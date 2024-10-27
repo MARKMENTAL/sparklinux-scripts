@@ -1,0 +1,39 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=pspg
+pkgver=5.8.6
+pkgrel=0
+pkgdesc="A unix pager optimized for psql"
+url="https://github.com/okbob/pspg"
+arch="all"
+options="!check" # there is no tests
+license="BSD-2-Clause"
+makedepends="automake autoconf libpq-dev ncurses-dev readline-dev"
+subpackages="$pkgname-doc"
+source="https://github.com/okbob/pspg/archive/$pkgver/pspg-$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+	./autogen.sh
+}
+
+build() {
+	# getpass
+	CFLAGS="$CFLAGS -D_BSD_SOURCE" \
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--localstatedir=/var
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	install -Dm644 pspg.1 -t "$pkgdir"/usr/share/man/man1/
+}
+
+sha512sums="
+1483adbecaac01fc5ef73fde2792a804bc6f8db00ef5ac434692985cf61f181c16be3ae3ddcfc50648cfe09ace8f237f3dbeee86c09e3ad1ccb2ec9141378b8d  pspg-5.8.6.tar.gz
+"

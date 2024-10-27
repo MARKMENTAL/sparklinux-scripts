@@ -1,0 +1,40 @@
+# Contributor: Fabio Ribeiro <fabiorphp@gmail.com>
+# Maintainer: Andy Postnikov <apostnikov@gmail.com>
+pkgname=php81-pecl-mongodb
+_extname=mongodb
+pkgver=1.19.4
+pkgrel=0
+pkgdesc="PHP 8.1 MongoDB driver - PECL"
+url="https://pecl.php.net/package/mongodb"
+arch="all !loongarch64"
+license="Apache-2.0"
+depends="php81-common"
+makedepends="cyrus-sasl-dev icu-dev openssl-dev>3 php81-dev snappy-dev zstd-dev"
+source="php-pecl-$_extname-$pkgver.tgz::https://pecl.php.net/get/$_extname-$pkgver.tgz"
+builddir="$srcdir"/$_extname-$pkgver
+provides="php81-mongodb=$pkgver-r$pkgrel" # for backward compatibility
+replaces="php81-mongodb" # for backward compatibility
+
+build() {
+	phpize81
+	./configure --prefix=/usr \
+		--with-php-config=/usr/bin/php-config81
+	make
+}
+
+check() {
+	# tests requires additional dependencies (vagrant)
+	php81 -d extension=modules/$_extname.so --ri $_extname
+}
+
+package() {
+	make INSTALL_ROOT="$pkgdir" install
+
+	local _confdir="$pkgdir"/etc/php81/conf.d
+	install -d $_confdir
+	echo "extension=$_extname" > $_confdir/$_extname.ini
+}
+
+sha512sums="
+9d180d1de036d8c95506293a69397164a75dd184f454a9f199e3f7be8f09f9d7c1f41c07099105df09da6ef6596d991cbd6724883c660cb7514fc6e09663105f  php-pecl-mongodb-1.19.4.tgz
+"

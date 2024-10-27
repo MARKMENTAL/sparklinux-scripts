@@ -1,0 +1,49 @@
+# Contributor: Marian Buschsieweke <marian.buschsieweke@posteo.net>
+# Maintainer: Marian Buschsieweke <marian.buschsieweke@posteo.net>
+pkgname=py3-cbor2
+pkgver=5.6.1
+pkgrel=1
+pkgdesc="encoding and decoding for CBOR (RFC 8949)"
+url="https://github.com/agronholm/cbor2"
+arch="all"
+license="MIT"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-setuptools_scm
+	py3-wheel
+	python3-dev
+	"
+checkdepends="
+	py3-hypothesis
+	py3-pytest
+	py3-pytest-cov
+	py3-tomli
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://files.pythonhosted.org/packages/source/c/cbor2/cbor2-$pkgver.tar.gz
+	fix-32bit-tests.patch
+	"
+builddir="$srcdir/cbor2-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+9ddf2c3690780816ff50ff4ed371435ca45b597b706254c37c9f01d1f1a699892e2c945a72e69b5506a803c41692f399b58b4e32d9409a0197c677e537e656b2  py3-cbor2-5.6.1.tar.gz
+ba8a19a73fe2dc747846b77fde6cd621ccb500a514ba61192dfa28c875720003666165ad12c767260b31148b0dd25454e36e4f43dd8bb1d11928944c6a5b61dd  fix-32bit-tests.patch
+"

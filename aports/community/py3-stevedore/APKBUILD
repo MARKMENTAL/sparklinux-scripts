@@ -1,0 +1,38 @@
+# Contributor: Dmitry Zakharchenko <dmitz@disroot.org>
+# Maintainer: Dmitry Zakharchenko <dmitz@disroot.org>
+pkgname=py3-stevedore
+_pkgname=stevedore
+pkgver=4.1.1
+pkgrel=3
+pkgdesc="Manage dynamic plugins for Python applications"
+url="https://github.com/openstack/stevedore"
+arch="noarch"
+license="Apache-2.0"
+depends="python3"
+makedepends="py3-setuptools py3-pbr"
+checkdepends="py3-pytest py3-testtools py3-docutils py3-sphinx"
+subpackages="$pkgname-pyc"
+source="https://pypi.org/packages/source/s/$_pkgname/$_pkgname-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+prepare() {
+	default_prepare
+	# Remove dependency on pbr; it's not a runtime dependency
+	sed -i '/pbr/d' requirements.txt
+}
+
+build() {
+	python3 setup.py build
+}
+
+check() {
+	pytest
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+9f75af586e4fff1bebb88351a242b171d6cce795d86cfffd021c47bafd9ced84a78a838a589d8828fa7bb0f183e767fe888b0780aeda9129895182bf4e0ff717  stevedore-4.1.1.tar.gz
+"

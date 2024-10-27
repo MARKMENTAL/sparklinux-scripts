@@ -1,0 +1,54 @@
+# Contributor: Łukasz Jendrysik <scadu@yandex.com>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=awesome
+pkgver=4.3
+pkgrel=6
+pkgdesc="lua-configurable window manager framework"
+url="https://awesomewm.org/"
+arch="all"
+license="GPL-2.0-or-later"
+depends="imagemagick lua5.1-lgi cairo-gobject pango"
+makedepends="
+	cairo-dev
+	cmake
+	dbus-dev
+	gdk-pixbuf-dev
+	glib-dev
+	gperf
+	imlib2-dev
+	libev-dev
+	libxcb-dev
+	libxdg-basedir-dev
+	libxkbcommon-dev
+	lua-doc
+	lua5.1-dev
+	pango-dev
+	samurai
+	startup-notification-dev
+	xcb-util-cursor-dev
+	xcb-util-dev
+	xcb-util-image-dev
+	xcb-util-keysyms-dev
+	xcb-util-wm-dev
+	xcb-util-xrm-dev
+	"
+subpackages="$pkgname-doc"
+options="!check" # No test suite
+source="$pkgname-$pkgver.tar.xz::https://github.com/awesomeWM/awesome-releases/raw/master/awesome-$pkgver.tar.xz"
+
+build() {
+	export CFLAGS="$CFLAGS -fcommon"
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DSYSCONFDIR=/etc \
+		-DCMAKE_BUILD_TYPE=MinSizeRel
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+c5ef1e8dc593e7783b895d22143154aea8f211beeda24672a7ee4ed5112b4f4284043f848a151f3d3c4f569e91308670367a4353f705b20511b36495b22fa3f5  awesome-4.3.tar.xz
+"

@@ -1,0 +1,59 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Contributor: Alex Denes <caskd@redxen.eu>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=neomutt
+pkgver=20240425
+pkgrel=0
+pkgdesc="Mutt with miscellaneous fixes and feature patches"
+url="https://neomutt.org/"
+arch="all"
+options="chmod-clean"
+license="GPL-2.0-or-later"
+# TODO: Replace gnupg with specific gnupg subpackages that neomutt really needs.
+depends="gnupg"
+makedepends="cyrus-sasl-dev gdbm-dev gettext-dev gpgme-dev libidn2-dev
+	ncurses-dev openssl-dev>3 notmuch-dev bsd-compat-headers libxslt tcl
+	docbook-xsl pcre2-dev perl w3m zlib-dev"
+checkdepends="bash"
+subpackages="$pkgname-doc $pkgname-lang"
+_test_commit=1569b826a56c39fd09f7c6dd5fc1163ff5a356a2
+source="neomutt-$pkgver.tar.gz::https://github.com/neomutt/neomutt/archive/$pkgver.tar.gz
+	neomutt-test-files-$_test_commit.tar.gz::https://github.com/neomutt/neomutt-test-files/archive/$_test_commit.tar.gz
+	disable-failing-test.patch
+	"
+
+# secfixes:
+#   20211015-r0:
+#     - CVE-2021-32055
+
+build() {
+	./configure \
+		--notmuch \
+		--gpgme \
+		--gdbm \
+		--disable-idn \
+		--idn2 \
+		--pcre2 \
+		--ssl \
+		--sasl \
+		--testing \
+		--zlib
+	make
+}
+
+check() {
+	export NEOMUTT_TEST_DIR="$srcdir/neomutt-test-files-$_test_commit"
+	(cd $NEOMUTT_TEST_DIR && ./setup.sh)
+	make test
+	(cd $NEOMUTT_TEST_DIR && ./restore.sh)
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+bb47aba1aa8ecc824d9d0a8f6be23f2d39f0aac06739920ee349ff96bc27cbe39b6cfa797f648eb683fe49f01fa1873805a3ed2e7cbf4124dae12517591c02c9  neomutt-20240425.tar.gz
+8c98a34c50e87a0b671b49b256dbd83034104fdfa93cde423adc102aebd9c3741942364addadc7c7c2a8a71cbca1850d6c03ff12c2238efac2d106da65f8c296  neomutt-test-files-1569b826a56c39fd09f7c6dd5fc1163ff5a356a2.tar.gz
+090c58d67ab071df7406cce6720974b9fecca084a093b8a40b84a581ba741273d1524e186da7433501436717cc87e1315e9726b44a29a4287535ad53aca7d228  disable-failing-test.patch
+"

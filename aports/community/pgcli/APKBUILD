@@ -1,0 +1,52 @@
+# Contributor: Thomas Boerger <thomas@webhippie.de>
+# Maintainer: omni <omni+alpine@hack.org>
+pkgname=pgcli
+pkgver=4.1.0
+pkgrel=0
+pkgdesc="Postgres CLI with autocompletion and syntax highlighting"
+url="https://www.pgcli.com"
+arch="noarch"
+license="BSD-3-Clause"
+depends="python3
+	py3-cli_helpers>1.0.0
+	py3-click
+	py3-configobj
+	py3-humanize
+	py3-gpep517
+	py3-pendulum
+	py3-pgspecial
+	py3-prompt_toolkit>2.0.0
+	py3-psycopg-c
+	py3-pygments
+	py3-setproctitle
+	py3-setuptools
+	py3-sqlparse<0.5.0
+	py3-wcwidth
+	py3-wheel
+	"
+checkdepends="pytest py3-mock"
+makedepends="python3-dev"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/p/pgcli/pgcli-$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest --ignore=tests/test_ssh_tunnel.py
+	# sshtunnel module is not yet packaged
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+aa2cf018a9fd17ca1178984a84170a0a3eefff84901779be6ea5ce2b124a99ee7bfd0e70987b4b1476c5a7c67008e8fe55b3053a85065291407825ef3e273bf7  pgcli-4.1.0.tar.gz
+"

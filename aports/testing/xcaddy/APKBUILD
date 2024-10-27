@@ -1,0 +1,33 @@
+# Contributor: Fabricio Silva <hi@fabricio.dev>
+# Maintainer: Fabricio Silva <hi@fabricio.dev>
+pkgname=xcaddy
+pkgver=0.4.2
+pkgrel=2
+pkgdesc="Build Caddy with plugins"
+url="https://github.com/caddyserver/xcaddy"
+license="Apache-2.0"
+arch="all"
+depends="go"
+source="https://github.com/caddyserver/xcaddy/archive/v$pkgver/xcaddy-$pkgver.tar.gz"
+options="net" # for downloading Go modules
+
+export GOFLAGS="$GOFLAGS -modcacherw"
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -trimpath -o bin/xcaddy ./cmd/xcaddy
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	install -Dm755 bin/xcaddy -t "$pkgdir"/usr/sbin/
+}
+
+sha512sums="
+5cc91ae5597d7e3de0cc76dfcd7d2632471fd7a6213f7044f7dea729f51d2c8599577bf0d7da3d00c18ec3c57d3e164b0e0b5e5067fec6f2551a331469132d4d  xcaddy-0.4.2.tar.gz
+"

@@ -1,0 +1,26 @@
+# Contributor: fossdd <fossdd@pwned.life>
+# Maintainer: fossdd <fossdd@pwned.life>
+pkgname=hare-unicode
+pkgver=0_git20240417
+_commit=1488c26f46f7f8568235eaee6224983ac46e78ff
+pkgrel=0
+pkgdesc="Hare unicode database"
+url="https://git.sr.ht/~sircmpwn/hare-unicode"
+arch="noarch !armhf !armv7 !ppc64le !s390x !x86 !loongarch64" # blocked by hare
+license="MPL-2.0"
+checkdepends="hare"
+source="$pkgname-$_commit.tar.gz::https://git.sr.ht/~sircmpwn/hare-unicode/archive/$_commit.tar.gz"
+builddir="$srcdir/$pkgname-$_commit"
+
+check() {
+	hare test
+}
+
+package() {
+	install -vdm755 "$pkgdir/usr/src/hare/third-party"
+	cp -Rdv "unicode" "$pkgdir/usr/src/hare/third-party"
+}
+
+sha512sums="
+a72c13482b193f23e92ce557655ee552622ec191298d0d2539fb40925c8a5b8629ece96463673c42509285a82ccb1fd20aee9018e191c50e432462ade6768f8b  hare-unicode-1488c26f46f7f8568235eaee6224983ac46e78ff.tar.gz
+"

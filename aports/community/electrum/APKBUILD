@@ -1,0 +1,61 @@
+# Maintainer: Rdbo <rdbodev@gmail.com>
+# Contributor: Michał Adamski <michal@ert.pl>
+# Contributor: Rdbo <rdbodev@gmail.com>
+pkgname=electrum
+pkgver=4.5.5
+pkgrel=0
+pkgdesc="Lightweight Bitcoin Wallet"
+url="https://electrum.org/"
+arch="noarch"
+license="MIT"
+depends="
+	libsecp256k1
+	py3-aiohttp
+	py3-aiohttp-socks
+	py3-aiorpcx
+	py3-attrs
+	py3-bitstring
+	py3-certifi
+	py3-dnspython
+	py3-ecdsa
+	py3-jsonpatch
+	py3-protobuf
+	py3-pycryptodomex
+	py3-qrcode
+	py3-qt5
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="py3-pytest-xdist py3-cryptography py3-pyaes"
+subpackages="$pkgname-pyc"
+source="
+	electrum-$pkgver.tar.gz::https://github.com/spesmilo/electrum/archive/refs/tags/$pkgver.tar.gz
+	0001-apk-add-instead-of-apt-get-install.patch
+"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto \
+		--ignore tests/test_qml_types.py \
+		tests
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+28121665cad7bc540600562d4d3e72e20108785c096647fdcc9eb8c26616a04730f53ba53b19f6a332eadc8e20a5524b33dab3719421aeb2b51a0531f9e8ef11  electrum-4.5.5.tar.gz
+797f684a8df30176129335e9e09868be8a4db7a76b3b89dd0b48d93e577a90aa378839a7cc2bf7804494e1cfea77e392fcf74d55243ad51531f4e42c6c747aac  0001-apk-add-instead-of-apt-get-install.patch
+"

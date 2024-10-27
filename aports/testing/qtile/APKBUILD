@@ -1,0 +1,49 @@
+# Contributor: Emma Nora Theuer <kontakt@entheuer.de>
+# Contributor: Dominika Liberda <ja@sdomi.pl>
+# Maintainer: Emma Nora Theuer <kontakt@entheuer.de>
+pkgname=qtile
+pkgver=0.23.0
+pkgrel=2
+pkgdesc="A full-featured, hackable tiling X11 window manager written and configured in Python"
+url="https://github.com/qtile/qtile"
+arch="all"
+license="MIT"
+depends="
+	pango
+	py3-cairocffi
+	py3-dbus-next
+	py3-xcffib
+	"
+makedepends="
+	libx11-dev
+	pango
+	py3-cffi
+	py3-setuptools
+	py3-setuptools_scm
+	py3-gpep517
+	"
+options="!check" # broken due to unavailable packages
+subpackages="$pkgname-pyc"
+source="qtile-$pkgver.tar.gz::https://github.com/qtile/qtile/archive/v$pkgver.tar.gz"
+
+build() {
+	export SETUPTOOLS_SCM_PRETEND_VERSION=$pkgver
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	gpep517 install-wheel --destdir .testenv --prefix '' .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+8121d980fb74de6b7c464c0d8d82fcffa922653400c0d74dfb5e9105762a6a9931fbc7465d68accc6c513abe11a79547282ab886d20cac9970dba1b184da682b  qtile-0.23.0.tar.gz
+"

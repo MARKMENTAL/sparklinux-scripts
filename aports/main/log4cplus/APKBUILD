@@ -1,0 +1,54 @@
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=log4cplus
+pkgver=2.1.1
+pkgrel=0
+pkgdesc="Logging Framework for C++"
+url="https://github.com/log4cplus/log4cplus"
+arch="all"
+license="Apache-2.0 AND BSD-2-Clause"
+checkdepends="findutils"
+subpackages="
+	$pkgname-static
+	$pkgname-dev
+	$pkgname-unicode
+	"
+source="https://github.com/log4cplus/log4cplus/releases/download/REL_${pkgver//./_}/log4cplus-$pkgver.tar.xz"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--disable-implicit-initialization \
+		--enable-lto \
+		--enable-static \
+		--with-working-c-locale
+	make
+}
+
+check() {
+	make check || {
+		find . -name testsuite.log -type f -ls \
+			-printf '%P {{{\n' \
+			-exec cat -v -n '{}' ';' \
+			-printf '}}} %P\n'
+		return 1
+	}
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+unicode() {
+	pkgdesc="$pkgdesc (Unicode)"
+
+	amove ./usr/lib/liblog4cplusU*
+}
+
+sha512sums="
+7cb03b7e230c3ec775eaf91ed32860e8d5e8015fa07713312c7febd379ec5a05758ef861b8cddf7a8776c8981c0948dff0baccf0aa9ce07540de7e2864669b74  log4cplus-2.1.1.tar.xz
+"

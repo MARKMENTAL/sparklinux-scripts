@@ -1,0 +1,22 @@
+# Maintainer: Pedro Lucas Porcellis <porcellis@eletrotupi.com>
+pkgname=today
+pkgver=6.2.0
+pkgrel=0
+pkgdesc="Script for keeping a daily journal"
+url="https://sr.ht/~sotirisp/today"
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="vim"
+makedepends="scdoc"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://git.sr.ht/~sotirisp/today/archive/v$pkgver.tar.gz"
+builddir="$srcdir/today-v$pkgver"
+options="!check" # no tests
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr install
+}
+
+sha512sums="
+8adb6875ea419e51ce5267981a83d1e3dbbf5250ed3d294c283f64280f12a04669d5dac12d07056b1ae8a2488d98d86a4d12a9831219620f28bbe4021ca2f596  today-6.2.0.tar.gz
+"

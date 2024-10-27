@@ -1,0 +1,62 @@
+# Contributor: Natanael Copa <ncopa@alpinelinux.org>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=hydrogen
+pkgver=1.2.3
+pkgrel=0
+pkgdesc="Advanced drum machine for GNU/Linux"
+url="http://www.hydrogen-music.org/"
+arch="aarch64 armv7 ppc64le x86 x86_64" # armhf limited by qt5-qtxmlpatterns
+license="GPL-2.0-or-later"
+makedepends="
+	alsa-lib-dev
+	cmake
+	flac-dev
+	jack-dev
+	ladspa-dev
+	libarchive-dev
+	libsndfile-dev
+	portaudio-dev
+	pulseaudio-dev
+	qt5-qtbase-dev
+	qt5-qtsvg-dev
+	qt5-qttools-dev
+	qt5-qtxmlpatterns-dev
+	samurai
+	"
+checkdepends="cppunit-dev"
+subpackages="$pkgname-dev $pkgname-doc"
+source="hydrogen-$pkgver.tar.gz::https://github.com/hydrogen-music/hydrogen/archive/$pkgver.tar.gz
+	nodevel.patch
+	"
+# tiny float differences
+options="!check"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	CXXFLAGS="$CXXFLAGS -flto=auto" \
+	cmake -G Ninja -B build \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=None \
+		-DWANT_CPPUNIT="$(want_check && echo ON || echo OFF)" \
+		-DWANT_DEBUG=OFF \
+		-DVERSION_SUFFIX=alpine \
+		$CMAKE_CROSSOPTS
+	cmake --build build
+}
+
+check() {
+	./build/src/tests/tests
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+0dad3ac25e7c867b3141450faf2affeac2165b7593a2cafb61885434520d1726eaee85d11689be0304bc8a037fbc0737c8130d4ba59bd1ed4e7f1addc56cc25d  hydrogen-1.2.3.tar.gz
+e8e6b10847771fb70434fa31bd8c213e422f6cea61871470bcb8d10cd1df7d262eacddc8af4306bf7c3a68f68f7ee5d341b4dbda9f66da34376d75cc32226c57  nodevel.patch
+"

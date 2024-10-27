@@ -1,0 +1,46 @@
+# Contributor: Galen Abell <galen@galenabell.com>
+# Maintainer: Galen Abell <galen@galenabell.com>
+pkgname=jedi-language-server
+pkgver=0.41.4
+pkgrel=0
+pkgdesc="Python language server exclusively for Jedi"
+url="https://github.com/pappasam/jedi-language-server"
+arch="noarch"
+license="MIT"
+depends="
+	py3-cattrs
+	py3-docstring-to-markdown
+	py3-gls
+	py3-jedi
+	py3-lsprotocol
+	py3-typing-extensions
+	python3
+	"
+makedepends="
+	py3-gpep517
+	py3-poetry-core
+	"
+checkdepends="py3-pytest py3-pyhamcrest py3-jsonrpc-server py3-lsp-jsonrpc"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/pappasam/jedi-language-server/archive/v$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/jedi_language_server-$pkgver-py3-none-any.whl
+}
+
+sha512sums="
+a8fcdd5328255b969a8e533f32f87a977362a18adfcdd2cb5552d00abb943dab778cd4a2da2cfd6af2d8fc3d7aec182d18d8b8871c0a715a94ea55d902e658b8  jedi-language-server-0.41.4.tar.gz
+"

@@ -1,0 +1,34 @@
+# Contributor: rubicon <rubicon@mailo.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=gleam
+pkgver=1.5.1
+pkgrel=0
+pkgdesc="Statically-typed language that compiles to Erlang and JS"
+url="https://gleam.run/"
+arch="all"
+license="Apache-2.0"
+depends="erlang-dev"
+makedepends="cargo cargo-auditable"
+source="$pkgname-$pkgver.tar.gz::https://github.com/gleam-lang/gleam/archive/refs/tags/v$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dvm755 target/release/gleam -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+b17d4f780005e848c9e9f8147284c1094663f0c8c460c214e4a614dd4630853850005bf0c69e6441ca442ade3e7e8091c510776b5c3be77053ca17adeaa04271  gleam-1.5.1.tar.gz
+"

@@ -1,0 +1,291 @@
+# Contributor: Holger Jaekel <holger.jaekel@gmx.de>
+# Maintainer: Holger Jaekel <holger.jaekel@gmx.de>
+pkgname=google-cloud-cpp
+pkgver=2.26.0
+_googleapis_commit_sha=622e10a1e8b2b6908e0ac7448d347a0c1b4130de
+pkgrel=0
+pkgdesc="C++ Client Libraries for Google Cloud Services"
+url="https://cloud.google.com/sdk"
+arch="all"
+license="Apache-2.0"
+makedepends="
+	abseil-cpp-dev
+	c-ares-dev
+	clang
+	cmake
+	crc32c-dev
+	curl-dev
+	grpc-dev
+	nlohmann-json
+	openssl-dev
+	protobuf-dev
+	re2-dev
+	samurai
+	"
+checkdepends="benchmark-dev gtest-dev"
+subpackages="$pkgname-dev"
+source="google-cloud-cpp-$pkgver.tar.gz::https://github.com/googleapis/google-cloud-cpp/archive/refs/tags/v$pkgver.tar.gz
+	https://github.com/googleapis/googleapis/archive/$_googleapis_commit_sha.tar.gz
+	"
+
+_ga_library="
+	accessapproval
+	accesscontextmanager
+	advisorynotifications
+	aiplatform
+	alloydb
+	apigateway
+	apigeeconnect
+	apikeys
+	appengine
+	apphub
+	artifactregistry
+	asset
+	assuredworkloads
+	automl
+	backupdr
+	baremetalsolution
+	batch
+	beyondcorp
+	bigquery
+	bigtable
+	billing
+	binaryauthorization
+	certificatemanager
+	channel
+	cloudbuild
+	cloudcontrolspartner
+	cloudquotas
+	commerce
+	composer
+	compute
+	confidentialcomputing
+	config
+	connectors
+	contactcenterinsights
+	containeranalysis
+	container
+	contentwarehouse
+	datacatalog
+	datafusion
+	datamigration
+	dataplex
+	dataproc
+	datastore
+	datastream
+	deploy
+	dialogflow_cx
+	dialogflow_es
+	discoveryengine
+	dlp
+	documentai
+	domains
+	edgecontainer
+	edgenetwork
+	essentialcontacts
+	eventarc
+	filestore
+	functions
+	gkebackup
+	gkehub
+	gkemulticloud
+	iam
+	iap
+	ids
+	kms
+	language
+	logging
+	managedidentities
+	managedkafka
+	memcache
+	metastore
+	migrationcenter
+	monitoring
+	netapp
+	networkconnectivity
+	networkmanagement
+	networksecurity
+	networkservices
+	notebooks
+	oauth2
+	optimization
+	orgpolicy
+	osconfig
+	oslogin
+	policysimulator
+	policytroubleshooter
+	privateca
+	profiler
+	publicca
+	pubsub
+	rapidmigrationassessment
+	recaptchaenterprise
+	recommender
+	redis
+	resourcemanager
+	resourcesettings
+	retail
+	run
+	scheduler
+	secretmanager
+	securesourcemanager
+	securitycenter
+	servicecontrol
+	servicedirectory
+	servicehealth
+	servicemanagement
+	serviceusage
+	shell
+	spanner
+	speech
+	sql
+	storageinsights
+	storagetransfer
+	storage
+	support
+	talent
+	tasks
+	telcoautomation
+	texttospeech
+	timeseriesinsights
+	tpu
+	trace
+	translate
+	videointelligence
+	video
+	vision
+	vmmigration
+	vmwareengine
+	vpcaccess
+	webrisk
+	websecurityscanner
+	workflows
+	workstations
+	"
+_non_ga_library="
+	cloud-common-common-protos
+	cloud-extended-operations-protos
+	cloud-orgpolicy-v1-orgpolicy-protos
+	grafeas-protos
+	grpc-utils
+	longrunning-operations-protos
+	rest-internal
+	rest-protobuf-internal
+	rpc-code-protos
+	rpc-context-attribute-context-protos
+	rpc-error-details-protos
+	rpc-status-protos
+	"
+_api_protos="
+	api-annotations
+	api-auth
+	api-backend
+	api-billing
+	api-client
+	api-config-change
+	api-consumer
+	api-context
+	api-control
+	api-distribution
+	api-documentation
+	api-endpoint
+	api-error-reason
+	api-field-behavior
+	api-field-info
+	api-httpbody
+	api-http
+	api-label
+	api-launch-stage
+	api-logging
+	api-log
+	api-metric
+	api-monitored-resource
+	api-monitoring
+	api-policy
+	api-quota
+	api-resource
+	api-routing
+	api-service
+	api-source-info
+	api-system-parameter
+	api-usage
+	api-visibility
+	"
+_type_protos="
+	type-calendar-period
+	type-color
+	type-datetime
+	type-date
+	type-dayofweek
+	type-decimal
+	type-expr
+	type-fraction
+	type-interval
+	type-latlng
+	type-localized-text
+	type-money
+	type-month
+	type-phone-number
+	type-postal-address
+	type-quaternion
+	type-timeofday
+	"
+
+for _lib in $_ga_library $_non_ga_library $_api_protos $_type_protos ; do
+	subpackages="$subpackages $pkgname-$_lib:library"
+done
+
+prepare() {
+	default_prepare
+
+	# google-cloud-cpp needs the proto and gRPC definitions for most
+	# Google Cloud services. By default these definitions are downloaded
+	# from GitHub during the build process. Using the same SHA is the
+	# recommended practice when the googleapis are downloaded outside the
+	# build process. In this APKBUILD, we download the googleapis as an
+	# additional source. In that case we have to make sure that the SHA
+	# match.
+	local sha256=$(awk '/_GOOGLE_CLOUD_CPP_GOOGLEAPIS_SHA256/ { getline; print $0 }' cmake/GoogleapisConfig.cmake | tr -d '") ')
+	echo "expected sha: $sha256"
+	echo "$sha256 *$srcdir/$_googleapis_commit_sha.tar.gz" | sha256sum -c -
+}
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		local crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	CC=clang CXX=clang++ \
+	LDFLAGS="$LDFLAGS -Wl,--copy-dt-needed-entries" \
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=None \
+		-DBUILD_TESTING="$(want_check && echo ON || echo OFF)" \
+		-DGOOGLE_CLOUD_CPP_ENABLE_EXAMPLES=OFF \
+		-DGOOGLE_CLOUD_CPP_ENABLE=__ga_libraries__ \
+		-DGOOGLE_CLOUD_CPP_OVERRIDE_GOOGLEAPIS_URL=$srcdir/googleapis-$_googleapis_commit_sha \
+		$crossopts
+	cmake --build build
+}
+
+check() {
+	cd build
+	timeout 1500 \
+		ctest --output-on-failure -LE "integration-test"
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+library() {
+	local name=${subpkgname#"$pkgname"-}
+	pkgdesc="$pkgdesc ($name)"
+	amove usr/lib/libgoogle_cloud_cpp_${name//-/_}*
+}
+
+sha512sums="
+c249270f528b504dbe86a60e92113e16dc8f9f9dd8edeeffcd265da699ee73b660c9fafa7992d8be5ee473a68a00201332d60d9980fc8b373e10bb3e0237b301  google-cloud-cpp-2.26.0.tar.gz
+eb64f73c8664ba6dc2f23759daf25a94e9ada6f014e370274d463e1fae652d2b5a1ec8a13123d674e7b69d6a2fdaf3425cfdc53866fda8415b577f3658532b81  622e10a1e8b2b6908e0ac7448d347a0c1b4130de.tar.gz
+"

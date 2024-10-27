@@ -1,0 +1,31 @@
+# Contributor: Maarten van Gompel <proycon@anaproy.nl>
+# Maintainer: Maarten van Gompel <proycon@anaproy.nl>
+pkgname=ticcutils
+pkgver=0.35
+pkgrel=1
+pkgdesc="Common library with shared functions for Frog, ucto, libfolia, timbl"
+options="!check"
+arch="all"
+url="https://github.com/LanguageMachines/ticcutils"
+license="GPL-3.0-only"
+makedepends="libtool libxml2-dev bzip2-dev icu-dev"
+subpackages="$pkgname-dev $pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/LanguageMachines/ticcutils/releases/download/v$pkgver/ticcutils-$pkgver.tar.gz"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--localstatedir=/var
+	make
+}
+
+package() {
+	make DESTDIR=$pkgdir install
+}
+
+sha512sums="
+20add20d654ae18f2aae1c130c5ef9a04644db64be765a45a2c44ab7b31e55f9c693f43512df454ed6a57f8b7142f347f867d550eded2b57882b3374358dd2f6  ticcutils-0.35.tar.gz
+"

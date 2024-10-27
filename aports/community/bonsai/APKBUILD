@@ -1,0 +1,30 @@
+# Maintainer: Willow Barraco <contact@willowbarraco.fr>
+pkgname=bonsai
+pkgver=1.2.0
+pkgrel=0
+pkgdesc="A Finite State Machine structured as a tree that trigger commands"
+url="https://sr.ht/~stacyharper/bonsai/"
+arch="x86_64 aarch64 riscv64" # hare
+license="AGPL-3.0-or-later"
+makedepends="hare hare-json hare-ev"
+source="$pkgname-v$pkgver.tar.gz::https://git.sr.ht/~stacyharper/bonsai/archive/v$pkgver.tar.gz"
+builddir="$srcdir/$pkgname-v$pkgver"
+
+build() {
+	# Don't use user's global Hare cache
+	export XDG_CACHE_HOME="$srcdir"/hare-cache
+	mkdir -p "$XDG_CACHE_HOME"
+
+	make -j1
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX="/usr" install
+}
+sha512sums="
+1b37cd5dcc0bf83225171474bd102f8fac0babc61327a3908ec992b4442ef0c77456258d192f3f502b8557ddccfad1a63d5eaa2ec39283e98fece5de038d246a  bonsai-v1.2.0.tar.gz
+"

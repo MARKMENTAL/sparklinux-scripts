@@ -1,0 +1,106 @@
+# Maintainer: leso-kn <info@lesosoftware.com>
+pkgname=onnxruntime
+pkgver=1.19.2
+pkgrel=0
+pkgdesc="Cross-platform, high performance ML inferencing and training accelerator"
+url="https://onnxruntime.ai"
+# x86, s390x, loongarch64: fails to build
+# riscv64: tests fails
+arch="all !x86 !s390x !riscv64 !loongarch64"
+license="MIT"
+makedepends="
+	abseil-cpp-dev
+	bash
+	cmake
+	gtest-dev
+	icu-dev
+	linux-headers
+	nlohmann-json
+	protobuf-dev
+	py3-numpy-dev
+	py3-protobuf
+	py3-pybind11-dev
+	py3-setuptools
+	py3-wheel
+	python3-dev
+	re2-dev
+	samurai
+	zlib-dev
+	"
+subpackages="
+	$pkgname-dev
+	py3-$pkgname-pyc
+	py3-$pkgname:py3
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/microsoft/onnxruntime/archive/refs/tags/v$pkgver.tar.gz
+	flatbuffers-locale.patch.noauto
+	no-execinfo.patch
+	system.patch
+	0001-Remove-MATH_NO_EXCEPT-macro.patch
+	"
+options="net"
+
+# tests fail on arm 32 bit, see https://github.com/microsoft/onnxruntime/issues/16387
+case "$CARCH" in
+armhf|armv7) options="!check $options"; _extra_cxxflags="-Wno-overflow";;
+esac
+
+build() {
+	CFLAGS="$CFLAGS -O2 -flto=auto" \
+	CXXFLAGS="$CXXFLAGS $_extra_cxxflags -O2 -Wno-deprecated-declarations -Wno-error=template-id-cdtor -flto=auto -U_FORTIFY_SOURCE" \
+	LDFLAGS="$LDFLAGS -Wl,--copy-dt-needed-entries" \
+	cmake -S cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBUILD_ONNX_PYTHON=ON \
+		-Donnxruntime_BUILD_SHARED_LIB=ON \
+		-Donnxruntime_BUILD_UNIT_TESTS="$(want_check && echo ON || echo OFF)" \
+		-Donnxruntime_ENABLE_PYTHON=ON \
+		-Donnxruntime_USE_NEURAL_SPEED=OFF # fix for 1.17.0, see: https://github.com/microsoft/onnxruntime/pull/19382
+	# hack for protobuf 23
+	sed -i 's|CMAKE_CXX_STANDARD 11|CMAKE_CXX_STANDARD 17|' build/_deps/onnx-src/CMakeLists.txt
+
+	# from testing/flutter/shared-libcxx.patch.engine
+	patch -p1 < ../flatbuffers-locale.patch.noauto
+
+	cmake --build build
+
+	cd build
+	msg "building python module"
+	python3 ../setup.py build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	cd build
+	python3 ../setup.py install --skip-build --root="$pkgdir"
+
+	ln -sfv ../../../../libonnxruntime_providers_shared.so \
+		"$(echo "$pkgdir"/usr/lib/python3*/site-packages/onnxruntime/capi/libonnxruntime_providers_shared.so)"
+}
+
+py3() {
+	pkgdesc="$pkgname (python3 bindings)"
+	depends="
+		py3-coloredlogs
+		py3-flatbuffers
+		py3-numpy
+		py3-packaging
+		py3-sympy
+		"
+
+	amove usr/lib/python3*
+}
+
+sha512sums="
+3bf25e431d175c61953d28b1bf8f6871376684263992451a5b2a66e670768fc66e7027f141c6e3f4d1eddeebeda51f31ea0adf4749e50d99ee89d0a26bec77ce  onnxruntime-1.19.2.tar.gz
+52e1c1e4a69543b3b9bcfabbd3f6202edf309f56be129668ad226e7ad7c2f1220ce169f9957fbc1fc4f3cae5abc984f8fe5ea4990fb2ebb033d7111d1d298f95  flatbuffers-locale.patch.noauto
+976913be90b0a82ff1ba403f46306ef4e5939bb05296227c99d3c4a609dd00f5750f9b1c6c30d20791ff0724c1bcffc6aa498eac906257aefefc6f35df796fe0  no-execinfo.patch
+963542ac3cfef08c9dcd60f28c0a47d6a9fbfcbe43efbf891047939aecd5b56fe0285f538e0da3df409a53745433b0ed2bc2470c59ae8fcf86ce94bf7cd02649  system.patch
+b70a09b0de7921e494a85fe7f0ac46ad9c1117e9dcf8f7ec45e518df975bb56e1b663396ae969deaaabda94135c5b6e082f59d8b916483518589ffde14c04565  0001-Remove-MATH_NO_EXCEPT-macro.patch
+"

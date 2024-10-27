@@ -1,0 +1,40 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+pkgname=geonames
+pkgver=0.3.1
+pkgrel=2
+pkgdesc="A library for parsing and querying a local copy of the geonames.org database"
+arch="all"
+url="https://gitlab.com/ubports/development/core/geonames"
+license="GPL-3.0-only"
+makedepends="
+	bash
+	cmake
+	glib-dev
+	gtk-doc
+	samurai
+	"
+source="https://gitlab.com/ubports/development/core/geonames/-/archive/$pkgver/geonames-$pkgver.tar.gz"
+subpackages="$pkgname-dev $pkgname-lang $pkgname-doc"
+options="!check" # https://gitlab.com/ubports/development/core/geonames/-/issues/2
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_BUILD_TYPE=None
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+449fd54127385afde1da2c896c2b6e287826ff2949e456537a066bd1a0aaee3fd484074f2d1366c3b65f9ffa4dd9ff28b926aa48a6db3e93f41fa20c4bfe725d  geonames-0.3.1.tar.gz
+"

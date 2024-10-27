@@ -1,0 +1,37 @@
+# Contributor: Dominique Martinet <dominique.martinet@atmark-techno.com>
+# Maintainer: Dominique Martinet <dominique.martinet@atmark-techno.com>
+pkgname=pahole
+pkgver=1.25
+pkgrel=0
+pkgdesc="dwarf manipulation utilities"
+url="https://git.kernel.org/pub/scm/devel/pahole/pahole.git"
+arch="all"
+license="GPL-2.0-only"
+options="!check" # no test
+makedepends="cmake elfutils-dev libdwarf-dev zlib-dev libbpf-dev
+	linux-headers musl-obstack-dev argp-standalone samurai"
+subpackages="$pkgname-doc"
+source="https://git.kernel.org/pub/scm/devel/pahole/pahole.git/snapshot/pahole-v$pkgver.tar.gz"
+builddir="$srcdir/$pkgname-v$pkgver"
+
+build() {
+	# use libbpf installed uapi headers as we need something
+	# newer than linux-headers provides
+	export CFLAGS="$CFLAGS -I/usr/include/bpf/uapi"
+
+	cmake -B build -G Ninja . \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_BUILD_TYPE=None \
+		-D__LIB=lib \
+		-DCMAKE_MODULE_PATH=/usr/lib/cmake \
+		-DLIBBPF_EMBEDDED=OFF
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --build build --target install
+}
+
+sha512sums="
+79070ed90edae752588fa4213bd180c770cae7870b2c016fba8e265f34d9f3e0ca82fb8cdf39275b5c3f53119d9fb225b1ee5c87a5f95df5beef37d32b4fde15  pahole-v1.25.tar.gz
+"

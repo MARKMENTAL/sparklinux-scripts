@@ -1,0 +1,31 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=libmediaart
+pkgver=1.9.6
+pkgrel=1
+pkgdesc="Media art extraction and cache management library"
+url="https://gitlab.gnome.org/GNOME/libmediaart"
+arch="all"
+license="LGPL-2.1-or-later"
+makedepends="meson glib-dev gdk-pixbuf-dev vala gobject-introspection-dev"
+subpackages="$pkgname-dev"
+source="https://download.gnome.org/sources/libmediaart/${pkgver%.*}/libmediaart-$pkgver.tar.xz"
+
+build() {
+	abuild-meson \
+		-Dimage_library=gdk-pixbuf \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+93af1a06aa7b12d8fc7573201f51abc41838bd9405bc8cf56d4fcfb5cfa9f7427d8d8ddc2ee36501e938bc8e123d91f590cff2cdb4689e1e6ed2358f7264e887  libmediaart-1.9.6.tar.xz
+"

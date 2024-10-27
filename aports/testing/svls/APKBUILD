@@ -1,0 +1,35 @@
+# Maintainer: Cowington Post <cowingtonpost@gmail.com>
+pkgname=svls
+pkgver=0.2.12
+pkgrel=0
+pkgdesc="SystemVerilog language serer"
+url="https://github.com/dalance/svls"
+arch="all"
+license="MIT"
+makedepends="cargo cargo-auditable"
+subpackages="$pkgname-doc"
+source="https://github.com/dalance/svls/archive/v$pkgver/svls-$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm755 target/release/svls -t "$pkgdir"/usr/bin
+
+	install -Dm644 LICENSE "$pkgdir"/usr/share/licenses/svls/LICENSE
+}
+
+sha512sums="
+7ebbf2872b59d01f8868ec1662794d3fa20ce03bda2fc7afd7d9c566f755845f49ee92f01eb321cbc7db8e01f245e8d5551016713dcb8a71ffade751cb9d7761  svls-0.2.12.tar.gz
+"

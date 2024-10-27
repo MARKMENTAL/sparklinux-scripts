@@ -1,0 +1,78 @@
+# Contributor: Michał Polański <michal@polanski.me>
+# Contributor: Natanael Copa <ncopa@alpinelinux.org>
+# Maintainer: mio <miyopan@e.email>
+pkgname=task3
+pkgver=3.1.0
+pkgrel=0
+pkgdesc="Command-line to-do list manager"
+url="https://taskwarrior.org"
+arch="all"
+license="MIT"
+install="$pkgname.post-install"
+makedepends="
+	cargo
+	cmake
+	corrosion
+	sqlite-dev
+	util-linux-dev
+	"
+checkdepends="bash python3"
+subpackages="$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+# Release tarball excludes the test suite, extract from the archive tarball
+source="https://github.com/GothenburgBitFactory/taskwarrior/releases/download/v$pkgver/task-$pkgver.tar.gz
+	https://github.com/GothenburgBitFactory/taskwarrior/archive/v$pkgver/task-archive-$pkgver.tar.gz
+	0001-atomic-timestamp-32bit.patch
+	0002-use-system-corrosion.patch
+	0003-use-newer-ring.patch
+	"
+builddir="$srcdir"/task-$pkgver
+
+case "$CARCH" in
+	# armhf/armv7: 104/152 tests failed in 3.1.0
+	# loongarch64: 12/152 tests failed in 3.1.0 in builder
+	# x86: 1/152 test failed in 3.1.0
+	armhf|armv7|loongarch64|x86) options="!check";;
+esac
+
+prepare() {
+	default_prepare
+
+	cp -r "$srcdir"/taskwarrior-$pkgver/test "$builddir"/
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cmake -B build \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr
+	cmake --build build
+}
+
+check() {
+	cmake --build build --target build_tests
+	ctest --test-dir build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	install -Dm644 scripts/bash/task.sh \
+		"$pkgdir"/usr/share/bash-completion/completions/task
+	install -Dm644 scripts/fish/task.fish \
+		"$pkgdir"/usr/share/fish/vendor_completions.d/task.fish
+	install -Dm644 scripts/zsh/_task \
+		"$pkgdir"/usr/share/zsh/site-functions/_task
+}
+
+sha512sums="
+42d7fbe6a61352268768a902f69b7ec25ac224a15e4e373e5913c732358c8a1f456ef5501c2270f38a91c037b7b129f8d4a79906bb4b00c1b238682e355fd005  task-3.1.0.tar.gz
+29ca29a61cd2ad4e1853789c88a61a7359b2b3ea6c966dcd00273803e96aed3a54ad18f0bdf490c5c4799ed028a1d51ebfbbb04bb9cd2c06633d4a21e3cb5dc7  task-archive-3.1.0.tar.gz
+587dfe21168548a231819d97e94bdf611c1e6eb79443638986bbd6339fda24c637252a811a7ce0a6b8d2a5699582352a4f197981991384f2e1b1f22e788260f1  0001-atomic-timestamp-32bit.patch
+f27673ef30d660db34bac819679aa956059723cade6b0c22b6db0b9b72578bf2aa87e061771560398b003d1cd4e0f88d64174a30a95a9117a7a82d13e43e6b3f  0002-use-system-corrosion.patch
+bd197202d81c4ce277b491d03d27f0efacdebd73086f04bd8c26bb29867a8082567f65e8ea81baae51d549599fa45a9839491b4ce419ebfa3cb28d7d7149aa7d  0003-use-newer-ring.patch
+"

@@ -1,0 +1,39 @@
+# Contributor: Dmitry Romanenko <dmitry@romanenko.in>
+# Maintainer: Dmitry Romanenko <dmitry@romanenko.in>
+pkgname=py3-pytest-xdist
+pkgver=3.6.1
+pkgrel=0
+pkgdesc="pytest xdist plugin for distributed testing and loop-on-failing modes"
+url="https://pytest-xdist.readthedocs.io"
+arch="noarch"
+license="MIT"
+depends="py3-execnet py3-pytest"
+checkdepends="py3-filelock py3-py py3-pexpect py3-psutil"
+makedepends="py3-gpep517 py3-setuptools py3-setuptools_scm py3-wheel"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/p/pytest_xdist/pytest_xdist-$pkgver.tar.gz"
+builddir="$srcdir/pytest_xdist-$pkgver"
+
+replaces="pytest-xdist" # Backwards compatibility
+provides="pytest-xdist=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/pytest_xdist*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/pytest_xdist*.whl
+}
+
+sha512sums="
+583a78d0adc05d81458bbdd5832c239581c0fcd9cad9edfd16fa78009c005c15bffec7ed074d9e18f1542393f62d9ccb2c9e0a96d825e9cff1faec123545a2a3  pytest_xdist-3.6.1.tar.gz
+"

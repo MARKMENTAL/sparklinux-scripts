@@ -1,0 +1,73 @@
+From: Jakub Jirutka <jakub@jirutka.cz>
+Date: Fri, 22 Oct 2021 01:57:29 +0200
+Subject: [PATCH] Build with PulseAudio backend only
+
+PipeWire (the preferred audio server nowadays) provides PulseAudio API,
+there's IMHO not much reason for building Spot with both PulseAudio and
+ALSA backends.
+
+diff --git a/Cargo.toml b/Cargo.toml
+index 945780e..7728ac1 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -23,7 +23,8 @@ features = ["v2_60"]
+ 
+ [dependencies.librespot]
+ version = "0.4.2"
+-features = ["alsa-backend", "pulseaudio-backend"]
++default-features = false
++features = ["pulseaudio-backend"]
+ 
+ [dependencies.protobuf]
+ version = "2.25.2"
+diff --git a/data/dev.alextren.Spot.gschema.xml b/data/dev.alextren.Spot.gschema.xml
+index f3fefc0..bc38922 100644
+--- a/data/dev.alextren.Spot.gschema.xml
++++ b/data/dev.alextren.Spot.gschema.xml
+@@ -2,7 +2,6 @@
+ <schemalist gettext-domain="spot">
+   <enum id="dev.alextren.Spot.AudioBackend">
+     <value value="0" nick="pulseaudio"/>
+-    <value value="1" nick="alsa"/>
+   </enum>
+   <enum id="dev.alextren.Spot.Bitrate">
+     <value value="0" nick="96"/>
+@@ -43,10 +42,6 @@
+       <default>true</default>
+       <summary>A flag to enable gap-less playback</summary>
+     </key>
+-    <key name='alsa-device' type='s'>
+-      <default>'default'</default>
+-      <summary>Alsa device (if audio backend is 'alsa')</summary>
+-    </key>
+     <key name='ap-port' type='u'>
+       <default>0</default>
+       <summary>Port to communicate with Spotify's server (access point). Setting to 0 (default) allows Spot to use servers running on any port.</summary>
+diff --git a/src/app/components/settings/settings.rs b/src/app/components/settings/settings.rs
+index 76df837..0c4c9d3 100644
+--- a/src/app/components/settings/settings.rs
++++ b/src/app/components/settings/settings.rs
+@@ -133,9 +133,6 @@ impl SettingsWindow {
+             })
+             .build();
+ 
+-        let alsa_device = widget.alsa_device.downcast_ref::<gtk::Entry>().unwrap();
+-        settings.bind("alsa-device", alsa_device, "text").build();
+-
+         let audio_backend = widget
+             .audio_backend
+             .downcast_ref::<libadwaita::ComboRow>()
+diff --git a/src/settings.rs b/src/settings.rs
+index fe7d3f4..b9e472f 100644
+--- a/src/settings.rs
++++ b/src/settings.rs
+@@ -46,9 +46,6 @@ impl SpotifyPlayerSettings {
+         }?;
+         let backend = match settings.enum_("audio-backend") {
+             0 => Some(AudioBackend::PulseAudio),
+-            1 => Some(AudioBackend::Alsa(
+-                settings.string("alsa-device").as_str().to_string(),
+-            )),
+             _ => None,
+         }?;
+         let gapless = settings.boolean("gapless-playback");

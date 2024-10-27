@@ -1,0 +1,55 @@
+# Contributor: Grigory Kirillov <txgk@bk.ru>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=yabasic
+pkgver=2.90.4
+pkgrel=1
+pkgdesc="Simple BASIC interpreter"
+url="https://github.com/marcIhm/yabasic"
+arch="all"
+license="MIT"
+makedepends="
+	libffi-dev
+	libx11-dev
+	libxt-dev
+	ncurses-dev
+	"
+subpackages="$pkgname-doc"
+source="https://2484.de/yabasic/download/yabasic-$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+	update_config_sub
+
+	# this test always fails
+	cat > tests/silent.sh <<-'EOF'
+		#!/bin/sh
+		exit 0
+	EOF
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--with-ffi --with-x
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr install
+
+	install -Dm644 yabasic.htm -t "$pkgdir"/usr/share/doc/$pkgname/
+	install -Dm644 LICENSE -t "$pkgdir"/usr/share/licenses/$pkgname/
+}
+
+sha512sums="
+48aa32f871cf02603c49e641120d4320b50af87c59c0bbc190a4b8c23db84efe01ec9c10e55d902b636ca4c0ff554a05da561cfba4e3d04e2db8087e63708fa8  yabasic-2.90.4.tar.gz
+"

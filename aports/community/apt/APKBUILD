@@ -1,0 +1,84 @@
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=apt
+pkgver=2.9.8
+pkgrel=0
+pkgdesc="APT package management tool"
+url="https://salsa.debian.org/apt-team/apt"
+arch="all"
+license="GPL-2.0-or-later"
+depends="
+	debian-archive-keyring
+	dpkg
+	"
+makedepends="
+	bzip2-dev
+	db-dev
+	cmake
+	dpkg-dev
+	eudev-dev
+	gettext-dev
+	gnutls-dev
+	libgcrypt-dev
+	lz4-dev
+	samurai
+	triehash
+	xxhash-dev
+	xz-dev
+	zlib-dev
+	zstd-dev
+	"
+checkdepends="gtest-dev"
+install="$pkgname.pre-install"
+pkgusers="_apt"
+pkggroups="_apt"
+subpackages="
+	$pkgname-dev
+	$pkgname-libs
+	$pkgname-lang
+	$pkgname-bash-completion
+	"
+source="https://salsa.debian.org/apt-team/apt/-/archive/$pkgver/apt-$pkgver.tar.bz2
+	fix-basename.patch
+	"
+options="!check" # todo
+
+build() {
+	cmake -B build -G Ninja -Wno-dev \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DCMAKE_INSTALL_LIBEXECDIR=lib \
+		-DCURRENT_VENDOR=debian \
+		-DUSE_NLS=ON \
+		-DUSE_SYSTEM_APTPKG=OFF \
+		-DWITH_DOC=OFF \
+		-DWITH_TESTS="$(want_check && echo ON || echo OFF)"
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+dev() {
+	default_dev
+
+	mv -v "$subpkgdir"/usr/bin/apt-config "$pkgdir"/usr/bin/
+	rmdir -v "$subpkgdir"/usr/bin
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	cd "$pkgdir"
+	chown -Rc _apt:_apt \
+		etc/apt \
+		var/cache/apt \
+		var/lib/apt \
+		var/log/apt
+}
+
+sha512sums="
+ab7602187d803c4592407f24f751479ffe357b67a5489ce037dc25e8e4fff46cf3a9ff6e3be9a31b6633807665af4def4fe4d4386d182b6706093edd87d5cb04  apt-2.9.8.tar.bz2
+27d7e1516915bbae025c4c943c7427421662e7c3bee8f1821565ac3cd823e8a823c4ac99efb9cc9a27e338c73b49e2628f0a88c5c2c1d2e935b1c89b9209d18c  fix-basename.patch
+"

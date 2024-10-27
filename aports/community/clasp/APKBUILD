@@ -1,0 +1,36 @@
+# Contributor: Anil Madhavapeddy <anil@recoil.org>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=clasp
+pkgver=3.3.10
+pkgrel=0
+pkgdesc="Answer set solver for (extended) normal logic programs"
+url="https://potassco.org/"
+arch="all"
+license="MIT"
+makedepends="cmake samurai"
+source="https://github.com/potassco/clasp/releases/download/v$pkgver/clasp-$pkgver-source.tar.gz"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCLASP_BUILD_APP=ON \
+		-DCLASP_BUILD_TESTS=ON \
+		$CMAKE_CROSSOPTS
+	cmake --build build
+}
+
+check() {
+	CTEST_OUTPUT_ON_FAILURE=1 ninja -C build test
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+6b6c173110c88745858758db8d6a80e906c2deb9a54919c480b50b7f70a607c1e30745d26e18f8460122d5c384c394412ff255a8c72ae05ba10ae532036d3376  clasp-3.3.10-source.tar.gz
+"

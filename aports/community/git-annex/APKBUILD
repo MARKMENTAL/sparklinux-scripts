@@ -1,0 +1,96 @@
+# Contributor: Antoine Martin (ayakael) <dev@ayakael.net>
+# Maintainer: Antoine Martin (ayakael) <dev@ayakael.net>
+pkgname=git-annex
+pkgver=10.20240831
+pkgrel=0
+pkgdesc="Manage files with git, without checking their contents into git"
+url="http://git-annex.branchable.com"
+arch="x86_64 aarch64" # limited by ghc
+license="AGPL-3.0-or-later"
+options="net"
+depends="
+	curl
+	git
+	rsync
+	"
+makedepends="
+	alex
+	cabal
+	dbus-dev
+	file-dev
+	ghc
+	gmp-dev
+	gnutls-dev
+	happy
+	libffi-dev
+	libgsasl-dev
+	libxml2-dev
+	ncurses-dev
+	zlib-dev
+	"
+source="
+	https://git.joeyh.name/index.cgi/git-annex.git/snapshot/git-annex-$pkgver.tar.gz
+	https://ayakael.net/api/packages/mirrors/generic/git-annex/$pkgver/git-annex-$pkgver-edge.cabal
+	fix-makefile.patch
+	ghc-9.8.patch
+	"
+subpackages="$pkgname-doc $pkgname-bash-completion $pkgname-fish-completion $pkgname-zsh-completion"
+
+_feature_flags="+assistant +webapp +pairing +production +torrentparser +magicmime +benchmark -debuglocks +dbus +networkbsd +gitlfs +httpclientrestricted"
+
+# Cabal seems to be built without sandbox, moving the cabal-dir into src
+export CABAL_DIR="$srcdir/.cabal"
+
+cabal_update() {
+	cd "$builddir"
+	cabal update
+	(
+		cabal v2-freeze \
+			--strong-flags \
+			--shadow-installed-packages \
+			--flags="$_feature_flags"
+
+		mv cabal.project.freeze "$startdir/git-annex-$pkgver.config"
+	)
+}
+
+prepare() {
+	default_prepare
+	ln -sf "$srcdir"/git-annex-*.config "$builddir"/cabal.project.freeze
+}
+
+build() {
+	# ghc version path
+	export PATH="$PATH:/usr/lib/llvm15/bin"
+
+	cabal v2-update
+	cabal v2-build git-annex:exes \
+		--jobs=${JOBS:-1} \
+		--prefix=/usr \
+		--docdir=/usr/share/doc/$pkgname \
+		--sysconfdir=/etc \
+		--flags="$_feature_flags"
+
+	# Avoid invoking ghc(1) in install() function.
+ 	make mans Build/InstallDesktopFile
+
+	# Prepare executable for the tests and make install.
+	local executable="$(cabal list-bin git-annex:exes)"
+	cp "$executable" .
+	ln -s git-annex git-annex-shell
+}
+
+check() {
+	"$builddir"/git-annex test
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+8b543e2ee6f22cc8276337d7a8c2efe5dc919189f44bb970de2e4e5729b3aa970d6ced2d6430548c5c20a4361cfbfce754fffc2fd87858caa0967868bf35663b  git-annex-10.20240831.tar.gz
+f11dc542102b432bab0b573d8950d58128b12bbd214f7b2852c41396f736666ff74dd1b0ededc2a56360f65d8768483b0e3b40d0a287e9072644cace77b490cc  git-annex-10.20240831-edge.cabal
+b24201f6d2d1532e65881be41cf6ece071a5d53ea14ad8754e6344ef8168dfccb01db0be02dcd57a002fe5d5dde13898b2b063432d5fe965ec72e7d7066e9d75  fix-makefile.patch
+05b2f7248ebe3244e7a89a889bc6b6acf91114aa72b8b8e63c742483f7bd94e2ba8b16e917a091954893ba57a6ab0b0a9ccc23c219f2fd626d78d06b9fa106f1  ghc-9.8.patch
+"

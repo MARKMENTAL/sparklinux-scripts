@@ -1,0 +1,102 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=sydbox
+pkgver=3.21.3
+pkgrel=0
+pkgdesc="Rock-solid user-space kernel to sandbox applications on Linux"
+url="https://gitlab.exherbo.org/sydbox/sydbox"
+# s390x: fails to build "nix" crate
+# loongarch64: blocked by libc crate
+arch="all !s390x !loongarch64"
+license="GPL-3.0-or-later"
+depends=""
+makedepends="
+	cargo
+	cargo-auditable
+	libseccomp-dev
+	linux-headers
+	scdoc
+	"
+checkdepends="coreutils"
+subpackages="
+	$pkgname-utils
+	$pkgname-vim::noarch
+	$pkgname-doc
+	"
+source="https://gitlab.exherbo.org/sydbox/sydbox/-/archive/v$pkgver/sydbox-v$pkgver.tar.gz
+	make-install-no-build.patch
+	make-fix-install.patch
+	no-systemd.patch
+	"
+builddir="$srcdir/$pkgname-v$pkgver"
+options="!check"  # FIXME: tests don't work on CI
+
+case "$CARCH" in
+armv7)
+	# Omit "oci" because "nc" crate fails to build on armv7.
+	_features="elf,utils" ;;
+*)
+	_features="elf,oci,utils"
+	subpackages="$subpackages $pkgname-oci" ;;
+esac
+# Disable mimalloc and inline-more features.
+_cargo_opts="--frozen --no-default-features --features $_features"
+
+prepare() {
+	default_prepare
+
+	# NOTE: --targetu="$CTARGET" doesn't work here.
+	cargo fetch --locked
+}
+
+build() {
+	cargo auditable build $_cargo_opts --release
+
+	cd lib
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test $_cargo_opts
+}
+
+package() {
+	make install DESTDIR="$pkgdir" PREFIX=/usr
+
+	# Delete utils for running integration tests.
+	rm -rf "$pkgdir"/usr/bin/syd-test*
+
+	install -D -m644 src/esyd.sh -t "$pkgdir"/usr/libexec/
+	install -D -m644 data/user.syd-3 "$pkgdir"/usr/share/doc/$pkgname/user.syd-3.sample
+}
+
+oci() {
+	pkgdesc="OCI container runtime from sydbox"
+	depends="$pkgname=$pkgver-r$pkgrel"
+
+	amove usr/bin/syd-oci
+}
+
+utils() {
+	pkgdesc="Sydbox utilities"
+
+	local bin; for bin in $(ls -1 "$pkgdir"/usr/bin/); do
+		case "$bin" in
+			syd | syd-chk | syd-exec | syd-oci) ;;  # main programs
+			*) amove usr/bin/$bin;;
+		esac
+	done
+}
+
+vim() {
+	pkgdesc="$pkgdesc (vim syntax)"
+
+	amove usr/share/vim
+}
+
+sha512sums="
+8f8d3e61299d03272262631c37bed9dff223f303a48d64d22b9d098902d806a734848fcd6ca1ef62d723eb16ac45fdb36c4e09201bf255eca47c720f002181c9  sydbox-v3.21.3.tar.gz
+12c413eeee89626ab28a1527a6a6dbbe2e981d6c18c7d1ad298336a29092261c537ae3bca3bc3390f50273d735918152ada98ec17bb821150ba6a2472598c4f0  make-install-no-build.patch
+d5137c97556713289fb483c07ac75b0864678cb668b833c618abad1c8385baa28d4f948c8d65e7e304727134cfad9e1b5ef6488944c8c71cf93eab24ba4e3ae3  make-fix-install.patch
+72a88b4df8f94e0d84e5fe48541d62a02f323d3f651db15b86068c676aaf12c10612027c6c9084b7c8372989c34cfb4060d1c96bc8b359a733b346459a3d2605  no-systemd.patch
+"

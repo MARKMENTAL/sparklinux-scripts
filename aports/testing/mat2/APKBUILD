@@ -1,0 +1,59 @@
+# Maintainer: Waweic <waweic@activ.ism.rocks>
+# Contributor: Waweic <waweic@activ.ism.rocks>
+pkgname=mat2
+pkgver=0.13.4
+pkgrel=3
+pkgdesc="Metadata removal tool, supporting a wide range of commonly used file formats"
+url="https://0xacab.org/jvoisin/mat2"
+arch="noarch !s390x !riscv64" #librsvg missing for s390x and riscv64
+license="LGPL-3.0-or-later"
+depends="
+	exiftool
+	gdk-pixbuf
+	librsvg
+	mailcap
+	poppler-glib
+	py3-cairo
+	py3-gobject3
+	py3-mutagen
+	python3
+	"
+makedepends="py3-setuptools py3-gpep517"
+checkdepends="ffmpeg"
+source="https://0xacab.org/jvoisin/mat2/-/archive/$pkgver/mat2-$pkgver.tar.gz
+	manpage-dir.patch
+	test_all_parametred.patch
+	"
+subpackages="$pkgname-doc $pkgname-pyc"
+
+prepare() {
+	default_prepare
+
+	# doesn't contain a version in [project], so it's invalid to parse from a
+	# builder, 	# but we can ignore all that as all the logic is in setup.*
+	rm -fv pyproject.toml
+}
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	gpep517 install-wheel --destdir .testenv --prefix '' .dist/*.whl
+	.testenv/bin/python3 -m unittest discover
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+	install -Dm 644 doc/*.md -t "$pkgdir/usr/share/doc/$pkgname"
+}
+
+sha512sums="
+75c08c9c52a82f9983e799c2aeef0da8324d1c92ac32fb748a68063ec7b28569692082aceacf7161d24db0e8a988357c423b6e17ca5c0f934309c9791c41ab18  mat2-0.13.4.tar.gz
+2bf84ae9fab848fea43c87b708937628c2d5e74cb4f0457ef259356c651056eea1a0d033d606fc5511f195cbb5a097c21e631a9a4973431c8f3242a1969d9123  manpage-dir.patch
+51900783a82e4fd13ed4fa30ab92cb2c911ad0672876943a5b1f337ad54877379dfae6cba82876d553f682661e44f1aff7e4dffe351ba08586751eb8666ff8cc  test_all_parametred.patch
+"

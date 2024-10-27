@@ -1,0 +1,52 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer:
+pkgname=py3-ufolib2
+pkgver=0.16.0
+pkgrel=2
+pkgdesc="UFO font library"
+url="https://github.com/fonttools/ufoLib2"
+arch="noarch"
+license="Apache-2.0"
+depends="
+	py3-attrs
+	py3-fonttools
+	py3-fs
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools_scm
+	py3-wheel
+	"
+checkdepends="
+	py3-cattrs
+	py3-msgpack
+	py3-orjson
+	py3-pytest-cov
+	py3-pytest-forked
+	py3-pytest-xdist
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/fonttools/ufoLib2/archive/v$pkgver.tar.gz"
+builddir="$srcdir/ufoLib2-$pkgver"
+
+build() {
+	export SETUPTOOLS_SCM_PRETEND_VERSION=$pkgver
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto --forked
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/ufoLib2-$pkgver-*.whl
+}
+
+sha512sums="
+b4189e15f57afaf4356bd23fbd118e896c4ec4f79baea21812e2e9911598e3ce1405d2c64bd299c405769f0827dffa3ac81208312c0e335550706a4cbd91f076  py3-ufolib2-0.16.0.tar.gz
+"

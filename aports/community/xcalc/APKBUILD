@@ -1,0 +1,30 @@
+# Contributor: ScrumpyJack <scrumpyjack@st.ilet.to>
+# Maintainer: ScrumpyJack <scrumpyjack@st.ilet.to>
+pkgname=xcalc
+pkgver=1.1.2
+pkgrel=0
+pkgdesc="Calculator for the X Window System"
+options="!check" # No testsuite
+url="https://www.x.org"
+arch="all"
+license="MIT"
+makedepends="libx11-dev libxaw-dev libxt-dev"
+subpackages="$pkgname-doc"
+source="https://www.x.org/releases/individual/app/xcalc-$pkgver.tar.xz"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--datarootdir=/usr/share
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+51da677dc88bcd7299ed8d678cb26b048fdb82a1983e1496a06253ee2dceefca4ac87d1a74432b4a76dcc11921a61339bb3d292607be46228164140b430bbad2  xcalc-1.1.2.tar.xz
+"

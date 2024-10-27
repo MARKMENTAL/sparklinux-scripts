@@ -1,0 +1,41 @@
+# Contributor: Kaarle Ritvanen <kunkku@alpinelinux.org>
+# Maintainer: Kaarle Ritvanen <kunkku@alpinelinux.org>
+pkgname=py3-django-treebeard
+pkgver=4.7.1
+pkgrel=1
+pkgdesc="Efficient tree implementations for Django"
+url="https://github.com/django-treebeard/django-treebeard"
+arch="noarch"
+license="Apache-2.0"
+depends="py3-django"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest py3-pytest-django"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/django-treebeard/django-treebeard/archive/$pkgver.tar.gz"
+
+builddir="$srcdir/django-treebeard-$pkgver"
+
+replaces="py-django-treebeard" # Backwards compatibility
+provides="py-django-treebeard=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+	rm -rf "$pkgdir"/usr/lib/python3*/site-packages/treebeard/tests
+}
+
+sha512sums="
+739de1c1a9998662566c385c6a92c02be6dd90f87d0f790aca1f5f820e14cd4536f2276f55acbeb2a692c8d169714321b209a4435d094184d283612c9d2becce  py3-django-treebeard-4.7.1.tar.gz
+"

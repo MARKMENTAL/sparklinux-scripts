@@ -1,0 +1,42 @@
+# Contributor: Alex McGrath <amk@amk.ie>
+# Maintainer: Alex McGrath <amk@amk.ie>
+pkgname=py3-mpv
+pkgver=1.0.7
+pkgrel=0
+pkgdesc="Python interface to the mpv media player"
+url="https://github.com/jaseg/python-mpv"
+arch="noarch"
+license="MIT"
+depends="mpv-libs"
+makedepends="
+	py3-setuptools
+	py3-gpep517
+	py3-installer
+	py3-wheel
+	"
+checkdepends="pytest"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/jaseg/python-mpv/archive/v$pkgver.tar.gz"
+options="!check" # tests require unpackaged xvfbwrapper
+builddir="$srcdir/python-mpv-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+9373259bab0857855cb08c13f9f33fb3a26f880b09c8c468ce1330433c1b2cff72a5015fc066fb830a4089eff08852ad5aa05e648bfba617b9b3d225860c20d3  py3-mpv-1.0.7.tar.gz
+"

@@ -1,0 +1,123 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=zfs
+pkgver=2.2.6
+pkgrel=0
+pkgdesc="Advanced filesystem and volume manager"
+url="https://openzfs.org"
+arch="all"
+license="CDDL-1.0"
+provides="spl=$pkgver-r$pkgrel" # Mitigate upgrade conflicts
+depends_dev="
+	attr-dev
+	e2fsprogs-dev
+	glib-dev
+	libtirpc-dev
+	openssl-dev>3
+	"
+makedepends="
+	$depends_dev
+	linux-headers
+	py3-cffi
+	py3-distlib
+	py3-setuptools
+	python3-dev
+	util-linux-dev
+	"
+options="!check" # need to be run on live system w/ ZFS loaded.
+subpackages="
+	$pkgname-bash-completion
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-dracut::noarch
+	$pkgname-libs
+	$pkgname-openrc
+	$pkgname-scripts
+	$pkgname-udev
+	$pkgname-utils-py:utils_py:noarch
+	py3-pyzfs-pyc
+	py3-pyzfs:pyzfs:noarch
+	"
+source="https://github.com/openzfs/zfs/releases/download/zfs-$pkgver/zfs-$pkgver.tar.gz
+	alpine-bash-completion-dir.patch
+	"
+
+# secfixes:
+#   2.2.1-r1:
+#     - CVE-2023-49298
+
+build() {
+	export CFLAGS="$CFLAGS -fno-tree-vectorize"
+	export CXXFLAGS="$CXXFLAGS -fno-tree-vectorize"
+	export LIBS="$LIBS -lintl"
+	./configure --prefix=/usr \
+		--with-tirpc \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--localstatedir=/var \
+		--with-config=user \
+		--with-udevdir=/lib/udev \
+		--disable-systemd \
+		--disable-static \
+		--with-python=3 \
+		--enable-pyzfs
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	# no initramfs-tools
+	rm -rf "$pkgdir"/usr/share/initramfs-tools
+
+	# we use doas(1)
+	rm -rf "$pkgdir"/etc/sudoers.d
+
+	# zfs-mount-generator is a systemd.generator(7)
+	rm "$pkgdir"/usr/share/man/man8/zfs-mount-generator*
+
+	# Fix permissions of zfs OpenRC service configuration (#13840)
+	chmod 644 "$pkgdir"/etc/conf.d/zfs
+}
+
+dracut() {
+	pkgdesc="$pkgdesc (dracut)"
+	install_if="$pkgname=$pkgver-r$pkgrel dracut-modules"
+
+	amove usr/lib/dracut
+}
+
+udev() {
+	pkgdesc="$pkgdesc (udev)"
+
+	amove lib/udev
+}
+
+scripts() {
+	pkgdesc="$pkgdesc (scripts)"
+
+	amove usr/share/zfs
+}
+
+utils_py() {
+	pkgdesc="$pkgdesc (python utils)"
+	depends="python3"
+
+	amove usr/bin/arc_summary
+	amove usr/bin/arcstat
+	amove usr/bin/dbufstat
+	amove usr/bin/zilstat
+}
+
+pyzfs() {
+	pkgdesc="$pkgdesc (Python lib to interact with ZFS)"
+	depends="python3 $pkgname"
+
+	amove usr/lib/python3*
+}
+
+sha512sums="
+c217a3397b67d7239bc30bc492d58fff96bb29c9cf73e390d1787a4fb787cb297557e594a926453fed11faaab80363d40853af271f8ee18ce9a317dfde4c6745  zfs-2.2.6.tar.gz
+96610e902286b80d451a47c7d765e78891c3601b45def7ac83e17bea3f44727dcb8925b7e0be102e71690a20ffa6efe7dee32d11c2eda8f22c1b2d4e00422084  alpine-bash-completion-dir.patch
+"

@@ -1,0 +1,25 @@
+# Contributor: David Demelier <markand@malikania.fr>
+# Maintainer: David Demelier <markand@malikania.fr>
+pkgname=libretro-vbam
+pkgver=0_git20221007
+pkgrel=0
+_commit="7e30b038893de63e674944f75581d57c7685ea3a"
+pkgdesc="a fork of VBA-M with libretro integration"
+url="https://github.com/libretro/vbam-libretro"
+arch="all"
+license="GPL-2.0-only"
+source="$pkgname-$_commit.tar.gz::https://github.com/libretro/vbam-libretro/archive/$_commit.tar.gz"
+builddir="$srcdir/vbam-libretro-$_commit"
+options="!check" # No tests
+
+build() {
+	make -C src/libretro
+}
+
+package() {
+	install -Dm644 src/libretro/vbam_libretro.so "$pkgdir"/usr/lib/libretro/vbam_libretro.so
+}
+
+sha512sums="
+4059a98975dd0f5c9fee40768dc972deb9bfec9a46ba39a6a2a9a5b11c4b684ae00bf9f16f9c81fe78c1ed36158f569af5199a2463d340d3c6c8940139e03d35  libretro-vbam-7e30b038893de63e674944f75581d57c7685ea3a.tar.gz
+"

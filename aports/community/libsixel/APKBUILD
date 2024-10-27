@@ -1,0 +1,55 @@
+# Contributor: Maxim Karasev <begs@disroot.org>
+# Contributor: Dmitry Kruchko <corg@disroot.org>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=libsixel
+pkgver=1.10.3_git20221121
+pkgrel=2
+_commit=490ec15087e37d8e1395e4dbfb99fc543c5bae5d
+pkgdesc="SIXEL encoder/decoder implementation"
+url="https://github.com/libsixel/libsixel"
+arch="all"
+license="MIT"
+makedepends="meson libpng-dev libjpeg-turbo-dev zlib-dev libtool"
+options="!check" # tests failed
+subpackages="
+	$pkgname-dev
+	$pkgname-doc:_doc:noarch
+	$pkgname-tools:_tools
+	$pkgname-tools-bash-completion:_bash_comp:noarch
+	$pkgname-tools-zsh-completion:_zsh_comp:noarch
+	"
+source="https://github.com/libsixel/libsixel/archive/$_commit.tar.gz"
+builddir="$srcdir/libsixel-$_commit"
+
+build() {
+	abuild-meson -Db_lto=true . output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+_doc() {
+	default_doc
+	install_if="$pkgname-tools=$pkgver-r$pkgrel docs"
+}
+
+_tools() {
+	depends="$pkgname=$pkgver-r$pkgrel"
+	amove usr/bin/
+}
+
+_bash_comp() {
+	install_if="$pkgname-tools=$pkgver-r$pkgrel bash-completion"
+	amove usr/share/bash-completion/
+}
+
+_zsh_comp() {
+	install_if="$pkgname-tools=$pkgver-r$pkgrel zsh"
+	amove usr/share/zsh
+}
+
+sha512sums="
+74705ccb447bd098aba90b85436cf81bdab9479df703cc5d2b73f0efa6aa7308699dc61dd17ef47c0e7768e1f7510be0b188a5fa6da4d44ef1f98980cffee841  490ec15087e37d8e1395e4dbfb99fc543c5bae5d.tar.gz
+"

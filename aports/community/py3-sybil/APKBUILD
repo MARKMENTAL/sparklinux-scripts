@@ -1,0 +1,46 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Antoine Martin (ayakael) <dev@ayakael.net>
+pkgname=py3-sybil
+pkgver=6.0.3
+pkgrel=1
+pkgdesc="Automated testing for the examples in your documentation"
+url="https://github.com/simplistix/sybil"
+arch="noarch"
+license="MIT"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-sphinx
+	py3-wheel
+	"
+checkdepends="
+	py3-pytest
+	py3-seedir
+	py3-testfixtures
+	py3-yaml
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/simplistix/sybil/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/sybil-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -k 'not test_pytest'
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+
+sha512sums="
+1fb42b944b237556012ace6fcc5eb3d0f067f0ca043ceafa0e201a8076870fc7e06ae62813eec90d486de6e4b71ebf29176dfff6573de423480c688ff005004d  py3-sybil-6.0.3.tar.gz
+"

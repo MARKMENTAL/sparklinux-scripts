@@ -1,0 +1,50 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=networkmanager-openvpn
+pkgver=1.10.2
+pkgrel=1
+pkgdesc="NetworkManager VPN plugin for OpenVPN"
+url="https://wiki.gnome.org/Projects/NetworkManager/VPN"
+arch="all"
+license="GPL-2.0-or-later"
+depends="
+	dbus:org.freedesktop.Secrets
+	openvpn
+	"
+makedepends="
+	glib-dev
+	gtk+3.0-dev
+	gtk4.0-dev
+	intltool
+	libnma-dev
+	libsecret-dev
+	"
+source="https://download.gnome.org/sources/NetworkManager-openvpn/${pkgver%.*}/NetworkManager-openvpn-$pkgver.tar.xz"
+subpackages="$pkgname-lang"
+install="
+	$pkgname.pre-install
+	$pkgname.pre-upgrade
+	"
+builddir="$srcdir/NetworkManager-openvpn-$pkgver"
+
+build() {
+	./configure \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--localstatedir=/var \
+		--libexecdir=/usr/lib \
+		--disable-static \
+		--with-gtk4
+}
+
+check() {
+	make check
+}
+
+package() {
+	DESTDIR="$pkgdir" make install
+}
+
+sha512sums="
+469aa4eeab169ccabd04b18b425ab2f8ad095e19c80dfca528855e1c66314e3ac129145ce5e62f5ccbb7a01cd7ba7f657571c3f4ec57b15ecb95aeaa765f5c4a  NetworkManager-openvpn-1.10.2.tar.xz
+"

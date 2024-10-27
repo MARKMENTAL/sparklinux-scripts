@@ -1,0 +1,54 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Duncan Bellamy <dunk@denkimushi.com>
+pkgname=py3-jaraco.itertools
+pkgver=6.4.1
+pkgrel=2
+pkgdesc="jaraco.itertools"
+url="https://github.com/jaraco/jaraco.itertools"
+arch="noarch"
+license="MIT"
+depends="
+	py3-inflect
+	py3-more-itertools
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-setuptools_scm
+	py3-wheel
+	"
+checkdepends="
+	py3-pytest
+	py3-pytest-black
+	py3-pytest-cov
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/jaraco/jaraco.itertools/archive/refs/tags/v$pkgver.tar.gz"
+options="!check" # no tests in gh
+builddir="$srcdir/jaraco.itertools-$pkgver"
+
+# backwards compatibility for old name
+replaces="py3-jaraco-itertools"
+provides="py3-jaraco-itertools=$pkgver-r$pkgrel"
+
+build() {
+	SETUPTOOLS_SCM_PRETEND_VERSION=$pkgver \
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+729c04448add845d9f676fd559c18f9d8122b69be1f372fac1ebe4ccf4ca05175f5eb9e3fc06b306f35333f09581b4ab64c7b5e5d540c30e586a8dcc44da26d2  py3-jaraco.itertools-6.4.1.tar.gz
+"

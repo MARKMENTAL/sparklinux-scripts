@@ -1,0 +1,102 @@
+# Contributor: Daniel Sabogal <dsabogalcc@gmail.com>
+# Contributor: Duncan Bellamy <dunk@denkimushi.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=octave
+pkgver=9.2.0
+pkgrel=1
+pkgdesc="A high-level language, primarily intended for numerical computations"
+url="https://www.gnu.org/software/octave/"
+# ppc64le, s390x missing texlive
+# missing openjdk on riscv64
+arch="all !s390x !riscv64 !ppc64le"
+license="GPL-3.0-or-later"
+makedepends="
+	arpack-dev
+	bison
+	curl-dev
+	fftw-dev
+	fltk-dev
+	fontconfig-dev
+	freetype-dev
+	gfortran
+	ghostscript-dev
+	glpk-dev
+	glu-dev
+	gnuplot
+	graphicsmagick-dev
+	hdf5-dev
+	imagemagick-dev
+	java-jdk
+	lcms2-dev
+	libltdl
+	libsm-dev
+	libsndfile-dev
+	libtool
+	openblas-dev
+	pcre2-dev
+	perl
+	portaudio-dev
+	qhull-dev
+	qrupdate-dev
+	qscintilla-dev
+	qt5-qttools-dev
+	rapidjson-dev
+	readline-dev
+	suitesparse-dev
+	texinfo
+	xz-dev
+	zlib-dev
+	"
+checkdepends="
+	bzip2
+	gzip
+	tar
+	zip
+	"
+subpackages="$pkgname-dev $pkgname-doc"
+source="https://ftp.gnu.org/gnu/octave/octave-$pkgver.tar.xz
+	abs.patch
+	"
+
+case "$CARCH" in
+	x86)
+		#x86 libjava.so cannot find libjvm.so
+		options="!check" ;;
+esac
+
+# https://savannah.gnu.org/bugs/?63318
+export CXXFLAGS="${CXXFLAGS/-D_GLIBCXX_ASSERTIONS=1}"
+
+export JAVA_HOME="/usr/lib/jvm/default-jvm"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--infodir=/usr/share/info \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--enable-shared \
+		--disable-static \
+		--disable-rpath
+	make
+}
+
+check() {
+	LD_LIBRARY_PATH="$JAVA_HOME/lib/server:$LD_LIBRARY_PATH" \
+		make check
+}
+
+package() {
+	make DESTDIR="$pkgdir/" \
+		-C "$builddir" install
+	rm -rf "$pkgdir"/usr/lib/charset.alias
+	rm -rf "$pkgdir"/usr/share/octave/"$pkgver"/etc/tests
+}
+
+sha512sums="
+cb1667cd6557d48ecd7ae191bc44c9b9fd4f79e7cf4bf6c917093d120c4312e9594e6dddc5287661627ac053e9f23faaec40a1286d792d859f1fefbfdb3eeb8c  octave-9.2.0.tar.xz
+f6cd1a52686a66d9914029b3c70eba88d2468700abfb16c3bdc5c0bae2a29cbf06143e15c2828be1112d45403247ff5713edf1b1261eaf132465ac05df6c7c7c  abs.patch
+"

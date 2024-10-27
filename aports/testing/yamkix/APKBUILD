@@ -1,0 +1,49 @@
+# Contributor: Galen Abell <galen@galenabell.com>
+# Maintainer: Galen Abell <galen@galenabell.com>
+pkgname=yamkix
+pkgver=0.10.0
+pkgrel=1
+pkgdesc="A python based yaml formatter"
+url="https://github.com/looztra/yamkix"
+arch="noarch"
+license="Apache-2.0"
+depends="python3 py3-ruamel.yaml"
+makedepends="py3-gpep517 py3-poetry-core py3-setuptools py3-wheel"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/looztra/yamkix/archive/v$pkgver.tar.gz"
+
+[ "$CARCH" = "riscv64" ] && makedepends="$makedepends $checkdepends"
+
+prepare() {
+	default_prepare
+
+	# Use normal poetry build backend instead of poetry-dynamic-versioning.
+	sed -i "s/^__version__ = .*/__version__ = \"$pkgver\"/" \
+		src/yamkix/__init__.py
+	sed -i \
+		-e "s/^version = .*/version = \"$pkgver\"/" \
+		-e "s/^build-backend = .*/build-backend = \"poetry.core.masonry.api\"/" \
+		pyproject.toml
+}
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+3f15ebc687b95c1b44c31146032713d51a87933bc3d10b4c44668a217e99b49e3ac26914434f6885bbdad58e8234a7eb6517b44097a832477b507a9697341ec1  yamkix-0.10.0.tar.gz
+"

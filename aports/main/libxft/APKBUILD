@@ -1,0 +1,33 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=libxft
+pkgver=2.3.8
+pkgrel=3
+pkgdesc="FreeType-based font drawing library for X"
+url="https://xorg.freedesktop.org/"
+arch="all"
+license="MIT"
+options="!check"  # No test suite.
+subpackages="$pkgname-dev $pkgname-doc"
+depends_dev="zlib-dev"
+makedepends="$depends_dev xorgproto fontconfig-dev freetype-dev libxrender-dev util-macros"
+source="https://www.x.org/releases/individual/lib/libXft-$pkgver.tar.xz"
+
+builddir="$srcdir/libXft-$pkgver"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	install -Dm644 COPYING "$pkgdir"/usr/share/licenses/$pkgname/COPYING
+}
+
+sha512sums="
+fc385d73e1acb701942c154ffb5a283d17891f21d3ac598c4a3fb375a7d6082734593062368c15cad67c1a94177dd15deed878ec5ea852188393b52e92c372c8  libXft-2.3.8.tar.xz
+"

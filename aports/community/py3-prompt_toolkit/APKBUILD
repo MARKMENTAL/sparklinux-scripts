@@ -1,0 +1,43 @@
+# Contributor: Thomas Boerger <thomas@webhippie.de>
+# Maintainer: Thomas Boerger <thomas@webhippie.de>
+pkgname=py3-prompt_toolkit
+pkgver=3.0.47
+pkgrel=0
+pkgdesc="Library for building powerful interactive command lines in Python"
+url="https://github.com/prompt-toolkit/python-prompt-toolkit"
+arch="noarch"
+license="BSD-3-Clause"
+depends="python3 py3-wcwidth"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="py3-pytest-xdist"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/prompt-toolkit/python-prompt-toolkit/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/python-prompt-toolkit-$pkgver"
+
+replaces=py-prompt_toolkit # Backwards compatibility
+provides=py-prompt_toolkit=$pkgver-r$pkgrel # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+da5b2957115a072e3ffdc2c69e5e3eecf81de35b70466299d744a3b9b48d8816256cdf4d010482827a9d8a1676781e557a32d05b3f889940df35e6b0d1ce5b23  py3-prompt_toolkit-3.0.47.tar.gz
+"

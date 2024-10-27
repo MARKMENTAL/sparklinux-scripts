@@ -1,0 +1,37 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+pkgname=py3-emoji
+_pkgorig=emoji
+pkgver=2.13.2
+pkgrel=0
+pkgdesc="Emoji terminal output for Python"
+url="https://github.com/carpedm20/emoji"
+arch="noarch"
+license="BSD-3-Clause"
+depends="python3"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest-xdist"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/carpedm20/emoji/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/$_pkgorig-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto -k 'not test_zwj_replace and not test_zwj_remove'
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+2d2962de896986f1f3ecab9d9e56e2aa5b47062214699285ca5e83ecd10b0c1ce3158ed4e1a6e3976c4f905ae207d351f67b4ff59bde279b5c85895610116bf6  py3-emoji-2.13.2.tar.gz
+"

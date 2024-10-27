@@ -1,0 +1,73 @@
+# Contributor: Kevin Daudt <kdaudt@alpinelinux.org>
+# Maintainer: Kevin Daudt <kdaudt@alpinelinux.org>
+pkgname=darktable
+pkgver=4.8.1
+pkgrel=0
+pkgdesc="Open source photography workflow application and raw developer"
+url="https://www.darktable.org/"
+# aarch64: not supported with gcc
+arch="x86_64 ppc64le"
+license="GPL-3.0-or-later"
+depends="dbus:org.freedesktop.Secrets"
+makedepends="
+	bash
+	cmake
+	colord-dev
+	colord-gtk-dev
+	cups-dev
+	curl-dev
+	exiv2-dev
+	gtk+3.0-dev
+	intltool
+	libjpeg-turbo-dev
+	json-glib-dev
+	lcms2-dev
+	lensfun-dev
+	flickcurl-dev
+	libgphoto2-dev
+	libheif-dev
+	libjxl-dev
+	librsvg-dev
+	libsecret-dev
+	libwebp-dev
+	libxml2-dev
+	libxml2-utils
+	libxslt
+	lua5.4-dev
+	openexr-dev
+	openjpeg-dev
+	pugixml-dev
+	sqlite-dev
+	tiff-dev
+	"
+ldpath="/usr/lib/$pkgname"
+subpackages="$pkgname-dbg $pkgname-doc $pkgname-lang"
+options="!check" # Dependencies missing
+source="https://github.com/darktable-org/darktable/releases/download/release-$pkgver/darktable-$pkgver.tar.xz
+	fix-has-attribute-musl.patch
+	"
+
+build() {
+	local cmake_crossopts
+	if [ "$CBUILD" != "$CHOST" ]; then
+		cmake_crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DBINARY_PACKAGE_BUILD=ON \
+		-DRAWSPEED_ENABLE_LTO=ON \
+		$cmake_crossopts
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+8c0af6e768e3f3cfd5feb15969c494e63030571140e650920c1a43365c00c1d4c02ba80721c81a86f3191e06a2f150555b4a86b5868d8bebfb49719d70bae5c5  darktable-4.8.1.tar.xz
+ff13766f848a6bc38fdb877a92bcdbc22ee5b6cce5d65bd696f1df52030402e63a4994d6aef9eba480b98d070521e0c38ac9db1c4e145ac5ee3e5743fb9aa312  fix-has-attribute-musl.patch
+"

@@ -1,0 +1,81 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: team/kde <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=kde-applications
+pkgname=neochat
+pkgver=24.08.1
+pkgrel=0
+pkgdesc="A client for Matrix, the decentralized communication protocol"
+url="https://invent.kde.org/network/neochat/"
+# armhf blocked by extra-cmake-modules
+# riscv64 blocked due to build failure on builders, compiler segfault
+# Wait for real riscv64 hardware before enabling again
+# s390x and ppc64le blocked by qt6-qtwebview
+# loongarch64: blocked by purpose
+arch="all !armhf !riscv64 !s390x !ppc64le !loongarch64"
+license="GPL-2.0-or-later AND GPL-3.0-only AND GPL-3.0-or-later AND BSD-2-Clause"
+depends="
+	kirigami
+	kirigami-addons
+	kitemmodels
+	kquickcharts
+	kquickimageeditor
+	prison
+	qqc2-desktop-style
+	qt6-qtlocation
+	"
+makedepends="
+	cmark-dev
+	extra-cmake-modules
+	kconfig-dev
+	kcoreaddons-dev
+	kdbusaddons-dev
+	kdoctools-dev
+	ki18n-dev
+	kio-dev
+	kirigami-addons-dev
+	kirigami-dev
+	kitemmodels-dev
+	knotifications-dev
+	kquickimageeditor-dev
+	kstatusnotifieritem-dev
+	libquotient-dev
+	purpose-dev
+	qcoro-dev
+	qqc2-desktop-style-dev
+	qt6-qtbase-dev
+	qt6-qtdeclarative-dev
+	qt6-qtmultimedia-dev
+	qt6-qtsvg-dev
+	qt6-qtwebview-dev
+	qtkeychain-dev
+	samurai
+	sonnet-dev
+	syntax-highlighting-dev
+	"
+subpackages="$pkgname-dbg $pkgname-doc $pkgname-lang"
+_repo_url="https://invent.kde.org/network/neochat.git"
+source="https://download.kde.org/stable/release-service/$pkgver/src/neochat-$pkgver.tar.xz
+	neochatrc
+	"
+# No tests
+options="!check"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_INSTALL_PREFIX=/usr
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	install -Dm644 "$srcdir"/neochatrc -t "$pkgdir"/etc/xdg
+}
+
+sha512sums="
+fc480e0f936e5059d9c71ea2d6c4344ac9a5fb80c32b830937e423adb3ac46608a0ee54fd24db53e59c28968bbe05c3afc88ce11b7d2568f9382389bac885196  neochat-24.08.1.tar.xz
+d57214940e739639895b2cb140c7cedbfbc515662e8aa58adab339466ea8e87e95e087347aab7a4006287290515af2aa71dda4b0b9b9a40f9b297b17f92b285a  neochatrc
+"

@@ -1,0 +1,81 @@
+# Maintainer: Pedro Lucas Porcellis <porcellis@eletrotupi.com>
+pkgname=prometheus
+pkgver=2.53.2 # LTS
+pkgrel=0
+pkgdesc="The Prometheus monitoring system and time series database"
+url="https://github.com/prometheus/prometheus"
+# armhf: Unexpected token 'propSource' (src/promql.grammar 346:10)
+# riscv64: Illegal instruction
+arch="all !riscv64 !armhf"
+license="Apache-2.0"
+install="prometheus.pre-install"
+makedepends="go npm bash"
+options="!check"
+subpackages="$pkgname-openrc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/prometheus/prometheus/archive/v$pkgver.tar.gz
+	prometheus.initd
+	prometheus.confd
+	"
+
+# secfixes:
+#   2.40.4-r1:
+#     - CVE-2022-46146
+#   2.27.1-r0:
+#     - CVE-2021-29622
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	GOLDFLAGS="-X github.com/prometheus/common/version.Version=$pkgver
+		-X github.com/prometheus/common/version.Revision=AlpineLinux
+		-X github.com/prometheus/common/version.Branch=master
+		-X github.com/prometheus/common/version.BuildUser=$USER@$(hostname)
+		-X github.com/prometheus/common/version.BuildDate=$(date -u "+%Y%m%d-%H:%M:%S" ${SOURCE_DATE_EPOCH:+-d @$SOURCE_DATE_EPOCH})
+	"
+	if [ -n "$LDFLAGS" ]; then
+		# LDFLAGS (and only LDFLAGS) should be passed to -extldflags.
+		GOLDFLAGS="$GOLDFLAGS -extldflags '$LDFLAGS'"
+	fi
+
+	# set -j1 to run things in the correct order in makefile
+	# actual go building is still parallel
+	make -j1 assets-compress
+
+	go build \
+		-mod=readonly \
+		-ldflags "$GOLDFLAGS" \
+		-tags netgo,builtinassets \
+		./cmd/prometheus
+	go build \
+		-mod=readonly \
+		-ldflags "$GOLDFLAGS" \
+		./cmd/promtool
+}
+
+check() {
+	make test
+}
+
+package() {
+	install -Dm755 -t "$pkgdir"/usr/bin prometheus promtool
+
+	install -Dm644 "$srcdir"/prometheus.confd \
+		"$pkgdir"/etc/conf.d/prometheus
+	install -Dm755 "$srcdir"/prometheus.initd \
+		"$pkgdir"/etc/init.d/prometheus
+	install -dm644 "$pkgdir"/var/lib/prometheus/data
+
+	install -Dm644 -t "$pkgdir"/etc/prometheus \
+		documentation/examples/prometheus.yml
+
+	install -Dm644 -t "$pkgdir"/etc/prometheus/console_libraries/ console_libraries/*
+	install -Dm644 -t "$pkgdir"/etc/prometheus/consoles/ consoles/*
+}
+
+sha512sums="
+75df00adf20c3ba02452a7580aee50e2bf84bb8f9d46721d75f4eb21923c73be694efa3b051b9ef93d2e35284ee3290a48dfec16d2deb44afd3569ca319d2145  prometheus-2.53.2.tar.gz
+f4c222ba836f65d874fb30c62c7a55c27c4cedd6c473e39808a84bb7b4353c79c6ff3cefd3c4cf2ce966ce3a1234db3343cba397c83328ccc4e25072f683fcf5  prometheus.initd
+2e47a19e313cbf64f7a57a15de4bea959f5b1c307ef0c2b7f6b254f4abc5504b6ae31b02a1e11487fd82bc975f1cd8e1f3733393823b007f375acbdaf17af8ea  prometheus.confd
+"

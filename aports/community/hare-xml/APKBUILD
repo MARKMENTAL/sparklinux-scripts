@@ -1,0 +1,30 @@
+# Maintainer: Willow Barraco <contact@willowbarraco.fr>
+pkgname=hare-xml
+pkgver=0_git20240607
+_commit=2d51166ea9cbd59487db2f759c1d67bff8106d71
+pkgrel=0
+pkgdesc="XML support for Hare"
+url="https://sr.ht/~sircmpwn/hare-xml"
+arch="x86_64 aarch64 riscv64" # hare
+license="MPL-2.0"
+makedepends="hare"
+source="
+	$pkgname-$_commit.tar.gz::https://git.sr.ht/~sircmpwn/hare-xml/archive/$_commit.tar.gz
+"
+builddir="$srcdir/$pkgname-$_commit"
+
+build() {
+	make -j1 PREFIX=/usr
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr install
+}
+
+sha512sums="
+dd60b6986c70297027369aa2e3f371bc7b63fead051b9e0547509d5e339b2d8f89952033ed778940004a41aec71034a3aa68f3daa8421275daa3dc2d2814307a  hare-xml-2d51166ea9cbd59487db2f759c1d67bff8106d71.tar.gz
+"

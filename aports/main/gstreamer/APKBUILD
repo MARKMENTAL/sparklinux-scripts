@@ -1,0 +1,98 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=gstreamer
+pkgver=1.24.7
+pkgrel=0
+pkgdesc="GStreamer streaming media framework"
+url="https://gstreamer.freedesktop.org"
+arch="all"
+license="LGPL-2.0-or-later"
+replaces="gstreamer1"
+depends_dev="libxml2-dev"
+makedepends="$depends_dev
+	bison
+	flex
+	glib-dev
+	gobject-introspection-dev
+	libcap-dev
+	libcap-utils
+	meson
+	perl
+	rust
+	"
+subpackages="
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-tools
+	$pkgname-lang
+	$pkgname-ptp-helper:ptp_helper
+	"
+source="https://gstreamer.freedesktop.org/src/gstreamer/gstreamer-$pkgver.tar.xz"
+# setcap: gst-ptp-helper
+# FIXME: two tests fail
+options="setcap !check"
+
+# secfixes:
+#   1.18.4-r0:
+#     - CVE-2021-3497
+#     - CVE-2021-3498
+
+build() {
+	CFLAGS="$CFLAGS -O2" \
+	CXXFLAGS="$CXXFLAGS -O2" \
+	CPPFLAGS="$CPPFLAGS -O2" \
+	abuild-meson \
+		-Db_lto=true \
+		-Dintrospection=enabled \
+		-Dbash-completion=disabled \
+		-Dptp-helper=enabled \
+		-Dptp-helper-permissions=capabilities \
+		-Dpackage-name="GStreamer (Alpine Linux)" \
+		-Dpackage-origin="https://alpinelinux.org" \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+dev() {
+	default_dev
+
+	# Support for debugging.
+	amove usr/share/gdb
+	amove usr/share/gstreamer-*/gdb
+
+	# Unit test libraries.
+	amove usr/bin/gst-tester-*
+	amove usr/lib/libgstcheck-*.so.*
+	amove usr/lib/girepository-1.0/GstCheck-*.typelib
+}
+
+doc() {
+	default_doc
+	replaces="${pkgname}1-doc"
+}
+
+tools() {
+	pkgdesc="Tools for GStreamer streaming media framework"
+	# gst-feedback needs this
+	depends="pkgconfig"
+
+	amove usr/bin
+}
+
+ptp_helper() {
+	pkgdesc="$pkgdesc (ptp helper)"
+	install_if="$pkgname=$pkgver-r$pkgrel"
+
+	amove usr/libexec/gstreamer-*/gst-ptp-helper
+}
+
+sha512sums="
+ec14e42a184cd9e50bef19e4b3aae54eb56838153fce32fdaeab4972b8dd7a54a4506d58ca5f5741d6d68a8e711408716d1045d02c36e018d07fb76c753fc2df  gstreamer-1.24.7.tar.xz
+"

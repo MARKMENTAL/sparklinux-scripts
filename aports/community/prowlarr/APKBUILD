@@ -1,0 +1,115 @@
+# Contributor: Fabricio Silva <hi@fabricio.dev>
+# Maintainer: Fabricio Silva <hi@fabricio.dev>
+pkgname=prowlarr
+pkgver=1.23.1.4708
+pkgrel=0
+pkgdesc="Aggregator for usenet index and torrent tracker"
+url="https://github.com/Prowlarr/Prowlarr"
+arch="x86_64 aarch64 armv7" # limited by dotnet
+license="GPL-3.0-only"
+options="net" # net for nuget
+depends="aspnetcore6-runtime sqlite-libs"
+makedepends="dotnet6-sdk yarn"
+subpackages="$pkgname-openrc"
+install="$pkgname.pre-install"
+source="
+	$pkgname-$pkgver.tar.gz::https://github.com/Prowlarr/Prowlarr/archive/refs/tags/v$pkgver.tar.gz
+	0001-disable-restart.patch
+	prowlarr.initd
+	prowlarr.confd
+	package_info
+	"
+builddir="$srcdir/Prowlarr-$pkgver"
+pkgusers="prowlarr"
+pkggroups="prowlarr"
+
+# secfixes:
+#   1.17.2.4511-r0:
+#     - CVE-2024-32655
+
+# map arch to dotnet
+case $CARCH in
+	x86_64) _dotnet_arch="x64" ;;
+	aarch64) _dotnet_arch="arm64" ;;
+	armv7) _dotnet_arch="arm" ;;
+	*) _dotnet_arch="$CARCH" ;;
+esac
+
+# custom variables
+_runtime="linux-musl-$_dotnet_arch"
+_framework="net6.0"
+_output="_output"
+_artifacts="$_output/$_framework/$_runtime/publish"
+
+prepare() {
+	default_prepare
+
+	# increase max opened files
+	ulimit -n 4096
+
+	# replace version info
+	local buildprops=src/Directory.Build.props
+	sed -i "/<AssemblyVersion>/s/>.*<\//>$pkgver<\//" "$buildprops"
+	sed -i "/<AssemblyConfiguration>/s/>.*<\//>master<\//" "$buildprops"
+
+	export BROWSERSLIST_IGNORE_OLD_DATA=true
+	yarn install --frozen-lockfile --network-timeout 120000
+}
+
+build() {
+	dotnet build src \
+		-p:RuntimeIdentifiers="$_runtime" \
+		-p:Configuration=Release \
+		-p:SelfContained=false \
+		-t:PublishAllRids
+	yarn build --env production --no-stats
+
+	# cleanup
+	find "$_artifacts" \( \
+		-name "ServiceUninstall.*" -o \
+		-name "ServiceInstall.*" -o \
+		-name "Prowlarr.Windows.*" \) -delete
+
+	mv "$_output"/UI "$_artifacts"
+}
+
+check() {
+	local _filters="Category!=ManualTest&Category!=AutomationTest&Category!=WINDOWS"
+
+	# skipping:
+	# 	IntegrationTest: broken
+	# 	DiskTransferServiceFixture: CI fails due disk permission
+	_filters="$_filters&Category!=IntegrationTest&FullyQualifiedName!~DiskTransferServiceFixture"
+
+	# link build to tests
+	ln -sf ../../$_artifacts _tests/$_framework/$_runtime/bin
+	mkdir -p ~/.config/Prowlarr
+
+	dotnet test src \
+		--runtime "$_runtime" \
+		--configuration Release \
+		--filter "$_filters" \
+		--no-build
+}
+
+package() {
+	local destdir="$pkgdir"/usr/lib/prowlarr
+
+	# use package_info to disable update feature
+	install -Dm644 "$srcdir"/package_info "$destdir"/package_info
+	echo "PackageVersion=$pkgver-r$pkgrel" >>"$destdir"/package_info
+
+	cp -af "$_artifacts" "$destdir"/bin
+	chown -R "$pkgusers:$pkggroups" "$destdir"
+
+	install -Dm755 "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
+	install -Dm644 "$srcdir"/$pkgname.confd "$pkgdir"/etc/conf.d/$pkgname
+}
+
+sha512sums="
+18430c670f2ea1585bcb4eeac4f8d5e66631273ea92617b58ad47bfd5d82e8b47663cce9a905a5a1c4b9009e63209148ced02ed2a58381363dd2183a2a1da142  prowlarr-1.23.1.4708.tar.gz
+753520379a6c5f2899b4ddfd820d5573598a32cb105f74c6fd978a3f2c98895cf709ef2d9afe2bae8c4856da86cb6a1364f5713ea7ef6a36bb21b5a5840c1471  0001-disable-restart.patch
+33de66749dc613a430ce00abcff070b646c80f158de2bf70c7078e5526f93348f24bb5d45ff55e3e06123aa4c849a8eebfebf941c8f9c54db87fa614bda679c7  prowlarr.initd
+1f073dd820a890e7d24d84e18763b04f07abd86a0370f56f7319c3e7c9da9d3e2be484e0cef2fb5fc4050be1cbb1e0445080d702d217393633256ed3758fc593  prowlarr.confd
+67c4dd1cf8259296d994c350dfd3962d23333071889ce0b4ef6b2f4cbb4349490c5dbe4dcc202c99bab7a5c4b7611be56d7c8835b2b13924526c45311db1c3fb  package_info
+"

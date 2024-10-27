@@ -1,0 +1,63 @@
+# Contributor: Alex Yam <alex@alexyam.com>
+# Maintainer: Krassy Boykinov <kboykinov@teamcentrixx.com>
+pkgname=imath
+pkgver=3.1.12
+pkgrel=0
+pkgdesc="C++ and python library of 2D and 3D vector, matrix, and math operations for computer graphics"
+url="https://github.com/AcademySoftwareFoundation/Imath"
+arch="all"
+license="BSD-3-Clause"
+makedepends="
+	bash
+	boost-dev
+	clang-extra-tools
+	cmake
+	doxygen
+	py3-numpy-dev
+	python3-dev
+	samurai
+	"
+subpackages="$pkgname-dev py3-$pkgname:_py"
+source="$pkgname-$pkgver.tar.gz::https://github.com/AcademySoftwareFoundation/Imath/archive/refs/tags/v$pkgver.tar.gz"
+builddir=$srcdir/Imath-$pkgver
+
+# openexr used to vendor an imath that was system installed
+replaces="openexr"
+
+case "$CARCH" in
+x86)
+	options="$options !check"
+	# fails a bunch of tests
+	;;
+esac
+
+build() {
+	CFLAGS="$CFLAGS -O2 -flto=auto" \
+	CXXFLAGS="$CXXFLAGS -O2 -flto=auto" \
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=None \
+		-DPYTHON=ON
+	cmake --build build
+}
+
+check() {
+	cd build && CTEST_OUTPUT_ON_FAILURE=TRUE ctest
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+_py() {
+	pkgdesc="Imath Python library"
+	depends="python3 $pkgname=$pkgver-r$pkgrel"
+	amove usr/lib/python3*
+	amove usr/lib/libPy*
+}
+
+sha512sums="
+32628dfcacb610310b81ffe017a66215cf5fb84c2e0a6ac8c94a68c048be3d2b97eb57965dd253770184d5824cce1e5440b8eefb2834666b273b3193ff108343  imath-3.1.12.tar.gz
+"

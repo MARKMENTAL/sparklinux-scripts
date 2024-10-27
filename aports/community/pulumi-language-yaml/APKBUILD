@@ -1,0 +1,36 @@
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=pulumi-language-yaml
+pkgver=1.10.0
+pkgrel=0
+pkgdesc="Infrastructure as Code SDK (YAML language provider)"
+url="https://pulumi.com/"
+# blocked by pulumi
+arch="x86_64 aarch64"
+license="Apache-2.0"
+depends="pulumi"
+makedepends="go"
+source="$pkgname-$pkgver.tar.gz::https://github.com/pulumi/pulumi-yaml/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/pulumi-yaml-$pkgver"
+# Requires PULUMI_ACCESS_TOKEN for tests to be run
+options="!check"
+
+export CGO_ENABLED=0
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+export GOFLAGS="$GOFLAGS -modcacherw"
+
+build() {
+	go build -v \
+		-ldflags "-X github.com/pulumi/pulumi-yaml/pkg/version.Version=v$pkgver" \
+		-o $pkgname \
+		./cmd/pulumi-language-yaml/
+}
+
+package() {
+	install -Dm755 $pkgname -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+d11128c6214eb6875da668730d3178b60ff035b4e5312c2d3b82396144b6d587dd6a6618202ea67b61c040392266a63b1ad00b2aee5e22ef2e0cd71d03de3924  pulumi-language-yaml-1.10.0.tar.gz
+"

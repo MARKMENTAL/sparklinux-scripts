@@ -1,0 +1,47 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=libice
+pkgver=1.1.1
+pkgrel=6
+pkgdesc="X11 Inter-Client Exchange library"
+url="https://xorg.freedesktop.org/"
+arch="all"
+license="X11"
+makedepends="
+	check-dev
+	util-macros
+	xmlto
+	xorgproto
+	xtrans
+	"
+subpackages="$pkgname-static $pkgname-dev $pkgname-doc"
+source="https://www.x.org/releases/individual/lib/libICE-$pkgver.tar.xz"
+builddir="$srcdir/libICE-$pkgver"
+
+# secfixes:
+#   1.0.10-r0:
+#     - CVE-2017-2626
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--enable-ipv6 \
+		--enable-docs \
+		--with-xmlto \
+		--without-fop
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+2f7833a25f31cc743ca95cb88f9a8403b50e19ffb5bf43bfef87ba405857d359789daaa9ec2391351237d958f16d35dbf082adb76d301e46d3a54162a6b452d3  libICE-1.1.1.tar.xz
+"

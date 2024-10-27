@@ -1,0 +1,47 @@
+# Contributor: Francesco Colis_ta <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=rutorrent
+_pkgname=ruTorrent
+pkgver=4.3.1
+pkgrel=0
+pkgdesc="Yet another web front-end for rTorrent"
+url="https://github.com/Novik/ruTorrent"
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="php83 curl"
+# we need to user gnu tar since the permissions on files in tar archive are
+# bad
+makedepends="tar"
+checkdepends="nodejs npm"
+pkggroups="rutorrent"
+install="$pkgname.pre-install $pkgname.post-install"
+source="$pkgname-$pkgver.tar.gz::https://github.com/Novik/$_pkgname/archive/v$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+build() {
+	chmod -R u+w "$builddir"
+}
+
+check() {
+	cd tests
+	npm install --package-lock=false
+	# js rss tests are broken upstream for now
+	npm test -- --testPathIgnorePatterns="rss"
+	# php tests failing due charset or something - also minimal tests
+	# ./php-test.sh
+}
+
+package() {
+	install -d $pkgdir/usr/share/webapps/$pkgname
+	install -d $pkgdir/var/www/localhost/htdocs/
+	cp -r ./* $pkgdir/usr/share/webapps/$pkgname
+	rm -fr $pkgdir/usr/share/webapps/$pkgname/tests
+	chgrp -R $pkggroups $pkgdir/usr/share/webapps/$pkgname/share
+	chmod 0775 $pkgdir/usr/share/webapps/$pkgname/share/settings
+	chmod 0775 $pkgdir/usr/share/webapps/$pkgname/share/torrents
+	chmod 0775 $pkgdir/usr/share/webapps/$pkgname/share/users
+}
+
+sha512sums="
+2105be51f72b28cd40969d933e2c19dd8dbfcbf7951601b447bf590464cc498a99f676306d251f22eb6e69c5f3c6fa65c426c5860805c75a2741687feeb870f3  rutorrent-4.3.1.tar.gz
+"

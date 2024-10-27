@@ -1,0 +1,44 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Contributor: Leonardo Arena <rnalrd@alpinelinux.org>
+# Maintainer: team/gnome <ablocorrea@hotmail.com>
+pkgname=simple-scan
+pkgver=46.0
+pkgrel=0
+pkgdesc="Simple Scan allows you to get images from a scanner"
+url="https://gitlab.gnome.org/GNOME/simple-scan"
+# riscv64 disabled due to missing rust in recursive dependency
+arch="all" # !s390x !riscv64" # polkit
+license="GPL-3.0-or-later"
+makedepends="
+	colord-dev
+	dconf-dev
+	gtk4.0-dev
+	itstool
+	libadwaita-dev
+	libgusb-dev
+	libwebp-dev
+	libxml2-utils
+	meson
+	sane-dev
+	vala
+	"
+subpackages="$pkgname-doc $pkgname-lang"
+source="https://download.gnome.org/sources/simple-scan/${pkgver%.*}/simple-scan-$pkgver.tar.xz"
+
+build() {
+	abuild-meson -Db_lto=true . output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+f7c4433536f59c71f066cdae51b0de1b0dcf9b8af00f3bedb4c1be281d09f9ce122666ed849bd88de8868042429f14bb7b01409f8a006360ce4285000fd30bdc  simple-scan-46.0.tar.xz
+"

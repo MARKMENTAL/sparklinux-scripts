@@ -1,0 +1,35 @@
+# Contributor: Jakob Meier <comcloudway@ccw.icu>
+# Maintainer: Jakob Meier <comcloudway@ccw.icu>
+pkgname=py3-pillow_heif
+pkgver=0.18.0
+pkgrel=0
+pkgdesc="Python library for working with HEIF images and plugin for Pillow."
+url="https://github.com/bigcat88/pillow_heif"
+arch="all"
+license="BSD-3-Clause"
+makedepends="py3-gpep517 py3-setuptools py3-wheel libheif-dev python3-dev"
+checkdepends="py3-pytest py3-pillow"
+subpackages="$pkgname-pyc"
+source="https://github.com/bigcat88/pillow_heif/archive/v$pkgver/pillow_heif-$pkgver.tar.gz"
+builddir="$srcdir/pillow_heif-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+196ad26201c3ef3cca1cf51581419a0ce31c4911c256296c07e8b29404278fdaa9f3258111aa0d7a81d8f0beb990812c9b025511d30058aee823d6b39e672b32  pillow_heif-0.18.0.tar.gz
+"

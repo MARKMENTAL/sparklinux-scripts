@@ -1,0 +1,69 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=ruby-rmagick
+_gemname=rmagick
+pkgver=6.0.1
+_pkgver=${pkgver//./-}
+pkgrel=0
+pkgdesc="Ruby bindings for ImageMagick"
+url="https://github.com/rmagick/rmagick"
+arch="all"
+license="MIT"
+depends="ghostscript-fonts"
+makedepends="
+	imagemagick-dev
+	ruby
+	ruby-dev
+	ruby-pkg-config
+	"
+checkdepends="
+	imagemagick
+	imagemagick-pdf
+	ruby-rake
+	ruby-rspec
+	"
+source="https://github.com/rmagick/rmagick/archive/RMagick_$_pkgver.tar.gz
+	gemspec.patch
+	spec-drop-pry.patch
+	dont-test-webp.patch
+	skip-broken-test.patch
+	fix-tempfile.patch
+	"
+builddir="$srcdir/rmagick-RMagick_$_pkgver"
+
+build() {
+	gem build $_gemname.gemspec
+	gem install --local \
+		--install-dir dist \
+		--ignore-dependencies \
+		--no-document \
+		--verbose \
+		$_gemname
+}
+
+check() {
+	GEM_PATH='dist:.gem' rspec
+}
+
+package() {
+	local gemdir="$pkgdir/$(ruby -e 'puts Gem.default_dir')"
+	cd "$builddir"/dist
+
+	mkdir -p "$gemdir"
+	cp -r extensions gems specifications "$gemdir"/
+
+	# Remove unnecessary files and rubbish...
+	find "$gemdir"/extensions/ -name mkmf.log -delete
+
+	cd "$gemdir"/gems/$_gemname-$pkgver
+	rm -r ext/ lib/*.so
+}
+
+sha512sums="
+a6fdecd4ad6d17045438a9a14fc6c0a8b9d18224d6d3d0af2ade6fcba1bd0c889710f03d8b2f9738214023d87c504f7a7017f49b467a778fa3d97a14aa2bfeb3  RMagick_6-0-1.tar.gz
+b701536776e201458494509d1fa4dccb4485aa94da67ce9fe4e922c2bd4ba0ac26bea20c636e17312892fed24427bc4b950cd1328b27e37a6365aec3ecbcdb0b  gemspec.patch
+6550535ebaf3924b9f707da395eeaec630e5db50e1964ab9f84d2f941d97c7c49eb7dff05439efa355abb97e72556385b26b8af1d86e05b7c12fd8f2f781834a  spec-drop-pry.patch
+5eeea508d44f2c9679fe4fe3d5b9a51470f8022537f5822f85c95dbd4d78149c2cada763f0bdf3e86523770b0b758117a6d216b240c92f54253905c19d38d064  dont-test-webp.patch
+3e10aae2b9c452409c34b38f005b922aa91119a44b260d192f1a03bcbd7e90a7ea6e01ec65bc331bdd19457490296a36af75008fcdbbee086f2ea169b48fa1af  skip-broken-test.patch
+c661ca0c22d93795e5c2c89bbac7cb577b4bc32ec2cb4906cb49a6fa2d109a429d963fea7089d04c4750531f2c0c5a77eee1998db0741520dc81f0c5cfb04d8b  fix-tempfile.patch
+"

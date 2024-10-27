@@ -1,0 +1,103 @@
+# Contributor: André Klitzing <aklitzing@gmail.com>
+# Maintainer: André Klitzing <aklitzing@gmail.com>
+pkgname=ostree
+pkgver=2024.8
+pkgrel=0
+pkgdesc="Operating system and container binary deployment and upgrades"
+url="https://github.com/ostreedev/ostree"
+arch="all"
+license="LGPL-2.0-or-later"
+makedepends="
+	bison
+	curl-dev
+	e2fsprogs-dev
+	fuse3-dev
+	gpgme-dev
+	gtk-doc
+	libarchive-dev
+	libsoup3-dev
+	libxslt
+	linux-headers
+	openssl-dev>3
+	xz-dev
+	"
+checkdepends="
+	bash
+	coreutils
+	"
+subpackages="
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-dbg
+	$pkgname-grub:grub:noarch
+	$pkgname-bash-completion:bashcomp:noarch
+	"
+source="https://github.com/ostreedev/ostree/releases/download/v$pkgver/libostree-$pkgver.tar.xz"
+builddir="$srcdir/lib$pkgname-$pkgver"
+# todo: fails to make stuff in var/tmp in root
+options="!check"
+
+prepare() {
+	default_prepare
+	update_config_sub
+}
+
+build() {
+	CFLAGS="$CFLAGS -flto=auto" \
+	CXXFLAGS="$CXXFLAGS -flto=auto" \
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--localstatedir=/var \
+		--sbindir=/usr/bin \
+		--libexecdir=/usr/lib \
+		--enable-gtk-doc \
+		--disable-static \
+		--disable-glibtest \
+		--with-curl \
+		--with-openssl \
+		--with-soup3
+	make
+	make ostree-trivial-httpd
+}
+
+check() {
+	export TMPDIR="$srcdir"
+	make check || {
+		cat test-suite.log
+		return 1
+	}
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+dev() {
+	default_dev
+
+	install -Dm755 "$builddir"/ostree-trivial-httpd \
+		-t "$subpkgdir"/usr/lib/libostree/
+}
+
+grub() {
+	pkgdesc="GRUB2 integration for OSTree"
+	install_if="$pkgname=$pkgver-r$pkgrel grub"
+
+	amove etc/grub.d/*
+	amove usr/lib/libostree/grub2-*
+}
+
+bashcomp() {
+	depends=""
+	pkgdesc="Bash completions for $pkgname"
+	install_if="$pkgname=$pkgver-r$pkgrel bash-completion"
+
+	amove usr/share/bash-completion
+}
+
+sha512sums="
+6faed3daebce443134141bbf98add459c6f0c8239cc0e050cf2517d1127f3fd6aededd4af5d8400f869683b96aea2abb93bab8869dbf2f9a4ba02324c3005e5d  libostree-2024.8.tar.xz
+"

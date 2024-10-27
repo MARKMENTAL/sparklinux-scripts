@@ -1,0 +1,36 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=libffi
+pkgver=3.4.6
+pkgrel=0
+pkgdesc="portable, high level programming interface to various calling conventions."
+url="https://sourceware.org/libffi/"
+arch="all"
+license="MIT"
+depends_dev="linux-headers"
+makedepends_build="texinfo"
+checkdepends="dejagnu"
+subpackages="$pkgname-dbg $pkgname-dev $pkgname-doc"
+source="https://github.com/libffi/libffi/releases/download/v$pkgver/libffi-$pkgver.tar.gz"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--enable-pax_emutramp \
+		--enable-portable-binary \
+		--disable-exec-static-tramp
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+033d2600e879b83c6bce0eb80f69c5f32aa775bf2e962c9d39fbd21226fa19d1e79173d8eaa0d0157014d54509ea73315ad86842356fc3a303c0831c94c6ab39  libffi-3.4.6.tar.gz
+"

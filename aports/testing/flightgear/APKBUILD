@@ -1,0 +1,87 @@
+# Contributor: Leonardo Arena <rnalrd@alpinelinux.org>
+# Maintainer: Thomas Kienlen <kommander@laposte.net>
+pkgname=flightgear
+pkgver=2020.3.19
+_pkgver=${pkgver%.*}
+pkgrel=1
+pkgdesc="Flight Gear Flight Simulator"
+url="http://flightgear.org"
+arch="all !riscv64 !x86 !armhf !armv7" # limited by openscenegraph and build compatibility
+license="GPL-2.0-or-later"
+makedepends="
+	boost-dev
+	cmake
+	curl-dev
+	dbus-dev
+	eudev-dev
+	freeglut-dev
+	glew-dev
+	libevent-dev
+	libx11-dev
+	libxi-dev
+	libxmu-dev
+	mesa-dev
+	openal-soft-dev
+	openscenegraph-dev
+	plib
+	qt5-qtbase-dev
+	qt5-qtdeclarative-dev
+	qt5-qttools-dev
+	qt5-qtsvg-dev
+	samurai
+	simgear-dev=~$pkgver
+	zlib-dev
+	"
+install="$pkgname.post-install"
+subpackages="
+	$pkgname-dbg
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-zsh-completion
+	"
+options="!check" # FIXME test suite does not get built
+source="
+	https://downloads.sourceforge.net/project/flightgear/release-$_pkgver/flightgear-$pkgver.tar.bz2
+	no-execinfo.patch
+	musl-fenv.patch
+	musl-fix_error_h.patch
+	musl-fix_feenableexcept.patch
+	musl-fix_fpos_t.patch
+	musl-include-fcntl.patch
+	flightgear-data-downloader.sh
+	"
+
+build() {
+	# reduce size of debug syms
+	CFLAGS="$CFLAGS -g1" CXXFLAGS="$CXXFLAGS -g1" \
+	cmake -B build -G Ninja \
+		-D BUILD_TESTING="$(want_check && echo ON || echo OFF)" \
+		-D CMAKE_BUILD_TYPE=Release \
+		-D CMAKE_INSTALL_PREFIX=/usr \
+		-D CMAKE_INSTALL_SYSCONFDIR=/etc/$pkgname \
+		-D FG_DATA_DIR=/var/lib/$pkgname \
+		-D SimGear_DIR=/usr/lib/cmake/SimGear
+	cmake --build build
+}
+
+check() {
+	ninja -C build test
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	install -Dm755 "$srcdir"/flightgear-data-downloader.sh "$pkgdir"/usr/bin/flightgear-data-downloader
+	sed -i -e "s/%FGDATA_VERSION%/$pkgver/" "$pkgdir"/usr/bin/flightgear-data-downloader
+}
+
+sha512sums="
+ad5a4dd455a92bd9032c0f01084c0c114e4a91e60d53f200a754e54e1f8e08fd8e9008ea9f97f69410ee842fdc6c2210091d4ac5e5c6da6ba19f47e22438d207  flightgear-2020.3.19.tar.bz2
+34186d8ac64368bebed4f7564bc38df236b2c3e7870366240635c80c8a4ebce854e0ea30d9fc30f6f578acb86340dd2ee0d6dc1ce4b25c5a76129a8d8d4bf7df  no-execinfo.patch
+81ffb1ecfceae8d4ebb14717fb785118b3c290171245762cb4ab85be769582576147fe1b1b60fe854f4dd8079ebaf913da1585809ba9048d55f8710159c05614  musl-fenv.patch
+b477510a102b0d01859ab39ddf7b5c4bcd3b80aa522320b2128095228b643d5e067dd61f8edbef7df7ed1a35aea647444126ba58eb39a82d294ae8a0f6e808e5  musl-fix_error_h.patch
+29d12098c2581122234188cadd929238c41258bf347de2fcd30dabb46e398d19566e064b2a4267370bf7669c5dcde2c87ef1232b7b1a9ed27ad7885a26378b05  musl-fix_feenableexcept.patch
+3a5d280bcd806fbdeb7b2f92435ffa7b44c420494ae658060624dfa34709a2b36448c1ca8c81bff1e4bb2878fa55200eb69535699062aff5286c7f640fbc3081  musl-fix_fpos_t.patch
+89f871216cac9bf772c6f7a4d12d79ff73a38179547464ffa93ed24394309cb085719c0de5e2a82e2086e994cbf886a8763e4c577fdda476ddbab0e3e3dea4cd  musl-include-fcntl.patch
+fc350ca635981a0c0936aee13e11913c7f78cd31716ab1bf7edb060fc934a2b61913e722b32a9deacb19f2eef58f374a96fe9cc821cae7c38cf579d18adc860f  flightgear-data-downloader.sh
+"

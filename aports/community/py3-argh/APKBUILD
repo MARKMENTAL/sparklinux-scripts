@@ -1,0 +1,42 @@
+# Contributor: Fabian Affolter <fabian@affolter-engineering.ch>
+# Maintainer: Fabian Affolter <fabian@affolter-engineering.ch>
+pkgname=py3-argh
+pkgver=0.31.3
+pkgrel=0
+pkgdesc="Python3 argparse wrapper"
+url="https://github.com/neithere/argh"
+arch="noarch"
+license="LGPL-3.0-or-later"
+depends="python3"
+makedepends="
+	py3-gpep517
+	py3-flit-core
+	"
+checkdepends="py3-mock py3-pytest"
+subpackages="$pkgname-pyc"
+source="https://github.com/neithere/argh/archive/v$pkgver/py3-argh-$pkgver.tar.gz"
+builddir="$srcdir/argh-$pkgver"
+
+replaces="py-argh" # Backwards compatibility
+provides="py-argh=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+ef24f470a5d4154ea99c4acb6dd07c622e098ca3241eb1173a11c1b48cf33b301aeaf8762524d2a5388306ac4871c246377c1763b031d55c8f1f7e8c729808c7  py3-argh-0.31.3.tar.gz
+"

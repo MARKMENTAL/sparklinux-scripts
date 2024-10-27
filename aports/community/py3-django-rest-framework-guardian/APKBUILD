@@ -1,0 +1,49 @@
+# Contributor: Antoine Martin (ayakael) <dev@ayakael.net>
+# Maintainer: Antoine Martin (ayakael) <dev@ayakael.net>
+pkgname=py3-django-rest-framework-guardian
+_pyname=django-rest-framework-guardian2
+pkgver=0.6.0
+# last version not pushed as tag to GitHub
+_gittag=90bd05bf97a1013719dbfe4878ea7fad8f8d4daa
+pkgrel=0
+arch="noarch"
+pkgdesc="django-guardian support for Django REST Framework"
+url="https://pypi.python.org/project/djangorestframework-guardian2"
+license="MIT"
+depends="
+	py3-django-rest-framework
+	py3-django-guardian
+	"
+makedepends="
+	py3-setuptools
+	py3-gpep517
+	py3-wheel
+	"
+checkdepends="
+	py3-pytest-django
+"
+source="$pkgname-$pkgver.tar.gz::https://github.com/johnthagen/django-rest-framework-guardian2/archive/$_gittag.tar.gz"
+builddir="$srcdir"/$_pyname-$_gittag
+subpackages="$pkgname-pyc"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	DJANGO_SETTINGS_MODULE=tests.settings \
+		.testenv/bin/python3 -m pytest -v
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+67bd6ebb6d4f5b6130dd2aae28a09efdf9cbbc90aeacd7b6b18684638cc8faeb181b6b632313753f89c520fbd26fb56a9472701321306a0c275147462ad6d1d4  py3-django-rest-framework-guardian-0.6.0.tar.gz
+"

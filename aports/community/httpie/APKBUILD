@@ -1,0 +1,65 @@
+# Contributor: Fabian Affolter <fabian@affolter-engineering.ch>
+# Contributor: Daniel Isaksen <d@duniel.no>
+# Contributor: Mickaël Schoentgen <mickael@apible.io>
+# Contributor: fossdd <fossdd@pwned.life>
+# Maintainer: fossdd <fossdd@pwned.life>
+pkgname=httpie
+pkgver=3.2.3
+pkgrel=0
+pkgdesc="CLI, cURL-like tool"
+url="https://httpie.org/"
+arch="noarch"
+license="BSD-3-Clause"
+depends="
+	py3-defusedxml
+	py3-multidict
+	py3-pip
+	py3-pygments
+	py3-pysocks
+	py3-requests
+	py3-requests-toolbelt
+	py3-rich
+	py3-setuptools
+	py3-wheel
+	python3
+	"
+makedepends="
+	py3-gpep517
+	py3-wheel
+	"
+checkdepends="
+	py3-pytest
+	py3-pytest-httpbin
+	py3-pytest-mock
+	py3-responses
+	py3-virtualenv
+	py3-werkzeug
+	"
+source="https://files.pythonhosted.org/packages/source/h/httpie/httpie-$pkgver.tar.gz"
+subpackages="$pkgname-doc $pkgname-pyc"
+options="!check" # fail on random network errors
+
+# secfixes:
+#   1.0.3-r0:
+#     - CVE-2019-10751
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --system-site-packages --without-pip --clear testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest ./httpie ./tests -k "not TestQuietFlag and not test_fetch and not check_updates"
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+930eba3323be78f0170ae714f19d8a598f1446c6423c65f11908cae6bc3780f04cfa1da532d044442d2421196f3c99a8166ad3d3772b1b8e11f84a211136bc2a  httpie-3.2.3.tar.gz
+"

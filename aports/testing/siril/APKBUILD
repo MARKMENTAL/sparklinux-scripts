@@ -1,0 +1,49 @@
+# Maintainer: duckl1ng <bogdan@sanocki.info>
+pkgname=siril
+pkgver=1.2.3
+pkgrel=1
+pkgdesc="Siril is an astronomical image processing tool"
+url="https://siril.org"
+# s390x, riscv64, ppc64le, loongarch64: no opencv
+arch="all !s390x !riscv64 !ppc64le !loongarch64"
+license="GPL-3.0-or-later"
+makedepends="
+	cfitsio-dev
+	cmake
+	curl-dev
+	exiv2-dev
+	fftw-dev
+	gsl-dev
+	gtk+3.0-dev
+	json-glib-dev
+	libconfig-dev
+	ffms2-dev
+	libheif-dev
+	libraw-dev
+	libunwind-dev
+	meson
+	opencv-dev
+	"
+subpackages="$pkgname-doc $pkgname-lang"
+source="https://free-astro.org/download/siril-$pkgver.tar.bz2
+	lfs64.patch
+	"
+
+build() {
+	abuild-meson . output -Denable-libcurl=yes
+	meson compile -C output
+}
+
+check() {
+	output/src/siril --version
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+	rm "$pkgdir"/usr/lib/librtprocess.a
+}
+
+sha512sums="
+a46e1565dfc69c3033f1a796e8acf8e19a0b6991b24b59bd9519b7b71c00582ca170e6a6886cebb6fc6f9940e008df72a7bdebd4f3b9a68e6b419d5582a4518d  siril-1.2.3.tar.bz2
+66a0aa9893f0f838aa9d1d23a4af54ffbc0c42b11bcc741231a33a0a1d798d9025639e39c2ce4fb62f2b14534641280222711e1de2973b30a547590fdbb18cb3  lfs64.patch
+"

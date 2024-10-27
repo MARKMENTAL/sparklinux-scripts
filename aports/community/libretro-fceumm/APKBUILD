@@ -1,0 +1,25 @@
+# Contributor: David Demelier <markand@malikania.fr>
+# Maintainer: David Demelier <markand@malikania.fr>
+pkgname=libretro-fceumm
+pkgver=0_git20230107
+pkgrel=0
+_commit="159f27a1f16e74f4e1f7f424477d3bb098302ea0"
+pkgdesc="FCEUmm libretro port"
+url="https://github.com/libretro/libretro-fceumm"
+arch="all"
+license="GPL-2.0-only"
+source="$pkgname-$_commit.tar.gz::https://github.com/libretro/libretro-fceumm/archive/$_commit.tar.gz"
+builddir="$srcdir/libretro-fceumm-$_commit"
+options="!check" # No tests
+
+build() {
+	make -f Makefile.libretro
+}
+
+package() {
+	install -Dm644 fceumm_libretro.so "$pkgdir"/usr/lib/libretro/fceumm_libretro.so
+}
+
+sha512sums="
+8b8d64bc91adf339a52a2927ae3d9c8b2b4eeadec315d19c30952a0cb0e21db26b1e0991d7fb2e9fdaa20796e224e7eb022c3a1a12f74caa6eae3281ba126798  libretro-fceumm-159f27a1f16e74f4e1f7f424477d3bb098302ea0.tar.gz
+"

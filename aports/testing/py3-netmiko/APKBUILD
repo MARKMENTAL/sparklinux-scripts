@@ -1,0 +1,32 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=py3-netmiko
+_pkgname=netmiko
+pkgver=4.4.0
+pkgrel=0
+pkgdesc="Multi-vendor library to simplify Paramiko SSH connections to network devices"
+url="https://github.com/ktbyers/netmiko"
+arch="noarch"
+license="MIT"
+depends="openssh-client py3-yaml py3-paramiko py3-scp python3"
+options="!check" # no textfsm package available
+makedepends="py3-gpep517 py3-setuptools py3-wheel poetry"
+checkdepends="py3-pytest py3-pyserial"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/ktbyers/netmiko/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir"/$_pkgname-$pkgver
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+f7e9584c780bd7e52f1933a7c65e8882838cb7ac667659895cb915ff37859c7af2e2492aa5e869636c29959fc05298ec54a7bca7d0e1e2a76514abf4a66599d5  py3-netmiko-4.4.0.tar.gz
+"

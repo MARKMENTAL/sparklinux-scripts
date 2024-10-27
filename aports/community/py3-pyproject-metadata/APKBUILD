@@ -1,0 +1,33 @@
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=py3-pyproject-metadata
+pkgver=0.8.0
+pkgrel=0
+pkgdesc="PEP 621 metadata parsing"
+url="https://github.com/FFY00/python-pyproject-metadata"
+arch="noarch"
+license="MIT"
+depends="python3 py3-packaging"
+makedepends="py3-gpep517 py3-flit-core py3-wheel"
+checkdepends="py3-pytest"
+source="$pkgname-$pkgver-3.tar.gz::https://github.com/FFY00/python-pyproject-metadata/archive/refs/tags/$pkgver.tar.gz"
+subpackages="$pkgname-pyc"
+builddir="$srcdir/pyproject-metadata-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+8d8c7839a318acce64b0cf15b3adbc49c2f309b453135b55f2d7942967ba8bbd4f85696d0f3c651e1246c50e33657e6108f0f05ac20b4a9162cdb2875269c548  py3-pyproject-metadata-0.8.0-3.tar.gz
+"

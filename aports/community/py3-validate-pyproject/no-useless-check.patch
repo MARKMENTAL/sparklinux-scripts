@@ -1,0 +1,13 @@
+diff --git a/pyproject.toml b/pyproject.toml
+index caa4ab9..9cb04a7 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -67,8 +67,6 @@ version_scheme = "no-guess-dev"
+ 
+ [tool.pytest.ini_options]
+ addopts = """
+-    --cov validate_pyproject
+-    --cov-report term-missing
+     --doctest-modules
+     --verbose
+     --strict-markers

@@ -1,0 +1,36 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer:
+pkgname=intel-gmmlib
+pkgver=22.3.17
+pkgrel=0
+pkgdesc="Intel Graphics Memory Management Library"
+options="!check" # tests can't run in check(), only on install
+url="https://github.com/intel/gmmlib/"
+arch="aarch64 x86_64"
+license="MIT"
+makedepends="cmake samurai"
+subpackages="$pkgname-dev"
+source="$pkgname-$pkgver.tar.gz::https://github.com/intel/gmmlib/archive/intel-gmmlib-$pkgver.tar.gz"
+builddir="$srcdir/gmmlib-intel-gmmlib-$pkgver"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DRUN_TEST_SUITE=OFF \
+		$CMAKE_CROSSOPTS
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+073cb2e9ec025ae32e2f33f51547083cd8425b0c7297e361b037c71b55a8d2322cd36ac7cabbf8c7a325f80f1cc97947c0aa8aa833dc5fbae5abe28e9c04451a  intel-gmmlib-22.3.17.tar.gz
+"

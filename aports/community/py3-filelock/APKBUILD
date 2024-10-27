@@ -1,0 +1,49 @@
+# Contributor: Dmitry Romanenko <dmitry@romanenko.in>
+# Maintainer: Dmitry Romanenko <dmitry@romanenko.in>
+pkgname=py3-filelock
+_pkgname=filelock
+pkgver=3.13.1
+pkgrel=1
+pkgdesc="A platform independent file lock for Python3"
+url="https://github.com/tox-dev/py-filelock"
+arch="noarch"
+license="Unlicense"
+depends="python3"
+makedepends="
+	py3-gpep517
+	py3-hatch-vcs
+	py3-hatchling
+	"
+checkdepends="
+	py3-pytest
+	py3-pytest-mock
+	py3-pytest-timeout
+	"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/f/$_pkgname/$_pkgname-$pkgver.tar.gz"
+builddir="$srcdir"/$_pkgname-$pkgver
+
+replaces="py-filelock" # Backwards compatibility
+provides="py-filelock=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	SETUPTOOLS_SCM_PRETEND_VERSION=$pkgver \
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+e9975a5b939ec0a417d1dbc5a3ca494aac3445c761f382849de5671ba1ae9a5f38e8a8714c7ed700fbb0d4cb161191917c439573993026f2e3efa1ada7d4f844  filelock-3.13.1.tar.gz
+"

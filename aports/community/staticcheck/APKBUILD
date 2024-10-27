@@ -1,0 +1,57 @@
+# Contributor: Clayton Craft <clayton@craftyguy.net>
+# Maintainer: Clayton Craft <clayton@craftyguy.net>
+pkgname=staticcheck
+pkgver=2024.1.1
+pkgrel=0
+pkgdesc="advanced Go linter"
+url="https://github.com/dominikh/go-tools"
+arch="all"
+license="MIT"
+makedepends="go"
+options="net"
+source="$pkgname-$pkgver.tar.gz::https://github.com/dominikh/go-tools/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/go-tools-$pkgver"
+
+case "$CARCH" in
+	# tests run out of memory in CI on these platforms:
+	s390x|x86|armhf|armv7) options="!check" ;;
+esac
+
+# Without this, linking fails on ppc64le. If this persists after
+# Go 1.18.1 is released then report this upstream.
+#
+# See https://github.com/golang/go/issues/51787
+case "$CARCH" in
+	ppc64le) export GOFLAGS="$GOFLAGS -ldflags=-linkmode=external" ;;
+esac
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	export CGO_CPPFLAGS="$CPPFLAGS"
+	export CGO_CFLAGS="$CFLAGS"
+	export CGO_CXXFLAGS="$CXXFLAGS"
+	export CGO_LDFLAGS="$LDFLAGS"
+
+	mkdir -p bin
+	go build -o ./bin ./...
+}
+
+check() {
+	GOROOT="/usr/lib/go" \
+	go test ./...
+}
+
+package() {
+	install -p -Dm755 -t "$pkgdir/usr/bin/" bin/*
+
+	install -Dm644 "LICENSE"  "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+	install -Dm644 "LICENSE-THIRD-PARTY" \
+		"$pkgdir/usr/share/licenses/$pkgname/LICENSE-THIRD-PARTY"
+}
+
+sha512sums="
+abd32fd81b4993a99c2fedaf349fca6f5edcb47651d7efff5e71e7c3c4b9ed41188061c7228d82796c65efbb5f5aa1498ea86c7476f530e0587c3787fbe9dae2  staticcheck-2024.1.1.tar.gz
+"

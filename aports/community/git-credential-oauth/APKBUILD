@@ -1,0 +1,32 @@
+# Maintainer: M Hickford <mirth.hickford@gmail.com>
+pkgname=git-credential-oauth
+pkgver=0.11.0
+pkgrel=6
+pkgdesc="Git credential helper that securely authenticates to GitHub, GitLab and BitBucket using OAuth"
+url="https://github.com/hickford/git-credential-oauth"
+arch="all"
+license="Apache-2.0"
+makedepends="go"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/hickford/git-credential-oauth/archive/v$pkgver.tar.gz"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -v
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	install -Dm755 git-credential-oauth -t "$pkgdir"/usr/bin/
+	install -Dm0644 git-credential-oauth.1 -t "$pkgdir"/usr/share/man/man1/
+}
+
+sha512sums="
+eedf5afc7ab034337a36b6de51462c6f319bccddc65e69b5448f4fe6a19c1e339528626ef284ab93f781c2d522fcfe2b99f78bbbd554a81d4ac3787baf650caf  git-credential-oauth-0.11.0.tar.gz
+"

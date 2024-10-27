@@ -1,0 +1,262 @@
+# Contributor: Holger Jaekel <holger.jaekel@gmx.de>
+# Maintainer: Holger Jaekel <holger.jaekel@gmx.de>
+pkgname=qgis
+pkgver=3.34.0
+pkgrel=0
+pkgdesc="Geographic Information System (GIS) that supports vector, raster & database formats"
+url="https://qgis.org/"
+# armhf: py3-qscintilla qt5-qt3d-dev qt5-qtlocation-dev missing
+# ppc64le, riscv64 and loongarch64: qt5-qtwebengine-dev missing
+# s390x: grass-gis-dev netcdf-dev qt5-qtwebengine-dev missing
+arch="all !armhf !ppc64le !riscv64 !s390x !loongarch64"
+license="GPL-2.0-or-later"
+depends="font-opensans font-cantarell qt5-qtbase-sqlite postgresql-client"
+makedepends="
+	bison
+	cmake
+	draco-dev
+	exiv2-dev
+	expat-dev
+	fcgi-dev
+	flex
+	gdal-dev
+	geos-dev
+	gsl-dev
+	grass-gis-dev
+	hdf5-dev
+	hdf5-static
+	libspatialindex-dev
+	libspatialite-dev
+	libzip-dev
+	netcdf-dev
+	opencl-dev
+	pdal-dev
+	postgresql-dev
+	proj-dev
+	protobuf-dev
+	py3-ply
+	py3-pyqt-builder
+	py3-qscintilla
+	py3-qt5
+	py3-sip
+	python3-dev
+	qca-dev
+	qscintilla-dev
+	qt5-qt3d-dev
+	qt5-qtbase-dev
+	qt5-qtlocation-dev
+	qt5-qtmultimedia-dev
+	qt5-qtserialport-dev
+	qt5-qtsvg-dev
+	qt5-qttools-dev
+	qt5-qtwebengine-dev
+	qtkeychain-dev
+	qwt-dev
+	samurai
+	sqlite-dev
+	unixodbc-dev
+	yarn
+	"
+checkdepends="py3-nose2 py3-yaml py3-gdal py3-psycopg2 py3-oauthlib py3-owslib gdal-tools gdal-driver-all py3-mock py3-termcolor qpdf poppler-utils xvfb-run firefox bash"
+subpackages="
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-lang
+	$pkgname-server
+	$pkgname-grass
+	py3-$pkgname:py3
+	"
+options="!check" # test failures on builders
+source="https://qgis.org/downloads/qgis-$pkgver.tar.bz2
+	10-node-ipc.patch
+	20-qgstyle-infinite-loop.patch
+	"
+langdir="/usr/share/qgis/i18n"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		local crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DQGIS_CGIBIN_SUBDIR=libexec/qgis \
+		-DBINDINGS_GLOBAL_INSTALL=TRUE \
+		-DBUILD_TESTING="$(want_check && echo TRUE || echo FALSE)" \
+		-DENABLE_TESTS="$(want_check && echo TRUE || echo FALSE)" \
+		-DWITH_3D=TRUE \
+		-DWITH_ANALYSIS=TRUE \
+		-DWITH_AUTH=TRUE \
+		-DWITH_BINDINGS=TRUE \
+		-DWITH_COPC=TRUE \
+		-DWITH_DESKTOP=TRUE \
+		-DWITH_EPT=TRUE \
+		-DWITH_GUI=TRUE \
+		-DWITH_GRASS8=TRUE \
+		-DGRASS_PREFIX8="$(pkg-config --variable=prefix grass)" \
+		-DWITH_HANA=TRUE \
+		-DWITH_ORACLE=FALSE \
+		-DWITH_PDAL=TRUE \
+		-DWITH_POSTGRESQL=TRUE \
+		-DWITH_QGIS_PROCESS=TRUE \
+		-DWITH_QSPATIALITE=TRUE \
+		-DWITH_SERVER=TRUE \
+		-DWITH_SERVER_LANDINGPAGE_WEBAPP=TRUE \
+		-DWITH_CUSTOM_WIDGETS=TRUE \
+		-DQGIS_MANUAL_SUBDIR=share/man \
+		-DWITH_QTWEBKIT=FALSE \
+		-DWITH_QWTPOLAR=TRUE \
+		-DQWTPOLAR_LIBRARY=/usr/lib/libqwt.so \
+		-DQWTPOLAR_INCLUDE_DIR=/usr/include/qwt \
+		-DCMAKE_CXX_FLAGS="$CXXFLAGS -DQWT_POLAR_VERSION=0x060200" \
+		-DWITH_INTERNAL_QWTPOLAR=FALSE \
+		$crossopts
+	cmake --build build
+}
+
+check() {
+	local test_excludes="(
+		logGitStatus$|
+		checkGitStatus$|
+		ProcessingQgisAlgorithmsTestPt1$|
+		ProcessingQgisAlgorithmsTestPt3$|
+		ProcessingQgisAlgorithmsTestPt4$|
+		ProcessingGdalAlgorithmsRasterTest$|
+		ProcessingGrass7AlgorithmsImageryTest$|
+		ProcessingGrass7AlgorithmsRasterTestPt1$|
+		ProcessingGrass7AlgorithmsRasterTestPt2$|
+		ProcessingOtbAlgorithmsTest$|
+		test_core_authmanager$|
+		test_core_compositionconverter$|
+		test_core_dxfexport$|
+		test_core_expression$|
+		test_core_gdalprovider$|
+		test_core_labelingengine$|
+		test_core_layoutpicture$|
+		test_core_maprendererjob$|
+		test_core_overlayexpression$|
+		test_core_projectstorage$|
+		test_core_tiledownloadmanager$|
+		test_core_openclutils$|
+		test_core_coordinatereferencesystem$|
+		test_gui_filedownloader$|
+		test_gui_layoutgui$|
+		test_gui_queryresultwidget$|
+		test_3d_mesh3drendering$|
+		test_analysis_processingalgspt2$|
+		test_analysis_gcptransformer$|
+		test_analysis_processing$|
+		test_geometry_checker_geometrychecks$|
+		test_provider_wcsprovider$|
+		test_provider_eptprovider$|
+		qgis_grassprovidertest8$|
+		test_app_gpsintegration$|
+		PyQgsAnnotation$|
+		PyQgsBlendModes$|
+		PyQgsBlockingProcess$|
+		PyQgsDatumTransform$|
+		PyQgsExpression$|
+		PyQgsExternalStorageWebDav$|
+		PyQgsExternalStorageAwsS3$|
+		PyQgsFillSymbolLayers$|
+		PyQgsProjectBadLayers$|
+		PyQgsGeometryTest$|
+		PyQgsHashLineSymbolLayer$|
+		PyQgsInterpolatedLineSymbolLayer$|
+		PyQgsLayoutHtml$|
+		PyQgsLineSymbolLayers$|
+		PyQgsMapClippingRegion$|
+		PyQgsMapLayerComboBox$|
+		PyQgsMapLayerProxyModel$|
+		PyQgsMapUnitScale$|
+		PyQgsMergedFeatureRenderer$|
+		PyQgsNetworkAccessManager$|
+		PyQgsNoApplication$|
+		PyQgsPalLabelingPlacement$|
+		PyQgsPathResolver$|
+		PyQgsProcessExecutablePt1$|
+		PyQgsProcessExecutablePt2$|
+		PyQgsProjectionSelectionWidgets$|
+		PyQgsStyleStorageGpkg$|
+		TestQgsRandomMarkerSymbolLayer$|
+		PyQgsRasterFileWriter$|
+		PyQgsSvgCache$|
+		PyQgsOGRProvider$|
+		PyQgsStyleModel$|
+		PyQgsVectorFileWriter$|
+		PyQgsVectorLayerEditBuffer$|
+		PyQgsVectorLayerNamedStyle$|
+		PyQgsVectorLayerProfileGenerator$|
+		PyQgsDBManagerGpkg$|
+		PyQgsSelectiveMasking$|
+		PyQgsPalLabelingServer$|
+		PyQgsServerApi$|
+		PyQgsServerWMSGetMap$|
+		PyQgsServerWMSGetLegendGraphic$|
+		PyQgsServerWMSGetPrint$|
+		PyQgsServerWMSGetPrintExtra$|
+		PyQgsServerWMSGetPrintOutputs$|
+		PyQgsServerWMSDimension$|
+		PyQgsAuthManagerPKIOWSTest$|
+		PyQgsAuthManagerOAuth2OWSTest$|
+		PyQgsServerConfigCache$|
+		test_core_settingsentry$|
+		test_app_qgisappclipboard$|
+		qgis_sipify$|
+		qgis_sip_include$|
+		qgis_sip_uptodate$
+	)"
+	local test_excludes_regexp
+	local testcase; for testcase in $test_excludes
+	do
+		test_excludes_regexp=$test_excludes_regexp$testcase
+	done
+	xvfb-run -a -s "-screen 0 1280x1024x24 -dpi 96" ctest -j 1 --test-dir build --output-on-failure --timeout 15000 -E $test_excludes_regexp
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+dev() {
+	default_dev
+	amove usr/share/qgis/FindQGIS.cmake
+	amove usr/lib/qt5/plugins/designer/libqgis_customwidgets.so*
+}
+
+server() {
+	pkgdesc="FCGI-based OGC web map server"
+	amove usr/bin/qgis_mapserver
+	amove usr/lib/qgis/server
+	amove usr/lib/libqgis_server.so*
+	amove usr/libexec/qgis
+	amove usr/lib/python3*/site-packages/qgis/server
+	amove usr/lib/python3*/site-packages/qgis/_server.so
+	amove usr/share/qgis/resources/server
+}
+
+grass() {
+	pkgdesc="GRASS Support Libraries for QGIS"
+	amove usr/lib/libqgisgrass*.so.*
+	amove usr/lib/qgis/plugins/libplugin_grass8.so
+	amove usr/lib/qgis/plugins/libprovider_grass8.so
+	amove usr/lib/qgis/plugins/libprovider_grassraster8.so
+	amove usr/lib/qgis/grass/
+	amove usr/share/qgis/grass/
+}
+
+py3() {
+	pkgdesc="Python integration and plug-ins for QGIS"
+	depends="py3-owslib py3-pyaml py3-gdal py3-httplib2 py3-jinja2
+		py3-matplotlib py3-psycopg2 py3-pygments py3-qscintilla"
+	amove usr/lib/libqgispython.so*
+	amove usr/share/qgis/python/
+	amove usr/lib/python3*/site-packages/qgis/
+	amove usr/lib/python3*/site-packages/PyQt5/uic/widget-plugins/
+}
+
+sha512sums="
+48892d3c7974f2250b819d146c337c67865ba4eafbc24d97adf09146eb742e991d82692fe7dde0b79df1ba76b92701b148b0309b6626473591d2978358a61e59  qgis-3.34.0.tar.bz2
+5b2d4cf7b72158428b25859914a18243d8bb26e3fa4c24021319ea3733856b1b4e11016f46c1f0a58336cb1328bc5ff98289c55c699dde1088e74ef12161ba0a  10-node-ipc.patch
+82e6c1bef90a12872c31264299f2102a27ad13eba197632aa65e54645e800d79395c8c25cbfb90ff34ac1f32a33f3c718c1202493aef8a57a89d2dad57925d6a  20-qgstyle-infinite-loop.patch
+"

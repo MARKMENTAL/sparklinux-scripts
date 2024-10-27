@@ -1,0 +1,32 @@
+# Maintainer: Simon Zeni <simon@bl4ckb0ne.ca>
+pkgname=hare
+pkgver=0.24.2
+pkgrel=0
+pkgdesc="The Hare systems programming language"
+url="https://harelang.org"
+arch="x86_64 aarch64 riscv64"
+license="MPL-2.0 AND GPL-3.0-only"
+depends="qbe harec binutils"
+makedepends="scdoc"
+checkdepends="tzdata"
+subpackages="$pkgname-doc"
+source="
+	$pkgname-$pkgver.tar.gz::https://git.sr.ht/~sircmpwn/hare/archive/$pkgver.tar.gz
+	"
+
+build() {
+	cp configs/linux.mk config.mk
+	make PREFIX=/usr ARCH=$CARCH VERSION="$pkgver"-alpine
+}
+
+check() {
+	make ARCH=$CARCH STDLIB_SLOW_TESTS=1 check
+}
+
+package() {
+	make PREFIX=/usr DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+6214d0068f507f156bff85d12aeb515e5f752bff03645b3b207d224aecc62e34d4a44a171fc2b357eaaf72a804c2b79d6ad2886caa2804f1dcad07cc25d7efac  hare-0.24.2.tar.gz
+"

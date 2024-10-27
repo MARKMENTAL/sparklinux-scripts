@@ -1,0 +1,41 @@
+# Contributor: Dhruvin Gandhi <contact@dhru.vin>
+# Maintainer: Dhruvin Gandhi <contact@dhru.vin>
+pkgname=reuse
+pkgver=4.0.3
+pkgrel=1
+pkgdesc="Tool for compliance with the REUSE recommendations"
+url="https://reuse.software"
+arch="noarch"
+license="Apache-2.0 AND CC-BY-SA-4.0 AND CC0-1.0 AND GPL-3.0-or-later"
+depends="
+	py3-attrs
+	py3-binaryornot
+	py3-boolean.py
+	py3-debian
+	py3-jinja2
+	py3-license-expression
+	py3-tomlkit
+	"
+makedepends="py3-poetry-core py3-gpep517 py3-installer"
+checkdepends="py3-pytest py3-pytest-xdist py3-pytest-cov py3-freezegun"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/r/reuse/reuse-$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	pytest -n auto
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/reuse*.whl
+}
+
+sha512sums="
+9ae78ab5d0958ddfb1de876c7aca66bbbdfa7b6500d9edb0dce107f7e84274935db8c93864f225c34a0356cfc1f15597e53ed6f936b81bebdf408c2a997775db  reuse-4.0.3.tar.gz
+"

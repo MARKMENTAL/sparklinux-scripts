@@ -1,0 +1,149 @@
+# Contributor: Fathi Boudra <fathi.boudra@linaro.org>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=libguestfs
+# NOTE: Upgrade only to even-numbered versions (e.g. 1.50.x, 1.52.x)!
+# Odd-numbered versions are development versions.
+pkgver=1.52.0
+pkgrel=1
+pkgdesc="Access and modify virtual machine disk images"
+url="https://libguestfs.org/"
+# riscv64, loongarch64: blocked by ocaml
+arch="all !riscv64 !loongarch64"
+license="GPL-2.0-or-later"
+depends="
+	cmd:mkisofs
+	curl
+	qemu-img
+	"
+makedepends="
+	acl-dev
+	augeas-dev
+	bash
+	bison
+	cmd:xzcat
+	cmd:zstdcat
+	coreutils
+	file-dev
+	flex
+	fuse-dev
+	gawk
+	gperf
+	hivex-dev
+	jansson-dev
+	libcap-dev
+	libconfig-dev
+	libtirpc-dev
+	libxml2-dev
+	lua5.1-dev
+	musl-libintl
+	ocaml
+	ocaml-findlib
+	pcre2-dev
+	perl
+	python3-dev
+	readline-dev
+	ruby-dev
+	ruby-rake
+	zstd-dev
+	"
+subpackages="
+	$pkgname-static
+	$pkgname-dev
+	$pkgname-doc
+	guestfs-tools
+	lua5.1-$pkgname:_lua51
+	py3-$pkgname:_py
+	ruby-$pkgname:_ruby
+	"
+source="https://download.libguestfs.org/${pkgver%.*}-stable/libguestfs-$pkgver.tar.gz
+	fix-missing-int64_t.patch
+	fix-missing-error-h.patch
+	"
+options="!check"  # XXX: Test suite does not support Alpine Linux at this moment
+
+case "$CARCH" in
+	arm*) _qemu="qemu-system-arm";;
+	ppc64le) _qemu="qemu-system-ppc64";;
+	x86_64 | x86) _qemu="qemu-system-x86_64";;
+	*) _qemu="qemu-system-$CARCH";;
+esac
+depends="$depends $_qemu"
+
+prepare() {
+	default_prepare
+
+	# busybox gzip does not support --best
+	sed -i 's/gzip --best/gzip -9/g' test-data/files/*
+}
+
+build() {
+	# TODO: build and package appliance
+	# NOTE: libvirt is a huge dependency linked into libguestfs.so,
+	#  so it cannot be easily split.
+	PYTHON=/usr/bin/python3 ./configure \
+		--prefix=/usr \
+		--mandir=/usr/share/man \
+		--sysconfdir=/etc \
+		--disable-nls \
+		--enable-fuse \
+		--disable-probes \
+		--disable-daemon \
+		--disable-appliance \
+		--disable-ocaml \
+		--disable-perl \
+		--enable-ruby \
+		--disable-haskell \
+		--disable-php \
+		--disable-erlang \
+		--enable-lua \
+		--disable-golang \
+		--disable-gobject \
+		--disable-rust \
+		--enable-vala=no \
+		--with-readline \
+		--without-java \
+		--without-libvirt \
+		--with-qemu="$_qemu"
+	make V=1
+}
+
+package() {
+	# INSTALLDIRS ensures that Perl and Ruby libs are installed in the
+	# vendor dir not the site dir.
+	make V=1 DESTDIR="$pkgdir" INSTALLDIRS="vendor" install
+}
+
+tools() {
+	pkgdesc="$pkgdesc (CLI tools)"
+	depends=""
+
+	amove etc
+	amove usr/bin
+}
+
+_lua51() {
+	pkgdesc="Lua 5.1 bindings for $pkgname"
+	depends=""
+
+	amove usr/lib/lua
+}
+
+_py() {
+	pkgdesc="Python 3 bindings for $pkgname"
+	depends=""
+
+	amove usr/lib/python3*
+}
+
+_ruby() {
+	pkgdesc="Ruby bindings for $pkgname"
+	depends=""
+
+	amove usr/lib/ruby
+}
+
+sha512sums="
+48dfaabb6b371ab3476b42310d363addf2fd1dfe43876be3bc984953f6919a30c7de13ef235d83fdd39117d71aa6bbfb5fbb645c1b17bc3031798a2a2b3df9d7  libguestfs-1.52.0.tar.gz
+9ca7a2ac8572553394d42eda0e02f8b694651288ce58f1f4c7569eaab81cd3295b0992dcd6452a42b4b284cec54a666fd277eafcee05d54d05b1e84560ac7b06  fix-missing-int64_t.patch
+e4d0cac4ba856d871ca524ebeb4dedf25b3a956fe6a1ab4c93481eba03954fb684621c63085526fc1846b3bffd4cbe30dadfba2b92844d24b8ec277c0e84bf5c  fix-missing-error-h.patch
+"

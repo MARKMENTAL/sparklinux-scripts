@@ -1,0 +1,28 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=encodings
+pkgver=1.0.7
+pkgrel=1
+pkgdesc="X.org font encoding files"
+url="https://xorg.freedesktop.org/"
+arch="noarch"
+license="Public Domain"
+options="!check"  # No test suite.
+makedepends="mkfontscale util-macros"
+source="https://www.x.org/releases/individual/font/encodings-$pkgver.tar.xz"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--with-encodingsdir=/usr/share/fonts/encodings
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+dc72982b14e5d89fe1eff1ab11f308796c89255a06337d8cd6bf65757f11dd0a5478b41d844793213db8fe9638389734f148abe9df9fb05027ea563dacde6ba8  encodings-1.0.7.tar.xz
+"

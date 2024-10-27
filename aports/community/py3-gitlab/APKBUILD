@@ -1,0 +1,49 @@
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=py3-gitlab
+_pyname=${pkgname/py3/python}
+pkgver=4.10.0
+pkgrel=0
+pkgdesc="Python wrapper for Gitlab's API"
+url="https://github.com/python-gitlab/python-gitlab"
+arch="noarch"
+license="LGPL-3.0-or-later"
+depends="python3 py3-requests py3-requests-toolbelt"
+makedepends="
+	py3-setuptools
+	py3-gpep517
+	py3-installer
+	py3-wheel
+	py3-sphinx
+	py3-sphinxcontrib-autoprogram
+	py3-myst-parser
+	"
+checkdepends="py3-pytest py3-responses py3-build"
+subpackages="$pkgname-doc $pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/python-gitlab/python-gitlab/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/$_pyname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+	sphinx-build -W -b man docs/ man/
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest --ignore=tests/functional/ \
+		--deselect tests/smoke/test_dists.py::test_sdist_includes_correct_files
+# FAILED tests/smoke/test_dists.py::test_sdist_includes_correct_files - FileNot...
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+	install -Dm644 man/$_pyname.1 \
+		"$pkgdir"/usr/share/man/man1/$_pyname.1
+}
+
+sha512sums="
+32feee9033acd317d35e5be538e94589ee7f365935fb9a3b92f78435ce0f5d318d244f3e179e72d08f90de423ef8891bca37840ab025ad3a3fe330a0c04700a2  py3-gitlab-4.10.0.tar.gz
+"

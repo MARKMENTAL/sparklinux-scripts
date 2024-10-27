@@ -1,0 +1,56 @@
+# Contributor: Peter Bui <pnutzh4x0r@gmail.com>
+# Maintainer: Fabian Affolter <fabian@affolter-engineering.ch>
+pkgname=py3-httplib2
+pkgver=0.22.0
+pkgrel=2
+pkgdesc="Python3 HTTP client library"
+url="https://github.com/httplib2/httplib2"
+arch="noarch"
+license="MIT"
+depends="
+	py3-parsing
+	python3
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="
+	py3-cryptography
+	py3-pytest
+	py3-pytest-cov
+	py3-pytest-timeout
+	py3-six
+	"
+subpackages="$pkgname-pyc"
+source="httplib2-$pkgver.tar.gz::https://github.com/httplib2/httplib2/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/httplib2-$pkgver"
+
+replaces="py-httplib2" # Backwards compatibility
+provides="py-httplib2=$pkgver-r$pkgrel" # Backwards compatibility
+
+# secfixes:
+#   0.19.0-r0:
+#     - CVE-2021-21240
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+77210f85ccaa2d2cf4a6c89f5146ca5eb9a6f26f00e862f6d0716ec73baffdf94714ae1d5eaced4349920b91276a7835e2f028c6d9156e84c241514b198791e5  httplib2-0.22.0.tar.gz
+"

@@ -1,0 +1,43 @@
+# Contributor: Antoine Martin (ayakael) <dev@ayakael.net>
+# Maintainer: Antoine Martin (ayakael) <dev@ayakael.net>
+pkgname=py3-django-environ
+_pyname=django-environ
+pkgver=0.11.2
+pkgrel=1
+arch="noarch"
+pkgdesc="A package that allows you to utilize 12factor inspired environment variables to configure your Django application."
+url="https://pypi.python.org/project/django-environ"
+license="MIT"
+depends="
+	py3-django
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="
+	py3-pytest
+	"
+source="$pkgname-$pkgver.tar.gz::https://pypi.io/packages/source/d/django-environ/django-environ-$pkgver.tar.gz"
+builddir="$srcdir"/$_pyname-$pkgver
+subpackages="$pkgname-pyc"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	pytest -v
+}
+
+package() {
+	python3 -m installer -d="$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+d024858514b2a6edd99a7a2f1ae26e9e7cc007b1454a1c3f2cd2ae061b4e961f16c4acc8c77ee6449e4b11b3d98c72aae849e337339cb5e275b85077a02b59d0  py3-django-environ-0.11.2.tar.gz
+"

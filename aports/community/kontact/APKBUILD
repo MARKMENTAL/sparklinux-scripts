@@ -1,0 +1,57 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: team/kde <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=kde-applications
+pkgname=kontact
+pkgver=24.08.1
+pkgrel=0
+# armhf blocked by extra-cmake-modules
+# armv7, ppc64le, s390x and riscv64 blocked by qt6-qtwebengine
+# riscv64 disabled due to missing rust in recursive dependency
+# loongarch64 blocked by pimcommon
+arch="all !armv7 !armhf !ppc64le !s390x !riscv64 !loongarch64"
+url="https://kontact.kde.org/"
+pkgdesc="Container application to unify several major PIM applications within one application"
+license="GPL-2.0-or-later"
+makedepends="
+	akonadi-dev
+	extra-cmake-modules
+	grantleetheme-dev
+	kcmutils-dev
+	kcrash-dev
+	kdbusaddons-dev
+	kdoctools-dev
+	kiconthemes-dev
+	kontactinterface-dev
+	kpimtextedit-dev
+	kwindowsystem-dev
+	libkdepim-dev
+	pimcommon-dev
+	qt6-qtbase-dev
+	qt6-qtwebengine-dev
+	samurai
+	"
+subpackages=" $pkgname-lang"
+_repo_url="https://invent.kde.org/pim/kontact.git"
+source="https://download.kde.org/stable/release-service/$pkgver/src/kontact-$pkgver.tar.xz"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+859293d7579caa2c2c7b9d402b759d8efbb5080baf89ad25d0e487c17e54fc13d6300f667ff9d108f29ce7fca6cd93a9e3e983f0497f9fb180dfe4fa0c90ac2b  kontact-24.08.1.tar.xz
+"

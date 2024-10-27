@@ -1,0 +1,60 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: team/gnome <ablocorrea@hotmail.com>
+pkgname=gnome-maps
+pkgver=47.0
+pkgrel=0
+pkgdesc="simple map client"
+url="https://wiki.gnome.org/Apps/Maps"
+# armhf, s390x, riscv64: limited by gjs
+# loongarch64: blocked by gfbgraph
+arch="all !armhf !s390x !riscv64 !loongarch64"
+license="GPL-2.0-or-later"
+depends="
+	geoclue
+	gfbgraph
+	gjs
+	libadwaita
+	libgweather4
+	libportal
+	"
+makedepends="
+	folks-dev
+	geoclue-dev
+	geocode-glib-dev>=3.26.4-r1
+	gjs-dev
+	glib-dev
+	gobject-introspection-dev
+	gtk4.0-dev
+	libadwaita-dev
+	libgee-dev
+	libgweather4-dev
+	libportal-dev
+	librsvg-dev
+	libshumate-dev>=1.0.1-r1
+	libxml2-dev
+	meson
+	rest1-dev
+	"
+checkdepends="
+	appstream-glib
+	desktop-file-utils
+	"
+subpackages="$pkgname-lang"
+source="https://download.gnome.org/sources/gnome-maps/${pkgver%.*}/gnome-maps-$pkgver.tar.xz"
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+e98081d6f3b077fa708d95e7a9e03a7e685e5d74671134620a1ebff2d1d5b421029b1d555c29976b81ff45a345d4c1e834202c6b6d61d71ee099e0dbcc929b9c  gnome-maps-47.0.tar.xz
+"

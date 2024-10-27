@@ -1,0 +1,124 @@
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=shadowsocks-rust
+pkgver=1.21.0
+pkgrel=0
+pkgdesc="Rust port of shadowsocks"
+url="https://github.com/shadowsocks/shadowsocks-rust"
+arch="all"
+license="MIT"
+makedepends="
+	cargo
+	mimalloc2-dev
+	openssl-dev
+	"
+subpackages="
+	$pkgname-sslocal
+	$pkgname-ssmanager
+	$pkgname-ssserver
+	$pkgname-ssservice
+	$pkgname-ssurl
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/shadowsocks/shadowsocks-rust/archive/refs/tags/v$pkgver.tar.gz"
+options="net !check" # fail for some reason
+
+prepare() {
+	default_prepare
+
+	# Rust target triple.
+	local target=$(rustc -vV | sed -n 's/host: //p')
+
+	# Build against system-provided libs
+	mkdir -p .cargo
+	cat >> .cargo/config.toml <<-EOF
+		[target.$target]
+		mimalloc = { rustc-link-lib = ["mimalloc"] }
+	EOF
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	local features="
+		aead-cipher-2022
+		local-dns
+		local-http-native-tls
+		local-redir
+		local-socks4
+		local-tunnel
+		logging
+		manager
+		mimalloc
+		multi-threaded
+		server
+		service
+		utility
+		"
+	case "$CARCH" in
+	ppc64le|s390x|riscv64|loongarch64)
+		;;
+	*)
+		# ioctl-sys
+		features="$features local-tun"
+		;;
+	esac
+	cargo build --release \
+		--frozen \
+		--bins \
+		--no-default-features \
+		--features="$(echo $features | tr -s " " ",")"
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	depends="
+		$pkgname-sslocal=$pkgver-r$pkgrel
+		$pkgname-ssmanager=$pkgver-r$pkgrel
+		$pkgname-ssserver=$pkgver-r$pkgrel
+		$pkgname-ssservice=$pkgver-r$pkgrel
+		$pkgname-ssurl=$pkgver-r$pkgrel
+		"
+	cd target/release
+	install -Dm755 -t "$pkgdir"/usr/bin/ \
+		sslocal \
+		ssmanager \
+		ssserver \
+		ssservice \
+		ssurl
+}
+
+sslocal() {
+	pkgdesc="$pkgdesc (sslocal binary)"
+
+	amove usr/bin/sslocal
+}
+
+ssmanager() {
+	pkgdesc="$pkgdesc (ssmanager binary)"
+
+	amove usr/bin/ssmanager
+}
+
+ssserver() {
+	pkgdesc="$pkgdesc (ssserver binary)"
+
+	amove usr/bin/ssserver
+}
+
+ssservice() {
+	pkgdesc="$pkgdesc (ssservice binary)"
+
+	amove usr/bin/ssservice
+}
+
+ssurl() {
+	pkgdesc="$pkgdesc (ssurl binary)"
+
+	amove usr/bin/ssurl
+}
+
+sha512sums="
+bd1301aa8f3488195bbaa448fbe4933adb2f411de62bd8345fbfc24db85f2ea8bed9db57c87ea0cbb511722ddc9b6366a5cb8064a11bfb90d4d661cc80b68eb3  shadowsocks-rust-1.21.0.tar.gz
+"

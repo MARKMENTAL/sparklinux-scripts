@@ -1,0 +1,88 @@
+# Contributor: Konstantin Kulikov <k.kulikov2@gmail.com>
+# Maintainer: Adam Jensen <adam@acj.sh>
+pkgname=bpftrace
+pkgver=0.21.2
+pkgrel=2
+pkgdesc="High-level tracing language for Linux eBPF"
+url="https://github.com/iovisor/bpftrace"
+arch="all !x86" # x86 unsupported
+license="Apache-2.0"
+_llvmver=17
+makedepends="
+	asciidoctor
+	bcc-dev
+	binutils-dev
+	bison
+	cereal
+	clang$_llvmver-dev
+	clang$_llvmver-extra-tools
+	clang$_llvmver-static
+	cmake
+	elfutils-dev
+	flex-dev
+	libbpf-dev
+	linux-headers
+	llvm$_llvmver-dev
+	llvm$_llvmver-gtest
+	llvm$_llvmver-static
+	samurai
+	libxml2-dev
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/iovisor/bpftrace/archive/v$pkgver.tar.gz
+	10-link-libbpf.patch
+	20-zlib.patch
+	"
+# Tests require root, network to download gmock and a few tests fail.
+# Stripping is done ourselves to keep the BEGIN_trigger symbol required
+# for BEGIN probe (see https://github.com/iovisor/bpftrace/issues/954 )
+options="!check !strip"
+subpackages="$pkgname-doc:doc $pkgname-tools:tools:noarch $pkgname-tools-doc:tools_doc"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DBUILD_TESTING=OFF \
+		-DCMAKE_PREFIX_PATH=/usr/lib/llvm$_llvmver/lib/cmake \
+		-DLLVM_REQUESTED_VERSION="$(/usr/lib/llvm$_llvmver/bin/llvm-config --version)" \
+		-DUSE_SYSTEM_BPF_BCC=1
+	cmake --build build
+}
+
+# Main package contains only bpftrace binary.
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+	strip --keep-symbol BEGIN_trigger \
+		--keep-symbol END_trigger \
+		"$pkgdir"/usr/bin/bpftrace \
+		"$pkgdir"/usr/bin/bpftrace-aotrt
+
+	mv "$pkgdir/usr/share/bpftrace/tools/doc" "$pkgdir/usr/share/bpftrace/tools_doc"
+}
+
+# Doc package should contain only man page for bpftrace.
+doc() {
+	mkdir -p "$subpkgdir/usr/share/man/man8"
+	mv "$pkgdir/usr/share/man/man8/bpftrace.8.gz" "$subpkgdir/usr/share/man/man8/"
+}
+
+# Tools are not installed in PATH, because they would conflict with other tools provided by bcc or perf-tools.
+tools() {
+	depends="$pkgname"
+	pkgdesc="$pkgdesc (tools)"
+	amove usr/share/bpftrace/tools
+}
+
+# Tools docs contains man pages and examples for tools.
+tools_doc() {
+	pkgdesc="$pkgdesc (tool docs and examples)"
+
+	amove usr/share/bpftrace/tools_doc
+	amove usr/share/man
+}
+
+sha512sums="
+8c64de94da29030dcde0680be90e3c16a5cd965a0066b1abe3c0740f11a78d70f383bf2e0bbe2fce639eddc7d45cb44508cc8a78743c205d7efa45734151e743  bpftrace-0.21.2.tar.gz
+1f884e75ee7df8d28e8f613eca64cc56f859806c5a8d0f491c07709b0000be3a29be62a3eab6dfb04fcf9aadd1a4c3fde26e212ea0c40e5a54e59a197f148ed4  10-link-libbpf.patch
+45aab5507ca1b8d4a8914cef5d771f9769c2984e5d7fc03a4c509948b2864170c58dc255d96ddf92defde5c76f41003ee653887f7036833c135481449781f251  20-zlib.patch
+"

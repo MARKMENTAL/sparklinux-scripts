@@ -1,0 +1,70 @@
+# Contributor: TBK <alpine@jjtc.eu>
+# Maintainer: TBK <alpine@jjtc.eu>
+pkgname=commons-daemon
+pkgver=1.4.0
+pkgrel=0
+pkgdesc="Tools to allow Java programs to run as UNIX daemons"
+url="https://commons.apache.org/daemon/"
+# riscv64 and loongarch64 blocked by java-jdk
+arch="all !riscv64 !loongarch64"
+license="Apache-2.0"
+options="!check" # No test suite
+depends="java-jre-headless"
+makedepends="docbook2x libcap-dev linux-headers maven java-jdk"
+subpackages="$pkgname-doc jsvc:_jsvc jsvc-doc:_jsvc_doc"
+source="https://archive.apache.org/dist/commons/daemon/source/commons-daemon-$pkgver-src.tar.gz
+	rat_workaround.patch
+	"
+builddir="$srcdir/$pkgname-$pkgver-src"
+
+build() {
+	# commons-daemon.jar
+	mvn install -DskipTests=true -Dmaven.javadoc.skip=false -B
+
+	# jsvc
+	cd "$builddir/src/native/unix"
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--with-java=/usr/lib/jvm/default-jvm \
+		CFLAGS="$CFLAGS -I/usr/lib/jvm/default-jvm/include/linux"
+	make
+
+	# jsvc manpage
+	db2x_xsltproc -s man man/jsvc.1.xml -o jsvc.1
+	gzip -9 jsvc.1
+}
+
+package() {
+	install -Dm644 target/$pkgname-$pkgver.jar \
+		"$pkgdir"/usr/share/java/$pkgname-$pkgver.jar
+	ln -s $pkgname-$pkgver.jar "$pkgdir"/usr/share/java/$pkgname.jar
+}
+
+doc() {
+	default_doc
+
+	mkdir -p "$subpkgdir"/usr/share/doc/$pkgname
+	cp -a "$builddir"/src/docs/* "$subpkgdir"/usr/share/doc/$pkgname/
+	cp -a "$builddir"/src/samples "$subpkgdir"/usr/share/doc/$pkgname/
+}
+
+_jsvc() {
+	pkgdesc="Executes classfile that implements a Daemon interface"
+	url="https://commons.apache.org/proper/commons-daemon/jsvc.html"
+	depends="$pkgname libcap"
+
+	cd "$builddir/src/native/unix"
+	install -Dm755 jsvc "$subpkgdir"/usr/bin/jsvc
+}
+
+_jsvc_doc() {
+	cd "$builddir/src/native/unix"
+	install -Dm644 jsvc.1.gz "$subpkgdir"/usr/share/man/man1/jsvc.1.gz
+}
+
+sha512sums="
+285f33ce36e2591f49b6067da16612ec1b49b23a8637d077618aefaae4452993dc2a31660665551ea761857390d940100e162e205fe7c0fad9c72374f2d15bb8  commons-daemon-1.4.0-src.tar.gz
+3e64d521e8ed7c6a1ff6b67911087e6553edddbd847c13633ec773cfcdc5486ddd24d9e6a518493bef1855741445bb92d149d8bfdd2d5fb1ae6af4ad4d211426  rat_workaround.patch
+"

@@ -1,0 +1,74 @@
+# Contributor: Clayton Craft <clayton@craftyguy.net>
+# Maintainer: Clayton Craft <clayton@craftyguy.net>
+pkgname=openmw
+# 0.48 is broken https://gitlab.com/OpenMW/openmw/-/issues/7500
+pkgver=0.47.0
+pkgrel=13
+pkgdesc="Open-source engine reimplementation for the role-playing game Morrowind"
+# Note: only tested on the following archs, may work on others too but not
+# adding them until this has been confirmed
+arch="x86_64 aarch64"
+url="http://www.openmw.org"
+license="GPL-3.0-or-later"
+makedepends="
+	boost-dev
+	bullet-dev
+	cmake
+	doxygen
+	ffmpeg-dev
+	libxt-dev
+	luajit-dev
+	lz4-dev
+	mesa-dev
+	mygui-dev
+	openal-soft-dev
+	openscenegraph-dev
+	qt5-qtbase-dev
+	recastnavigation-dev
+	samurai
+	sdl2-dev
+	tinyxml-dev
+	unshield-dev
+	yaml-cpp-dev
+	"
+checkdepends="gtest-dev"
+source="https://gitlab.com/OpenMW/openmw/-/archive/openmw-$pkgver/openmw-openmw-$pkgver.tar.gz
+	ffmpeg6.patch
+	gcc13.patch
+	"
+builddir="$srcdir/openmw-openmw-$pkgver"
+options="!check" # need cloning some test files
+
+build() {
+	# build OpenMW
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DBUILD_WITH_CODE_COVERAGE=0 \
+		-DBUILD_UNITTESTS="$(want_check && echo ON || echo OFF)" \
+		-DBUILD_BENCHMARKS=OFF \
+		-DOPENMW_USE_SYSTEM_BULLET=ON \
+		-DOPENMW_USE_SYSTEM_GOOGLETEST=ON \
+		-DOPENMW_USE_SYSTEM_ICU=ON \
+		-DOPENMW_USE_SYSTEM_MYGUI=ON \
+		-DOPENMW_USE_SYSTEM_OSG=ON \
+		-DOPENMW_USE_SYSTEM_RECASTNAVIGATION=ON \
+		-DOPENMW_USE_SYSTEM_SQLITE3=ON \
+		-DOPENMW_USE_SYSTEM_YAML_CPP=ON \
+		-DUSE_SYSTEM_TINYXML=TRUE
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+517e650d0054cdba8d38de05ed3975b0fcf8de32fda59c8df7c34b973e5390efa0dd9ec79babdfdaa79dee7aa8a75009776f62fad91b9aa9aa28016c5032652b  openmw-openmw-0.47.0.tar.gz
+20a56191f08b2d2e20ac7e0fce965186b420f7ce3f45ce1fe3fc81180eddc5b5cf67fb32d46489ca75e665727e73f89bced8c68b34af2ed55831c1aa40aa64ac  ffmpeg6.patch
+1bea014f1766883dbd3b4f8e603fcacac40f913fdd256527e4ba3f929f1f9c81e5cd4a73c8689c32ec828c96857cae59602f479bdad4d8d0799861e3f77987e9  gcc13.patch
+"

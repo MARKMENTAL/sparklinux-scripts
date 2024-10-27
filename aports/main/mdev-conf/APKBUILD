@@ -1,0 +1,28 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=mdev-conf
+pkgver=4.7
+pkgrel=0
+pkgdesc="Configuration files for mdev and mdevd"
+url="https://gitlab.alpinelinux.org/alpine/mdev-conf"
+arch="noarch"
+license="MIT"
+checkdepends="kyua"
+replaces="busybox-initscripts"
+source="https://gitlab.alpinelinux.org/alpine/mdev-conf/-/archive/$pkgver/mdev-conf-$pkgver.tar.gz
+	"
+
+build() {
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+340a2f788cb860591e2768769a81bda85522e38c3c855ac36c328b7d2e802d940da6ca0aae72e03171ef16ace701fecdee284e65ef74fa903a305234c89dc483  mdev-conf-4.7.tar.gz
+"

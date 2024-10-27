@@ -1,0 +1,53 @@
+# Contributor: Carlos Giraldo <cgiraldo@gradiant.org>
+# Maintainer: Carlos Giraldo <cgiraldo@gradiant.org>
+pkgname=py3-pandas
+_pkgname=pandas
+pkgver=2.0.3
+pkgrel=2
+pkgdesc="Powerful data structures for data analysis, time series, and statistics"
+url="https://pandas.pydata.org/"
+arch="all"
+license="BSD-3-Clause"
+depends="
+	py3-dateutil
+	py3-numpy
+	py3-tz
+	py3-tzdata
+	"
+makedepends="
+	cython
+	linux-headers
+	py3-gpep517
+	py3-numpy-dev
+	py3-python-versioneer
+	py3-setuptools
+	py3-wheel
+	python3-dev
+	"
+subpackages="$pkgname-pyc $pkgname-tests::noarch"
+source="https://github.com/pandas-dev/pandas/releases/download/v$pkgver/pandas-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+options="!check" # todo
+
+replaces="py-pandas" # Backwards compatibility
+provides="py-pandas=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	export CFLAGS="$CFLAGS -flto=auto -O3"
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/pandas-$pkgver-*.whl
+}
+
+tests() {
+	amove usr/lib/python*/site-packages/pandas/tests
+}
+
+sha512sums="
+bee3640521692545cb063b78c85f5ab90817c8029156f97856af4c9edfcc3e13596b48c4c1b4060c92e7e75b3b876d0734f7c1e3b2096d44c52ec09372c99d2e  pandas-2.0.3.tar.gz
+"

@@ -1,0 +1,39 @@
+# Contributor: Maxim Karasev <begs@disroot.org>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=dsp
+pkgver=1.9
+pkgrel=2
+pkgdesc="Audio processing program with an interactive mode"
+url="https://github.com/bmc0/dsp"
+arch="all"
+license="ISC"
+makedepends="
+	alsa-lib-dev
+	ffmpeg-dev
+	fftw-dev
+	ladspa-dev
+	libao-dev
+	libmad-dev
+	libsndfile-dev
+	libtool
+	pulseaudio-dev
+	zita-convolver-dev
+	"
+subpackages="$pkgname-doc"
+source="https://github.com/bmc0/dsp/archive/v$pkgver/dsp-$pkgver.tar.gz"
+options="!check" # no test suite
+
+build() {
+	./configure --prefix=/usr # not a GNU autoconf
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	install -Dvm755 scripts/* -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+a923cf6931842f297c4b0c09c498fe96bad1e1b2564494861ca4fb9cf44f646d06ea6114ee802f15b52a6fe7dbcf1141ca616da57aa5853ee4bcb97a920daacd  dsp-1.9.tar.gz
+"

@@ -1,0 +1,57 @@
+# Contributor: Maxim Karasev <mxkrsv@disroot.org>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=sqlmap
+pkgver=1.8.9
+pkgrel=0
+pkgdesc="Automatic SQL injection and database takeover tool"
+url="https://sqlmap.org/"
+arch="noarch"
+license="GPL-2.0-or-later"
+depends="
+	py3-beautifulsoup4
+	py3-bottle
+	py3-chardet
+	py3-colorama
+	py3-keepalive
+	py3-magic
+	py3-pydes
+	py3-six
+	py3-termcolor
+	"
+makedepends="py3-setuptools py3-gpep517 py3-wheel"
+subpackages="$pkgname-pyc"
+source="https://pypi.python.org/packages/source/s/sqlmap/sqlmap-$pkgver.tar.gz
+	reduce-amount-of-third-party-dependencies.patch
+	"
+options="!check" # fail with py311 for some reason
+
+prepare() {
+	default_prepare
+
+	# remove unneeded thirdparty moduels (keep patch small)
+	cd sqlmap/thirdparty
+	rm -rf chardet bottle beautifulsoup colorama keepalive magic odict \
+		pydes six termcolor
+}
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	gpep517 install-wheel --destdir .testenv --prefix '' .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+7f576f7d2246a740be6dda5c5dca13a4c67406d90726c3ab7c19b2db771a0e22ffdf4e01227155fe4eed84909ba81b3be1bad78654c6ca7c5610e6260255021a  sqlmap-1.8.9.tar.gz
+9befad1a47ca6b876de1e419b4f12d9ac6b9245467d01cfc0c9690997d6d4db02b64b528eec97ffa3a25632a4fae7ebc4c9a371383624cedd33e7a241942526a  reduce-amount-of-third-party-dependencies.patch
+"

@@ -1,0 +1,42 @@
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=py3-pytest-subprocess
+_pyname=${pkgname#py3-}
+pkgver=1.5.2
+pkgrel=0
+pkgdesc="Pytest plugin to fake subprocess"
+url="https://github.com/aklajnert/pytest-subprocess"
+arch="noarch"
+license="MIT"
+depends="python3 py3-pytest"
+makedepends="py3-setuptools py3-gpep517"
+checkdepends="
+	py3-anyio
+	py3-docutils
+	py3-pygments
+	py3-pytest-asyncio
+	py3-pytest-rerunfailures
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/aklajnert/pytest-subprocess/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/$_pyname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	gpep517 install-wheel --destdir .testenv --prefix '' .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+56bf95ee085e74df1b9691d23a1e766de304896a74fb319df22dbb3faa6e4959fe9b7e790cd65a55c816fb39f3ae8db68bd501aeaade0db498a7273cd7267e45  py3-pytest-subprocess-1.5.2.tar.gz
+"

@@ -1,0 +1,78 @@
+# Contributor: Dennis Przytarski <dennis@przytarski.com>
+# Maintainer: Dennis Przytarski <dennis@przytarski.com>
+pkgname=firecracker
+pkgver=1.4.1
+pkgrel=0
+pkgdesc="Secure and fast microVMs for serverless computing"
+url="https://github.com/firecracker-microvm/firecracker"
+arch="aarch64 x86_64"
+license="Apache-2.0"
+makedepends="rust cargo clang-dev cmake linux-headers cargo-auditable"
+subpackages="
+	$pkgname-seccompiler
+	$pkgname-rebase-snap:rebase_snap
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/firecracker-microvm/firecracker/archive/v$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --locked --target "$CTARGET"
+
+	# Change the seccomp filters' names so they get embedded into the binary
+	for a in $arch; do
+		mv -v resources/seccomp/"$a-unknown-linux-musl.json" resources/seccomp/"$a-alpine-linux-musl.json"
+	done
+}
+
+build() {
+	export CARGO_PROFILE_RELEASE_OPT_LEVEL=2
+	cargo auditable build \
+		--package firecracker \
+		--package jailer \
+		--package seccompiler \
+		--package rebase-snap \
+		--target "$CTARGET" \
+		--all-features \
+		--frozen \
+		--release
+}
+
+check() {
+	# jailer: tests failed testing functionality of cgroups
+	# seccompiler: tests failed spawning a thread
+	cargo test \
+		--package firecracker \
+		--package rebase-snap \
+		--target "$CTARGET" \
+		--frozen
+
+	# Other integration tests need pytest and docker
+}
+
+package() {
+	install -Dm755 build/cargo_target/$CTARGET/release/firecracker \
+		-t "$pkgdir"/usr/bin
+	install -Dm755 build/cargo_target/$CTARGET/release/jailer \
+		-t "$pkgdir"/usr/bin
+	install -Dm755 build/cargo_target/$CTARGET/release/rebase-snap \
+		-t "$pkgdir"/usr/bin
+	install -Dm755 build/cargo_target/$CTARGET/release/seccompiler-bin \
+		-t "$pkgdir"/usr/bin
+}
+
+seccompiler() {
+	pkgdesc="$pkgdesc - seccompiler"
+
+	amove usr/bin/seccompiler-bin
+}
+
+rebase_snap() {
+	pkgdesc="$pkgdesc - rebasing diff snapshot tool"
+
+	amove usr/bin/rebase-snap
+}
+
+sha512sums="
+20d105b4ee87728f5d92921148dd507ed0e727100cf04320943af66dee4d169d572b40a54c288fabe2b57d7c08337cd9a0138601ad90c76338b4177786ca2ee5  firecracker-1.4.1.tar.gz
+"

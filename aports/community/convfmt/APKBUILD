@@ -1,0 +1,34 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=convfmt
+pkgver=0.1.6
+pkgrel=0
+pkgdesc="CLI tool which can convert between JSON, YAML, TOML etc."
+url="https://github.com/oriontvv/convfmt"
+# loongarch64: blocked by libc crate
+arch="all !loongarch64"
+license="Apache-2.0"
+makedepends="cargo cargo-auditable"
+source="https://github.com/oriontvv/convfmt/archive/$pkgver/convfmt-$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -D -m755 target/release/$pkgname -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+66edf458f2114b4cee3cece116a236ff94e5c52345073673f042e33c5b710b583e0b4d0b0a2399d2c4031e0b9ad825eecba6d15c1d908a231d42f44ac86cd47e  convfmt-0.1.6.tar.gz
+"

@@ -1,0 +1,42 @@
+# Contributor: Vlad Glagolev <scm@vaygr.net>
+# Maintainer: Vlad Glagolev <scm@vaygr.net>
+pkgname=vile
+pkgver=9.8z
+pkgrel=0
+pkgdesc="vi-like Emacs"
+url="https://invisible-island.net/vile/"
+arch="all"
+license="GPL-2.0-only"
+makedepends="flex ncurses-dev"
+subpackages="$pkgname-doc"
+source="https://invisible-island.net/archives/vile/current/vile-$pkgver.tgz"
+
+build() {
+	CFLAGS="$CFLAGS -D_GNU_SOURCE" \
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--disable-stripping \
+		--enable-filters \
+		--enable-plugins \
+		--with-ncurses \
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	install -Dm644 COPYING "$pkgdir"/usr/share/licenses/$pkgname/COPYING
+}
+
+sha512sums="
+f5ff6f3d239f993d7b060e89650567e1c622cec1a024901e29d15cd9a588e8603097e12087d54e88beca91a3a7cd7328a541bac62889368da6636f143d6380ff  vile-9.8z.tgz
+"

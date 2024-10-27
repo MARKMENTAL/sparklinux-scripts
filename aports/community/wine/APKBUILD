@@ -1,0 +1,163 @@
+# Contributor: Pedro Filipe <xpecex@outlook.com>
+# Contributor: Valery Kartel <valery.kartel@gmail.com>
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Contributor: Łukasz Jendrysik <scadu@yandex.com>
+# Contributor: Martell Malone <martell@marinelayer.io>
+# Contributor: Craig Andrews <candrews@integralblue.com>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=wine
+pkgver=9.17
+pkgrel=0
+pkgdesc="Compatibility layer for running Windows programs"
+url="https://www.winehq.org"
+arch="x86 x86_64"
+license="LGPL-2.0-or-later"
+depends="
+	libxi
+	libxrandr
+	"
+depends_dev="$pkgname perl"
+makedepends="
+	alsa-lib-dev
+	autoconf
+	automake
+	bison
+	cups-dev
+	dbus-dev
+	flex-dev
+	fontconfig-dev
+	freetype-dev
+	gnutls-dev
+	gstreamer-dev
+	gst-plugins-base-dev
+	krb5-dev
+	libgphoto2-dev
+	libpcap-dev
+	libusb-dev
+	libxcomposite-dev
+	libxcursor-dev
+	libxi-dev
+	libxinerama-dev
+	libxkbcommon-dev
+	libxrandr-dev
+	libxrender-dev
+	mesa-dev
+	mingw-w64-gcc
+	ncurses-dev
+	opencl-dev
+	pcsc-lite-dev
+	pulseaudio-dev
+	sane-dev
+	sdl2-dev
+	udisks2-dev
+	v4l-utils-dev
+	vulkan-loader-dev
+	wayland-dev
+	"
+subpackages="$pkgname-dev $pkgname-doc"
+checkdepends="xvfb-run"
+source="https://dl.winehq.org/wine/source/9.x/wine-$pkgver.tar.xz
+	rpath.patch
+	"
+options="textrels !check" # As of 2.0.3 most of the tests fails
+# ignore tracing something in a weird rpath just to silence a warning
+# no effect
+somask="ntdll.so win32u.so"
+
+prepare() {
+	default_prepare
+	# fix opencl header detection
+	sed 's|OpenCL/opencl.h|CL/opencl.h|g' -i configure*
+}
+
+case "$CARCH" in
+x86_64)
+	# also pull in 32-target, enabled with --enable-archs
+	makedepends="$makedepends i686-mingw-w64-gcc"
+	;;
+esac
+
+build() {
+	export CFLAGS="$CFLAGS -O2 -Wno-error=format-security"
+	export CXXFLAGS="$CXXFLAGS -O2 -Wno-error=format-security"
+	export CPPFLAGS="$CPPFLAGS -O2 -Wno-error=format-security"
+
+	# invalid to the msys linker
+	export LDFLAGS="${LDFLAGS/,-Wl,-z,pack-relative-relocs}"
+
+	case "$CARCH" in
+	x86_64)
+		local win64="--enable-win64"
+		local archs="--enable-archs=x86_64,i386"
+		;;
+	x86)
+		local no_pie="-no-pie"
+		;;
+	esac
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--libdir=/usr/lib \
+		--sysconfdir=/etc \
+		--localstatedir=/var \
+		--with-dbus \
+		--with-mingw \
+		--with-x \
+		--with-vulkan \
+		$win64 \
+		$archs
+	make LDFLAGS="$LDFLAGS $no_pie" tools/winedump/winedump
+	make
+}
+
+check() {
+	xvfb-run make test
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	install -Dm755 tools/wineapploader \
+		"$pkgdir"/usr/bin/wineapploader
+
+	local file
+	for file in msiexec notepad regedit regsvr32 wineboot \
+		winecfg wineconsole winefile winemine winepath; do
+		rm -v "$pkgdir"/usr/bin/$file
+		ln -sfv /usr/bin/wineapploader "$pkgdir"/usr/bin/$file
+	done
+
+	case "$CARCH" in
+	x86_64)
+		x86_64-w64-mingw32-strip --strip-unneeded "$pkgdir"/usr/lib/wine/x86_64-windows/*.dll
+		i686-w64-mingw32-strip --strip-unneeded "$pkgdir"/usr/lib/wine/i386-windows/*.dll
+
+		# add compat links, since with archs these rename back to non-64
+		ln -sfv wine "$pkgdir"/usr/bin/wine64
+		ln -sfv wine-preloader "$pkgdir"/usr/bin/wine64-preloader
+		;;
+	x86)
+		i686-w64-mingw32-strip --strip-unneeded "$pkgdir"/usr/lib/wine/i386-windows/*.dll
+		;;
+	esac
+}
+
+dev() {
+	default_dev
+
+	local file
+	for file in widl wmc wrc winebuild winedump function_grep.pl \
+		winedbg winemaker winegcc winecpp wineg++; do
+		amove usr/bin/$file
+	done
+}
+
+doc() {
+	default_doc
+	rm -fr "$subpkgdir"/usr/share/man/*.UTF-8
+}
+sha512sums="
+06ee82fc0f0c8c02f1f646f674e8e3c5d4b9ca9cf64a910b01eb9c6d5dbe0471a6b232875e099c2e5cfd8e1c183ee72850820f24fc026b11523b56872a2efec5  wine-9.17.tar.xz
+72f64ed66ce24cf51f278874edc351c9297ebbad22adedd3036f1ead5113b0a09660f7fff4034c7b6a05bd7c15d42d9d7d203e8bd8a7fe1027643b6f49470ff3  rpath.patch
+"

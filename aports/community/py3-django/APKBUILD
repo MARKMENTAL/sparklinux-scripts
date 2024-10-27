@@ -1,0 +1,127 @@
+# Contributor: Andrew Wilcox <AWilcox@Wilcox-Tech.com>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=py3-django
+_pkgname=Django
+pkgver=4.2.12
+pkgrel=0
+pkgdesc="High-level Python3 Web framework"
+url="https://djangoproject.com/"
+arch="noarch"
+license="BSD-3-Clause"
+depends="
+	python3
+	py3-asgiref
+	py3-sqlparse
+	tzdata
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+options="!check" # some depends missing, others in community/testing
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/${_pkgname:0:1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+builddir="$srcdir/django-$pkgver"
+
+replaces="py-django" # Backwards compatibility
+provides="py-django=$pkgver-r$pkgrel" # Backwards compatibility
+
+# secfixes:
+#   4.2.11-r0:
+#     - CVE-2024-27351
+#   4.2.6-r0:
+#     - CVE-2023-43665
+#   4.2.5-r0:
+#     - CVE-2023-41164
+#   3.2.18-r0:
+#     - CVE-2023-24580
+#   3.2.17-r0:
+#     - CVE-2023-23969
+#   3.2.16-r0:
+#     - CVE-2022-41323
+#   3.2.15-r0:
+#     - CVE-2022-36359
+#   3.2.14-r0:
+#     - CVE-2022-34265
+#   3.2.13-r0:
+#     - CVE-2022-28346
+#     - CVE-2022-28347
+#   3.2.12-r0:
+#     - CVE-2021-44420
+#     - CVE-2021-45115
+#     - CVE-2021-45116
+#     - CVE-2021-45452
+#     - CVE-2022-22818
+#     - CVE-2022-23833
+#   3.1.13-r0:
+#     - CVE-2021-33203
+#     - CVE-2021-33571
+#     - CVE-2021-35042
+#   3.1.8-r0:
+#     - CVE-2021-28658
+#   3.1.7-r0:
+#     - CVE-2021-23336
+#   3.1.6-r0:
+#     - CVE-2021-3281
+#   3.1.1-r0:
+#     - CVE-2020-24583
+#     - CVE-2020-24584
+#   3.0.7-r0:
+#     - CVE-2020-13254
+#     - CVE-2020-13596
+#   1.11.29-r0:
+#     - CVE-2020-9402
+#   1.11.28-r0:
+#     - CVE-2020-7471
+#   1.11.27-r0:
+#     - CVE-2019-19844
+#   1.11.23-r0:
+#     - CVE-2019-14232
+#     - CVE-2019-14233
+#     - CVE-2019-14234
+#     - CVE-2019-14235
+#   1.11.22-r0:
+#     - CVE-2019-12781
+#   1.8.16-r0:
+#     - CVE-2016-9013
+#     - CVE-2016-9014
+#   1.10.7-r0:
+#     - CVE-2017-7233
+#     - CVE-2017-7234
+#   1.11.5-r0:
+#     - CVE-2017-12794
+#   1.11.10-r0:
+#     - CVE-2018-6188
+#   1.11.11-r0:
+#     - CVE-2018-7536
+#     - CVE-2018-7537
+#   1.11.15-r0:
+#     - CVE-2018-14574
+#   1.11.18-r0:
+#     - CVE-2019-3498
+#   1.11.19-r0:
+#     - CVE-2019-6975
+#   1.11.21-r0:
+#     - CVE-2019-12308
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+5fe9a7b1c12d6e2aee2ff9108eca77719d0bc44bd26990465a6651cd5ea0d705cce49704be1a0e9afcf11b3ec37457232484193ed1902bb8e872e28b3c05c4c1  Django-4.2.12.tar.gz
+"

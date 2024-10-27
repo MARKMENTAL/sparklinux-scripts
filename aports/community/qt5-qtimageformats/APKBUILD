@@ -1,0 +1,69 @@
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=qt5-qtimageformats
+pkgver=5.15.10_git20230612
+pkgrel=1
+_module="${pkgname#qt5-}"
+_pkgver=5aa33ec870977863c400103db94da452edbaf414
+_fullname=$_module-$_pkgver
+pkgdesc="Qt5 - QtImageFormats component"
+url="https://www.qt.io/developers/"
+arch="all"
+license="( LGPL-2.0-or-later OR GPL-3.0-only OR GPL-2.0-or-later ) AND Qt-GPL-exception-1.0"
+makedepends="
+	libmng-dev
+	libwebp-dev
+	qt5-qtbase-dev
+	tiff-dev
+	"
+source="https://dev.alpinelinux.org/archive/qt/$_fullname.tar.xz
+	CVE-2023-4863.patch
+	"
+builddir="$srcdir/$_fullname"
+
+# secfixes:
+#   5.15.10_git20230612-r1:
+#     - CVE-2023-4863
+
+_disturl="dev.alpinelinux.org:/archive/qt/"
+snapshot() {
+	clean
+	makedepends="git xz rsync tar" deps
+	mkdir -p "$srcdir" && cd "$srcdir"
+	git clone --filter=tree:0 https://invent.kde.org/qt/qt/$_module.git .
+	git archive --format tar --prefix=$_fullname/ $_pkgver > "$SRCDEST"/$_fullname.tar
+	xz -vv -T0 -9 -e "$SRCDEST"/$_fullname.tar
+	rsync --progress -La "$SRCDEST"/$_fullname.tar.xz $_disturl
+}
+
+prepare() {
+	default_prepare
+
+	# We need to make the build system think we're running in a git repository
+	# so it correctly symlinks during the build
+	mkdir .git
+}
+
+build() {
+	qmake-qt5
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make install INSTALL_ROOT="$pkgdir"
+
+	# Drop QMAKE_PRL_BUILD_DIR because reference the build dir
+	find "$pkgdir/usr/lib" -type f -name '*.prl' \
+		-exec sed -i -e '/^QMAKE_PRL_BUILD_DIR/d' {} \;
+
+	install -d "$pkgdir"/usr/share/licenses
+	ln -s /usr/share/licenses/qt5-base "$pkgdir"/usr/share/licenses/$pkgname
+}
+
+sha512sums="
+c53c0bab1388c544be09af577c93ea6da8644a88207f8c0936d8d7039b2255b4be5d3b9bff760ca4624c4fda77721ce112fbed073df6b3d93a863a0e0e830c02  qtimageformats-5aa33ec870977863c400103db94da452edbaf414.tar.xz
+fe36275c5883cb9d538da063b95099ecdf8c3f76e81461d0dd0cb9934e15565e0567a869bd0618300601b47ca0207c37b92b655d9eb249fb378466b36cc211dd  CVE-2023-4863.patch
+"

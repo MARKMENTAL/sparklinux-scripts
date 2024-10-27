@@ -1,0 +1,46 @@
+# Maintainer:
+pkgname=libtraceevent
+pkgver=1.8.3
+pkgrel=0
+pkgdesc="Linux kernel trace event library"
+url="https://git.kernel.org/pub/scm/libs/libtrace/libtraceevent.git"
+arch="all"
+license="LGPL-2.1-or-later AND GPL-2.0-or-later"
+depends_dev="linux-headers"
+makedepends="
+	$depends_dev
+	asciidoc
+	meson
+	xmlto
+	"
+checkdepends="cunit-dev"
+subpackages="$pkgname-plugins $pkgname-dev"
+source="https://git.kernel.org/pub/scm/libs/libtrace/libtraceevent.git/snapshot/libtraceevent-$pkgver.tar.gz"
+
+build() {
+	abuild-meson \
+		--default-library=shared \
+		-Db_lto=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+plugins() {
+	pkgdesc="$pkgdesc (plugins)"
+	# it had the same plugin files
+	replaces="perf<6.2"
+
+	amove usr/lib/traceevent/plugins
+}
+
+sha512sums="
+25aebdd3f8bd5f9e0fadf4f03af73effdfe6e40c5667dfbe5011f4bfaf536657dde1c085e7c26d13a9da04fa8ce2d7c27210a5d3ab8aabc7e7a485a46a4456ea  libtraceevent-1.8.3.tar.gz
+"

@@ -1,0 +1,56 @@
+# Contributor: Bhushan Shah <bshah@kde.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=libphonenumber
+pkgver=8.13.36
+pkgrel=1
+pkgdesc="Library for parsing, formatting, and validating international phone numbers."
+url="https://github.com/google/libphonenumber"
+arch="all"
+license="Apache-2.0"
+depends_dev="
+	abseil-cpp-dev
+	icu-dev
+	protobuf-dev
+	"
+makedepends="$depends_dev
+	cmake
+	gtest-dev
+	ninja
+	"
+checkdepends="icu-data-full"
+subpackages="$pkgname-static libgeocoding $pkgname-dev"
+source="https://github.com/google/libphonenumber/archive/v$pkgver/libphonenumber-v$pkgver.tar.gz
+	system-abseil.patch
+	"
+
+build() {
+	cd cpp
+	LDFLAGS="$LDFLAGS -Wl,--copy-dt-needed-entries" \
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DREGENERATE_METADATA=OFF \
+		-DUSE_BOOST=OFF \
+		-DUSE_STDMUTEX=ON
+	cmake --build build
+}
+
+check() {
+	cd cpp
+	./build/libphonenumber_test
+}
+
+package() {
+	cd cpp
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+libgeocoding() {
+	amove usr/lib/libgeocoding.so.*
+}
+
+sha512sums="
+1cbc5db517df1728afa6776dc9d0ee46cdb048405356d37f748054fb4844da083121233befa68aa7a87b496b82996efe33f20911815b449009a89e8741dce482  libphonenumber-v8.13.36.tar.gz
+03c1eb32208a868bcacf92eb42b1f3f009bcc898fa6446594a3e79baadbef5fb53bbe829adfb7d0c8ebebdd37898c6686ff837320d258cd47ef5de7a6bf341bc  system-abseil.patch
+"

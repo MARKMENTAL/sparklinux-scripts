@@ -1,0 +1,40 @@
+# Contributor: Magnus Sandin <magnus.sandin@gmail.com>
+# Maintainer: Magnus Sandin <magnus.sandin@gmail.com>
+pkgname=x42-plugins
+pkgver=20240611
+pkgrel=0
+pkgdesc="Collection of LV2 plugins"
+url="https://github.com/x42/x42-plugins"
+arch="x86 x86_64 aarch64 riscv64 loongarch64"
+license="GPL-2.0-only AND GPL-3.0-only"
+subpackages="$pkgname-doc"
+depends="
+	font-liberation
+	"
+makedepends="
+	cairo-dev
+	coreutils
+	fftw-dev
+	ftgl-dev
+	glu-dev
+	jack-dev
+	libltc-dev
+	libsamplerate-dev
+	libsndfile-dev
+	lv2-dev
+	pango-dev
+	"
+source="https://gareus.org/misc/x42-plugins/x42-plugins-$pkgver.tar.xz"
+options="!check" # No tests available
+
+build() {
+	FONTFILE=/usr/share/fonts/liberation/LiberationSans-Regular.ttf make
+}
+
+package() {
+	make install DESTDIR="$pkgdir" PREFIX=/usr
+}
+
+sha512sums="
+19c782cb5f6f9ac22da448c8d72308f93e89c76eea4efa1e68a6bb1036201bde0cff16dc8996ca34b855ad5f6dfcdf882f4cd3045160b9083ebc023a5f680fd2  x42-plugins-20240611.tar.xz
+"

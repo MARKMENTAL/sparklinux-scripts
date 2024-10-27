@@ -1,0 +1,42 @@
+# Maintainer: Simon Rupf <simon@rupf.net>
+pkgname=convert2json
+pkgver=1.0.0
+pkgrel=0
+pkgdesc="Utilities to convert CSV, INI, RSV, TOML, XML & YAML to JSON, including jq/jaq wrappers."
+url="https://github.com/simonrupf/convert2json"
+arch="all"
+license="MIT"
+depends="jaq"
+makedepends="
+	cargo
+	cargo-auditable
+	clang-dev
+	"
+source="https://github.com/simonrupf/convert2json/archive/$pkgver/convert2json-$pkgver.tar.gz"
+options="net"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --release --frozen
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm755 target/release/cq target/release/tq target/release/rq \
+	    target/release/xq target/release/yq target/release/csv2json \
+	    target/release/toml2json target/release/rsv2json \
+	    target/release/xml2json target/release/yaml2json \
+	    -t "$pkgdir"/usr/bin
+}
+
+sha512sums="
+9c883781f535345e06a5a6a9a14ca381ff975818ed97a10dc4285878d20809f3ea8b1693e7980d8cee827535831590e60427783412fef00e902ce87531b59ac7  convert2json-1.0.0.tar.gz
+"

@@ -1,0 +1,50 @@
+# Contributor: Michał Polański <michal@polanski.me>
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=kustomize
+pkgver=5.4.3
+pkgrel=0
+pkgdesc="Template-free customization of Kubernetes YAML manifests"
+url="https://kustomize.io/"
+license="Apache-2.0"
+arch="all"
+makedepends="go"
+subpackages="
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="https://github.com/kubernetes-sigs/kustomize/archive/kustomize/v$pkgver/kustomize-$pkgver.tar.gz"
+builddir="$srcdir/kustomize-kustomize-v$pkgver/kustomize"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	local builddate="$(date -u "+%Y-%m-%dT%TZ" ${SOURCE_DATE_EPOCH:+-d @$SOURCE_DATE_EPOCH})"
+
+	go build -ldflags="
+		-X sigs.k8s.io/kustomize/api/provenance.version=$pkgver
+		-X sigs.k8s.io/kustomize/api/provenance.buildDate=$builddate
+		"
+
+	./kustomize completion bash > $pkgname.bash
+	./kustomize completion fish > $pkgname.fish
+	./kustomize completion zsh > $pkgname.zsh
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	install -Dm755 kustomize -t "$pkgdir"/usr/bin/
+
+	install -Dm644 $pkgname.bash "$pkgdir"/usr/share/bash-completion/completions/$pkgname
+	install -Dm644 $pkgname.fish "$pkgdir"/usr/share/fish/vendor_completions.d/$pkgname.fish
+	install -Dm644 $pkgname.zsh "$pkgdir"/usr/share/zsh/site-functions/_$pkgname
+}
+
+sha512sums="
+d7390cdce3cae5c36e0e60842044e82c27ca95cf9c4227639fd0c782d793dc13d6acf989c65adbeedc0ba26a3eda1c76a602c0afc42a89a6e8a8cc3ba3a31299  kustomize-5.4.3.tar.gz
+"

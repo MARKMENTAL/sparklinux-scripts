@@ -1,0 +1,103 @@
+# Contributor: Simon Frankenberger <simon-alpine@fraho.eu>
+# Maintainer: Simon Frankenberger <simon-alpine@fraho.eu>
+pkgname=java-jtreg
+pkgver=7.3.1_p1
+_pkgver=${pkgver/_p/+}
+pkgrel=0
+pkgdesc="jtreg is the test harness used by the JDK test framework"
+url="https://github.com/openjdk/jtreg"
+# oracle dropped support for 32 bit
+# riscv64 blocked by openjdk11
+# s390x, ppc64le due to java-asmtools
+# loongarch64: blocked by apache-ant
+arch="all !x86 !armhf !armv7 !riscv64 !s390x !ppc64le !loongarch64"
+license="GPL-2.0"
+depends="java-jtharness java-asmtools apache-ant"
+makedepends="bash openjdk11 zip" # explicitly requires java 11 to compile
+checkdepends="diffutils grep"
+
+# check gets stuck on builder
+[ "$CARCH" = "ppc64le" ] && options="$options !check"
+
+source="jtreg-$_pkgver.tar.gz::https://github.com/openjdk/jtreg/archive/jtreg-$_pkgver.tar.gz
+
+	fix-build.patch
+	headless-tests.patch
+
+	jtreg-symlink-patch.txt
+	jtdiff-symlink-patch.txt
+"
+builddir="$srcdir/jtreg-jtreg-${pkgver/_p/-}"
+
+build() {
+	export JTREG_BUILD_VERSION="${_pkgver%+*}" \
+		JTREG_BUILD_NUMBER="${_pkgver/*+}"
+
+	local ant_home=/usr/share/java/apache-ant
+	export  ANT="$ant_home"/bin/ant \
+		ANT_JAR="$ant_home"/lib/ant.jar
+
+	local asmtools_home=/usr/share/java/asmtools
+	export  ASMTOOLS_JAR="$asmtools_home"/lib/asmtools.jar \
+		ASMTOOLS_LICENSE="$asmtools_home"/LICENSE
+
+	local jtharness_home=/usr/share/java/jtharness
+	export  JTHARNESS_JAVATEST_JAR="$jtharness_home"/lib/javatest.jar \
+		JTHARNESS_LICENSE="$jtharness_home"/legal/license.txt \
+		JTHARNESS_COPYRIGHT="$jtharness_home"/legal/copyright.txt
+
+	bash make/build.sh \
+		--jdk /usr/lib/jvm/java-11-openjdk \
+		-- \
+		-j1
+}
+
+check() {
+	sed -i 's/-j1/quick-test/'  build/make.sh
+	bash build/make.sh
+}
+
+package() {
+	_destdir="$pkgdir/usr/share/java/jtreg"
+	mkdir -p "$_destdir"
+	cp -r \
+		$builddir/build/images/jtreg/bin\
+		$builddir/build/images/jtreg/legal \
+		$builddir/build/images/jtreg/lib \
+		$builddir/build/images/jtreg/COPYRIGHT \
+		$builddir/build/images/jtreg/LICENSE \
+		$builddir/build/images/jtreg/README \
+		$builddir/build/images/jtreg/release \
+		"$_destdir"
+
+	# link to jtharness and asmtools from depends
+	rm "$_destdir"/lib/asmtools.jar
+	rm "$_destdir"/lib/javatest.jar
+	ln -s /usr/share/java/asmtools/lib/asmtools.jar  "$_destdir"/lib/asmtools.jar
+	ln -s /usr/share/java/jtharness/lib/javatest.jar "$_destdir"/lib/javatest.jar
+
+	# patch the jtreg executable script to handle symlink from /usr/bin
+	cd "$pkgdir"
+	patch -p1 -i "$srcdir"/jtreg-symlink-patch.txt
+	patch -p1 -i "$srcdir"/jtdiff-symlink-patch.txt
+
+	mkdir -p "$pkgdir/usr/bin"
+	ln -s /usr/share/java/jtreg/bin/jtdiff "$pkgdir"/usr/bin/jtdiff
+	ln -s /usr/share/java/jtreg/bin/jtreg  "$pkgdir"/usr/bin/jtreg
+}
+
+_doc() {
+	_destdir="$subpkgdir/usr/share/java/jtreg"
+	mkdir -p "$_destdir"
+	cp -r \
+		$builddir/target/binaries/doc \
+		"$_destdir"
+}
+
+sha512sums="
+3d098a77da247092b48a60aa1c336c8e07340ad9bc760a1d054c754c10d93a72ab72674cc1eb2e27d391043c37a01d6c067a50d9fd3e7bcbc3c960841f93423c  jtreg-7.3.1+1.tar.gz
+2c4bcfdc7792bacdb9c5ed81feb52bbbb1cdcbe8ac1cb9c9c6e1e5c6474ede625a748829a75c12cbd0cba57582f69006221ec7d3f7e999d116955022575697ff  fix-build.patch
+1b10c0b3f27541d2456166930c925d32db95b6a7d73625df8340a61f781b85d3bfb0d50f3099bdd448b498c0c9be8e7dd8ab0646142592c2538a291ab4a579b8  headless-tests.patch
+136e6e58b85d05f3e97467344c95303cbd310ada7c6533a129a6e62786d5e9498a1842b75de9838b432e68d0d863058ac5aeeea2a78e98a2170b4a0c1c113083  jtreg-symlink-patch.txt
+67f63317a2aaedd17e822389065ff5d86d574f4cb2e2af375856a9c7356dd048c396517372788b889db376fe4aa73c66d530938b8975d11d7714ac84e3dcd00d  jtdiff-symlink-patch.txt
+"

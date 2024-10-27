@@ -1,0 +1,65 @@
+# Contributor: Celeste <cielesti@protonmail.com>
+# Contributor: qaqland <qaq@qaq.land>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=ktistec
+pkgver=2.3.0
+pkgrel=0
+pkgdesc="Single-user ActivityPub server written in Crystal"
+url="https://github.com/toddsundsted/ktistec"
+arch="x86_64 aarch64" # crystal
+license="AGPL-3.0-or-later"
+depends="tzdata"
+makedepends="
+	crystal
+	libxml2-dev
+	musl-utils
+	openssl-dev
+	shards
+	sqlite-dev
+	"
+checkdepends="yaml-dev"
+options="net"
+install="$pkgname.pre-install"
+pkgusers="ktistec"
+pkggroups="ktistec"
+subpackages="$pkgname-openrc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/toddsundsted/ktistec/archive/refs/tags/v$pkgver.tar.gz
+	ktistec.initd
+	ktistec.confd
+	"
+options="!check" # TODO: spectator macro incompatibilities with Crystal 1.13.1
+
+export CRYSTAL_CACHE_DIR="${CRYSTAL_CACHE_DIR:-"$srcdir/.cache"}"
+export SHARDS_CACHE_PATH="${SHARDS_CACHE_PATH:-"$srcdir/.cache"}"
+
+prepare() {
+	default_prepare
+
+	shards install --frozen
+}
+
+build() {
+	crystal build --no-debug --release src/ktistec/server.cr
+}
+
+check() {
+	crystal spec -v
+}
+
+package() {
+	install -Dvm755 server "$pkgdir"/usr/bin/ktistec
+	install -dvm750 -o ktistec -g ktistec "$pkgdir"/var/lib/ktistec
+
+	cp -a etc public "$pkgdir"/var/lib/ktistec/
+	ln -sv public/uploads "$pkgdir"/var/lib/ktistec/
+	chown -R ktistec:ktistec "$pkgdir"/var/lib/ktistec/public/uploads
+
+	install -Dm755 "$srcdir"/ktistec.initd "$pkgdir"/etc/init.d/ktistec
+	install -Dm644 "$srcdir"/ktistec.confd "$pkgdir"/etc/conf.d/ktistec
+}
+
+sha512sums="
+551261e685a221d05062549cecb6dbd6668ea43da7edfc7ef12f33d29b05e2d2eaa76b6a6d15a4143e461aae8cb57baa39bf65d39fb99ce3f90a9564142249c2  ktistec-2.3.0.tar.gz
+f2520a9306daf544fec456e739abf1bb1e1a188992bbd8ef4a3ce3915a342209521ceedef8fc871c659d12ca57914825a8dcebc04e0114147fe32fc7de1dcabb  ktistec.initd
+b8971fe3a504df6173015a33a8edd64d74144128a1247328067fe82bee796d5faa55fa00de01690fedd7a027fb55e584b98b20277faa4140b913f52e4ec094e3  ktistec.confd
+"

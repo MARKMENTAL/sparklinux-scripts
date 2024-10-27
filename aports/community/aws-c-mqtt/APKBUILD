@@ -1,0 +1,60 @@
+# Contributor: Holger Jaekel <holger.jaekel@gmx.de>
+# Maintainer: fossdd <fossdd@pwned.life>
+pkgname=aws-c-mqtt
+pkgver=0.10.4
+pkgrel=1
+pkgdesc="AWS C99 implementation of the MQTT 3.1.1 specification"
+url="https://github.com/awslabs/aws-c-mqtt"
+# s390x: aws-c-common
+# arm*, ppc64le: aws-c-io
+arch="all !armhf !armv7 !ppc64le !s390x"
+license="Apache-2.0"
+makedepends="
+	aws-c-cal-dev
+	aws-c-common-dev
+	aws-c-compression-dev
+	aws-c-http-dev
+	aws-c-io-dev
+	cmake
+	openssl-dev
+	s2n-tls-dev
+	samurai
+	"
+subpackages="$pkgname-dev"
+source="$pkgname-$pkgver.tar.gz::https://github.com/awslabs/aws-c-mqtt/archive/refs/tags/v$pkgver.tar.gz"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		local crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	CFLAGS="$CFLAGS -flto=auto" \
+	CXXFLAGS="$CXXFLAGS -flto=auto" \
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=/usr/lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=None \
+		-DBUILD_TESTING="$(want_check && echo ON || echo OFF)" \
+		$crossopts
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+	# just test binaries
+	# shellcheck disable=2115
+	rm -rf "$pkgdir"/usr/bin/
+}
+
+dev() {
+	default_dev
+	amove usr/lib/aws-c-mqtt
+}
+
+sha512sums="
+0d6b884e40845173623e2561191f7ba7d67a88797f56b43ce80986ad09f05bb88ad9b290990e4c62db39e67c4e5abdf89e2c8be6176b53f65c617c158aab7767  aws-c-mqtt-0.10.4.tar.gz
+"

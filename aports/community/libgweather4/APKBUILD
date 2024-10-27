@@ -1,0 +1,49 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Contributor: Natanael Copa <ncopa@alpinelinux.org>
+# Maintainer: Newbyte <newbie13xd@gmail.com>
+pkgname=libgweather4
+pkgver=4.4.4
+pkgrel=0
+pkgdesc="GNOME weather library"
+url="https://wiki.gnome.org/Projects/LibGWeather"
+arch="all"
+license="LGPL-2.1-or-later"
+depends="tzdata gsettings-desktop-schemas"
+makedepends="
+	font-cantarell
+	geocode-glib-dev>=3.26.4-r1
+	gi-docgen
+	glib-dev
+	gobject-introspection-dev
+	json-glib-dev
+	libsoup3-dev
+	libxml2-dev
+	meson
+	py3-gobject3
+	vala
+	"
+options="!check" # Fail due to musl locale support
+subpackages="$pkgname-dev $pkgname-doc $pkgname-lang"
+source="https://download.gnome.org/sources/libgweather/${pkgver%.*}/libgweather-$pkgver.tar.xz"
+builddir="$srcdir/libgweather-$pkgver"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dgtk_doc=true \
+		-Denable_vala=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+2140c742a89a3816ef0e20d0eac570bbc4af058d1c94982b08819740132e7ca56eb9597b3817385310d19d7f1ab6d478fb665770f99db1eca1c0aab1c073dd2f  libgweather-4.4.4.tar.xz
+"

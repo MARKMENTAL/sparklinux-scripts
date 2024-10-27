@@ -1,0 +1,50 @@
+# Contributor: lauren n. liberda <lauren@selfisekai.rocks>
+# Maintainer: lauren n. liberda <lauren@selfisekai.rocks>
+pkgname=android-apkeep
+pkgver=0.16.0
+pkgrel=0
+pkgdesc="A command-line tool for downloading Android APK files from various sources"
+url="https://github.com/EFForg/apkeep"
+# loongarch64: libc crate
+arch="all !loongarch64"
+license="MIT"
+makedepends="
+	bzip2-dev
+	cargo
+	cargo-auditable
+	openssl-dev
+	zstd-dev
+	"
+source="https://github.com/EFForg/apkeep/archive/refs/tags/$pkgver/apkeep-$pkgver.tar.gz"
+options="!check"	# no tests
+builddir="$srcdir/apkeep-$pkgver"
+
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+
+	# Rust target triple.
+	local target=$(rustc -vV | sed -n 's/host: //p')
+
+	# Build against system-provided libs
+	mkdir -p .cargo
+	cat >> .cargo/config.toml <<-EOF
+		[target.$target]
+		bzip2 = { rustc-link-lib = ["bz2"] }
+		zstd = { rustc-link-lib = ["zstd"] }
+	EOF
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+package() {
+	install -Dm755 target/release/apkeep "$pkgdir"/usr/bin/apkeep
+}
+
+sha512sums="
+912d83d138e4440e2fc1e8e8a47f92e821fcdaa0378a6a28659a511f082df3d8056d0e0be1d7df227edae2b8c1adaa40ad5f39889fce4d70fa8b1044479b6b62  apkeep-0.16.0.tar.gz
+"

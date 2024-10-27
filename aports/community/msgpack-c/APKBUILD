@@ -1,0 +1,34 @@
+# Contributor: Daniel Sabogal <dsabogalcc@gmail.com>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=msgpack-c
+pkgver=6.0.2
+pkgrel=0
+pkgdesc="An efficient object serialization library for C"
+url="https://msgpack.org"
+arch="all"
+license="BSL-1.0"
+makedepends="cmake samurai"
+checkdepends="gtest-dev zlib-dev"
+subpackages="$pkgname-dev"
+source="https://github.com/msgpack/msgpack-c/releases/download/c-$pkgver/msgpack-c-$pkgver.tar.gz"
+
+build() {
+	cmake -G Ninja -B build . \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_VERBOSE_MAKEFILE=TRUE \
+		-DMSGPACK_BUILD_TESTS="$(want_check && echo ON || echo OFF)"
+	cmake --build build
+}
+
+check() {
+	cmake --build build --target test
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+a62409ead0b324be5e7449263ebc411e3a6dd5a0a76058930c69208994f32b562d3d3e984f35508fb120ed4b89bc188c8c356d03484d8e2a64dc2f07cd70ba06  msgpack-c-6.0.2.tar.gz
+"

@@ -1,0 +1,102 @@
+# Contributor: Joshua Murphy <joshuamurphy@posteo.net>
+# Maintainer: Joshua Murphy <joshuamurphy@posteo.net>
+pkgname=lilypond
+pkgver=2.25.17
+pkgrel=0
+pkgdesc="Music engraving program"
+url="https://lilypond.org"
+# ppc64le, s390x, riscv64, loongarch64: texlive
+# x86: hangs on build forever
+arch="all !ppc64le !s390x !riscv64 !x86 !loongarch64"
+license="GPL-3.0-or-later"
+depends="
+	ghostscript
+	guile
+	python3
+	"
+makedepends="
+	autoconf
+	bison
+	flex-dev
+	fontconfig-dev
+	fontforge
+	gc-dev
+	glib-dev
+	guile-dev
+	imagemagick
+	pango-dev
+	perl
+	py3-setuptools
+	rsync
+	t1utils
+	texinfo
+	texlive-dev
+	texmf-dist-langcyrillic
+	texmf-dist-most
+	"
+subpackages="
+	$pkgname-doc
+	$pkgname-emacs::noarch
+	$pkgname-lang
+	$pkgname-pyc
+	$pkgname-vim::noarch
+	"
+source="$pkgname-$pkgver.tar.gz::https://gitlab.com/lilypond/lilypond/-/archive/v$pkgver/lilypond-v$pkgver.tar.gz"
+builddir="$srcdir/$pkgname-v$pkgver"
+# https://gitlab.com/lilypond/lilypond/-/issues/1557
+# Tests fail due to texi2html
+# Strip manually due to guile files
+options="!check !strip"
+
+prepare() {
+	default_prepare
+	./autogen.sh --noconfigure
+}
+
+build() {
+	./configure \
+		--prefix=/usr \
+		--host=$CHOST \
+		--build=$CBUILD \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		GUILE_FLAVOR=guile-3.0
+
+	timeout 1500 \
+		make vimdir="/usr/share/vim/vimfiles" all bytecode
+}
+
+check() {
+	make test-baseline
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" vimdir="/usr/share/vim/vimfiles" install install-bytecode
+	strip "$pkgdir"/usr/bin/lilypond
+}
+
+emacs() {
+	pkgdesc="$pkgdesc (emacs plugin)"
+	install_if="$pkgname=$pkgver-r$pkgrel emacs"
+
+	amove usr/share/emacs
+}
+
+pyc() {
+	default_pyc
+
+	amove usr/share/lilypond/*/python/__pycache__
+}
+
+vim() {
+	pkgdesc="Vim syntax for $pkgname"
+	install_if="$pkgname=$pkgver-r$pkgrel vim"
+
+	amove usr/share/vim
+}
+
+sha512sums="
+464eb2d702d6ff821bacac9aa807d5bfe3f336fac1b3a3abf3d7c197e0790d0805c2624ca1819be8a631b4fb1c939708097a56e5e2b5c7b0468d3065d2c737b2  lilypond-2.25.17.tar.gz
+"

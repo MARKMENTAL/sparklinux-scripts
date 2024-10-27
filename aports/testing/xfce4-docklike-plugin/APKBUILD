@@ -1,0 +1,36 @@
+# Maintainer: Hakan Erduman <hakan@erduman.de>
+pkgname=xfce4-docklike-plugin
+pkgver=0.4.2
+pkgrel=0
+pkgdesc="Modern, minimalist taskbar for Xfce"
+url="https://docs.xfce.org/panel-plugins/xfce4-docklike-plugin/start"
+arch="all"
+license="GPL-3.0-only"
+makedepends="xfce4-panel-dev libxfce4ui-dev libwnck3-dev"
+subpackages="$pkgname-lang"
+source="https://archive.xfce.org/src/panel-plugins/xfce4-docklike-plugin/${pkgver%.*}/xfce4-docklike-plugin-$pkgver.tar.bz2"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--localstatedir=/var \
+		--disable-static
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+8e96abbde0f9f81bb4797302aba3a711307ab46c832aac92351e038543e078bbf42f86785ee06c28c9d38dff0655ee2933247e9086ba0925f5aa05416b3ef708  xfce4-docklike-plugin-0.4.2.tar.bz2
+"

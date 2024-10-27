@@ -1,0 +1,27 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: David Demelier <markand@malikania.fr>
+pkgname=libretro-nestopia
+pkgver=0_git20230102
+pkgrel=0
+_commit="cb1e24e2d6e5d49a85924a9d6dd9c470c109f537"
+arch="all"
+url="https://github.com/libretro/nestopia"
+pkgdesc="Nintendo Entertainment System core for libretro"
+license="GPL-2.0-or-later"
+source="$pkgname-$_commit.tar.gz::https://github.com/libretro/nestopia/archive/$_commit.tar.gz"
+builddir="$srcdir/nestopia-$_commit"
+options="!check" # No tests
+
+build() {
+	cd libretro
+	make
+}
+
+package() {
+	cd libretro
+	install -Dm644 nestopia_libretro.so "$pkgdir"/usr/lib/libretro/nestopia_libretro.so
+}
+
+sha512sums="
+d070f9ee3b47eaec691bebcb7ac535a410e1fe00cc979704968c9e47ca754a107996f9444cd3690f3c42e1d21b38711e185cb8fd5833d337bc4b68df1f31d956  libretro-nestopia-cb1e24e2d6e5d49a85924a9d6dd9c470c109f537.tar.gz
+"

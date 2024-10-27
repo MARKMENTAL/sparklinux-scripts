@@ -1,0 +1,43 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=py3-cucumber-tag-expressions
+pkgver=6.0.0
+pkgrel=1
+pkgdesc="Cucumber tag expression parser"
+url="https://github.com/cucumber/tag-expressions"
+arch="noarch"
+license="MIT"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="
+	py3-pytest
+	py3-pytest-html
+	py3-yaml
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/cucumber/tag-expressions/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/tag-expressions-$pkgver/python"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+9b976cab730420921cd7344c764ae5af0b594099e49b25416632d8e97a9ff551d9e3f042f99d47335807fe2fa3713e32ebfbf14a03b110bedc1b520db2e4fe2f  py3-cucumber-tag-expressions-6.0.0.tar.gz
+"

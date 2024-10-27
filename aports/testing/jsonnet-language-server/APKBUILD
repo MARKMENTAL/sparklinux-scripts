@@ -1,0 +1,30 @@
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=jsonnet-language-server
+pkgver=0.13.1
+pkgrel=5
+pkgdesc="Jsonnet language server"
+url="https://github.com/grafana/jsonnet-language-server"
+arch="all"
+license="AGPL-3.0-or-later"
+makedepends="go"
+source="$pkgname-$pkgver.tar.gz::https://github.com/grafana/jsonnet-language-server/archive/refs/tags/v$pkgver.tar.gz"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -v -ldflags "-X main.version=v$pkgver"
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	install -Dm755 $pkgname -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+4a3bd06a23c0606aa0d35a827001d390cb7a1fbfb4d4cd75a9e012ecbe2998ff9649489b5d3fdc48c7ce166f09a4ca97bce8d70e6ca46d6f6850bf689f2ffae5  jsonnet-language-server-0.13.1.tar.gz
+"

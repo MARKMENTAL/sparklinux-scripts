@@ -1,0 +1,43 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+pkgname=py3-niaarm
+_pkgorig=niaarm
+pkgver=0.3.12
+pkgrel=0
+pkgdesc="A minimalistic framework for numerical association rule mining"
+url="https://github.com/firefly-cpp/NiaARM"
+arch="noarch"
+license="MIT AND Apache-2.0"
+depends="python3 py3-numpy py3-pandas py3-niapy py3-nltk py3-scikit-learn"
+checkdepends="py3-pytest-xdist"
+makedepends="py3-gpep517 py3-poetry-core"
+subpackages="$pkgname-doc $pkgname-pyc"
+source="https://github.com/firefly-cpp/NiaARM/archive/$pkgver/$_pkgorig-$pkgver.tar.gz"
+builddir="$srcdir/NiaARM-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto -k 'not text_mining' --ignore=tests/test_visualization.py
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/niaarm-$pkgver-py3-none-any.whl
+
+	install -Dm644 paper/10.21105.joss.04448.pdf -t "$pkgdir"/usr/share/doc/$pkgname
+	install -Dm644 CITATION.cff -t "$pkgdir"/usr/share/doc/$pkgname
+	install -Dm644 interest_measures.md -t "$pkgdir"/usr/share/doc/$pkgname
+
+	install -Dm644 niaarm.1 -t "$pkgdir"/usr/share/man/man1/
+}
+
+sha512sums="
+991a32fdde042f3d11c546672954f54c9cda13c711ef4c579f22f017ab0ef37930d01e5a11654d32059f0b6f0f62afe73fc6a459d58036fd7494dbf0b4662b8f  niaarm-0.3.12.tar.gz
+"

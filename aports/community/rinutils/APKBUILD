@@ -1,0 +1,50 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=rinutils
+pkgver=0.10.2
+pkgrel=0
+pkgdesc="C11 / gnu11 utilities C library"
+url="https://www.shlomifish.org/open-source/projects/"
+arch="noarch"
+license="MIT"
+makedepends="
+	cmake
+	cmocka-dev
+	perl
+	samurai
+	"
+checkdepends="
+	perl-dev
+	perl-env-path
+	perl-inline
+	perl-inline-c
+	perl-parse-recdescent
+	perl-path-tiny
+	perl-string-shellquote
+	perl-test-differences
+	perl-utils
+	"
+subpackages="$pkgname-dev"
+source="https://github.com/shlomif/rinutils/releases/download/$pkgver/rinutils-$pkgver.tar.xz"
+options="!check" # Requires unavailable perl modules Test::TrainlingSpace module
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build build
+}
+
+check() {
+	cd build
+	CTEST_OUTPUT_ON_FAILURE=TRUE ctest
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+e2bc6304e84235947aa9aeb09fae0a27c10892ce547d59ab82569e2f03219a783a20c3bf7bd8a471464c2c07fe465eb8f2985e31d1f0e060da7d7bd832a67b67  rinutils-0.10.2.tar.xz
+"

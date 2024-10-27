@@ -1,0 +1,49 @@
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=ghq
+pkgver=1.6.2
+pkgrel=0
+pkgdesc="CLI to manage remote repository clones"
+url="https://github.com/x-motemen/ghq"
+arch="all"
+license="MIT"
+makedepends="asciidoctor go"
+subpackages="
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/x-motemen/ghq/archive/refs/tags/v$pkgver.tar.gz"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -v -ldflags "-X main.revision=AlpineLinux"
+
+	sed -i '1 s/^.*$/= ghq(1)/' README.adoc
+	asciidoctor -b manpage README.adoc
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	install -Dm755 ghq -t "$pkgdir"/usr/bin/
+
+	install -Dvm644 ghq.1 -t "$pkgdir"/usr/share/man/man1/
+	install -Dvm644 LICENSE -t "$pkgdir"/usr/share/licenses/$pkgname/
+
+	install -Dm644 misc/bash/_ghq \
+		"$pkgdir"/usr/share/bash-completion/completions/ghq
+	install -Dm644 misc/fish/ghq.fish \
+		"$pkgdir"/usr/share/fish/vendor_completions.d/ghq.fish
+	install -Dm644 misc/zsh/_ghq \
+		"$pkgdir"/usr/share/zsh/site-functions/_ghq
+}
+
+sha512sums="
+2fd6237005a587c11bad34741c02d543620042e61fc6cf612f9ff4d281f0572a4a42f16c7c00eb648fbeb51574635e22384f8c1f925c23b83069c7290e00faf4  ghq-1.6.2.tar.gz
+"

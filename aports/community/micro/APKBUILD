@@ -1,0 +1,49 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Contributor: Justin Berthault <justin.berthault@zaclys.net>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=micro
+pkgver=2.0.14
+pkgrel=1
+# This will need to be updated along with version as it cannot currently be
+# obtained from the tarball, and is necessary if the user is to make error
+# reports upsteam.
+_commithash=04c577049ca898f097cd6a2dae69af0b4d4493e1
+pkgdesc="A modern and intuitive terminal-based text editor"
+url="https://micro-editor.github.io/"
+arch="all"
+license="MIT"
+makedepends="go"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/zyedidia/micro/archive/v$pkgver.tar.gz"
+options="!check chmod-clean"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go generate ./runtime
+	go build -o micro -ldflags "
+		-X github.com/zyedidia/micro/v2/internal/util.Version=$pkgver-$pkgrel
+		-X github.com/zyedidia/micro/v2/internal/util.CommitHash=$_commithash
+		-X github.com/zyedidia/micro/v2/internal/util.CompileDate=$SOURCE_DATE_EPOCH
+		" ./cmd/micro
+}
+
+package() {
+	install -Dm755 micro -t "$pkgdir"/usr/bin
+
+	install -Dm644 assets/packaging/micro.1 \
+		-t "$pkgdir"/usr/share/man/man1/
+	install -Dm644 LICENSE* \
+		-t "$pkgdir"/usr/share/licenses/$pkgname/
+
+	install -Dm644 assets/packaging/micro.desktop \
+		-t "$pkgdir"/usr/share/applications/
+	install -Dm644 assets/micro-logo.svg \
+		-t "$pkgdir"/usr/share/icons/hicolor/scalable/apps/
+}
+
+sha512sums="
+424fd5b03167ca428e6831069e4f0ac471acd8a74a8476240835dc1e5d57d7398302814a5bfe460554169ececbd1e6f7d026b716ef1307887e3e2a8363f5e70a  micro-2.0.14.tar.gz
+"

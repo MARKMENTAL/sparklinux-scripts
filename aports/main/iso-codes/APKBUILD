@@ -1,0 +1,33 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=iso-codes
+pkgver=4.17.0
+pkgrel=0
+pkgdesc="ISO codes and their translations"
+url="https://salsa.debian.org/iso-codes-team/iso-codes"
+arch="noarch"
+license="LGPL-2.1-or-later"
+depends_dev="$pkgname=$pkgver-r$pkgrel"
+makedepends="python3 gettext"
+subpackages="$pkgname-lang $pkgname-dev"
+source="https://salsa.debian.org/iso-codes-team/iso-codes/-/archive/v$pkgver/iso-codes-v$pkgver.tar.bz2"
+builddir="$srcdir/iso-codes-v$pkgver"
+
+build() {
+	./configure \
+		--host=$CHOST \
+		--build=$CBUILD \
+		--prefix=/usr
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" pkgconfigdir=/usr/lib/pkgconfig install
+}
+
+sha512sums="
+3ef9e57e0441f9e002c62c42256caa262b91aa07bd64439bf6f0d8c5e0417bca3d4a1877a41aaba6ca4fcb437fdceacf84e0845ed0c8e412506e013333ef685b  iso-codes-v4.17.0.tar.bz2
+"

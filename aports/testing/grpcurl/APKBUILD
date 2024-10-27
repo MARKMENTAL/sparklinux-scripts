@@ -1,0 +1,31 @@
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=grpcurl
+pkgver=1.9.1
+pkgrel=3
+pkgdesc="CLI tool to interact with gRPC servers"
+url="https://github.com/fullstorydev/grpcurl"
+arch="all"
+license="MIT"
+makedepends="go"
+options="net"
+source="$pkgname-$pkgver.tar.gz::https://github.com/fullstorydev/grpcurl/archive/refs/tags/v$pkgver.tar.gz"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -v -ldflags "-X main.version=v$pkgver" ./cmd/grpcurl/
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	install -Dm755 $pkgname -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+0af24ad50dc6b2aa1d2ad1a0f3349d3946dca6137fa2f6b248a3a69ff6dc4bda5d79dd8c38333e795182e15286c7d77b882d96f1d87b5b7940144cd2233a3a44  grpcurl-1.9.1.tar.gz
+"

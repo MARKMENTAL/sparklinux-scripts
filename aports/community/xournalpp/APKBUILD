@@ -1,0 +1,66 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: mio <miyopan@e.email>
+pkgname=xournalpp
+pkgver=1.2.3
+pkgrel=0
+pkgdesc="Xournal++ is a handwriting notetaking software with PDF annotation support"
+url="https://github.com/xournalpp/xournalpp"
+arch="all !s390x !riscv64 !loongarch64"
+license="GPL-2.0-or-later"
+depends="adwaita-icon-theme"
+makedepends="
+	cmake
+	glib-dev
+	gtest-dev
+	gtk+3.0-dev
+	gtksourceview4-dev
+	help2man
+	librsvg-dev
+	libsndfile-dev
+	libx11-dev
+	libxi-dev
+	libxml2-dev
+	libzip-dev
+	lsb-release
+	lua5.4-dev
+	poppler-dev
+	portaudio-dev
+	samurai
+	"
+options="!check" # 3 failed unit tests
+subpackages="$pkgname-dbg $pkgname-doc $pkgname-lang"
+source="xournalpp-$pkgver.tar.gz::https://github.com/xournalpp/xournalpp/archive/v$pkgver.tar.gz
+	no-execinfo.patch
+	"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+
+	# Increase stack-size to avoid crashes when using pen for input
+	LDFLAGS="$LDFLAGS -Wl,-z,stack-size=2097152" \
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBUILD_SHARED_LIBS=True \
+		-DLUA_LIBRARIES="/usr/lib/lua5.4/liblua.so" \
+		-DENABLE_GTEST=on \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		$CMAKE_CROSSOPTS
+	cmake --build build --target all translations
+}
+
+check() {
+	cmake --build build --target test-units
+	cmake --build build --target test
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+	install -Dm0644 LICENSE "$pkgdir"/usr/share/licenses/xournalpp/LICENSE
+}
+
+sha512sums="
+17303314d49001f492469d855155a019659cdafc67509d4e176f60a93322f4ee1d4b999e8a25a9a23bde27b878012c06aa11f15bc2a54a730098964053834d1f  xournalpp-1.2.3.tar.gz
+1046141c3b51286fee439b4bba1ea247e7d121054b64134eecfb5859932d55d5afbf617052502bd7ca110928122b9690d463d579ed1575cf37b52ce318b087ca  no-execinfo.patch
+"

@@ -1,0 +1,76 @@
+# Contributor: Oleg Titov <oleg.titov@gmail.com>
+# Maintainer: Oleg Titov <oleg.titov@gmail.com>
+pkgname=apptainer
+pkgver=1.3.3
+pkgrel=0
+pkgdesc="Application containers for Linux"
+url="https://apptainer.org/"
+# loongarch64: blocked by github.com/cilium/ebpf
+arch="all !loongarch64"
+license="BSD-3-Clause AND BSD-3-Clause-LBNL"
+# Lots of tests fail due to:
+# - no root privilege
+# - no apptainer configuration at /etc/apptainer/apptainer.conf
+options="suid !check"
+depends="fakeroot squashfs-tools"
+makedepends="
+	bash
+	cni-plugins
+	cryptsetup
+	go
+	libseccomp-dev
+	"
+subpackages="
+	$pkgname-doc
+	$pkgname-suid:_suid
+	$pkgname-bash-completion
+	"
+source="apptainer-$pkgver.tar.gz::https://github.com/apptainer/apptainer/archive/refs/tags/v$pkgver.tar.gz"
+
+# secfixes:
+#   1.1.8-r0:
+#     - CVE-2023-30549
+#   1.1.6-r0:
+#     - CVE-2022-23538
+#   1.1.2-r0:
+#     - CVE-2022-39237
+
+export GOPATH="$srcdir"
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+prepare() {
+	default_prepare
+	echo "$pkgver" > "$builddir"/VERSION
+}
+
+build() {
+	# override git dir so it picks up our version above
+	GIT_DIR=. ./mconfig \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--without-network \
+		--with-suid
+
+	make -e -C builddir
+}
+
+package() {
+	make -C builddir DESTDIR="$pkgdir" GOFLAGS="$GOFLAGS" install
+
+	install -Dm644 -t "$pkgdir"/usr/share/doc/$pkgname README.md
+}
+
+_suid() {
+	pkgdesc="$pkgdesc (SUID helper binary)"
+	depends="$pkgname=$pkgver-r$pkgrel"
+
+	amove usr/libexec/apptainer/bin/starter-suid
+}
+
+sha512sums="
+5ee6466d103e89bceba2c8ac9ec49f4e9a2e78e77ba486c6e8420705a1dec08a283c67d84c3c391fbba2f3a185c5662de7a9fb24973b436257be4398c0d46cdd  apptainer-1.3.3.tar.gz
+"

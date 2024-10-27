@@ -1,0 +1,35 @@
+# Contributor: David Demelier <markand@malikania.fr>
+# Maintainer: David Demelier <markand@malikania.fr>
+pkgname=tiled
+pkgver=1.10.2
+pkgrel=0
+pkgdesc="powerful tile map editor"
+url="http://mapeditor.org"
+# ppc64le: Segfault.
+# riscv64: qt5 fails to ever be found on riscv64
+# armhf: hangs in build
+# 32-bit: no qbs
+arch="all !armv7 !x86 !armhf !ppc64le !riscv64"
+license="Apache-2.0 AND BSD-2-Clause AND GPL-2.0-only"
+makedepends="qt6-qttools-dev qt6-qtdeclarative-dev qt6-qtsvg-dev qbs"
+subpackages="$pkgname-dev $pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/bjorn/tiled/archive/v$pkgver.tar.gz"
+options="!check" # No tests.
+
+build() {
+	qbs config:release \
+		qbs.installPrefix:"/usr" \
+		projects.Tiled.useRPaths:false \
+		projects.Tiled.installHeaders:true \
+		moduleProviders.Qt.qmakeFilePaths:/usr/lib/qt6/bin/qmake
+}
+
+package() {
+	qbs install \
+		config:release \
+		--install-root "$pkgdir"
+}
+
+sha512sums="
+963ea9bc15bfdb3b18363888e7e3cb964895a6f4919f93ab1c4ce679ed979bd9640115c1d76d3b597390afd0630342313cbb8308d26ddd66226ce99dfc8cd7e7  tiled-1.10.2.tar.gz
+"

@@ -1,0 +1,45 @@
+# Contributor: TBK <alpine@jjtc.eu>
+# Maintainer: TBK <alpine@jjtc.eu>
+pkgname=cvs-fast-export
+pkgver=1.65
+pkgrel=0
+pkgdesc="Export RCS or CVS history as a fast-import stream"
+url="http://www.catb.org/esr/cvs-fast-export/"
+arch="all"
+license="GPL-2.0-or-later"
+depends="cvs rcs"
+makedepends="asciidoctor bison flex libxslt"
+checkdepends="python3"
+subpackages="$pkgname-doc $pkgname-tools::noarch"
+source="https://gitlab.com/esr/cvs-fast-export/-/archive/$pkgver/cvs-fast-export-$pkgver.tar.gz"
+options="!check" # take 50 years
+
+build() {
+	# "make all" will run the commands below + html.
+	# html can not run in parallel because the ".adoc.html"
+	# rules reuse the "docbook-xsl.css" file name.
+	make cvs-fast-export man
+}
+
+check() {
+	# v1.55 - More then one job and the tests
+	# are executed in the wrong order!
+	make -j 1 check
+}
+
+package() {
+	make DESTDIR="$pkgdir" prefix=/usr install
+}
+
+tools() {
+	pkgdesc="$pkgdesc (extra tools)"
+ 	depends="$pkgname=$pkgver-r$pkgrel git python3 rsync"
+
+	amove \
+		usr/bin/cvsconvert \
+		usr/bin/cvssync
+}
+
+sha512sums="
+84665f654364c111455edec5c335cf75dbdb8b63759b94eee85b4bc7389d3c90d85e0c84e8d2ba2d7ab89588d568c6e56b6f8c4a8fbd9f3083a370d9b1302e63  cvs-fast-export-1.65.tar.gz
+"

@@ -1,0 +1,39 @@
+# Contributor: Adam Nye <adam@spoontech.biz>
+# Maintainer:
+pkgname=zim
+pkgver=0.75.2
+pkgrel=1
+pkgdesc="Desktop wiki editor"
+url="https://zim-wiki.org/"
+arch="noarch"
+license="GPL-2.0-or-later"
+depends="python3 py3-gobject3 py3-xdg xdg-utils gtk+3.0"
+makedepends="desktop-file-utils font-cantarell py3-setuptools"
+checkdepends="adwaita-icon-theme xvfb-run"
+subpackages="$pkgname-doc $pkgname-lang $pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/zim-desktop-wiki/zim-desktop-wiki/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/zim-desktop-wiki-$pkgver"
+
+build() {
+	XDG_RUNTIME_DIR=/tmp \
+	python3 setup.py build
+}
+
+check() {
+	# Disable widgets test module for now as some tests
+	# fail because of problems related to system locale.
+	cat /dev/null > tests/widgets.py
+	XDG_RUNTIME_DIR=/tmp xvfb-run -a python3 test.py --fast
+}
+
+package() {
+	XDG_RUNTIME_DIR=/tmp \
+	python3 setup.py install --skip-build --root="$pkgdir"
+
+	install -dm755 "$pkgdir"/usr/share/icons
+	cp -r xdg/hicolor "$pkgdir"/usr/share/icons
+}
+
+sha512sums="
+ea6f361047690dfb314a3510d34880a4831d142c94fc0ca08e1c29869fd42d5fd1182c47edc241edeb512fed601a474af6d9970f819e8a8b67135c7589ae461a  zim-0.75.2.tar.gz
+"

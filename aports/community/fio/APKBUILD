@@ -1,0 +1,39 @@
+# Contributor: wener <wenermail@gmail.com>
+# Maintainer: wener <wenermail@gmail.com>
+pkgname=fio
+pkgver=3.37
+pkgrel=0
+pkgdesc="Flexible I/O Tester"
+url="https://github.com/axboe/fio"
+arch="all"
+license="GPL-2.0-only"
+makedepends="
+	libaio-dev
+	linux-headers
+	numactl-dev
+	zlib-dev
+	"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/axboe/fio/archive/fio-$pkgver.tar.gz"
+builddir="$srcdir/fio-$pkgname-$pkgver"
+
+build() {
+	./configure \
+		--prefix=/usr \
+		--disable-native
+	make
+}
+
+check() {
+	make test
+}
+
+package() {
+	make mandir=/usr/share/man DESTDIR="$pkgdir" install
+	install -Dm644 README.rst REPORTING-BUGS MORAL-LICENSE \
+		-t "$pkgdir"/usr/share/doc/$pkgname/
+}
+
+sha512sums="
+18c0b9f489df34de9827b3e3f63af6fa9abb9ecd72bc1192dc4cb735a637697292e4b1f2b36eb1c5df11e9089547c3230c58b62b13c6a359d6ced9c0e729ac9f  fio-3.37.tar.gz
+"

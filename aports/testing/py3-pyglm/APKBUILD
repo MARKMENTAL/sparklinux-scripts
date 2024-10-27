@@ -1,0 +1,52 @@
+# Maintainer: Thomas Aldrian <aldrian.thom@proton.me>
+pkgname=py3-pyglm
+pkgver=2.7.1
+pkgrel=0
+pkgdesc="OpenGL Mathematics library for Python"
+url="https://github.com/Zuzu-Typ/PyGLM"
+# loongarch64: ftbfs
+arch="all !loongarch64"
+license="Zlib"
+depends="python3"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	python3-dev
+	"
+checkdepends="py3-pytest"
+# Keep in sync with project's submodules.
+_glm_gitrev=fcda03b54596adda543bcdccc6c1879e380c86a7
+source="
+	$pkgname-$pkgver.tar.gz::https://github.com/Zuzu-Typ/PyGLM/archive/refs/tags/$pkgver.tar.gz
+	https://github.com/Zuzu-Typ/glm/archive/$_glm_gitrev/glm-$_glm_gitrev.tar.gz
+"
+builddir="$srcdir/PyGLM-$pkgver/"
+
+prepare() {
+	default_prepare
+
+	rm -r glm
+	ln -s "$srcdir/glm-$_glm_gitrev" glm
+}
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+1b7cc0f7986fbb8bd17963675997762b1dbbf7769c2659bfe6c2e110da0d30e93b36e998aad4946abdeebf38555e85a31dfb819c2b9c3d64a6dc3326a8c8bc5a  py3-pyglm-2.7.1.tar.gz
+ae9f6cb040700f98be6cbadc6f4bec1ac22e1fe704c7e36781aaa1db155e70fa9bd280e8ddd14bf941a02d0ed7587965a7607f3ad6699655a15131d440141f41  glm-fcda03b54596adda543bcdccc6c1879e380c86a7.tar.gz
+"

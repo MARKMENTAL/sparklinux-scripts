@@ -1,0 +1,47 @@
+# Contributor: Michael Mason <ms13sp@gmail.com>
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Michael Mason <ms13sp@gmail.com>
+pkgname=postgresql-pllua
+pkgver=2.0.12
+_pkgver="REL_${pkgver//./_}"
+pkgrel=1
+pkgdesc="Procedural language for PostgreSQL using Lua"
+url="https://github.com/RhodiumToad/pllua-ng"
+# ppc64le, riscv64, loongarch64: limited by luajit
+# s390x: fails to build
+arch="all !ppc64le !riscv64 !s390x !loongarch64"
+license="MIT"
+makedepends="postgresql-dev postgresql luajit-dev"
+options="!check"  # tests require running PostgreSQL
+provides="pllua=$pkgver-r$pkgrel"  # for backward compatibility
+replaces="pllua"  # for backward compatibility
+subpackages="$pkgname-dev"
+source="https://github.com/RhodiumToad/pllua-ng/archive/$_pkgver/pllua-ng-$_pkgver.tar.gz"
+builddir="$srcdir/pllua-ng-$_pkgver"
+
+case "$CARCH" in
+	s390x) makedepends="$makedepends llvm clang" ;;
+esac
+
+build() {
+	_make
+}
+
+package() {
+	depends="postgresql$(pg_config --major-version)"
+
+	_make DESTDIR="$pkgdir" install
+}
+
+_make() {
+	make \
+		LUAJIT=luajit \
+		LUA_INCDIR="$(pkgconf --variable=includedir luajit)" \
+		LUALIB="$(pkgconf --libs luajit)" \
+		USE_PGXS=1 \
+		"$@"
+}
+
+sha512sums="
+c27892e12cabc406e320537827c46b8ed5eb7d6ba8bffffca56300664edd68da2bddf6d9abe1c272732a5fc0d468dc9b0b030c52acc4fb14539a36483064ae20  pllua-ng-REL_2_0_12.tar.gz
+"

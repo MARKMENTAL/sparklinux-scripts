@@ -1,0 +1,103 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: team/kde <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=kde-plasma
+pkgname=plasma-mobile
+pkgver=6.1.5
+pkgrel=0
+pkgdesc="Modules providing phone functionality for Plasma"
+# armhf blocked by extra-cmake-modules
+# s390x blocked by plasma-workspace
+arch="all !armhf !s390x"
+url="https://www.plasma-mobile.org/"
+license="GPL-2.0-or-later AND LGPL-2.1-or-later"
+depends="
+	bluez-qt
+	breeze-icons
+	dbus-x11
+	kpipewire
+	kquickcharts
+	maliit-keyboard
+	plasma-activities
+	plasma-nano
+	plasma-nm
+	plasma-pa
+	plasma-settings
+	plasma-workspace
+	qqc2-breeze-style
+	"
+makedepends="
+	extra-cmake-modules
+	kauth-dev
+	kbookmarks-dev
+	kcodecs-dev
+	kcompletion-dev
+	kconfig-dev
+	kconfigwidgets-dev
+	kcoreaddons-dev
+	kdbusaddons-dev
+	kdeclarative-dev
+	ki18n-dev
+	kio-dev
+	kirigami-addons-dev
+	kitemviews-dev
+	kjobwidgets-dev
+	knotifications-dev
+	kpackage-dev
+	kpeople-dev
+	kservice-dev
+	kwayland-dev
+	kwidgetsaddons-dev
+	kwin-dev
+	kwindowsystem-dev
+	kxmlgui-dev
+	libphonenumber-dev
+	libplasma-dev
+	modemmanager-qt-dev
+	networkmanager-qt-dev
+	plasma-activities-dev
+	plasma-workspace-dev
+	qcoro-dev
+	qt6-qtdeclarative-dev
+	samurai
+	solid-dev
+	telepathy-qt-dev
+	"
+
+provides="plasma-phone-components=$pkgver-r$pkgrel" # For backwards compatibility
+replaces="plasma-phone-components" # For backwards compatibility
+
+subpackages="$pkgname-lang"
+
+case "$pkgver" in
+	*.90*) _rel=unstable;;
+	*) _rel=stable;;
+esac
+_repo_url="https://invent.kde.org/plasma/plasma-mobile.git"
+source="https://download.kde.org/stable/plasma/$pkgver/plasma-mobile-$pkgver.tar.xz
+	99-flashlight.rules
+	"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	install -Dm644 "$srcdir"/99-flashlight.rules -t "$pkgdir"/usr/lib/udev/rules.d/
+}
+
+sha512sums="
+970dc4e9d9464d4055b0de40ed383bbbfa774bf5f385b3f5b377f4c9c0d0775c22b5322643ddc41a2e7e5a06da50473d67ff229cd5cdd1edc61d4e9f8463450c  plasma-mobile-6.1.5.tar.xz
+4badc25cbb7dc84d6af54cff5f3c09dcc37da86b7e930bdcab6d75f8dd90ef0dd9c8a3837ab696b1f4de9cad82d5e64ddd44904640a92e910a8f45524542be95  99-flashlight.rules
+"

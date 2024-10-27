@@ -1,0 +1,594 @@
+# Contributor: Joseph Benden <joe@benden.us>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=thunderbird
+pkgver=128.2.2
+pkgrel=0
+_pkgver="${pkgver}esr"
+pkgdesc="Thunderbird email client"
+url="https://www.thunderbird.net/"
+# Limited on:
+# armhf: build failure on armhf due to wasm
+# s390x and riscv64: limited by rust and cargo
+# s390x: limited by pipewire
+# loongarch64: libc crate
+arch="all !armhf !s390x !riscv64 !loongarch64"
+license="GPL-3.0-or-later AND LGPL-2.1-or-later AND MPL-2.0"
+depends="libotr"
+makedepends="
+	alsa-lib-dev
+	automake
+	botan-dev
+	bsd-compat-headers
+	bzip2-dev
+	cargo
+	cbindgen
+	clang
+	clang-libclang
+	dbus-glib-dev
+	gettext
+	gtk+3.0-dev
+	hunspell-dev
+	icu-dev
+	json-c-dev
+	libevent-dev
+	libffi-dev
+	libjpeg-turbo-dev
+	libnotify-dev
+	libogg-dev
+	libtheora-dev
+	libtool
+	libvorbis-dev
+	libvpx-dev
+	libwebp-dev
+	libxcomposite-dev
+	libxt-dev
+	lld
+	llvm-dev
+	m4
+	mesa-dev
+	nasm
+	nodejs
+	nspr-dev
+	nss-dev
+	openmp-dev
+	pipewire-dev
+	pulseaudio-dev
+	python3
+	sed
+	wasi-sdk
+	wireless-tools-dev
+	zip
+	"
+source="https://ftp.mozilla.org/pub/thunderbird/releases/$_pkgver/source/thunderbird-$_pkgver.source.tar.xz
+	fix-fortify-system-wrappers.patch
+	fix-libresolv-path.patch
+	fix-rust-target.patch
+	fix-webrtc-glibcisms.patch
+	lfs64.patch
+	metainfo.patch
+	nrappkit-qsort.patch
+	ppc-musttail.patch
+	python-deps.patch
+	rust-lto-thin.patch
+	sandbox-fork.patch
+	sandbox-sched_setscheduler.patch
+	icu74.patch
+
+	stab.h
+
+	distribution.ini
+	mozilla-location.keys
+	thunderbird.desktop
+	vendor-prefs.js
+	"
+options="!check" # huge browser thing, skipped like firefox
+
+# secfixes:
+#   115.10.1-r0:
+#     - CVE-2024-3864
+#   115.5.0-r0:
+#     - CVE-2023-6204
+#     - CVE-2023-6205
+#     - CVE-2023-6206
+#     - CVE-2023-6207
+#     - CVE-2023-6208
+#     - CVE-2023-6209
+#     - CVE-2023-6212
+#   115.4.1-r0:
+#     - CVE-2023-5721
+#     - CVE-2023-5732
+#     - CVE-2023-5724
+#     - CVE-2023-5725
+#     - CVE-2023-5726
+#     - CVE-2023-5727
+#     - CVE-2023-5728
+#     - CVE-2023-5730
+#   102.1.0-r0:
+#     - CVE-2022-2200
+#     - CVE-2022-2226
+#     - CVE-2022-31744
+#     - CVE-2022-34468
+#     - CVE-2022-34470
+#     - CVE-2022-34472
+#     - CVE-2022-34478
+#     - CVE-2022-34479
+#     - CVE-2022-34481
+#     - CVE-2022-34484
+#   102.0-r0:
+#     - CVE-2022-2200
+#     - CVE-2022-2226
+#     - CVE-2022-31744
+#     - CVE-2022-34468
+#     - CVE-2022-34470
+#     - CVE-2022-34472
+#     - CVE-2022-34478
+#     - CVE-2022-34479
+#     - CVE-2022-34481
+#     - CVE-2022-34484
+#   91.10.0-r0:
+#     - CVE-2022-1834
+#     - CVE-2022-31736
+#     - CVE-2022-31737
+#     - CVE-2022-31738
+#     - CVE-2022-31739
+#     - CVE-2022-31740
+#     - CVE-2022-31741
+#     - CVE-2022-31742
+#     - CVE-2022-31747
+#   91.9.1-r0:
+#     - CVE-2022-1529
+#     - CVE-2022-1802
+#   91.9.0-r0:
+#     - CVE-2022-1520
+#     - CVE-2022-29909
+#     - CVE-2022-29911
+#     - CVE-2022-29912
+#     - CVE-2022-29913
+#     - CVE-2022-29914
+#     - CVE-2022-29916
+#     - CVE-2022-29917
+#   91.8.0-r0:
+#     - CVE-2022-1097
+#     - CVE-2022-1196
+#     - CVE-2022-1197
+#     - CVE-2022-24713
+#     - CVE-2022-28281
+#     - CVE-2022-28282
+#     - CVE-2022-28285
+#     - CVE-2022-28286
+#     - CVE-2022-28289
+#   91.7.0-r0:
+#     - CVE-2022-26381
+#     - CVE-2022-26383
+#     - CVE-2022-26384
+#     - CVE-2022-26386
+#     - CVE-2022-26388
+#   91.6.2-r0:
+#     - CVE-2022-0566
+#     - CVE-2022-26485
+#     - CVE-2022-26486
+#   91.6.0-r0:
+#     - CVE-2022-22753
+#     - CVE-2022-22754
+#     - CVE-2022-22756
+#     - CVE-2022-22759
+#     - CVE-2022-22760
+#     - CVE-2022-22761
+#     - CVE-2022-22763
+#     - CVE-2022-22764
+#   91.5.0-r0:
+#     - CVE-2021-4140
+#     - CVE-2022-22737
+#     - CVE-2022-22738
+#     - CVE-2022-22739
+#     - CVE-2022-22740
+#     - CVE-2022-22741
+#     - CVE-2022-22742
+#     - CVE-2022-22743
+#     - CVE-2022-22744
+#     - CVE-2022-22745
+#     - CVE-2022-22746
+#     - CVE-2022-22747
+#     - CVE-2022-22748
+#     - CVE-2022-22751
+#   91.4.1-r0:
+#     - CVE-2021-4126
+#     - CVE-2021-44538
+#   91.4.0-r0:
+#     - CVE-2021-4129
+#     - CVE-2021-43528
+#     - CVE-2021-43536
+#     - CVE-2021-43537
+#     - CVE-2021-43538
+#     - CVE-2021-43539
+#     - CVE-2021-43541
+#     - CVE-2021-43542
+#     - CVE-2021-43543
+#     - CVE-2021-43545
+#     - CVE-2021-43546
+#   91.3.2-r0:
+#     - CVE-2021-23961
+#     - CVE-2021-23994
+#     - CVE-2021-23995
+#     - CVE-2021-23998
+#     - CVE-2021-23999
+#     - CVE-2021-24002
+#     - CVE-2021-29945
+#     - CVE-2021-29946
+#     - CVE-2021-29948
+#     - CVE-2021-29951
+#     - CVE-2021-29956
+#     - CVE-2021-29957
+#     - CVE-2021-29964
+#     - CVE-2021-29967
+#     - CVE-2021-29969
+#     - CVE-2021-29970
+#     - CVE-2021-29976
+#     - CVE-2021-29980
+#     - CVE-2021-29980
+#     - CVE-2021-29981
+#     - CVE-2021-29982
+#     - CVE-2021-29984
+#     - CVE-2021-29985
+#     - CVE-2021-29986
+#     - CVE-2021-29987
+#     - CVE-2021-29988
+#     - CVE-2021-29989
+#     - CVE-2021-29991
+#     - CVE-2021-30547
+#     - CVE-2021-32810
+#     - CVE-2021-38492
+#     - CVE-2021-38493
+#     - CVE-2021-38495
+#     - CVE-2021-38496
+#     - CVE-2021-38497
+#     - CVE-2021-38498
+#     - CVE-2021-38500
+#     - CVE-2021-38501
+#     - CVE-2021-38502
+#     - CVE-2021-38503
+#     - CVE-2021-38504
+#     - CVE-2021-38505
+#     - CVE-2021-38506
+#     - CVE-2021-38507
+#     - CVE-2021-38508
+#     - CVE-2021-38509
+#     - CVE-2021-38510
+#     - CVE-2021-43534
+#     - CVE-2021-43535
+#   78.9.0-r0:
+#     - CVE-2021-23968
+#     - CVE-2021-23969
+#     - CVE-2021-23973
+#     - CVE-2021-23978
+#     - CVE-2021-23981
+#     - CVE-2021-23982
+#     - CVE-2021-23984
+#     - CVE-2021-23987
+#   78.7.0-r0:
+#     - CVE-2020-15685
+#     - CVE-2020-26976
+#     - CVE-2021-23953
+#     - CVE-2021-23954
+#     - CVE-2021-23960
+#     - CVE-2021-23964
+#   78.6.1-r0:
+#     - CVE-2020-16044
+#     - CVE-2020-16042
+#     - CVE-2020-26971
+#     - CVE-2020-26973
+#     - CVE-2020-26974
+#     - CVE-2020-26978
+#     - CVE-2020-35111
+#     - CVE-2020-35112
+#     - CVE-2020-35113
+#   78.5.1-r0:
+#     - CVE-2020-15683
+#     - CVE-2020-15969
+#     - CVE-2020-15999
+#     - CVE-2020-16012
+#     - CVE-2020-26950
+#     - CVE-2020-26951
+#     - CVE-2020-26953
+#     - CVE-2020-26956
+#     - CVE-2020-26958
+#     - CVE-2020-26959
+#     - CVE-2020-26960
+#     - CVE-2020-26961
+#     - CVE-2020-26965
+#     - CVE-2020-26966
+#     - CVE-2020-26968
+#     - CVE-2020-26970
+#   68.10.0-r0:
+#     - CVE-2020-12417
+#     - CVE-2020-12418
+#     - CVE-2020-12419
+#     - CVE-2020-12420
+#     - CVE-2020-12421
+#   68.9.0-r0:
+#     - CVE-2020-12398
+#     - CVE-2020-12399
+#     - CVE-2020-12405
+#     - CVE-2020-12406
+#     - CVE-2020-12410
+#   68.8.0-r0:
+#     - CVE-2020-12387
+#     - CVE-2020-12392
+#     - CVE-2020-12393
+#     - CVE-2020-12395
+#     - CVE-2020-12397
+#     - CVE-2020-6831
+#   68.7.0-r0:
+#     - CVE-2020-6819
+#     - CVE-2020-6820
+#     - CVE-2020-6821
+#     - CVE-2020-6822
+#     - CVE-2020-6825
+#   68.6.0-r0:
+#     - CVE-2019-20503
+#     - CVE-2020-6805
+#     - CVE-2020-6806
+#     - CVE-2020-6807
+#     - CVE-2020-6811
+#     - CVE-2020-6812
+#     - CVE-2020-6814
+#   68.5.0-r0:
+#     - CVE-2020-6793
+#     - CVE-2020-6794
+#     - CVE-2020-6795
+#     - CVE-2020-6797
+#     - CVE-2020-6798
+#     - CVE-2020-6792
+#     - CVE-2020-6800
+
+_mozappdir=/usr/lib/thunderbird
+
+# help our shared-object scanner to find the libs
+ldpath="$_mozappdir"
+sonameprefix="$pkgname:"
+
+# we need this because cargo verifies checksums of all files in vendor
+# crates when it builds and gives us no way to override or update the
+# file sanely... so just clear out the file list
+
+_clear_vendor_checksums() {
+	sed -i 's/\("files":{\)[^}]*/\1/' third_party/rust/$1/.cargo-checksum.json
+}
+
+# Build with Clang, only supported, much better here
+export CC="clang"
+export CXX="clang++"
+
+export SHELL=/bin/sh
+export BUILD_OFFICIAL=1
+export MOZILLA_OFFICIAL=1
+export USE_SHORT_LIBNAME=1
+export MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE=system
+export MOZBUILD_STATE_PATH="$srcdir"/mozbuild
+# disable desktop notifications
+export MOZ_NOSPAM=1
+# Find our triplet JSON
+export RUST_TARGET="$CTARGET"
+
+# set rpath so linker finds the libs
+export LDFLAGS="$LDFLAGS -Wl,-rpath,$_mozappdir"
+
+# let firefox do this itself.
+unset CARGO_PROFILE_RELEASE_OPT_LEVEL
+unset CARGO_PROFILE_RELEASE_LTO
+
+export CFLAGS="${CFLAGS/-fstack-clash-protection/} -g0 -O2"
+export CXXFLAGS="${CXXFLAGS/-fstack-clash-protection/} -g0 -O2 -Wno-deprecated-builtins -Wno-deprecated-declarations"
+
+prepare() {
+	default_prepare
+	rm -rf third_party/rust/packed_simd/
+	cp "$srcdir"/stab.h toolkit/crashreporter/google-breakpad/src/
+
+	_clear_vendor_checksums audio_thread_priority
+	_clear_vendor_checksums bindgen
+
+	base64 -d "$srcdir"/mozilla-location.keys > "$builddir"/mozilla-api-key
+
+	case "$CARCH" in
+	aarch64|arm*|x86*)
+		# disable-elf-hack: exists only on aarch64, arm*, x86, x86_64
+		local arch_config="ac_add_options --disable-elf-hack"
+		;;
+	esac
+
+	# webrtc does not build on these
+	case "$CARCH" in
+	ppc64le)
+		local webrtc_config="ac_add_options --disable-webrtc"
+		;;
+	esac
+
+	# FF esr doesn't have SIMD available on armv7
+	case "$CARCH" in
+	armv7)
+		# broken here
+		local rust_simd="ac_add_options --disable-rust-simd"
+		;;
+	*)
+		local rust_simd="ac_add_options --enable-rust-simd"
+		;;
+	esac
+
+	# sandbox only supported here
+	case "$CARCH" in
+	x86*|armv7|aarch64)
+		local sandbox="ac_add_options --enable-sandbox"
+		;;
+	*)
+		local sandbox="ac_add_options --disable-sandbox"
+		;;
+	esac
+
+	cat > base-mozconfig <<-EOF
+	# disable unwanted things
+	ac_add_options --disable-bootstrap
+	ac_add_options --disable-cargo-incremental
+	ac_add_options --disable-crashreporter
+	ac_add_options --disable-debug
+	ac_add_options --disable-debug-symbols
+	ac_add_options --disable-install-strip
+	ac_add_options --disable-jemalloc
+	ac_add_options --disable-strip
+	ac_add_options --disable-tests
+	ac_add_options --disable-updater
+
+	# features
+	ac_add_options --enable-alsa
+	ac_add_options --enable-application=comm/mail
+	ac_add_options --enable-dbus
+	ac_add_options --enable-default-toolkit=cairo-gtk3-wayland
+	ac_add_options --enable-ffmpeg
+	ac_add_options --enable-hardening
+	ac_add_options --enable-linker=lld
+	ac_add_options --enable-necko-wifi
+	ac_add_options --enable-official-branding
+	ac_add_options --enable-optimize="$CFLAGS"
+	ac_add_options --enable-pulseaudio
+	ac_add_options --enable-release
+	ac_add_options --enable-update-channel=release
+
+	# system libs
+	ac_add_options --enable-system-pixman
+	ac_add_options --with-librnp-backend=botan
+	ac_add_options --with-system-botan
+	ac_add_options --with-system-bz2
+	ac_add_options --with-system-ffi
+	ac_add_options --with-system-icu
+	ac_add_options --with-system-jpeg
+	ac_add_options --with-system-jsonc
+	ac_add_options --with-system-libevent
+	ac_add_options --with-system-libvpx
+	ac_add_options --with-system-nspr
+	ac_add_options --with-system-nss
+	ac_add_options --with-system-png
+	ac_add_options --with-system-webp
+	ac_add_options --with-system-zlib
+
+	# misc
+	ac_add_options --prefix=/usr
+	ac_add_options --with-distribution-id=org.alpinelinux
+	ac_add_options --with-libclang-path=/usr/lib
+	ac_add_options --with-unsigned-addon-scopes=app,system
+	ac_add_options --with-wasi-sysroot=/usr/share/wasi-sysroot
+	ac_add_options --host=$CHOST
+	ac_add_options --target=$CTARGET
+
+	# objdir
+	mk_add_options MOZ_OBJDIR="$builddir/obj"
+
+	mk_add_options RUSTFLAGS="$RUSTFLAGS"
+
+	# keys
+	# these are for alpine linux use only
+	ac_add_options --with-mozilla-api-keyfile="$builddir/mozilla-api-key"
+
+	$arch_config
+	$rust_simd
+	$sandbox
+	$webrtc_config
+	EOF
+
+	# XXX: fix transparency in icon
+	sed -i '/^<rect/d' comm/mail/branding/thunderbird/TB-symbolic.svg
+}
+
+build() {
+	cat > .mozconfig base-mozconfig
+
+	export MOZ_BUILD_DATE="$(date ${SOURCE_DATE_EPOCH:+ -d@${SOURCE_DATE_EPOCH}} "+%Y%m%d%H%M%S")"
+
+	# for lto
+	ulimit -n 4096
+
+	# can't be set here and fail
+	unset RUSTFLAGS
+
+	local thinlto_jobs=${JOBS:-1}
+
+	case "$CARCH" in
+	# on this platform, lld seems to not utilise >1 threads for thinlto for some reason.
+	# at the same time, having more than 8 also crashes lld for firefox buildsystems (why?).
+	aarch64)
+		if [ $thinlto_jobs -gt 8 ]; then
+			thinlto_jobs=8
+		fi
+		;;
+	esac
+
+	export LDFLAGS="$LDFLAGS -Wl,--thinlto-jobs=$thinlto_jobs"
+
+	case "$CARCH" in
+	# lto for 64-bit systems only
+	aarch64|x86_64|ppc64le)
+		cat > .mozconfig base-mozconfig <<-EOF
+		ac_add_options --enable-lto=cross
+		EOF
+	esac
+
+	./mach build
+}
+
+package() {
+	DESTDIR="$pkgdir" ./mach install
+
+	local _png
+	for _png in "$builddir"/comm/mail/branding/thunderbird/default*.png; do
+		local i=${_png%.png}
+		i=${i##*/default}
+		install -Dm644 "$_png" "$pkgdir"/usr/share/icons/hicolor/"$i"x"$i"/apps/thunderbird.png
+	done
+
+	install -Dm644 "$builddir"/comm/mail/branding/thunderbird/TB-symbolic.svg \
+		"$pkgdir"/usr/share/icons/hicolor/symbolic/apps/thunderbird-symbolic.svg
+
+	install -Dm644 "$builddir"/comm/mail/branding/thunderbird/net.thunderbird.Thunderbird.appdata.xml \
+		-t "$pkgdir"/usr/share/metainfo
+
+	install -Dm644 "$srcdir"/thunderbird.desktop \
+		-t "$pkgdir"/usr/share/applications
+
+	install -Dm644 "$srcdir"/vendor-prefs.js \
+		-t "$pkgdir"/$_mozappdir/defaults/pref
+	install -Dm644 "$srcdir"/distribution.ini \
+		-t "$pkgdir"/$_mozappdir/distribution
+
+	# Use system-provided dictionaries
+	ln -Tsfv /usr/share/hunspell "$pkgdir"/usr/lib/$pkgname/dictionaries
+	ln -Tsfv /usr/share/hyphen "$pkgdir"/usr/lib/$pkgname/hyphenation
+
+	# Replace duplicate binary with wrapper
+	# https://bugzilla.mozilla.org/show_bug.cgi?id=658850
+	install -Dm755 /dev/stdin "$pkgdir"/usr/bin/thunderbird <<- EOF
+	#!/bin/sh
+	exec $_mozappdir/thunderbird "\$@"
+	EOF
+	rm "$pkgdir"/$_mozappdir/thunderbird-bin
+	ln -sfv /usr/bin/thunderbird "$pkgdir"/$_mozappdir/thunderbird-bin
+}
+sha512sums="
+6300f3f6d3a907e849a6acf06101d7441680a4eab965955887ac829886d4f2152e49a0ca97255e3cd9de579fea9ff5c03f75c70a361116a66c735face885ab89  thunderbird-128.2.2esr.source.tar.xz
+19eea840aa9c1c21e7bd1f832ec078989fe6f08fca40baa271be7e74f1cffeb5ab8d3218a93e664b8d90a41506dede524e2a5174cd47580866109bc6711ea969  fix-fortify-system-wrappers.patch
+0b9f44c3c2c4efaf073d2021357f7ad61f7e8ca316494c35f785723f43e0e9b29712cd22abe02260df43a5c57cf394e8a1e308cab5a001620ed8a458a563fceb  fix-libresolv-path.patch
+cd68b89e29e5f6379fbd5679db27b9a5ef70ea65e51c0d0a8137e1f1fd210e35a8cfb047798e9549bc7275606d7ec5c8d8af1335d29da4699db7acd8bc7ff556  fix-rust-target.patch
+305c874fdea3096e9c4c6aa6520ac64bb1c347c4b59db8360096646593fe684c3b5377874d91cecd33d56d1410b4714fbdea2b514923723ecbeff79d51265d9b  fix-webrtc-glibcisms.patch
+e75daab5573ec6e28d3940a9bb98304d572dfb26ce7c1709e99fdd75dfa58abce170c96de683f8dc2224ea2e118aa7d78affbd54f99c4e328a4641685d64bd7d  lfs64.patch
+79948c0670e4ff1d9dac3b11b64937e58fb73dd9ea405cbebc6777ec96243ac3d8ac820b2ac67c1b39aaa286267da156b00ff28abc40a5071e189637046b9834  metainfo.patch
+b586ddb21b50fa8fba798c3a269518049c38cc52fd91ad00e96a3f1144e6b2879d9df1a182a2fb181898042043ae98381a70d0e4acbf8aa705d2b4f62c17a5a1  nrappkit-qsort.patch
+ea9ca4bae9c56497ec6de6ba8599e8428c6ba623c71ea9e40655970102c70b9407dc4e8403d068781174b15e03ab484a89463c9e8623cfac32d82fbbe43cb65e  ppc-musttail.patch
+4e40b34c5f77a1a21fe971a6fcd8a21b1a63423a3a7932a5a6e1c7a2779f9f06a561c806614a01931679a4b1c6afdfd8ae1f3cc6b673f259ccd368e8e54f6e90  python-deps.patch
+1c6918dd6655d3a1251bfd4af2e1c561cbb00d540a883b4c1ebf7f5de530d754d9ac07b4b5f56cdab6c511d25c8910ec94043f5733e97501a67abffe1bafaeb1  rust-lto-thin.patch
+2518f2fc75b5db30058e0735f47d60fdf1e7adfaeee4b33fb2afb1bd9a616ce943fd88f4404d0802d4083703f4acf1d5ad42377218d025bc768807fbaf7e1609  sandbox-fork.patch
+94433c5ffdbe579c456d95c5f053f61fcbab2f652fa90bc69dcc27d9a1507a8e5c677adeadae9a7a75cc9a55184c1040737f4dfd10b279c088ef016561e6f135  sandbox-sched_setscheduler.patch
+afabea91b328c5a68eaa20f9099ac7b2d0e7f2423e816b05ed168bdd326a5684fa02de08bf05c6033e9b888f02775d1b0443a00329b7a632ee399122a391c13a  icu74.patch
+0b3f1e4b9fdc868e4738b5c81fd6c6128ce8885b260affcb9a65ff9d164d7232626ce1291aaea70132b3e3124f5e13fef4d39326b8e7173e362a823722a85127  stab.h
+3d1f85c2cd446a973cf158caada7fbc32cbc890ec5111d6d2ac98862df11d0c80cc52eaec290721c64034be7398ed68a91405f168e13ca71ff1981f51cb60046  distribution.ini
+382510375b1a2fa79be0ab79e3391a021ae2c022429ffbaa7e7a69166f99bb56d01e59a1b10688592a29238f21c9d6977672bd77f9fae439b66bdfe0c55ddb15  mozilla-location.keys
+5eddbfdbe3f8ed31936c0b9e9e6313aa35f1a75d0a2303c0a0742e06997714b787e444fae1696453e3e146226bf2f7fe2ab5e34b0b2069f05f0ccbc55099de89  thunderbird.desktop
+d48e2a328fd756e082e7ccd1b3156b5066b4526c2647fafad9d22189b3413d6a564a4d0b03b37a9670c53d65b5ba4a7af855a7a4a4583e4228ee66510bdb379d  vendor-prefs.js
+"

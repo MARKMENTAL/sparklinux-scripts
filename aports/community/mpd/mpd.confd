@@ -1,0 +1,7 @@
+# Configuration for /etc/init.d/mpd
+
+# Options to pass to mpd daemon.
+#command_args=
+
+# Run with process supervisor.
+supervisor=supervise-daemon

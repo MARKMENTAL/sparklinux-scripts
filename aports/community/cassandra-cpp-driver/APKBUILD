@@ -1,0 +1,33 @@
+# Contributor: Gennady Feldman <gena01@gmail.com>
+# Maintainer: Gennady Feldman <gena01@gmail.com>
+pkgname=cassandra-cpp-driver
+_pkgname=cpp-driver
+pkgver=2.16.2
+pkgrel=2
+pkgdesc="Cassandra CPP Driver"
+url="https://datastax.github.io/cpp-driver/"
+arch="aarch64 x86_64 x86 ppc64le"
+license="Apache-2.0"
+options="!check" # FIXME: cassandra_integration_tests won't link
+makedepends="cmake make openssl-dev>3 libuv-dev zlib-dev samurai"
+subpackages="$pkgname-dev"
+source="$_pkgname-$pkgver.tar.gz::https://github.com/datastax/cpp-driver/archive/$pkgver.tar.gz
+	"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCASS_BUILD_STATIC=ON \
+		-DCMAKE_INSTALL_PREFIX:PATH=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+6dee9ceaafa1a86bacd54759931d6cf794c50cb2e0944a568b2e36f04f4151d816f7d041ef17d70b1d0133497ec25f8f975c166b4fc6f882df23d0725bb0e28a  cpp-driver-2.16.2.tar.gz
+"

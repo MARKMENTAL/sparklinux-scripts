@@ -1,0 +1,34 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=thunar-archive-plugin
+pkgver=0.5.2
+pkgrel=0
+pkgdesc="Create and deflate archives in Thunar"
+url="https://goodies.xfce.org/projects/thunar-plugins/thunar-archive-plugin"
+arch="all"
+license="GPL-2.0-only"
+options="!check" # no test suite
+makedepends="intltool thunar-dev exo-dev"
+subpackages="$pkgname-lang"
+source="https://archive.xfce.org/src/thunar-plugins/thunar-archive-plugin/${pkgver%.*}/thunar-archive-plugin-$pkgver.tar.bz2"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--libexecdir=/usr/lib/xfce4 \
+		--localstatedir=/var \
+		--disable-static
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	# dont want file-roller
+	rm -f "$pkgdir"/usr/lib/xfce4/thunar-archive-plugin/file-roller.tap
+}
+
+sha512sums="
+f334b960c623bc6c5736ba38d0e965b4e8d4f22fe857a66301c36c255701a702f839d6f63f67b37bc665066d75d787ea8159d4eed7561a2ecd98340bdcb65bc0  thunar-archive-plugin-0.5.2.tar.bz2
+"

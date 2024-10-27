@@ -1,0 +1,78 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: omni <omni+alpine@hack.org>
+pkgname=onefetch
+pkgver=2.22.0
+pkgrel=0
+pkgdesc="Git repository summary on your terminal"
+url="https://github.com/o2sh/onefetch"
+# s390x: build failure
+arch="all !s390x"
+license="MIT"
+makedepends="
+	cargo
+	cargo-auditable
+	zlib-dev
+	zlib-ng-dev
+	zstd-dev
+	"
+checkdepends="bash"
+subpackages="
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="$pkgname-$pkgver.tar.gz::https://crates.io/api/v1/crates/onefetch/$pkgver/download"
+options="net"
+
+case "$CARCH" in
+riscv64)
+	options="$options !check"
+	# didn't manage to disable the test with
+	# cargo test --frozen -- --skip test_repo
+	# maybe some other test is failing?
+	;;
+esac
+
+# Reduce binary size
+export CARGO_PROFILE_RELEASE_OPT_LEVEL="z"
+
+prepare() {
+	default_prepare
+
+	# Rust target triple.
+	local target=$(rustc -vV | sed -n 's/host: //p')
+
+	# Build against system-provided libzstd.
+	mkdir -p .cargo
+	cat >> .cargo/config.toml <<-EOF
+		[target.$target]
+		z-ng = { rustc-link-lib = ["z-ng"], rustc-cfg = ["zng"] }
+		zstd = { rustc-link-lib = ["zstd"] }
+	EOF
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+	for shellcomp in bash fish zsh; do
+		./target/release/onefetch --generate "$shellcomp" > onefetch."$shellcomp"
+	done
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm0755 target/release/onefetch "$pkgdir"/usr/bin/onefetch
+	install -Dm0644 docs/onefetch.1 "$pkgdir"/usr/share/man/man1/onefetch.1
+	install -Dm0644 onefetch.bash "$pkgdir"/usr/share/bash-completion/completions/onefetch
+	install -Dm0644 onefetch.fish "$pkgdir"/usr/share/fish/vendor_completions.d/onefetch.fish
+	install -Dm0644 onefetch.zsh "$pkgdir"/usr/share/zsh/site-functions/_onefetch
+}
+
+sha512sums="
+fdec92d0ef26f95adcee9f681dc7deddeb4c35e9fc399d3d7c34a32472f8a8479a379700ba4b615814a3aecb067d953278ad1f81ee298c9421084a42a12c05b8  onefetch-2.22.0.tar.gz
+"

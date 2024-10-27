@@ -1,0 +1,38 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+pkgname=py3-openant
+pkgver=1.3.2
+pkgrel=0
+pkgdesc="Python library to communicate with ANT-FS compliant devices"
+url="https://github.com/Tigge/openant"
+arch="noarch"
+license="MIT"
+depends="python3 py3-pyserial py3-usb"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest-xdist"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/Tigge/openant/archive/v$pkgver/openant-$pkgver.tar.gz"
+builddir="$srcdir/openant-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+
+	install -Dm644 "$builddir"/resources/42-ant-usb-sticks.rules -t "$pkgdir"/usr/lib/udev/rules.d/
+}
+
+sha512sums="
+2bb37efd48c6889f2de336ef3dd75b0b0f9001fc083cdbf3f1cee72c826b567a9b4a4b1ae9872dbdbf012f388f4b19d7b0a32b200f4352e26ee91949164d3243  py3-openant-1.3.2.tar.gz
+"

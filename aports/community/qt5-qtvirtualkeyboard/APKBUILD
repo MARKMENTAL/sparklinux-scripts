@@ -1,0 +1,64 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=qt5-qtvirtualkeyboard
+pkgver=5.15.10_git20230424
+pkgrel=0
+_module="${pkgname#qt5-}"
+_pkgver=72373522141dd3206183eb5fa56ae1c36a6d4c2b
+_fullname=$_module-$_pkgver
+pkgdesc="Virtual keyboard framework"
+arch="all !armhf" # armhf blocked by qt5-qtdeclarative
+url="https://www.qt.io/developers/"
+license="LGPL-2.1-only AND LGPL-3.0-only AND GPL-3.0-only AND Qt-GPL-exception-1.0"
+depends_dev="qt5-qtsvg-dev"
+makedepends="$depends_dev
+	hunspell-dev
+	qt5-qtbase-dev
+	qt5-qtdeclarative-dev
+	"
+subpackages="$pkgname-dev"
+source="https://dev.alpinelinux.org/archive/qt/$_fullname.tar.xz"
+builddir="$srcdir/$_fullname"
+
+_disturl="dev.alpinelinux.org:/archive/qt/"
+snapshot() {
+	clean
+	makedepends="git xz rsync tar" deps
+	mkdir -p "$srcdir" && cd "$srcdir"
+	git clone --filter=tree:0 https://invent.kde.org/qt/qt/$_module.git .
+	git archive --format tar --prefix=$_fullname/ $_pkgver > "$SRCDEST"/$_fullname.tar
+	xz -vv -T0 -9 -e "$SRCDEST"/$_fullname.tar
+	rsync --progress -La "$SRCDEST"/$_fullname.tar.xz $_disturl
+}
+
+prepare() {
+	default_prepare
+
+	# We need to make the build system think we're running in a git repository
+	# so it correctly symlinks during the build
+	mkdir .git
+}
+
+build() {
+	qmake-qt5 CONFIG+="lang-all handwriting arrow-key-navigation"
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make INSTALL_ROOT="$pkgdir" install
+
+	# Drop QMAKE_PRL_BUILD_DIR because reference the build dir
+	find "$pkgdir/usr/lib" -type f -name '*.prl' \
+		-exec sed -i -e '/^QMAKE_PRL_BUILD_DIR/d' {} \;
+
+	install -d "$pkgdir"/usr/share/licenses
+	ln -s /usr/share/licenses/qt5-base "$pkgdir"/usr/share/licenses/$pkgname
+}
+
+sha512sums="
+855aa06d2ababf2d1d3ef159ffdc0982ee9eb884d9033242b53e50ecd39a90c2ba9883b2a5d6b57e73bd9d5437a686548abdb35c3a311c3846ef2f18d8c2624b  qtvirtualkeyboard-72373522141dd3206183eb5fa56ae1c36a6d4c2b.tar.xz
+"

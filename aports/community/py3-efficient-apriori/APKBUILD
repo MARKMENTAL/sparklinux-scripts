@@ -1,0 +1,40 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+pkgname=py3-efficient-apriori
+pkgver=2.0.5
+pkgrel=0
+pkgdesc="An efficient Python implementation of the Apriori algorithm"
+url="https://github.com/tommyod/Efficient-Apriori"
+arch="noarch"
+license="MIT"
+depends="python3"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="https://github.com/tommyod/Efficient-Apriori/archive/$pkgver/efficient-apriori-$pkgver.tar.gz"
+builddir="$srcdir/Efficient-Apriori-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+b47bf03163abbd774c70895a52d1cbcd7160431fc40b8c22238e6cb5a1c1cd3fa824d150dcac8947544167b155f173bc6311e34bf1cb28db066d194684756c0a  efficient-apriori-2.0.5.tar.gz
+"

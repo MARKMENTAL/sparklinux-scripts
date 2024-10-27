@@ -1,0 +1,58 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=taplo
+_pkgname=release-taplo-cli
+pkgver=0.9.0
+pkgrel=0
+pkgdesc="A TOML toolkit written in Rust"
+url="https://taplo.tamasfe.dev/"
+# loongarch64: blocked by libc crate
+arch="all !loongarch64"
+license="MIT"
+makedepends="
+	cargo
+	cargo-auditable
+	openssl-dev
+	"
+source="https://github.com/tamasfe/taplo/archive/$_pkgname-$pkgver/$_pkgname-$pkgver.tar.gz
+	bump-getrandom.patch
+	"
+builddir="$srcdir/taplo-$_pkgname-$pkgver"
+
+export CARGO_PROFILE_RELEASE_OPT_LEVEL="z"
+
+case "$CARCH" in
+	# s390x: fails to build nix crate
+	s390x) _features="native-tls";;
+	*) _features="lsp,native-tls";;
+esac
+
+_cargo_opts="--frozen --no-default-features --features $_features"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+
+	# Dependency only for benchmarks, doesn't build on many arches.
+	sed -i '/pprof/d' crates/taplo/Cargo.toml
+
+	cargo fetch --target="$CTARGET"  # update Cargo.lock
+}
+
+build() {
+	cargo auditable build -p taplo-cli $_cargo_opts --release
+}
+
+check() {
+	cargo test $_cargo_opts
+}
+
+package() {
+	install -D -m755 target/release/$pkgname -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+16efc12fc0abb3944cab7302762f5af94a7f311fec176377a28c22479ecbff38e1f90893be71d903433c5854506c35c5ee95d75b64718b1ea488f1691f956cdb  release-taplo-cli-0.9.0.tar.gz
+e12c762f5be9741839059587e15f4579aa2d2c1fe8ac4ee408ee84df6075afb850585bf9f3cdb0097f53f4697b48eae23d1b709a3bc8e3834327caea49bf3a6d  bump-getrandom.patch
+"

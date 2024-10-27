@@ -1,0 +1,47 @@
+# Contributor: Evgeny Grin (Karlson2k) <k2k@narod.ru>
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Contributor: Łukasz Jendrysik <scadu@yandex.com>
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=libmicrohttpd
+pkgver=0.9.77
+pkgrel=0
+pkgdesc="small C library that is supposed to make it easy to run an HTTP server as part of another application"
+url="https://www.gnu.org/software/libmicrohttpd/"
+arch="all"
+license="LGPL-2.1-or-later"
+makedepends="gnutls-dev"
+checkdepends="curl-dev"
+subpackages="$pkgname-static $pkgname-dev $pkgname-doc"
+source="https://ftp.gnu.org/gnu/libmicrohttpd/libmicrohttpd-$pkgver.tar.gz
+	broken-test.patch
+	"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--disable-thread-names \
+		--enable-largefile \
+		--enable-curl \
+		--enable-https \
+		--enable-messages
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+001025c023dd94c4a0cf017ed575e65a577b5ce595e7e450346bfb75def77eaa8a4cfbeffb9f4b912e34165c2cfca147c02c895e067a4f6c5a321a12035758a5  libmicrohttpd-0.9.77.tar.gz
+5e5d4331ed9123c1be1dcf77697836ff246c5b297f1bbc7ad051f6a5b0dc68a8d9de17c08fa1363e4783730331dce7286777f714c732046738e4a7520dc038da  broken-test.patch
+"

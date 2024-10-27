@@ -1,0 +1,115 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+pkgname=lomiri
+pkgver=0.3.0
+pkgrel=0
+pkgdesc="A convergent desktop environment"
+# armhf: blocked by lomiri-ui-toolkit
+# s390x, riscv64, ppc64le: blocked by lomiri-system-settings
+# loongarch64: blocked by qtmir
+arch="all !armhf !s390x !riscv64 !ppc64le !loongarch64"
+url="https://gitlab.com/ubports/development/core/lomiri"
+license="GPL-3.0-only AND LGPL-2.1-only"
+depends="
+	ayatana-indicator-keyboard
+	ayatana-indicator-session
+	biometryd
+	gsettings-desktop-schemas
+	lomiri-notifications
+	lomiri-schemas
+	lomiri-settings-components
+	lomiri-telephony-service
+	lomiri-thumbnailer
+	openrc-settingsd
+	qt5-qtbase-sqlite
+	qt5-qtgraphicaleffects
+	suru-icon-theme
+	"
+makedepends="
+	cmake
+	cmake-extras
+	dbus-test-runner
+	doxygen
+	elogind-dev
+	geonames-dev
+	gnome-desktop-dev
+	graphviz
+	gsettings-qt-dev
+	libqtdbusmock
+	libqtdbustest
+	linux-pam-dev
+	lomiri-api-dev
+	lomiri-app-launch-dev
+	lomiri-deviceinfo-dev
+	lomiri-download-manager-dev
+	lomiri-indicator-network-dev
+	lomiri-libusermetrics-dev
+	lomiri-system-settings
+	lomiri-ui-toolkit-dev
+	qmenumodel
+	qmenumodel-dev
+	qt5-qtbase-dev
+	qt5-qtdeclarative-dev
+	qtmir-dev
+	samurai
+	"
+checkdepends="py3-dbusmock"
+source="https://gitlab.com/ubports/development/core/lomiri/-/archive/$pkgver/lomiri-$pkgver.tar.gz
+	0001-cursor-Always-follow-cursor-position-from-mir.patch
+	0002-Disable-broken-tests-due-to-dropped-mocks-from-mir-2.patch
+	0003-Add-qt5-suffix-to-search-for-Qt-tools.patch
+	0004-No-systemd.patch
+	0005-Disable-lightdm-integration.patch
+	0006-Change-hard-coded-launcher-logo-to-one-set-by-a-reso.patch
+	2010_use-desktop-qtmir.patch
+	home.svg
+	"
+subpackages="$pkgname-lang"
+options="!check" # Tests fail
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DCMAKE_INSTALL_LOCALSTATEDIR=/var \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_BUILD_TYPE=None \
+		-DWITH_MIR2=ON
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	# Replace the Ubuntu logo with Alpine
+	rm "$pkgdir"/usr/share/lomiri/Launcher/graphics/home.svg
+	install -Dm644 "$srcdir"/home.svg \
+		"$pkgdir"/usr/share/lomiri/Launcher/graphics/
+
+	# Remove various mocks and test files not wanted at runtime
+	rm "$pkgdir"/usr/bin/indicators-client
+	rm "$pkgdir"/usr/bin/lomiri-mock-indicator-service
+	rm -r "$pkgdir"/usr/lib/lomiri/qml/mocks/
+	rm -r "$pkgdir"/usr/lib/lomiri/qml/utils/Lomiri/SelfTest/
+	rm -r "$pkgdir"/usr/libexec/lomiri/tests/
+	rm "$pkgdir"/usr/libexec/lomiri/uqmlscene
+	rm "$pkgdir"/usr/share/applications/indicators-client.desktop
+	rm -r "$pkgdir"/usr/share/lomiri/mocks/
+	rm -r "$pkgdir"/usr/share/lomiri/tests/
+}
+
+sha512sums="
+d4a4731ff121b21e04225fd4afda801389dc52079cefdfb8dfb513b74c39b400e98960ba59334329bd96860dd0e707f575b14123296aff48d88a2f9e9b5f34d2  lomiri-0.3.0.tar.gz
+6a2366586584b9929baae31c689e717f5198c04639902a5ec2bfeca20d0b176dde280cc64ba9ea90d8d1784aaacc86d642f800880e11c7e295eb18027f7cf013  0001-cursor-Always-follow-cursor-position-from-mir.patch
+9a2a5dbc1fcfb94a354c56c0fe59395a42999f277c1353685cc10346154cea5d368d1f6471c5d0b62fbde8474b0411191ff4d21105752f7140434dde20434343  0002-Disable-broken-tests-due-to-dropped-mocks-from-mir-2.patch
+182e09c4909ca48b95faf7bce6f56de92a5ff5c26661f826ef3fdc7ddad2c486978d138bfcf54312775208ec13c65646583021dd2eadcb6af9dc4016de010d19  0003-Add-qt5-suffix-to-search-for-Qt-tools.patch
+d0baa1ba775f13f2782fb5771d2afa618d31e04fbec4442da57b3dd5eb3c2bc85e53518b75f4fd23b5407a520d2430e718e2bcb242af33ce37c48674168e7fce  0004-No-systemd.patch
+accdc7cc9747a32593d4c64eac6869dc232ef8e6775066a56e41180b23d61f6f749779f37cd98e824cd54c60edb40f7c1fadede24c1abf5ef14daa79fa0a8a35  0005-Disable-lightdm-integration.patch
+36ac033e4c892f8c43451ee93d00a5596b78fb6ff8cb13f96a28254af361b4e447a474cb0531f1a1f93a918e9939a5e169946568a7e8dbf5c8ea6c16f28d9355  0006-Change-hard-coded-launcher-logo-to-one-set-by-a-reso.patch
+7a329bb4b0e17152fa900d5c9097fb472bfc0f4d0cc62c9709cfb1d60e0a2159934cddcd3d098ae1de7badfe8a89ee596f98cb9b138bd99a620e2c11940b591e  2010_use-desktop-qtmir.patch
+8be30a5e7692c39ffb1948910b45d8fa69a88725df45b67ba69711281b3cf15568b9fff29a8b5b216e5e86656b5961ad7ef9eb0e87c007215e012c3a663045b7  home.svg
+"

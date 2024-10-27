@@ -1,0 +1,40 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=randrctl
+pkgver=1.9.0
+pkgrel=6
+pkgdesc="Profile based screen manager for X"
+url="https://github.com/edio/randrctl"
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="python3 py3-argcomplete py3-setuptools py3-yaml xrandr"
+checkdepends="py3-pytest"
+makedepends="python3-dev py3-pbr py3-setuptools py3-gpep517"
+subpackages="$pkgname-pyc"
+source="https://github.com/edio/randrctl/archive/$pkgver/randrctl-$pkgver.tar.gz"
+
+export PBR_VERSION="$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	gpep517 install-wheel --destdir .testenv --prefix '' .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+
+	install -m 644 -D randrctl/setup/99-randrctl.rules \
+		"$pkgdir"/lib/udev/rules.d/99-$pkgname.rules
+}
+
+sha512sums="
+6134f777f017e1d5b0e838128eb72302abd1001d0737518c3495b4b47c89a8e7e803997fee4b0454ef9e0759b9639fb5eec13ab7da477ef5acc14e83a1a6c8cc  randrctl-1.9.0.tar.gz
+"

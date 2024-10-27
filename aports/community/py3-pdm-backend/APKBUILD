@@ -1,0 +1,52 @@
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=py3-pdm-backend
+pkgver=2.1.8
+pkgrel=1
+pkgdesc="Build backend used by PDM that supports latest packaging standards"
+url="https://pdm-backend.fming.dev/"
+arch="noarch"
+license="MIT"
+depends="
+	py3-cerberus
+	py3-editables
+	py3-license-expression
+	py3-packaging
+	py3-pyproject-metadata
+	py3-tomli
+	py3-tomli-w
+	py3-validate-pyproject
+	python3
+	"
+makedepends="py3-gpep517 py3-installer"
+checkdepends="py3-pytest py3-setuptools python3-dev"
+subpackages="$pkgname-pyc"
+source="https://github.com/pdm-project/pdm-backend/archive/refs/tags/$pkgver/py3-pdm-backend-$pkgver.tar.gz
+	unvendor.patch
+	"
+builddir="$srcdir/pdm-backend-$pkgver"
+
+build() {
+	PDM_BUILD_SCM_VERSION=$pkgver \
+	gpep517 build-wheel	\
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+
+	rm -rf "$pkgdir"/usr/lib/python*/site-packages/pdm/backend/_vendor
+	find "$pkgdir" -type f -name '*.orig' -delete
+}
+
+sha512sums="
+975dad24d128a01b5484f62aece3b209eb3dddf3800c75e422ed1dd0d4cbe15ce60a155d6ed0cec4104eef47cad822e56a2379c877e3f5c8c719dfa86d8800c7  py3-pdm-backend-2.1.8.tar.gz
+f10a272dffef1c512992ad4a6343b58f3d1caddbe6321e7a8f30a45c8cc4c77d3881696a025531fe6c0f059d8519284464b9a5f2d0d5c6ee91355f568385ed44  unvendor.patch
+"

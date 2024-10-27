@@ -1,0 +1,36 @@
+# Maintainer: team/gnome <ablocorrea@hotmail.com>
+pkgname=gnome-app-list
+pkgver=1.0
+pkgrel=0
+pkgdesc="App recommendation data for the GNOME project"
+url="https://gitlab.gnome.org/GNOME/gnome-app-list"
+arch="noarch"
+license="LGPL-2.1-or-later"
+makedepends="
+	meson
+	py3-lxml
+	python3
+"
+checkdepends="
+	bash
+	libxml2-utils
+"
+source="https://download.gnome.org/sources/gnome-app-list/$pkgver/gnome-app-list-$pkgver.tar.xz"
+
+build() {
+	abuild-meson \
+		. output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+check() {
+	meson test --no-rebuild -C output
+}
+
+sha512sums="
+e07d58d2b5efc5f567484411e801ffe3e7202a2765c2dbff1460f9b60b3d393478e8589a2f741a03b2270a7a55baf924616e46bbf5264334ecb475c952cbc97e  gnome-app-list-1.0.tar.xz
+"

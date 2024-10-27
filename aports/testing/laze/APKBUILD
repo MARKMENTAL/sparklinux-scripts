@@ -1,0 +1,61 @@
+# Contributor: Kaspar Schleiser <kaspar@schleiser.de>
+# Maintainer: Kaspar Schleiser <kaspar@schleiser.de>
+pkgname=laze
+pkgver=0.1.24
+pkgrel=0
+pkgdesc="laze is a build system based on Ninja, aiming to be the next goto-alternative to make"
+url="https://laze-build.org"
+# loongarch64: blocked by libc crate
+arch="all !loongarch64"
+license="Apache-2.0"
+depends="ninja"
+makedepends="cargo cargo-auditable"
+checkdepends="xz"
+subpackages="$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="https://github.com/kaspar030/laze/archive/$pkgver/laze-$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --release --frozen
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm755 "target/release/laze" "$pkgdir/usr/bin/laze"
+
+	# create man pages
+	mkdir -p tmp/man tmp/completions
+	target/release/laze manpage tmp/man
+
+	install -Dm644 "tmp/man/laze.1" "$pkgdir/usr/share/man/man1/laze.1"
+	install -Dm644 "tmp/man/laze-build.1" "$pkgdir/usr/share/man/man1/laze-build.1"
+	install -Dm644 "tmp/man/laze-clean.1" "$pkgdir/usr/share/man/man1/laze-clean.1"
+
+	# create completions
+	for shell in bash zsh fish; do
+		target/release/laze -Ctmp/completions completion --generate $shell \
+			> tmp/completions/$shell
+	done
+
+	install -Dm644 "tmp/completions/bash" \
+		"$pkgdir/usr/share/bash-completion/completions/laze"
+	install -Dm644 "tmp/completions/fish" \
+		"$pkgdir/usr/share/fish/vendor_completions.d/laze.fish"
+	install -Dm644 "tmp/completions/zsh" \
+		"$pkgdir/usr/share/zsh/site-functions/_laze"
+}
+
+sha512sums="
+69e5ed2d0186601f45d48b39f3479826f71b3dcdcf365ef85ed8a677b81f02e0fa92671d5adb9ade73485e5d830f37af2bffbbb76ef00b6ad35075485a36dd07  laze-0.1.24.tar.gz
+"

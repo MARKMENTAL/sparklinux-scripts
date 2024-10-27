@@ -1,0 +1,45 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: mio <miyopan@e.email>
+pkgname=libgedit-tepl
+pkgver=6.11.0
+pkgrel=0
+pkgdesc="Gedit Technology — text editor product line"
+url="https://gitlab.gnome.org/World/gedit/libgedit-tepl"
+arch="all"
+license="LGPL-3.0-or-later"
+depends_dev="
+	glib-dev
+	gtk+3.0-dev
+	libgedit-gtksourceview-dev
+	"
+makedepends="
+	$depends_dev
+	gobject-introspection-dev
+	gsettings-desktop-schemas-dev
+	gtk-doc
+	libgedit-amtk-dev
+	libgedit-gfls-dev
+	libhandy1-dev
+	meson
+	"
+checkdepends="xvfb-run"
+subpackages="$pkgname-dev $pkgname-doc $pkgname-lang"
+source="https://gitlab.gnome.org/World/gedit/libgedit-tepl/-/archive/$pkgver/libgedit-tepl-$pkgver.tar.gz"
+replaces="tepl"
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+check() {
+	xvfb-run -a meson test --no-rebuild -v -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+2a9650c7b2bf467223f89b8aeeaef915084c3171c13f1950959f1e0f18ed2561f4bbb2ab4ef782455533a96098ae1d8c61a075b22772d773e20df53f22d99f79  libgedit-tepl-6.11.0.tar.gz
+"

@@ -1,0 +1,51 @@
+# Contributor: Jakob Meier <comcloudway@ccw.icu>
+# Maintainer: Jakob Meier <comcloudway@ccw.icu>
+pkgname=normaliz
+pkgver=3.10.2
+pkgrel=1
+pkgdesc="Normaliz is an open source tool for computations."
+url="https://www.normaliz.uni-osnabrueck.de/"
+# s390x: flint, libarb, libantic
+arch="all !s390x"
+license="GPL-3.0"
+makedepends="
+	boost-dev
+	diffutils
+	flint-dev
+	gmp-dev
+	libantic-dev
+	libarb-dev
+	"
+subpackages="$pkgname-dev $pkgname-libs"
+source="
+	normaliz-$pkgver.tar.gz::https://github.com/Normaliz/Normaliz/releases/download/v$pkgver/normaliz-$pkgver.tar.gz
+	"
+
+build() {
+	# math
+	export CFLAGS="$CFLAGS -O3 -flto=auto"
+	export CXXFLAGS="$CXXFLAGS -O3 -flto=auto"
+
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--disable-static
+
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+e9b6fdc699376e7d4245d100d600b5931fbf4ea0d8086144fe148a4f17210324d1f0cbaa2a4ed9e10fc1977302f083442ad27e94a4dfd8ec9015f22f696d7685  normaliz-3.10.2.tar.gz
+"

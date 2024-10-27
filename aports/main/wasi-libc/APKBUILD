@@ -1,0 +1,37 @@
+# Contributor: Alex Yam <alex@alexyam.com>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=wasi-libc
+pkgver=0.20240412
+_gitrev=9e8c542319242a5e536e14e6046de5968d298038
+pkgrel=0
+pkgdesc="WASI libc implementation for WebAssembly"
+url="https://github.com/WebAssembly/wasi-libc"
+arch="all"
+options="!check" # no testsuite
+# https://github.com/WebAssembly/wasi-libc/blob/main/LICENSE
+#   wasi-libc			- Apache License v2.0 WITH LLVM Exceptions AND
+#				  Apache License v2.0 AND MIT
+#   dlmalloc/			- CC0
+#   libc-bottom-half/cloudlibc/	- BSD-2-Clause
+#   libc-top-half/musl/		- MIT
+license="Apache-2.0 WITH LLVM-exception AND Apache-2.0 AND MIT AND CC0-1.0 AND BSD-2-Clause"
+makedepends="clang llvm"
+source="wasi-libc-$_gitrev.tar.gz::https://github.com/WebAssembly/wasi-libc/archive/$_gitrev.tar.gz
+	no-double-build.patch
+	"
+builddir="$srcdir"/$pkgname-$_gitrev
+
+build() {
+	# https://bugzilla.mozilla.org/show_bug.cgi?id=1773200#c4
+	make CC=clang BULK_MEMORY_SOURCES=
+	make CC=clang THREAD_MODEL=posix
+}
+
+package() {
+	make INSTALL_DIR="$pkgdir"/usr/share/wasi-sysroot install
+}
+
+sha512sums="
+22f9596f7ce48cfa15cb66ab017ba6c54c0df56c4f78783f9338e598f60571ff14110a82c6627f8602f3ec2ca3c5ba5eef3e1764a9bd9ead8ae7f1260f9cfd0d  wasi-libc-9e8c542319242a5e536e14e6046de5968d298038.tar.gz
+8241854f3331e4e22756f4414afcd6cd766d48e2a1a38ad6c95903f84b6f6b718b1ed0eae2ef0fe78f2ab5c87352ffb44f1eca3ea03983173b80f72af5948651  no-double-build.patch
+"

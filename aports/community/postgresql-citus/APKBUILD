@@ -1,0 +1,59 @@
+# Contributor: Michael Pirogov <vbnet.ru@gmail.com>
+# Maintainer: Michael Pirogov <vbnet.ru@gmail.com>
+pkgname=postgresql-citus
+_projname=citus
+pkgver=12.1.5
+pkgrel=0
+pkgdesc="Scalable PostgreSQL for multi-tenant and real-time analytics workloads"
+url="https://github.com/citusdata/citus"
+arch="all"
+license="AGPL-3.0-only"
+makedepends="
+	autoconf
+	icu-dev
+	libxml2-dev
+	lz4-dev
+	postgresql-dev
+	zstd-dev
+	"
+install="$pkgname.post-install"
+subpackages="
+	$pkgname-bitcode
+	$pkgname-dev
+	"
+source="https://github.com/citusdata/citus/archive/v$pkgver/$_projname-$pkgver.tar.gz"
+builddir="$srcdir/$_projname-$pkgver"
+options="!check" # tests requires running postgresql cluster
+
+prepare() {
+	default_prepare
+	autoreconf -fi
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--without-libcurl
+	make
+}
+
+package() {
+	depends="postgresql$(pg_config --major-version)"
+
+	make DESTDIR="$pkgdir" install
+	install -Dm644 LICENSE "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+}
+
+bitcode() {
+	pkgdesc="$pkgdesc (bitcode for JIT)"
+	depends="$pkgname=$pkgver-r$pkgrel"
+	install_if="postgresql$(pg_config --major-version)-jit $pkgname=$pkgver-r$pkgrel"
+
+	amove usr/lib/postgresql*/bitcode
+}
+
+sha512sums="
+267cf5e52a23eabd3ac86eedb9929fbeae09b16279db5656d328ddbf64879fe3691e82fb0d15efb216e3c254b37cb3b6a5ca9c5097fc5f075c8e7b9ec3337a93  citus-12.1.5.tar.gz
+"

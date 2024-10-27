@@ -1,0 +1,62 @@
+# Maintainer: Cowington Post <cowingotnpost@gmail.com>
+pkgname=psi-plus
+pkgver=1.5.1965
+pkgrel=0
+pkgdesc="Powerful XMPP (Jabber) client (Qt, C++) designed for power users"
+url="https://psi-plus.com/"
+# ppc64le, s390x, riscv64, loongarch64: qt5-qtwebengine missing
+arch="all !ppc64le !s390x !riscv64 !loongarch64"
+license="GPL-2.0"
+makedepends="
+	cmake
+	hunspell-dev
+	libidn-dev
+	libomemo-c-dev
+	libotr-dev
+	libsignal-protocol-c-dev
+	libusrsctp-dev
+	qca-dev
+	qt5-qtbase-dev
+	qt5-qtkeychain
+	qt5-qtmultimedia-dev
+	qt5-qtsvg-dev
+	qt5-qtwebengine-dev
+	qt5-qtx11extras-dev
+	qtkeychain-dev
+	samurai
+	tidyhtml-dev
+	"
+subpackages="$pkgname-plugins"
+source="https://github.com/psi-plus/psi-plus-snapshots/archive/$pkgver/psi-plus-$pkgver.tar.gz"
+builddir="$srcdir/psi-plus-snapshots-$pkgver"
+options="!check" # no tests
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		local crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCHAT_TYPE=webengine\
+		-DUSE_XSS=0 \
+		-DPSI_PLUS=1 \
+		-DENABLE_PLUGINS=ON \
+		-DBUILD_DEV_PLUGINS=ON \
+		$crossopts
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+plugins() {
+	amove usr/lib/psi-plus/plugins
+}
+
+sha512sums="
+2a8dad52959abdf48e7aded539a794e38eecee06100ed5434d2ff0ba411b90dd85bfdeb9e6373d1413fda01304cd2b58a45b2ec2ff1cb6ef2d6ee3fe2ed2f404  psi-plus-1.5.1965.tar.gz
+"

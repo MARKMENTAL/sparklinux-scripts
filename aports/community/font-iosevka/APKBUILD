@@ -1,0 +1,81 @@
+# Maintainer: Will Sinatra <wpsinatra@gmail.com>
+pkgname=font-iosevka
+pkgver=31.7.1
+pkgrel=0
+pkgdesc="Versatile typeface for code, from code"
+url="https://typeof.net/Iosevka/"
+arch="noarch"
+options="!check" # no testsuite
+license="OFL-1.1"
+depends="fontconfig"
+subpackages="
+	$pkgname-base
+	$pkgname-aile
+	$pkgname-etoile
+	$pkgname-slab
+	$pkgname-curly
+	$pkgname-curly-slab:curly_slab
+	"
+source="
+	https://github.com/be5invis/Iosevka/releases/download/v$pkgver/PkgTTC-Iosevka-$pkgver.zip
+	https://github.com/be5invis/Iosevka/releases/download/v$pkgver/PkgTTC-IosevkaAile-$pkgver.zip
+	https://github.com/be5invis/Iosevka/releases/download/v$pkgver/PkgTTC-IosevkaEtoile-$pkgver.zip
+	https://github.com/be5invis/Iosevka/releases/download/v$pkgver/PkgTTC-IosevkaSlab-$pkgver.zip
+	https://github.com/be5invis/Iosevka/releases/download/v$pkgver/PkgTTC-SGr-IosevkaCurly-$pkgver.zip
+	https://github.com/be5invis/Iosevka/releases/download/v$pkgver/PkgTTC-SGr-IosevkaCurlySlab-$pkgver.zip
+	"
+
+builddir="$srcdir"
+
+package() {
+	depends="
+		$pkgname-base=$pkgver-r$pkgrel
+		$pkgname-aile=$pkgver-r$pkgrel
+		$pkgname-etoile=$pkgver-r$pkgrel
+		$pkgname-slab=$pkgver-r$pkgrel
+		$pkgname-curly=$pkgver-r$pkgrel
+		$pkgname-curly-slab=$pkgver-r$pkgrel
+		"
+
+	install -Dm644 "$builddir"/*.ttc \
+		-t "$pkgdir"/usr/share/fonts/${pkgname#font-}
+}
+
+base() {
+	pkgdesc="$pkgdesc (Iosevka)"
+	amove usr/share/fonts/iosevka/Iosevka-*.ttc
+}
+
+aile() {
+	pkgdesc="$pkgdesc (Iosevka Aile)"
+	amove usr/share/fonts/iosevka/IosevkaAile-*.ttc
+}
+
+etoile() {
+	pkgdesc="$pkgdesc (Iosevka Etoile)"
+	amove usr/share/fonts/iosevka/IosevkaEtoile-*.ttc
+}
+
+slab() {
+	pkgdesc="$pkgdesc (Iosevka Slab)"
+	amove usr/share/fonts/iosevka/IosevkaSlab-*.ttc
+}
+
+curly() {
+	pkgdesc="$pkgdesc (Iosevka Curly)"
+	amove usr/share/fonts/iosevka/SGr-IosevkaCurly-*.ttc
+}
+
+curly_slab() {
+	pkgdesc="$pkgdesc (Iosevka Curly Slab)"
+	amove usr/share/fonts/iosevka/SGr-IosevkaCurlySlab-*.ttc
+}
+
+sha512sums="
+ae2a9647547778ba09eedf10b9a5cbe3493ff033ca4e86f9448263e7889ddf89b427990a510fd744263bd083a11ec830cb608ec5259d6ff7c0ffde20c20061ba  PkgTTC-Iosevka-31.7.1.zip
+f3b4f9fb34322680fe7fcdf00824db44a5740d730431e29c0f831e0868eeb51dc5b4d1269b29c06ebef25e8a002681f9fbddcd8ea9a387206d14d2dcf8f2c09e  PkgTTC-IosevkaAile-31.7.1.zip
+4cd668032f7d2d3bb9475f24b10d01282dc8254de0cda6f639fff4214a8c0b655852da69723de68e38410cc875f12cf5e3dfb5da09cce1026e0a5a7eb928bdfd  PkgTTC-IosevkaEtoile-31.7.1.zip
+1e2a99566b4ad6981db4ff213e12a5d0afb10cea1eea47f4da349225e5eac0ed8fff8724fed42a1882348cd6f1468d382702061376d62870cd635ba1d5cb4d22  PkgTTC-IosevkaSlab-31.7.1.zip
+0fe4cf4e82ce95fb903a4e2beaf7d780bf70b6c4f90f6c0061345d2ebe83b01218c9016a9253984e24bf5080e84da42135441911eb2924bc4cd3cbaddb302bf5  PkgTTC-SGr-IosevkaCurly-31.7.1.zip
+604a15e79ca75eaa0ab1cf35091fc26d89361cc7ec3a57ee95ac51f62e9b46d377d021620edfd98b5ffdd16666d2625b4e4b1379f4c530bc2a8afa4f7d4a061d  PkgTTC-SGr-IosevkaCurlySlab-31.7.1.zip
+"

@@ -1,0 +1,29 @@
+# Contributor: Michał Polański <michal@polanski.me>
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=lfs
+pkgver=2.6.0
+pkgrel=1
+pkgdesc="Get information on your mounted disks"
+url="https://github.com/Canop/lfs"
+license="MIT"
+# loongarch64: blocked by libc crate
+arch="all !loongarch64"
+makedepends="cargo cargo-auditable"
+source="https://github.com/Canop/lfs/archive/v$pkgver/dysk-$pkgver.tar.gz"
+builddir="$srcdir/dysk-$pkgver"
+
+build() {
+	cargo auditable build --release --locked
+}
+
+check() {
+	cargo test --release --locked
+}
+
+package() {
+	install -Dm755 target/release/lfs "$pkgdir"/usr/bin/lfs
+}
+
+sha512sums="
+bef3904e3cea13db1ad476d65e4f7fea24d45b1a48cfcb0c42a85e39fae6f971151f778641441fd6b003d7c2ee789151b7896889b1f2b27ddf9e9dd54782a951  dysk-2.6.0.tar.gz
+"

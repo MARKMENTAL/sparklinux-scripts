@@ -1,0 +1,42 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=postgresql-rum
+pkgver=1.3.13
+pkgrel=2
+pkgdesc="PostgreSQL extension providing access method to work with RUM index"
+url="https://github.com/postgrespro/rum"
+arch="all"
+license="PostgreSQL"
+depends_dev="$pkgname=$pkgver-r$pkgrel"
+makedepends="postgresql-dev"
+subpackages="
+	$pkgname-bitcode
+	$pkgname-dev
+	"
+source="https://github.com/postgrespro/rum/archive/$pkgver/$pkgname-$pkgver.tar.gz"
+builddir="$srcdir/rum-$pkgver"
+options="!check"  # tests require running PostgreSQL
+
+build() {
+	make USE_PGXS=1
+}
+
+package() {
+	_pgver=$(pg_config --major-version)
+	depends="postgresql$_pgver"
+
+	make USE_PGXS=1 DESTDIR="$pkgdir" install
+}
+
+bitcode() {
+	_pgver=$(pg_config --major-version)
+	pkgdesc="$pkgdesc (bitcode for JIT)"
+	depends="$pkgname=$pkgver-r$pkgrel"
+	install_if="postgresql$_pgver-jit $pkgname=$pkgver-r$pkgrel"
+
+	amove usr/lib/postgresql*/bitcode
+}
+
+sha512sums="
+5a5e614df2b9ee1ea5a2922588a745c9812fd6a6a6cb4f3e6c3c237d752ff93c332619cc6c7881abcffca59998a4c467bd7daec5cd50154391c236c4fe7e05f7  postgresql-rum-1.3.13.tar.gz
+"

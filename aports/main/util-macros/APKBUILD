@@ -1,0 +1,29 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=util-macros
+pkgver=1.20.1
+pkgrel=0
+pkgdesc="X.Org Autotools macros"
+url="https://xorg.freedesktop.org"
+arch="noarch"
+license="MIT"
+source="https://www.x.org/releases/individual/util/util-macros-$pkgver.tar.xz"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make pkgconfigdir=/usr/lib/pkgconfig DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+5f44d73c18ff87459cd94a68a961465b3970a36f0b55be65c0ec228320a675561eb24a1b1359745124302446a1a3fadc2f50d3378f439df5bd3e866cb8015286  util-macros-1.20.1.tar.xz
+"

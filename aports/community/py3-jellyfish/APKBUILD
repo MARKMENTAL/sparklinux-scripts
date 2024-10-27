@@ -1,0 +1,39 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Maintainer: Carlo Landmeter <clandmeter@alpinelinux.org>
+pkgname=py3-jellyfish
+pkgver=1.0.3
+pkgrel=1
+pkgdesc="Python library for approximate and phonetic string matching"
+url="https://github.com/jamesturk/jellyfish"
+arch="all"
+license="BSD-2-Clause"
+replaces="py-jellyfish" # for backwards compatibility
+provides="py-jellyfish=$pkgver-r$pkgrel" # for backwards compatibility
+makedepends="
+	cargo
+	py3-gpep517
+	py3-maturin
+	python3-dev
+	"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/j/jellyfish/jellyfish-$pkgver.tar.gz
+	update-rust-libc.patch
+	"
+builddir="$srcdir/jellyfish-$pkgver"
+options="net"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+dc977cff57c3aaad3564dabcae1155e05389bd16c37f0b836f81fea26df42dc0b4397ed17ee3f130d53c967007c3c7a322a917dfdc7a87cf2c340ce33552b09a  jellyfish-1.0.3.tar.gz
+ada388b3506ec64db1bcaef9a202a3f7fbf73534fa7eae798618ebc1f38163886b1a34773f720cf692be71692d9db168a10120b8b08f9c2d186c72cdec6a2de6  update-rust-libc.patch
+"

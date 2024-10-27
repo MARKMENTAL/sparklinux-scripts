@@ -1,0 +1,51 @@
+# Contributor: Anders Björklund <anders.f.bjorklund@gmail.com>
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=squashfuse
+pkgver=0.5.2
+pkgrel=0
+pkgdesc="FUSE filesystem to mount squashfs archives"
+url="https://github.com/vasi/squashfuse"
+arch="all"
+license="BSD-2-Clause"
+makedepends="
+	autoconf
+	automake
+	libtool
+	fuse3-dev
+	lz4-dev
+	lzo-dev
+	xz-dev
+	zlib-dev
+	zstd-dev
+	"
+checkdepends="squashfs-tools"
+subpackages="$pkgname-dev $pkgname-libs $pkgname-doc"
+source="https://github.com/vasi/squashfuse/releases/download/$pkgver/squashfuse-$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+	./autogen.sh
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+c13394df5a10d4121b5ee56485661b13ba03975ede25210444ed5badce97a3a25c599919bf0bcb683fb7391c19a9a8d989faf128466d8deae8b9c63f5dd4f941  squashfuse-0.5.2.tar.gz
+"

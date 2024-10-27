@@ -1,0 +1,40 @@
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=py3-cssselect2
+_pyname=cssselect2
+pkgver=0.7.0
+pkgrel=5
+pkgdesc="CSS selectors for Python ElementTree"
+url="https://pypi.org/project/cssselect2/"
+arch="noarch"
+license="BSD-3-Clause"
+depends="py3-tinycss2"
+makedepends="py3-gpep517 py3-flit-core py3-installer"
+checkdepends="py3-pytest"
+_pypiprefix="${_pyname%${_pyname#?}}"
+subpackages="$pkgname-pyc"
+source="
+	https://files.pythonhosted.org/packages/source/$_pypiprefix/$_pyname/$_pyname-$pkgver.tar.gz
+"
+builddir="$srcdir"/$_pyname-$pkgver
+options="!check" # upstream tests are broken
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+e3c975fe159d3bec53002bda31c72d9cb346f40529272d8d5bef6aa13142ce60f1e8aa20b039d93ff5ff3d2cd34119b8b2d406f889964eded69e770e4f04e949  cssselect2-0.7.0.tar.gz
+"

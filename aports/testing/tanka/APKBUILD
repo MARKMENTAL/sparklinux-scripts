@@ -1,0 +1,38 @@
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=tanka
+pkgver=0.27.1
+pkgrel=0
+pkgdesc="Flexible, reusable and concise configuration for Kubernetes"
+url="https://tanka.dev"
+# blocked by kubectl (kubernetes)
+arch="all !armhf !riscv64 !loongarch64"
+license="Apache-2.0"
+depends="kubectl"
+makedepends="go"
+checkdepends="go-jsonnet"
+source="$pkgname-$pkgver.tar.gz::https://github.com/grafana/tanka/archive/refs/tags/v$pkgver.tar.gz"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -v \
+		-ldflags "-X github.com/grafana/tanka/pkg/tanka.CurrentVersion=v$pkgver" \
+		./cmd/tk
+}
+
+check() {
+	# /pkg/helm test requires helm.
+	# Tests timeout with helm installed.
+	# shellcheck disable=2046
+	go test $(go list ./... | grep -v /pkg/helm)
+}
+
+package() {
+	install -Dm755 tk -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+f127bd203fb3ec5e3966760ff0ecae8a8f9096ac5e7427349e7b68988f88318b6aa31c177d5b50f9064a4241483209c466162ad5421b243ee34705f51c444042  tanka-0.27.1.tar.gz
+"

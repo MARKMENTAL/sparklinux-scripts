@@ -1,0 +1,35 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=libmpdclient
+pkgver=2.22
+pkgrel=0
+pkgdesc="An asynchronous API library for interfacing MPD in the C, C++ & Objective C languages"
+url="https://www.musicpd.org/libs/libmpdclient"
+arch="all"
+license="BSD-3-Clause"
+makedepends="meson check-dev"
+subpackages="$pkgname-dev $pkgname-doc"
+source="https://www.musicpd.org/download/libmpdclient/${pkgver%.*}/libmpdclient-$pkgver.tar.xz"
+
+build() {
+	abuild-meson \
+		-Dtest=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+
+	mkdir -p "$pkgdir"/usr/share/licenses/$pkgname/
+	mv "$pkgdir"/usr/share/doc/libmpdclient/BSD*Clause.txt \
+		"$pkgdir"/usr/share/licenses/$pkgname/
+}
+
+sha512sums="
+6dcf2f822cbe3a3bea145fff7edb9185951f83e39ee9794a6e420af1f9680e04bbf67b62458560c13b626201024c0bb59e330dfa91bec0fcd527da8de5127022  libmpdclient-2.22.tar.xz
+"

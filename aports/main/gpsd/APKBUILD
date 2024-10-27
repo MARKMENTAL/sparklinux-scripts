@@ -1,0 +1,91 @@
+# Contributor: Nathan Angelacos <nangel@alpinelinux.org>
+# Maintainer: Nathan Angelacos <nangel@alpinelinux.org>
+
+# gpsd is commonly used with NTP servers to provide a stable clock,
+# please do not move to community.
+
+pkgname=gpsd
+pkgver=3.25
+pkgrel=2
+pkgdesc="GPS daemon"
+arch="all"
+url="https://gpsd.gitlab.io/gpsd/index.html"
+license="BSD-2-Clause"
+makedepends="scons asciidoctor python3-dev libcap-dev ncurses-dev py3-setuptools"
+subpackages="
+	$pkgname-dev
+	$pkgname-doc
+	py3-$pkgname:_py:noarch
+	$pkgname-clients:_clients
+	$pkgname-openrc"
+source="https://download-mirror.savannah.gnu.org/releases/gpsd/gpsd-$pkgver.tar.gz
+	timepps.h
+	gpsd.initd
+	gpsd.confd"
+
+prepare() {
+	# We copy timepps.h to the local build directory instead of
+	# creating a pps-tools-dev package for ppstime.h
+	# (See https://github.com/ago/pps-tools)
+	mkdir -p "$builddir"/sys
+	cp "$srcdir"/timepps.h "$builddir"/sys/
+
+	# x86 regression test fails for the Caterpillar GPS - 1e-9 error on lat or lon
+	# on 2 tests.  Other platforms pass the test.
+	# reported upstream for 3.25 2023-02-06.  For now delete that test
+	if [ "$CARCH" = "x86" ]; then
+		# rm "$builddir/test/daemon/cat*" does not work for some reason ...
+		find "$builddir/test/daemon" -name "cat*" -exec rm {} \;
+	fi
+
+	default_prepare
+}
+
+build() {
+	CPPFLAGS="$CPPFLAGS -I$builddir -DHAVE_SYS_TIMEPPS_H"
+	scons -j${JOBS:-1} \
+		prefix=/usr \
+		target_python=python3 \
+		python_shebang=/usr/bin/python3 \
+		dbus_export=no \
+		systemd=no
+}
+
+check() {
+	scons check
+}
+
+package() {
+	DESTDIR="$pkgdir" scons install
+	install -m755 -D "$srcdir"/gpsd.initd "$pkgdir"/etc/init.d/gpsd
+	install -m644 -D "$srcdir"/gpsd.confd "$pkgdir"/etc/conf.d/gpsd
+}
+
+_py() {
+	local _py=${subpkgname##-*}
+	local _pyver=${_py%py}
+	pkgdesc="$pkgname library and clients for python $_pyver"
+	mkdir -p "$subpkgdir"/usr/lib
+	# As of 3.18.1, gpsd wants to put the python stuff in /usr/local
+	mv "$pkgdir"/usr/local/lib/python*  "$subpkgdir"/usr/lib/
+	rm -rf "${pkgdir:?}"/usr/local
+
+	mkdir -p "$subpkgdir"/usr/bin
+	for n in gpscat gpsfake gpsprof; do
+		mv "$pkgdir"/usr/bin/$n "$subpkgdir"/usr/bin/
+	done
+
+}
+
+_clients() {
+	pkgdesc="$pkgname clients"
+	mkdir -p "$subpkgdir"/usr/bin
+	mv "$pkgdir"/usr/bin/* "$subpkgdir"/usr/bin
+}
+
+sha512sums="
+0684cbd30defa1a328898589e1d61b2431462a774aff56c588bd00c1fbd92ac94cf6fc1f2b981debac78c34ab09fa24f48ed6334f3ecd09e6b8f5faa92ae1085  gpsd-3.25.tar.gz
+699b3652e9033d4deb62b61e4aee8845ecbf2fa257cfc6f821783878245fe9303caf657ab979afd2bd5d034de03837349e3f8f4221eb746280faa8060f2c3b7f  timepps.h
+f88940570cbed761495c3a13949428e873c2c3d112e8ac25d36dd3230ecf2171f67b0f429c37e593bb360dc1e5622fe9066e597880264561c81376ff42d1a818  gpsd.initd
+75dbfe39eb900cc9587dd70794ee77ae2230765bbede47760ca227145aa3f2290b6995335ffcfeae6cd86f56b01ca87367548f4fbcf810aff1bc012b7416deef  gpsd.confd
+"

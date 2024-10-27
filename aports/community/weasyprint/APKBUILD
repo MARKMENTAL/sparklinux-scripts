@@ -1,0 +1,54 @@
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=weasyprint
+pkgver=62.3
+pkgrel=0
+pkgdesc="A visual rendering engine for HTML and CSS that can export to PDF"
+url="https://weasyprint.org"
+arch="noarch"
+license="BSD-3-Clause"
+depends="
+	pango
+	py3-brotli
+	py3-cssselect2
+	py3-cffi
+	py3-fonttools
+	py3-html5lib
+	py3-pillow
+	py3-pydyf
+	py3-pyphen
+	py3-tinycss2
+	py3-zopfli
+	"
+makedepends="
+	py3-flit-core
+	py3-gpep517
+	"
+checkdepends="
+	font-dejavu
+	ghostscript
+	py3-pytest
+	py3-pytest-xdist
+	"
+replaces="py-weasyprint py3-weasyprint"  # for backward compatibility
+provides="py-weasyprint=$pkgver-r$pkgrel py3-weasyprint=$pkgver-r$pkgrel"  # for backward compatibility
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/w/weasyprint/weasyprint-$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	pytest --deselect tests/draw/test_text.py::test_otb_font
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/weasyprint-$pkgver-py3-none-any.whl
+}
+
+sha512sums="
+c563019aac075d0f55a153483719a5ea1dd4dced8bf281aeb1c5ccb65b8591e883ea09ca86757073b10a4dd9dc2d718df83ff5913cd5b9ed703fb5cf71bf7fbf  weasyprint-62.3.tar.gz
+"

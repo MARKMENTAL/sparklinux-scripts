@@ -1,0 +1,35 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=py3-icu
+_pyname=PyICU
+pkgver=2.12
+pkgrel=1
+pkgdesc="Python3 binding for ICU"
+url="https://pypi.org/project/PyICU/"
+arch="all"
+license="MIT"
+makedepends="py3-gpep517 py3-setuptools python3-dev icu-dev py3-wheel"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/P/$_pyname/$_pyname-$pkgver.tar.gz"
+builddir="$srcdir"/$_pyname-$pkgver
+
+replaces="py-icu" # Backwards compatibility
+provides="py-icu=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 setup.py check
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+75b799df40c43e0f607e3d90b07e0277dd2f37541b671bd24fdc81044facd2ad89ede991becc256d0761a7627afa3a70dd9e9681cef9eaa8e660f021450eb522  PyICU-2.12.tar.gz
+"

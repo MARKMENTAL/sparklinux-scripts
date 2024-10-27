@@ -1,0 +1,35 @@
+# Contributor: lauren n. liberda <lauren@selfisekai.rocks>
+# Maintainer: lauren n. liberda <lauren@selfisekai.rocks>
+pkgname=electron-tasje
+pkgver=0.7.3
+pkgrel=0
+pkgdesc="Tiny replacement for electron-builder"
+url="https://codeberg.org/selfisekai/electron_tasje/"
+arch="aarch64 x86_64"	# only useful on platforms with electron
+license="Apache-2.0 OR MIT"
+makedepends="cargo cargo-auditable"
+source="electron_tasje-${_rev:-"$pkgver"}.tar.gz::https://codeberg.org/selfisekai/electron_tasje/archive/${_rev:-"v$pkgver"}.tar.gz"
+builddir="$srcdir/electron_tasje"
+
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test
+}
+
+package() {
+	install -Dm755 target/release/tasje "$pkgdir"/usr/bin/tasje
+}
+
+sha512sums="
+251b7eabe74acdb5c7394f9d4d735b736acf555352785a9896ddaeed37632b238e823e1bb639e1f5a44a50455957ec41e1a585a3b2a9919b5818bb40843bd877  electron_tasje-0.7.3.tar.gz
+"

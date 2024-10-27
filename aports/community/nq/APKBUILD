@@ -1,0 +1,28 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Maintainer: Carlo Landmeter <clandmeter@alpinelinux.org>
+pkgname=nq
+pkgver=0.5
+pkgrel=0
+pkgdesc="Unix command line queue utility"
+url="https://github.com/leahneukirchen/nq"
+arch="all"
+license="CC0-1.0"
+checkdepends="perl-utils"
+subpackages="$pkgname-doc"
+source="nq-$pkgver.tar.gz::https://github.com/leahneukirchen/nq/archive/v$pkgver.tar.gz"
+
+build() {
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make PREFIX=/usr DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+784031971df0585c38c8e47b37d1a5ce73c35c71ab6c9abb7c3df6450eb26a53ad0e649f86a40a742201125ef88e246db34781491935e709ae8fc66afcdf6c0e  nq-0.5.tar.gz
+"

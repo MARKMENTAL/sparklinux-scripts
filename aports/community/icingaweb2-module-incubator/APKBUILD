@@ -1,0 +1,50 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=icingaweb2-module-incubator
+_module=${pkgname/*-/}
+pkgver=0.20.0
+pkgrel=1
+pkgdesc="Bleeding edge libraries useful for Icinga Web 2 modules"
+url="https://github.com/Icinga/icingaweb2-module-incubator"
+arch="noarch !armhf !armv7 !s390x !x86"
+license="MIT"
+options="!check"
+_php=php82
+depends="icingaweb2"
+pkggroups="icingaweb2"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/Icinga/$pkgname/archive/v$pkgver.tar.gz"
+
+package() {
+	mkdir -p "$pkgdir/etc/icingaweb2/modules/$_module"
+	mkdir -p "$pkgdir/usr/share/doc/$pkgname"
+	mkdir -p "$pkgdir/usr/share/webapps/icingaweb2/modules/$_module"
+	cp -a vendor composer.json composer.lock module.info run.php \
+		"$pkgdir/usr/share/webapps/icingaweb2/modules/$_module"
+	chgrp -R $pkggroups "$pkgdir/etc/icingaweb2/modules/$_module"
+
+	cat >"$pkgdir"/usr/share/doc/$pkgname/README.alpine <<EOF
+You need to fix /etc/icingaweb2/modules/$_module with the owner of the user of your webserver
+
+For nginx, as example:
+	# chown -R nginx /etc/icingaweb2/modules/$_module
+or
+	# chown -R nobody /etc/icingaweb2/modules/$_module
+
+For Apache:
+	# chown -R apache /etc/icingaweb2/modules/$_module
+
+For lighttpd:
+	# chown -R lighttpd /etc/icingaweb2/modules/$_module
+
+Remember to enable the module with:
+
+	# icingacli module enable $_module
+
+EOF
+
+}
+
+sha512sums="
+f561d9caffd6d72603debddf61181fa45b43aa4dc44d50749ed5e175c9a3ad169943cb59cfb74e890241cc0af3de0610a1747faa5c14c89ed3ab0b3e3c00da0e  icingaweb2-module-incubator-0.20.0.tar.gz
+"

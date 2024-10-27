@@ -1,0 +1,55 @@
+# Contributor: Jeff Bilyk <jbilyk@alpinelinux.org>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=putty
+pkgver=0.81
+pkgrel=1
+pkgdesc="SSH and telnet client"
+url="https://www.chiark.greenend.org.uk/~sgtatham/putty/"
+arch="all"
+license="MIT"
+depends="ncurses-terminfo-base"
+makedepends="
+	cmake
+	gtk+3.0-dev
+	linux-headers
+	perl
+	samurai
+	"
+subpackages="$pkgname-doc"
+source="https://the.earth.li/~sgtatham/putty/$pkgver/putty-$pkgver.tar.gz"
+options="!check" # no test suite
+
+# secfixes:
+#   0.81-r0:
+#     - CVE-2024-31497
+#   0.80-r0:
+#     - CVE-2023-48795
+#   0.76-r0:
+#     - CVE-2021-36367
+#   0.74-r0:
+#     - CVE-2020-14002
+#   0.73-r0:
+#     - CVE-2019-17068
+#     - CVE-2019-17069
+#   0.71-r0:
+#     - CVE-2019-9894
+#     - CVE-2019-9895
+#     - CVE-2019-9897
+#     - CVE-2019-9898
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_BUILD_TYPE=None
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	install -Dvm644 LICENCE -t "$pkgdir"/usr/share/licenses/$pkgname/
+}
+
+sha512sums="
+d86f2fd0e126b18275d58cf64334b3b27c450899a1c2be2502de9faa2ef58f7fc8efc5d45f25c8395623f1e21917aa02407343bb2fee44c4c00b9f81267d5ecd  putty-0.81.tar.gz
+"

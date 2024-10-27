@@ -1,0 +1,191 @@
+# Contributor: Jacek Migacz <jacekmigacz@gmail.com>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=lvm2
+pkgver=2.03.23
+pkgrel=5
+pkgdesc="Logical Volume Manager 2 utilities"
+url="https://sourceware.org/lvm2/"
+arch="all"
+options="!check"  # Test tries to use real /dev/mapper/control.
+license="GPL-2.0-or-later AND LGPL-2.1-or-later AND BSD-2-Clause"
+# lvm2 will dlopen libs so we need to add explicit depend
+depends="lvm2-libs=$pkgver-r$pkgrel"
+depends_dev="linux-headers"
+makedepends_host="$depends_dev libaio-dev util-linux-static util-linux-dev"
+source="https://mirrors.kernel.org/sourceware/lvm2/LVM2.$pkgver.tgz
+	default-udev-sync.patch
+	fix-stdio-usage.patch
+	library_dir-default-config.patch
+	mlockall-default-config.patch
+	no-systemd.patch
+	fix-implicit-basename.patch
+	0001-lvresize-use-POSIX-shell.patch
+	lvm.initd
+	lvm.confd
+	lvmlockd.initd
+	dmeventd.initd
+	"
+subpackages="
+	$pkgname-static:lvm2_static
+	device-mapper-static:dm_static
+	device-mapper-libs:dm_libs
+	device-mapper-event-libs:dm_event_libs
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-openrc
+	$pkgname-dmeventd
+	$pkgname-dmeventd-openrc:dmeventd_openrc
+	device-mapper:dm
+	device-mapper-udev:udev:noarch
+	$pkgname-libs
+	$pkgname-extra::noarch
+	"
+builddir="$srcdir/LVM2.$pkgver"
+
+if [ -z "$BOOTSTRAP" ] && [ -z "$APORTS_BOOTSTRAP" ]; then
+	# XXX: enable-udev_sync needs a bit more polish to not fail with mdev-only
+	_no_bootstrap="--enable-lvmlockd-sanlock --disable-udev_sync"
+	makedepends_host="$makedepends_host eudev-dev sanlock-dev"
+	subpackages="$subpackages $pkgname-lockd $pkgname-lockd-openrc:lockd_openrc"
+fi
+
+prepare() {
+	default_prepare
+	update_config_sub
+}
+
+build() {
+	# during cross-compilation malloc test goes wrong
+	export ac_cv_func_malloc_0_nonnull=yes
+	export ac_cv_func_realloc_0_nonnull=yes
+
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--sbindir=/sbin \
+		--localstatedir=/var \
+		--enable-static_link \
+		--disable-dependency-tracking \
+		--disable-nls \
+		--disable-readline \
+		--enable-pkgconfig \
+		--with-thin=internal \
+		--enable-dmeventd \
+		--enable-cmdlib \
+		--with-thin-check=/usr/sbin/thin_check \
+		--disable-thin_check_needs_check \
+		--with-thin-dump=/usr/sbin/thin_dump \
+		--with-thin-repair=/usr/sbin/thin_repair \
+		--with-thin-restore=/usr/sbin/thin_restore \
+		--with-cache-check=/usr/sbin/cache_check \
+		--disable-cache_check_needs_check \
+		--with-cache-dump=/usr/sbin/cache_dump \
+		--with-cache-repair=/usr/sbin/cache_repair \
+		--with-cache-restore=/usr/sbin/cache_restore \
+		--with-dmeventd-path=/sbin/dmeventd \
+		--without-systemd-run \
+		--enable-udev_rules \
+		--enable-write_install \
+		$_no_bootstrap \
+		CLDFLAGS="$LDFLAGS"
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	install -d "$pkgdir"/etc/lvm/archive "$pkgdir"/etc/lvm/backup
+	install -Dm755 "$srcdir"/lvm.initd "$pkgdir"/etc/init.d/lvm
+	install -Dm644 "$srcdir"/lvm.confd "$pkgdir"/etc/conf.d/lvm
+}
+
+dmeventd() {
+	pkgdesc="Device-mapper event daemon"
+	amove sbin/dmeventd
+}
+
+dmeventd_openrc() {
+	pkgdesc="Device-mapper event daemon (OpenRC init scripts)"
+	install_if="$pkgname-dmeventd=$pkgver-r$pkgrel openrc"
+	install -Dm755 "$srcdir"/dmeventd.initd "$subpkgdir"/etc/init.d/dmeventd
+}
+
+
+dm_static() {
+	pkgdesc="Device-mapper static libraries and binaries"
+	provides="device-mapper-event-static=$pkgver-r$pkgrel"
+	amove usr/lib/libdevmapper*.a usr/sbin/dm*.static
+}
+
+dm() {
+	pkgdesc="Device mapper userspace library and tools from LVM2"
+	amove sbin/dm*
+}
+
+udev() {
+	pkgdesc="Device mapper udev rules"
+	install="$subpkgname.post-install $subpkgname.post-upgrade"
+	install_if="device-mapper=$pkgver-r$pkgrel eudev"
+	amove usr/lib/udev/rules.d
+}
+
+libs() {
+	pkgdesc="LVM2 shared libraries"
+	depends=
+	amove usr/lib/liblvm2*.so.* \
+		usr/lib/libdevmapper-event-lvm2*.so.* \
+		usr/lib/device-mapper
+}
+
+dm_libs() {
+	pkgdesc="Device-mapper shared library"
+	depends=
+	amove usr/lib/libdevmapper.so.*
+}
+
+dm_event_libs() {
+	pkgdesc="Device-mapper event daemon shared library"
+	depends=
+	amove usr/lib/libdevmapper-event.so.*
+}
+
+lvm2_static() {
+	pkgdesc="$pkgdesc static library"
+	amove usr/lib/liblvm2*.a usr/sbin/lvm.static
+}
+
+extra() {
+	pkgdesc="LVM2 extra utilities"
+	depends="bash coreutils"
+	amove sbin/lvmdump sbin/fsadm sbin/blkdeactivate sbin/lvm_import_vdo
+}
+
+lockd() {
+	pkgdesc="LVM2 locking daemon"
+	depends="sanlock"
+	# lvmpolld isn't strictly part of this, but is enabled by enabling this, so put it here too
+	amove sbin/lvmlockctl sbin/lvmlockd sbin/lvmpolld
+}
+
+lockd_openrc() {
+	pkgdesc="LVM2 locking daemon (OpenRC init scripts)"
+	install_if="$pkgname-lockd=$pkgver-r$pkgrel openrc"
+
+	install -Dm755 "$srcdir"/lvmlockd.initd "$subpkgdir"/etc/init.d/lvmlockd
+}
+
+sha512sums="
+293430a80c7f599d14e77610456d0f44cac8164e6159cd0e2e287462278a89787e289fdb4d481eb8fd6b5eea07a6535c41cb7fdc3deee83df7fea9bf77dcbdaa  LVM2.2.03.23.tgz
+ce526e0b58236d26fcb21c81090f8a5baecc0909e645696dccf4c9c7b7adc31fb6f2ababb158217a81324aca14a55631d2fac3176177d81f0bbd35032c0b9979  default-udev-sync.patch
+c65ef16840321d8a58373e872713eeccbc315a84bb35beebccb6bc6063295b0f54b7c0726c799efd8cafedd011c21f51ec8e85f8a50d0d5df80b7428aedf29c3  fix-stdio-usage.patch
+b790cfcb55aa0362c7046c26a8e050708edecaf0233946adbb34d9c1d967d3614bc19e0c91695da4fd12d7b18adb74041ae11239cd635310cc44b8a7079ccbec  library_dir-default-config.patch
+07f77491cffa0d9dcda86004e2df428d5d52652a3bda8037a4b09c9c786146253314a11bae42512231c664a8fae110fec815bd12135fc3c6152b94e2101f8213  mlockall-default-config.patch
+dfcda00e5607606ae8f10e5765de048af933afd05e0719b14036ba84ebc3b4eb07b138e5ce9af9f653416b4a6cc42161591e6f93ee3a36721a2b7396d70d5d91  no-systemd.patch
+4e673f15d7531c3f3d31d4b994f8565f4d22945001939d52ee6603a90ea607b84c7d6ddef0bd6382f5bf4237d2ca7864fbc09a05c560b68cfc2a731be003f27c  fix-implicit-basename.patch
+3cec0a44e44b15dcfc0bb22f8a4318e76bf719fe9a550b6cf99160ea4181707f81ba6a50c8dafedc942638b1ae8bfde901eeff83ba0d6cb8383a178274ba54a5  0001-lvresize-use-POSIX-shell.patch
+714e6aaba3437b43af38b0b559d0f983b2cea023e2bc64e0c3763e9c78ae4ca125fb75839fda52128e7044a4add81940fd69e92439d30d232cf20a4204f0e321  lvm.initd
+07caf8fa942290f3c953cc2463aaf55bac01d0bcb9351daf3880fa4d0eefb67fe00761c46a7a4da91cd2f8e492a12fed35853a15dc939cd80d19d3303bc3951d  lvm.confd
+7215daf0872063672d5ad13f65ccd90833c6ebea7347149789b97a232d92af28ddc21c2893cb9ee2cb004f857700822917152c2005300a5060b3095f0582bfdd  lvmlockd.initd
+ca06220065525e93347efb7a5746a367cf55cb03574e50eed29bd7c4eae036bdd199b52c42d81811b6e742649e73ab8e66525f663bed66f9d1d82d0efde50332  dmeventd.initd
+"

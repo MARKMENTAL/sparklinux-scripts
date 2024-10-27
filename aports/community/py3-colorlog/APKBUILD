@@ -1,0 +1,40 @@
+# Contributor: Fabian Affolter <fabian@affolter-engineering.ch>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=py3-colorlog
+_pyname=colorlog
+pkgver=6.8.2
+pkgrel=2
+pkgdesc="formatter for use with Python's logging module"
+url="https://github.com/borntyping/python-colorlog"
+arch="noarch"
+license="MIT"
+depends="python3"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/c/$_pyname/$_pyname-$pkgver.tar.gz"
+builddir="$srcdir"/$_pyname-$pkgver
+
+replaces="py-colorlog" # Backwards compatibility
+provides="py-colorlog=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+cffd4541837e15ed7cfa0e48d8424d6bb10d0de6e227fe16145cfba51ebc2f90e2a4c750db57d37ee2708ec0272de97ad74e946283b7b3cd3628e1bd24a60b6f  colorlog-6.8.2.tar.gz
+"

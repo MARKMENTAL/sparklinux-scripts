@@ -1,0 +1,41 @@
+# Contributor: Hoang Nguyen <folliekazetani@protonmail.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=py3-time-machine
+pkgver=2.15.0
+pkgrel=0
+pkgdesc="Python library for mocking the current time"
+url="https://github.com/adamchainz/time-machine"
+arch="all"
+license="MIT"
+depends="py3-dateutil"
+makedepends="
+	python3-dev
+	py3-setuptools
+	py3-gpep517
+	py3-wheel
+	"
+checkdepends="py3-pytest tzdata"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/adamchainz/time-machine/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/time-machine-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+3221a131ffe042f2e222950ca3241050e3275ac209c0df806da290b63c5fc43efbfb202ae030096c29c6390a6467bc05d476d4a3cef9465ea63473e50e3629c7  py3-time-machine-2.15.0.tar.gz
+"

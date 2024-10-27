@@ -1,0 +1,48 @@
+# Contributor: Jonas <3426-spameier@users.gitlab.alpinelinux.org>
+# Maintainer: Jonas <3426-spameier@users.gitlab.alpinelinux.org>
+pkgname=py3-aiosmb
+_pyname=aiosmb
+pkgver=0.4.11
+pkgrel=0
+pkgdesc="Asynchronous SMB protocol implementation"
+url="https://github.com/skelsec/aiosmb"
+arch="noarch"
+license="MIT"
+depends="
+	py3-asn1crypto
+	py3-asyauth
+	py3-asysocks
+	py3-colorama
+	py3-minikerberos
+	py3-prompt_toolkit
+	py3-six
+	py3-tqdm
+	py3-unicrypto
+	py3-wcwidth
+	py3-winacl
+	python3
+	"
+makedepends="
+	py3-gpep517
+	py3-wheel
+	py3-setuptools
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/skelsec/aiosmb/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/$_pyname-$pkgver"
+options="!check" # no tests provided
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+	rm -rf "$pkgdir"/usr/lib/python3.*/site-packages/tests/ # remove tests
+}
+
+sha512sums="
+3ee6857f012cad45dd8776001756101c3685079d2a13c3eeb6bc87502da5dca3cd74ef2352af9a08fe46b91bf9ecd55ca08ab53491143b7e874a57e29b577085  py3-aiosmb-0.4.11.tar.gz
+"

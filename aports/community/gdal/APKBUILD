@@ -1,0 +1,411 @@
+# Contributor: Trevor R.H. Clarke <trevor@notcows.com>
+# Maintainer: Holger Jaekel <holger.jaekel@gmx.de>
+pkgname=gdal
+pkgver=3.9.2
+pkgrel=0
+pkgdesc="A translator library for raster and vector geospatial data formats"
+url="https://gdal.org/"
+arch="all"
+license="MIT"
+makedepends="
+	armadillo-dev
+	basisu-dev
+	bison
+	blosc-dev
+	brunsli-dev
+	cfitsio-dev
+	cmake
+	curl-dev
+	expat-dev
+	freexl-dev
+	geos-dev
+	giflib-dev
+	gnu-libiconv-dev
+	hdf5-dev
+	json-c-dev
+	kealib-dev
+	libaec-dev
+	libarchive-dev
+	libdeflate-dev
+	libgeotiff-dev
+	libheif-dev
+	libjpeg-turbo-dev
+	libkml-dev
+	libpng-dev
+	libpq-dev
+	libspatialite-dev
+	libtirpc-dev
+	libwebp-dev
+	libxml2-dev
+	linux-headers
+	lz4-dev
+	mariadb-dev
+	odbc-cpp-wrapper-dev
+	ogdi-dev
+	openexr-dev
+	openjpeg-dev
+	openssl-dev
+	poppler-dev
+	proj-dev
+	py3-numpy
+	py3-numpy-dev
+	py3-setuptools
+	python3-dev
+	qhull-dev
+	samurai
+	sfcgal-dev
+	sqlite-dev
+	swig
+	tiff-dev
+	unixodbc-dev
+	xerces-c-dev
+	zlib-dev
+	zstd-dev
+	"
+checkdepends="
+	pytest
+	"
+subpackages="
+	$pkgname-dev
+	py3-$pkgname-pyc
+	py3-$pkgname:_py3
+	$pkgname-tools
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-driver-all:_gdal_driver_all:noarch
+	"
+
+source="https://download.osgeo.org/gdal/$pkgver/gdal-$pkgver.tar.gz
+	10-atoll.patch
+	20-plugin_installation_message.patch
+	"
+
+# Print value of the specified variable, or the default if empty or not defined.
+getvar() {
+	eval "printf '%s\n' \"\${$1:-$2}\""
+}
+
+_all_drivers=""
+_add_driver() {
+	local libname="$1" typ="$2" descr="$3"
+	local name="$(echo "$libname" | tr '[:upper:]' '[:lower:]')"
+	local varprefix="_${name//-/_}"
+	local subpkgname="$pkgname-driver-$name"
+
+	eval "${varprefix}_libname='$libname'; ${varprefix}_typ='$typ'; ${varprefix}_descr='$descr'"
+	subpackages="$subpackages $subpkgname:_driver"
+	_all_drivers="$_all_drivers $subpkgname=$pkgver-r$pkgrel"
+	eval "export $(echo $typ | tr '[:lower:]' '[:upper:]')_DRIVER_$(echo $libname | tr '[:lower:]' '[:upper:]')_PLUGIN_INSTALLATION_MESSAGE=\"You may install it with 'apk add $subpkgname'\""
+}
+
+# Optional dependency netcdf-dev is not available on s390x
+_with_netcdf="OFF"
+case "$CARCH" in
+	s390x) ;;
+	*)
+		makedepends="$makedepends netcdf-dev"
+		_with_netcdf="ON";;
+esac
+
+# Optional dependency apache-arrow-dev is not available on s390x
+_with_apache_arrow="OFF"
+case "$CARCH" in
+	s390x) ;;
+	*)
+		makedepends="$makedepends apache-arrow-dev"
+		_with_apache_arrow="ON";;
+esac
+
+# Optional dependency lerc-dev is not available on s390x
+_with_lerc="OFF"
+case "$CARCH" in
+	s390x) ;;
+	*)
+		makedepends="$makedepends lerc-dev"
+		_with_lerc="ON";;
+esac
+
+# Optional dependency libjxl-dev is not available on s390x
+_with_jxl="OFF"
+case "$CARCH" in
+s390x) ;;
+*)
+	makedepends="$makedepends libjxl-dev"
+	_add_driver JPEGXL gdal "JPEG-XL File Format"
+	_with_jxl="ON"
+	;;
+esac
+
+# Optional dependency librasterlite2-dev is only available on x86 and x86_64
+_with_librasterlite2="OFF"
+case "$CARCH" in
+	x86|x86_64)
+		makedepends="$makedepends librasterlite2-dev"
+		_with_librasterlite2="ON"
+		;;
+esac
+
+# Optional dependency java-jdk is not available on riscv64 and loongarch64
+case "$CARCH" in
+	riscv64|loongarch64)
+		_with_java="OFF"
+		;;
+	*)
+		makedepends="$makedepends apache-ant java-jdk"
+		subpackages="$subpackages java-$pkgname:_java"
+		_with_java="ON"
+		_java_home="/usr/lib/jvm/default-jvm"
+		_java_include_path="$_java_home/include"
+		_java_include_path2="$_java_home/include/linux"
+		_java_awt_library="$_java_home/lib/libjawt.so"
+		_java_jvm_library="$_java_home/lib/server/libjvm.so"
+		;;
+esac
+
+# Optional dependency tiledb-dev is not available on s390x and 32-bit platforms
+_with_tiledb="OFF"
+case "$CARCH" in
+armhf|armv7|x86|s390x) ;;
+*)
+	makedepends="$makedepends tiledb-dev"
+	_with_tiledb="ON"
+	;;
+esac
+
+# Optional dependency libqb3-dev is not available on s390x and 32-bit platforms
+case "$CARCH" in
+armhf|armv7|x86|s390x) ;;
+*)
+	makedepends="$makedepends libqb3-dev"
+	;;
+esac
+
+
+_add_driver BASISU_KTX2 gdal "Basis Universal"
+_add_driver EXR gdal "Extended Dynamic Range Image File Format"
+_add_driver FITS gdal "Flexible Image Transport System"
+_add_driver GIF gdal "Graphics Interchange Format"
+_add_driver HDF5 gdal "Hierarchical Data Format Release 5 (HDF5)"
+_add_driver HEIF gdal "ISO/IEC 23008-12:2017 High Efficiency Image File Format"
+_add_driver JP2OpenJPEG gdal "JPEG2000 driver based on OpenJPEG library"
+_add_driver JPEG gdal "JFIF File Format"
+_add_driver KEA gdal "KEA"
+_add_driver PCIDSK gdal "PCI Geomatics Database File"
+_add_driver PCRaster gdal "PCRaster raster file format"
+_add_driver PDF gdal "Geospatial PDF"
+_add_driver PNG gdal "Portable Network Graphics"
+_add_driver PostGISRaster gdal "PostGIS Raster driver"
+_add_driver WEBP gdal "WEBP"
+_add_driver WMS gdal "Web Map Services"
+_add_driver CAD ogr "AutoCAD DWG"
+_add_driver Carto ogr "Carto"
+_add_driver Elastic ogr "Elasticsearch: Geographically Encoded Objects for Elasticsearch"
+_add_driver GMLAS ogr "Geography Markup Language (GML) driven by application schemas"
+_add_driver HANA ogr "SAP HANA"
+_add_driver LIBKML ogr "LIBKML Driver (.kml .kmz)"
+_add_driver MSSQLSpatial ogr "Microsoft SQL Server Spatial Database"
+_add_driver MySQL ogr "MySQL"
+_add_driver ODBC ogr "ODBC RDBMS"
+_add_driver OGDI ogr "OGDI Vectors"
+_add_driver PG ogr "PostgreSQL / PostGIS"
+_add_driver PLSCENES ogr "PLScenes (Planet Labs Scenes/Catalog API)"
+_add_driver VFK ogr "Czech Cadastral Exchange Data Format"
+_add_driver XLS ogr "MS Excel format"
+if [ "$_with_apache_arrow" = "ON" ]; then
+	_add_driver Arrow ogr "(Geo)Arrow IPC File Format / Stream"
+	_add_driver Parquet ogr "(Geo)Parquet"
+fi
+if [ "$_with_netcdf" = "ON" ]; then
+	_add_driver netCDF gdal "NetCDF: Network Common Data Form"
+fi
+if [ "$_with_tiledb" = "ON" ]; then
+	_add_driver TileDB gdal "TileDB tiledb.io"
+fi
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		local crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DCMAKE_CXX_STANDARD=17 \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DENABLE_IPO=OFF \
+		-DGDAL_USE_ARMADILLO=ON \
+		-DGDAL_USE_ARROW=$_with_apache_arrow \
+		-DGDAL_USE_BASISU=ON \
+		-DGDAL_USE_BLOSC=ON \
+		-DGDAL_USE_BRUNSLI=ON \
+		-DGDAL_USE_CFITSIO=ON \
+		-DGDAL_USE_CRNLIB=OFF \
+		-DGDAL_USE_CRYPTOPP=OFF \
+		-DGDAL_USE_CURL=ON \
+		-DGDAL_USE_DEFLATE=ON \
+		-DGDAL_USE_EXPAT=ON \
+		-DGDAL_USE_FILEGDB=OFF \
+		-DGDAL_USE_FREEXL=ON \
+		-DGDAL_USE_FYBA=OFF \
+		-DGDAL_USE_GEOS=ON \
+		-DGDAL_USE_GEOTIFF=ON \
+		-DGDAL_USE_GIF=ON \
+		-DGDAL_USE_GTA=OFF \
+		-DGDAL_USE_HDF4=OFF \
+		-DGDAL_USE_HDF5=ON \
+		-DGDAL_USE_HDFS=OFF \
+		-DGDAL_USE_HEIF=ON \
+		-DGDAL_USE_ICONV=ON \
+		-DGDAL_USE_IDB=OFF \
+		-DGDAL_USE_JPEG=ON \
+		-DGDAL_USE_JSONC=ON \
+		-DGDAL_USE_JXL=$_with_jxl \
+		-DGDAL_USE_KDU=OFF \
+		-DGDAL_USE_KEA=ON \
+		-DGDAL_USE_LERC=$_with_lerc \
+		-DGDAL_USE_LIBKML=ON \
+		-DGDAL_USE_LIBLZMA=ON \
+		-DGDAL_USE_LIBXML2=ON \
+		-DGDAL_USE_LURATECH=OFF \
+		-DGDAL_USE_LZ4=ON \
+		-DGDAL_USE_MONGOCXX=OFF \
+		-DGDAL_USE_MRSID=OFF \
+		-DGDAL_USE_MSSQL_NCLI=OFF \
+		-DGDAL_USE_MSSQL_ODBC=OFF \
+		-DGDAL_USE_MYSQL=ON \
+		-DGDAL_USE_NETCDF=$_with_netcdf \
+		-DGDAL_USE_ODBC=ON \
+		-DGDAL_USE_ODBCCPP=ON \
+		-DGDAL_USE_OGDI=ON \
+		-DGDAL_USE_OPENCAD=OFF \
+		-DGDAL_USE_OPENCL=OFF \
+		-DGDAL_USE_OPENEXR=ON \
+		-DGDAL_USE_OPENJPEG=ON \
+		-DGDAL_USE_OPENSSL=ON \
+		-DGDAL_USE_ORACLE=OFF \
+		-DGDAL_USE_PARQUET=$_with_apache_arrow \
+		-DGDAL_USE_PCRE2=ON \
+		-DGDAL_USE_PDFIUM=OFF \
+		-DGDAL_USE_PNG=ON \
+		-DGDAL_USE_POPPLER=ON \
+		-DGDAL_USE_POSTGRESQL=ON \
+		-DGDAL_USE_QHULL=ON \
+		-DGDAL_USE_RASTERLITE2=$_with_librasterlite2 \
+		-DGDAL_USE_RDB=OFF \
+		-DGDAL_USE_SFCGAL=ON \
+		-DGDAL_USE_SPATIALITE=ON \
+		-DGDAL_USE_SQLITE3=ON \
+		-DGDAL_USE_TEIGHA=OFF \
+		-DGDAL_USE_TIFF=ON \
+		-DGDAL_USE_TILEDB=$_with_tiledb \
+		-DGDAL_USE_WEBP=ON \
+		-DGDAL_USE_XERCESC=ON \
+		-DGDAL_USE_ZLIB=ON \
+		-DGDAL_USE_ZSTD=ON \
+		-DGDAL_ENABLE_PLUGINS=ON \
+		-DBUILD_PYTHON_BINDINGS=ON \
+		-DBUILD_CSHARP_BINDINGS=OFF \
+		-DBUILD_JAVA_BINDINGS=$_with_java \
+		-DJAVA_HOME="$_java_home" \
+		-DJAVA_INCLUDE_PATH="$_java_include_path" \
+		-DJAVA_INCLUDE_PATH2="$_java_include_path2" \
+		-DJAVA_AWT_LIBRARY="$_java_awt_library" \
+		-DJAVA_JVM_LIBRARY="$_java_jvm_library" \
+		-DGDAL_USE_TIFF_INTERNAL=ON \
+		-DGDAL_USE_GEOTIFF_INTERNAL=ON \
+		-DIconv_INCLUDE_DIR=/usr/include/gnu-libiconv \
+		-DIconv_LIBRARY=/usr/lib/libiconv.so \
+		-DlibQB3_DIR=/usr/lib/cmake \
+		$crossopts
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+_py3() {
+	pkgdesc="$pkgdesc (Python3 bindings)"
+	depends="py3-numpy"
+
+	amove usr/lib/python3*
+}
+
+_java() {
+	pkgdesc="$pkgdesc (Java bindings)"
+	amove "usr/share/java/gdal-$pkgver.jar"
+	cd "$subpkgdir/usr/share/java/"
+	ln -s gdal-$pkgver.jar gdal.jar
+
+	mv "$pkgdir/usr/lib/jni/libgdalalljni.so" "$pkgdir/usr/lib/libgdalalljni.so"
+	amove "usr/lib/libgdalalljni.so"
+}
+
+_driver() {
+	local varprefix="${subpkgname#"$pkgname"-driver-}"; varprefix="_${varprefix//-/_}"
+	local libname=$(getvar ${varprefix}_libname)
+	local typ=$(getvar ${varprefix}_typ)
+	local descr=$(getvar ${varprefix}_descr)
+	pkgdesc="$pkgdesc ($descr driver)"
+
+	# Package name with uppercase letters for backward compatibility (Alpine <3.20).
+	[ "$subpkgname" != "$pkgname-driver-$libname" ] \
+		&& provides="$pkgname-driver-$libname=$pkgver-r$pkgrel"
+
+	amove usr/lib/gdalplugins/${typ}_$libname.so
+}
+
+_gdal_driver_all() {
+	pkgdesc="$pkgdesc (all drivers)"
+	depends="$_all_drivers"
+
+	mkdir -p "$subpkgdir"
+}
+
+tools() {
+	pkgdesc="$pkgdesc (command line utilities)"
+	depends="py3-$pkgname"
+
+	cd "$builddir"/swig/python/gdal-utils
+	chmod a+x scripts/*
+
+	install -d "$subpkgdir/usr/bin"
+	install -m755 scripts/*.py "$subpkgdir/usr/bin/"
+
+	for b in "$pkgdir"/usr/bin/*; do
+		amove usr/bin/"$(basename $b)"
+	done
+}
+
+check() {
+	# TODO: https://trac.osgeo.org/gdal/wiki/TestingNotes
+
+	chmod a+x build/apps/gdal-config
+	build/apps/gdal-config --version | grep -q "$pkgver"
+
+	# confirms MBTiles support
+	build/apps/gdal_translate --formats | grep "MBTiles -raster,vector- (rw+v): MBTiles"
+}
+
+dev() {
+	default_dev
+
+	if [ "$_with_java" = "ON" ]; then
+		amove usr/share/java/gdal-*.pom
+	fi
+}
+
+doc() {
+	default_doc
+
+	if [ "$_with_java" = "ON" ]; then
+		amove usr/share/java/gdal-*-javadoc.jar
+		amove usr/share/java/gdal-*-sources.jar
+	fi
+}
+
+sha512sums="
+0801bfecda6b4cb68871047d7c64dd66deaa76efff6567b6923f06216e84897acb46eee7180c14f96af57b05067d59540f9b46e38c800152f151dc8203673031  gdal-3.9.2.tar.gz
+c1059034f62fa4f5088d3f6abbfae73773047b6ca3a0a197667c936c57266b68417c9e3bb436f507146d5440891de5fe059b62d560576e9c85b1b21afd0e5546  10-atoll.patch
+eae398e7d610115bb4df91771036986af3174dbc2b6fa1bead2144dd73c1546ead38a999aa5a55e38b4b4f3d19724cb24486d3fe57d3ca77f12f90b98ebf1988  20-plugin_installation_message.patch
+"

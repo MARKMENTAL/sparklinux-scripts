@@ -1,0 +1,37 @@
+# Maintainer: John Vogel <jvogel@stygian.me>
+pkgname=nawk
+pkgver=20240728
+_ckver=20240422
+pkgrel=1
+pkgdesc="The one, true implementation of AWK"
+url="https://github.com/onetrueawk/awk/"
+arch="all"
+license=MIT
+makedepends="bison"
+[ -z "$BOOTSTRAP" ] && checkdepends="cmd:pr musl-locales"
+[ -n "$BOOTSTRAP" ] && options="$options !check"
+subpackages="$pkgname-doc"
+source="awk-$pkgver.tar.gz::https://github.com/onetrueawk/awk/archive/refs/tags/$pkgver.tar.gz
+	awk-$_ckver.tar.gz::https://github.com/onetrueawk/awk/archive/refs/tags/$_ckver.tar.gz"
+builddir="$srcdir/awk-$pkgver"
+
+build() {
+	make
+}
+
+check() {
+	make -C "$srcdir"/awk-"$_ckver"
+	oldawk="$srcdir"/awk-"$_ckver"/a.out make check
+}
+
+package() {
+	install -Dm755 a.out "$pkgdir"/usr/bin/$pkgname
+	install -Dm644 awk.1 "$pkgdir"/usr/share/man/man1/$pkgname.1
+	install -Dm644 FIXES FIXES.1e LICENSE README.md TODO \
+		-t "$pkgdir"/usr/share/doc/"$pkgname"
+}
+
+sha512sums="
+2d5168664a721b866dd04259bf55138fd51c7934c46829c8cb63f50a15f62c93f83479d707292408f8eeaf9caf16a38cc7f65d5c0c59e4416dcd624a3428df6a  awk-20240728.tar.gz
+3d5626b0d6033a9eb8f3d81acbe0b30842e99f4c40563ca3f906ecfebdb72d754de18cd180345131868ad325fead4a6e66bfb765af45267180e256f46a76f316  awk-20240422.tar.gz
+"

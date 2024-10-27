@@ -1,0 +1,50 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=man-pages
+pkgver=6.9.1
+pkgrel=0
+pkgdesc="Linux man pages"
+url="https://www.kernel.org/doc/man-pages/"
+arch="noarch"
+license="GPL-2.0-or-later"
+makedepends="coreutils" # need gnu install
+source="https://cdn.kernel.org/pub/linux/docs/man-pages/man-pages-$pkgver.tar.xz"
+# just manpages
+options="!check"
+
+package() {
+	make LINK_PAGES=symlink SHELL=/bin/sh prefix="$pkgdir"/usr install
+	# skip things already zipped- find can iterate over new files made by -exec
+	find "$pkgdir"/usr/share/man -type f \
+		! -name "*.gz" \
+		-exec gzip -9 {} \+
+
+	# the symlink install links to non-gzipped
+	# installing with pre-gzipped form requires 'sponge'
+	# shellcheck disable=SC3045  # we aren't using dash
+	find "$pkgdir"/usr/share/man \( -type l -a ! -name "*.gz" \) -print0 | while IFS= read -r -d '' link; do
+		# append gz since gzipped
+		local target="$(readlink "$link")".gz
+
+		rm "$link"
+		ln -sfv "$target" "$link".gz
+	done
+
+	# provided by gnu-libiconv-doc
+	rm -f "$pkgdir"/usr/share/man/man1/iconv*
+	rm -f "$pkgdir"/usr/share/man/man3/iconv*
+
+	# provided by mandoc
+	rm -f "$pkgdir"/usr/share/man/man7/man* \
+		"$pkgdir"/usr/share/man/man7/mdoc*
+
+	# provided by tzdata
+	rm -f "$pkgdir"/usr/share/man/man5/tzfile* \
+		"$pkgdir"/usr/share/man/man8/tzselect* \
+		"$pkgdir"/usr/share/man/man8/zic* \
+		"$pkgdir"/usr/share/man/man8/zdump*
+}
+
+sha512sums="
+7ac05aa804135570a183ef9f00143a9ad3bfd33825ae851bffe216eff3b77cfc2b6b5992e11578f1a4b3ae3841c41b7ffff7d4bebb9abfa6348c414f5825187d  man-pages-6.9.1.tar.xz
+"

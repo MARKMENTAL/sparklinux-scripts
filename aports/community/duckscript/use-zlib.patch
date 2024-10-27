@@ -1,0 +1,54 @@
+Build against system-provided zlib library.
+
+diff --git a/Cargo.lock b/Cargo.lock
+index d096dcc..f59c64d 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -348,6 +348,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "3b9429470923de8e8cbd4d2dc513535400b4b3fef0319fb5c4e1f520a7bef743"
+ dependencies = [
+  "crc32fast",
++ "libz-sys",
+  "miniz_oxide",
+ ]
+ 
+@@ -618,6 +619,17 @@ version = "0.2.144"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "2b00cc1c228a6782d0f076e7b232802e0c5689d41bb5df366f2a6b6621cfdfe1"
+ 
++[[package]]
++name = "libz-sys"
++version = "1.1.12"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "d97137b25e321a73eef1418d1d5d2eda4d77e12813f8e6dead84bc52c5870a7b"
++dependencies = [
++ "cc",
++ "pkg-config",
++ "vcpkg",
++]
++
+ [[package]]
+ name = "linux-raw-sys"
+ version = "0.3.8"
+diff --git a/duckscript_sdk/Cargo.toml b/duckscript_sdk/Cargo.toml
+index bd276ca..459bfed 100644
+--- a/duckscript_sdk/Cargo.toml
++++ b/duckscript_sdk/Cargo.toml
+@@ -24,7 +24,7 @@ include = [
+ 
+ [dependencies]
+ attohttpc = { version = "^0.26", default-features = false, features = [
+-  "compress",
++  "compress-zlib",
+ ] }
+ base64 = "^0.21"
+ cfg-if = "^1"
+@@ -49,7 +49,7 @@ which = { version = "^4", default-features = false }
+ whoami = "^1"
+ zip = { version = "^0.6", default-features = false, features = [
+   "bzip2",
+-  "deflate",
++  "deflate-zlib",
+   "time",
+ ] }
+ 

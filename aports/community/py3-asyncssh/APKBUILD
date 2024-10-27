@@ -1,0 +1,43 @@
+# Contributor: Duncan Bellamy <dunk@denkimushi.com>
+# Maintainer: Duncan Bellamy <dunk@denkimushi.com>
+pkgname=py3-asyncssh
+_relname=${pkgname#"py3-"}
+pkgver=2.17.0
+pkgrel=0
+pkgdesc="provides an asynchronous client and server implementation of the SSHv2 protocol on top of the Python 3.6+ asyncio framework"
+url="https://asyncssh.readthedocs.io/en/latest/"
+arch="all"
+license="EPL-2.0"
+depends="python3 py3-cryptography py3-typing-extensions"
+makedepends="py3-gpep517 py3-installer py3-setuptools py3-wheel"
+checkdepends="py3-bcrypt py3-openssl py3-pytest"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/a/asyncssh/asyncssh-$pkgver.tar.gz"
+builddir="$srcdir/$_relname-$pkgver"
+
+# secfixes:
+#   2.14.2-r0:
+#     - CVE-2023-48795
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest \
+		--deselect tests/test_x11.py \
+		--deselect tests/test_connection.py \
+		--deselect tests/test_encryption.py
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+be4d25185008dacde8369249ae8321c403590423dd6f088ca6568333be9e96a93509f9663e5292d5bbe27ea20064bc530f0867dd05aef2a453bc1f8eeff1ed40  asyncssh-2.17.0.tar.gz
+"

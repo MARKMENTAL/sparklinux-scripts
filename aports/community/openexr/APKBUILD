@@ -1,0 +1,143 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Contributor: Holger Jaekel <holger.jaekel@gmx.de>
+# Maintainer: Mark Riedesel <mark+alpine@klowner.com>
+pkgname=openexr
+pkgver=3.1.13
+pkgrel=1
+pkgdesc="High dynamic-range image file format library"
+url="https://www.openexr.com/"
+arch="all"
+license="BSD-3-Clause"
+makedepends="
+	boost-dev
+	chrpath
+	cmake
+	imath-dev
+	samurai
+	zlib-dev
+	"
+subpackages="
+	$pkgname-doc
+	$pkgname-tools
+	$pkgname-dev
+	$pkgname-libiex
+	$pkgname-libilmthread
+	$pkgname-libopenexr
+	$pkgname-libopenexrcore
+	$pkgname-libopenexrutil
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/openexr/openexr/archive/v$pkgver.tar.gz"
+
+# secfixes:
+#   3.1.12-r0:
+#     - CVE-2023-5841
+#   3.1.4-r0:
+#     - CVE-2021-45942
+#   3.1.1-r0:
+#     - CVE-2021-3598
+#     - CVE-2021-23169
+#     - CVE-2021-23215
+#     - CVE-2021-26260
+#     - CVE-2021-26945
+#   2.5.4-r0:
+#     - CVE-2021-20296
+#     - CVE-2021-3474
+#     - CVE-2021-3475
+#     - CVE-2021-3476
+#     - CVE-2021-3477
+#     - CVE-2021-3478
+#     - CVE-2021-3479
+#   2.5.2-r0:
+#     - CVE-2020-15304
+#     - CVE-2020-15305
+#     - CVE-2020-15306
+#   2.4.1-r0:
+#     - CVE-2020-11758
+#     - CVE-2020-11759
+#     - CVE-2020-11760
+#     - CVE-2020-11761
+#     - CVE-2020-11762
+#     - CVE-2020-11763
+#     - CVE-2020-11764
+#     - CVE-2020-11765
+#   2.4.0-r0:
+#     - CVE-2017-12596
+#   2.2.1-r0:
+#     - CVE-2017-9110
+#     - CVE-2017-9111
+#     - CVE-2017-9112
+#     - CVE-2017-9113
+#     - CVE-2017-9114
+#     - CVE-2017-9115
+#     - CVE-2017-9116
+
+case "$CARCH" in
+ppc64le|s390x)
+	# fails a bunch of tests
+	options="$options !check"
+	;;
+esac
+
+build() {
+	CFLAGS="$CFLAGS -O2 -flto=auto" \
+	CXXFLAGS="$CXXFLAGS -O2 -flto=auto" \
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_SKIP_INSTALL_RPATH=ON \
+		-DBUILD_TESTING="$(want_check && echo ON || echo OFF)" \
+		$CMAKE_CROSSOPTS
+	cmake --build build
+}
+
+check() {
+	local exclude_tests="(OpenEXR.testDeepScanLineBasic|OpenEXR.testCopyMultiPartFile|OpenEXRCore.testDWAACompression|OpenEXRCore.testDWABCompression"
+	case "$CARCH" in
+	arm*)
+		exclude_tests="$exclude_tests|OpenEXR.testMultiTiledPartThreading|OpenEXR.testRgbaThreading|OpenEXR.testStandardAttributes|OpenEXR.testBackwardCompatibility"
+		;;
+	x86)
+		exclude_tests="$exclude_tests|OpenEXR.testDwaLookups|OpenEXR.testOptimizedInterleavePatterns"
+		;;
+	riscv64)
+		exclude_tests="$exclude_tests|OpenEXR.testMultiTiledPartThreading"
+		;;
+	esac
+
+	ctest --test-dir build --output-on-failure \
+		-E "$exclude_tests)"
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+tools() {
+	amove usr/bin
+}
+
+libiex() {
+	amove usr/lib/libIex-*.so.*
+}
+
+libilmthread() {
+	amove usr/lib/libIlmThread-*.so.*
+}
+
+libopenexr() {
+	amove usr/lib/libOpenEXR-*.so.*
+}
+
+libopenexrcore() {
+	amove usr/lib/libOpenEXRCore-*.so.*
+}
+
+libopenexrutil() {
+	amove usr/lib/libOpenEXRUtil-*.so.*
+}
+
+sha512sums="
+662ebfce32bc56e3b5140e7d1813b8c117ac6e806fe30c996b956465ce20ee43f1f535b97868a87a26d1d7909d7f59acbe383f335ab8d72ad1484408cbabf77b  openexr-3.1.13.tar.gz
+"

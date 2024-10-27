@@ -1,0 +1,37 @@
+# Maintainer: Andy Postnikov <apostnikov@gmail.com>
+pkgname=php82-pecl-zephir_parser
+_extname=zephir_parser
+pkgver=1.6.1
+pkgrel=0
+pkgdesc="Zephir Parser is a code parser, delivered as a C extension for the PHP 8.2 language - PECL"
+url="https://pecl.php.net/package/zephir_parser"
+arch="all"
+license="MIT"
+_phpv=82
+_php=php$_phpv
+depends="$_php-common"
+makedepends="$_php-dev"
+source="php-pecl-$_extname-$pkgver.tar.gz::https://pecl.php.net/get/$_extname-$pkgver.tgz"
+builddir="$srcdir"/$_extname-$pkgver
+
+build() {
+	phpize$_phpv
+	./configure --prefix=/usr --with-php-config=/usr/bin/php-config$_phpv
+	make
+}
+
+check() {
+	echo "$pkgver" > VERSION
+	make NO_INTERACTION=1 REPORT_EXIT_STATUS=1 test TESTS="${TESTS:- --show-diff }"
+}
+
+package() {
+	make INSTALL_ROOT="$pkgdir" install
+	local _confdir="$pkgdir"/etc/$_php/conf.d
+	install -d $_confdir
+	echo "extension=$_extname" > $_confdir/$_extname.ini
+}
+
+sha512sums="
+a53336de4efb5e303f1058492a7b20884739afea975801b971fea32dabaa0233521d85fbb4c2f5c76e215572f0a9e0056c0a3f9833c3d86d3c1d1d68f771a873  php-pecl-zephir_parser-1.6.1.tar.gz
+"

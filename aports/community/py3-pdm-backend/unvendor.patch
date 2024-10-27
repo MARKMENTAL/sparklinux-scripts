@@ -1,0 +1,169 @@
+diff --git a/src/pdm/backend/_vendor/packaging/specifiers.py b/src/pdm/backend/_vendor/packaging/specifiers.py
+index 2b9feb0..645214a 100644
+--- a/src/pdm/backend/_vendor/packaging/specifiers.py
++++ b/src/pdm/backend/_vendor/packaging/specifiers.py
+@@ -4,8 +4,8 @@
+ """
+ .. testsetup::
+ 
+-    from pdm.backend._vendor.packaging.specifiers import Specifier, SpecifierSet, InvalidSpecifier
+-    from pdm.backend._vendor.packaging.version import Version
++    from packaging.specifiers import Specifier, SpecifierSet, InvalidSpecifier
++    from packaging.version import Version
+ """
+ 
+ import abc
+diff --git a/src/pdm/backend/_vendor/packaging/version.py b/src/pdm/backend/_vendor/packaging/version.py
+index b9b6184..e5c738c 100644
+--- a/src/pdm/backend/_vendor/packaging/version.py
++++ b/src/pdm/backend/_vendor/packaging/version.py
+@@ -4,7 +4,7 @@
+ """
+ .. testsetup::
+ 
+-    from pdm.backend._vendor.packaging.version import parse, Version
++    from packaging.version import parse, Version
+ """
+ 
+ import collections
+diff --git a/src/pdm/backend/_vendor/pyproject_metadata/__init__.py b/src/pdm/backend/_vendor/pyproject_metadata/__init__.py
+index 0f6544b..f61ffad 100644
+--- a/src/pdm/backend/_vendor/pyproject_metadata/__init__.py
++++ b/src/pdm/backend/_vendor/pyproject_metadata/__init__.py
+@@ -13,10 +13,10 @@ import typing
+ from collections.abc import Mapping
+ from typing import Any
+ 
+-import pdm.backend._vendor.packaging.markers as pkg_markers
+-import pdm.backend._vendor.packaging.requirements as pkg_requirements
+-import pdm.backend._vendor.packaging.specifiers as pkg_specifiers
+-import pdm.backend._vendor.packaging.version as pkg_version
++import packaging.markers as pkg_markers
++import packaging.requirements as pkg_requirements
++import packaging.specifiers as pkg_specifiers
++import packaging.version as pkg_version
+ 
+ 
+ __version__ = '0.7.1'
+diff --git a/src/pdm/backend/_vendor/tomli_w/__init__.py b/src/pdm/backend/_vendor/tomli_w/__init__.py
+index 5324bfa..d7db4cd 100644
+--- a/src/pdm/backend/_vendor/tomli_w/__init__.py
++++ b/src/pdm/backend/_vendor/tomli_w/__init__.py
+@@ -1,4 +1,4 @@
+ __all__ = ("dumps", "dump")
+ __version__ = "1.0.0"  # DO NOT EDIT THIS LINE MANUALLY. LET bump2version UTILITY DO IT
+ 
+-from pdm.backend._vendor.tomli_w._writer import dump, dumps
++from tomli_w._writer import dump, dumps
+diff --git a/src/pdm/backend/config.py b/src/pdm/backend/config.py
+index e71e1ee..48b618a 100644
+--- a/src/pdm/backend/config.py
++++ b/src/pdm/backend/config.py
+@@ -6,8 +6,8 @@ import sys
+ from pathlib import Path
+ from typing import Any, TypeVar
+ 
+-from pdm.backend._vendor import tomli_w
+-from pdm.backend._vendor.pyproject_metadata import ConfigurationError, StandardMetadata
++import tomli_w
++from pyproject_metadata import ConfigurationError, StandardMetadata
+ from pdm.backend.exceptions import ConfigError, ValidationError
+ from pdm.backend.structures import Table
+ from pdm.backend.utils import find_packages_iter
+@@ -15,7 +15,7 @@ from pdm.backend.utils import find_packages_iter
+ if sys.version_info >= (3, 11):
+     import tomllib
+ else:
+-    import pdm.backend._vendor.tomli as tomllib
++    import tomli as tomllib
+ 
+ T = TypeVar("T")
+ 
+diff --git a/src/pdm/backend/editable.py b/src/pdm/backend/editable.py
+index 0a5ba0c..b637797 100644
+--- a/src/pdm/backend/editable.py
++++ b/src/pdm/backend/editable.py
+@@ -6,7 +6,7 @@ from pathlib import Path
+ 
+ from editables import EditableProject
+ 
+-from pdm.backend._vendor.packaging.utils import canonicalize_name
++from packaging.utils import canonicalize_name
+ from pdm.backend.exceptions import ConfigError, PDMWarning
+ from pdm.backend.hooks.base import Context
+ from pdm.backend.utils import to_filename
+diff --git a/src/pdm/backend/hooks/version/scm.py b/src/pdm/backend/hooks/version/scm.py
+index 14a39a9..8c97e70 100644
+--- a/src/pdm/backend/hooks/version/scm.py
++++ b/src/pdm/backend/hooks/version/scm.py
+@@ -15,7 +15,7 @@ from datetime import datetime
+ from pathlib import Path
+ from typing import Any, Iterable, NamedTuple
+ 
+-from pdm.backend._vendor.packaging.version import Version
++from packaging.version import Version
+ 
+ DEFAULT_TAG_REGEX = re.compile(
+     r"^(?:[\w-]+-)?(?P<version>[vV]?\d+(?:\.\d+){0,2}[^\+]*)(?:\+.*)?$"
+diff --git a/src/pdm/backend/intree.py b/src/pdm/backend/intree.py
+index 4a77e83..b19a9d7 100644
+--- a/src/pdm/backend/intree.py
++++ b/src/pdm/backend/intree.py
+@@ -8,7 +8,7 @@ import pdm.backend as api
+ if sys.version_info >= (3, 11):
+     import tomllib
+ else:
+-    import pdm.backend._vendor.tomli as tomllib
++    import tomli as tomllib
+ 
+ 
+ def get_requires_for_build_wheel(
+diff --git a/src/pdm/backend/sdist.py b/src/pdm/backend/sdist.py
+index c812b29..f13d770 100644
+--- a/src/pdm/backend/sdist.py
++++ b/src/pdm/backend/sdist.py
+@@ -8,7 +8,7 @@ from pathlib import Path
+ from posixpath import join as pjoin
+ from typing import Iterable
+ 
+-from pdm.backend._vendor.packaging.utils import canonicalize_name
++from packaging.utils import canonicalize_name
+ from pdm.backend.base import Builder
+ from pdm.backend.hooks import Context
+ from pdm.backend.utils import safe_version, to_filename
+diff --git a/src/pdm/backend/utils.py b/src/pdm/backend/utils.py
+index 390c6fc..18a6ff1 100644
+--- a/src/pdm/backend/utils.py
++++ b/src/pdm/backend/utils.py
+@@ -13,10 +13,10 @@ from fnmatch import fnmatchcase
+ from pathlib import Path
+ from typing import Callable, Generator, Iterable, Match
+ 
+-from pdm.backend._vendor.packaging import tags
+-from pdm.backend._vendor.packaging.markers import Marker
+-from pdm.backend._vendor.packaging.requirements import Requirement
+-from pdm.backend._vendor.packaging.version import InvalidVersion, Version
++from packaging import tags
++from packaging.markers import Marker
++from packaging.requirements import Requirement
++from packaging.version import InvalidVersion, Version
+ from pdm.backend.macosx_platform import calculate_macosx_platform_tag
+ 
+ 
+diff --git a/src/pdm/backend/wheel.py b/src/pdm/backend/wheel.py
+index 072757a..dfaa8eb 100644
+--- a/src/pdm/backend/wheel.py
++++ b/src/pdm/backend/wheel.py
+@@ -14,9 +14,9 @@ from base64 import urlsafe_b64encode
+ from pathlib import Path
+ from typing import IO, Any, Iterable, Mapping, NamedTuple, cast
+ 
+-from pdm.backend._vendor.packaging import tags
+-from pdm.backend._vendor.packaging.specifiers import SpecifierSet
+-from pdm.backend._vendor.packaging.utils import canonicalize_name
++from packaging import tags
++from packaging.specifiers import SpecifierSet
++from packaging.utils import canonicalize_name
+ from pdm.backend.base import Builder
+ from pdm.backend.hooks import Context
+ from pdm.backend.hooks.setuptools import SetuptoolsBuildHook

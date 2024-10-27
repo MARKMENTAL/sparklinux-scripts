@@ -1,0 +1,24 @@
+diff --git a/package.json b/package.json
+index e7820f7..0beb1f4 100644
+--- a/package.json
++++ b/package.json
+@@ -95,7 +95,6 @@
+     "eslint-plugin-react-hooks": "^4.6.2",
+     "eslint-plugin-react-refresh": "^0.4.7",
+     "eslint-plugin-vitest-globals": "^1.5.0",
+-    "husky": "^2.7.0",
+     "jest-styled-components": "^7.2.0",
+     "lint-staged": "^13.1.0",
+     "prettier": "^3.2.5",
+@@ -106,11 +105,6 @@
+     "vite-plugin-svgr": "^4.2.0",
+     "vitest": "^1.5.0"
+   },
+-  "husky": {
+-    "hooks": {
+-      "pre-commit": "lint-staged"
+-    }
+-  },
+   "lint-staged": {
+     "*.{ts,tsx,js,json}": [
+       "prettier --write"

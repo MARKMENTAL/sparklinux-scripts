@@ -1,0 +1,99 @@
+# Contributor: Sören Tempel <soeren+alpinelinux@soeren-tempel.net>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=harfbuzz
+pkgver=9.0.0
+pkgrel=0
+pkgdesc="Text shaping library"
+url="https://harfbuzz.github.io/"
+arch="all"
+license="MIT"
+makedepends="
+	cairo-dev
+	freetype-dev
+	glib-dev
+	gobject-introspection-dev
+	graphite2-dev
+	gtk-doc
+	icu-dev
+	meson
+	"
+checkdepends="python3"
+subpackages="
+	$pkgname-static
+	$pkgname-dev
+	$pkgname-cairo
+	$pkgname-doc
+	$pkgname-gobject
+	$pkgname-icu
+	$pkgname-subset
+	$pkgname-utils
+	"
+source="https://github.com/harfbuzz/harfbuzz/releases/download/$pkgver/harfbuzz-$pkgver.tar.xz"
+
+# secfixes:
+#   4.4.1-r0:
+#     - CVE-2022-33068
+
+build() {
+	CFLAGS="$CFLAGS -O2 -flto=auto -ffat-lto-objects" \
+	CXXFLAGS="$CXXFLAGS -O2 -flto=auto -ffat-lto-objects" \
+	CPPFLAGS="$CPPFLAGS -O2 -flto=auto -ffat-lto-objects" \
+	abuild-meson \
+		--default-library=both \
+		-Dglib=enabled \
+		-Dgobject=enabled \
+		-Dgraphite=enabled \
+		-Dicu=enabled \
+		-Dfreetype=enabled \
+		-Dtests="$(want_check && echo enabled || echo disabled)" \
+		-Dcairo=enabled \
+		-Ddocs=enabled \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+icu() {
+	pkgdesc="Harfbuzz ICU support library"
+	replaces="harfbuzz"
+
+	amove usr/lib/lib*icu.so.*
+}
+
+gobject() {
+	pkgdesc="Harfbuzz gobject library"
+	amove usr/lib/lib*gobject.so.*
+}
+
+cairo() {
+	pkgdesc="Harfbuzz cairo library"
+	amove usr/lib/lib*cairo.so.*
+}
+
+subset() {
+	pkgdesc="Harfbuzz subset library"
+	amove usr/lib/lib*subset.so.*
+}
+
+utils() {
+	pkgdesc="$pkgdesc (utilities)"
+
+	amove usr/bin
+}
+
+dev() {
+	default_dev
+	provides="harfbuzz-bootstrap-dev"
+	provider_priority=2
+}
+
+sha512sums="
+2700b560727d9c4440ad9c74a170b857f20f9e553e5d98b0c4bcf086a25ba644149d7c89009a41d964af7a924efcc486da4dcbfa5cc4d47f9f10e9b6b8c689af  harfbuzz-9.0.0.tar.xz
+"

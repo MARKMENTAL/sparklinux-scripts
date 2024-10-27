@@ -1,0 +1,31 @@
+# Contributor: guddaff <alpine@guddaff.de>
+# Maintainer: guddaff <alpine@guddaff.de>
+pkgname=spacenavd
+pkgver=1.2
+pkgrel=0
+pkgdesc="user-space driver for 6-dof space-mice"
+url="https://spacenav.sourceforge.net/"
+arch="all !armhf !armv7 !x86" #armhf, armv7, x86: truct input_event' has no member named 'time'
+license="GPL-3.0-or-later"
+makedepends="libx11-dev libxi-dev libxtst-dev linux-headers"
+options="!check" # no tests
+source="$pkgname-$pkgver.tar.gz::https://github.com/FreeSpacenav/spacenavd/archive/refs/tags/v$pkgver.tar.gz"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+f9be5a63de4c773dd637393d592bd040c2f64c3b1dc51847f8e3d9fe7d83df7adf6fa6b7af765d664e4ab86b8fa2715355ddc27514276c39c66fa86a46de46ea  spacenavd-1.2.tar.gz
+"

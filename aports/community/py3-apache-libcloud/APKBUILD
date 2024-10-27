@@ -1,0 +1,33 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=py3-apache-libcloud
+pkgver=3.8.0
+pkgrel=1
+pkgdesc="Python3 library for interacting with many popular cloud service providers using a unified API"
+url="https://libcloud.apache.org/"
+arch="noarch"
+license="Apache-2.0"
+depends="python3"
+makedepends="py3-setuptools"
+subpackages="$pkgname-pyc"
+source="libcloud-$pkgver.tar.gz::https://github.com/apache/libcloud/archive/v$pkgver.tar.gz"
+builddir="$srcdir"/libcloud-$pkgver
+
+replaces=py-libcloud # Backwards compatibility
+provides=py-libcloud=$pkgver-r$pkgrel # Backwards compatibility
+
+build() {
+	python3 setup.py build
+}
+
+check() {
+	python3 setup.py check
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+e353d4d5fe58ef0ba14cc28609915f532b79780844079bc7bcb2fb8c40eb0c44f3a5c93bef98c030df41f1d7491c751da928798cf6550341d788e9de8af7f234  libcloud-3.8.0.tar.gz
+"

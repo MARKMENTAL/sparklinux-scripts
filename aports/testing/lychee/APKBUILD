@@ -1,0 +1,44 @@
+# Contributor: Orhun Parmaksız <orhunparmaksiz@gmail.com>
+# Maintainer: Orhun Parmaksız <orhunparmaksiz@gmail.com>
+pkgname=lychee
+pkgver=0.15.1
+pkgrel=0
+pkgdesc="Fast, async, resource-friendly link checker written in Rust"
+url=https://lychee.cli.rs
+# !s390x !armhf !riscv64: openssl fails to build
+# loongarch64: blocked by libc crate
+arch="all !s390x !armhf !riscv64 !loongarch64"
+license="MIT OR Apache-2.0"
+makedepends="
+	cargo
+	cargo-auditable
+	perl
+	make
+	pkgconf
+	"
+subpackages="$pkgname-doc"
+options="net"
+source="$pkgname-$pkgver.tar.gz::https://github.com/lycheeverse/lychee/archive/v$pkgver/lychee-$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release --features vendored-openssl
+}
+
+check() {
+	cargo test --features vendored-openssl -- --test-threads 1
+}
+
+package() {
+	install -Dm 755 "target/release/$pkgname" -t "$pkgdir/usr/bin"
+	install -Dm 644 README.md -t "$pkgdir/usr/share/doc/$pkgname"
+	install -Dm 644 LICENSE-MIT -t "$pkgdir/usr/share/licenses/$pkgname"
+}
+
+sha512sums="
+642d0a35461e6fd2e22d518e984767fb54425f0b03b5b2ee5ccf019f91ec0fb5668231f54311c10140e96be13bb4cc2d1ef1be4c74b062992d46e6b3a54a0084  lychee-0.15.1.tar.gz
+"

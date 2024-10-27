@@ -1,0 +1,156 @@
+# Contributor: Timo Teräs <timo.teras@iki.fi>
+# Maintainer: Timo Teräs <timo.teras@iki.fi>
+pkgname=fwupd
+pkgver=1.9.25
+pkgrel=0
+pkgdesc="Firmware update daemon"
+url="https://fwupd.org/"
+# armhf, ppc64le, loongarch64 and s390x blocked by gnu-efi/fwupd-efi
+arch="all !armhf !ppc64le !s390x !riscv64 !loongarch64"
+license="LGPL-2.1-or-later"
+depends="dbus"
+makedepends="
+	cairo-dev
+	efivar-dev
+	elfutils-dev
+	elogind-dev
+	eudev-dev
+	flashrom-dev
+	font-opensans
+	fontconfig-dev
+	freetype-dev
+	glib-dev
+	gnu-efi-dev
+	gnutls-dev
+	gnutls-utils
+	gobject-introspection-dev
+	gpgme-dev
+	help2man
+	json-glib-dev
+	libarchive-dev
+	libcbor-dev
+	libdrm-dev
+	libgcab-dev
+	libgudev-dev
+	libgusb-dev
+	libjcat-dev
+	libmbim-dev
+	libqmi-dev
+	libxmlb-dev
+	linux-headers
+	meson
+	modemmanager-dev
+	polkit-dev
+	protobuf-c-dev
+	py3-cairo
+	py3-gobject3
+	py3-jinja2
+	py3-markdown
+	py3-pillow
+	py3-setuptools
+	python3
+	tpm2-tss-dev
+	tpm2-tss-esys
+	vala
+	"
+checkdepends="
+	bubblewrap
+	umockdev
+	"
+subpackages="
+	$pkgname-dbg
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-lang
+	$pkgname-openrc
+	$pkgname-fish-completion
+	$pkgname-udev
+	$pkgname-polkit
+	"
+source="https://github.com/fwupd/fwupd/releases/download/$pkgver/fwupd-$pkgver.tar.xz
+	$pkgname.initd
+	$pkgname.confd
+	"
+
+# libsmbios is a library for DELL devices which are x86/x86_64-only
+case "$CARCH" in
+	x86*)
+		makedepends="$makedepends libsmbios-dev"
+		;;
+	*) ;;
+esac
+
+case "$CARCH" in
+	x86*|aarch64)
+		# fwupd-efi needed for uefi-capsule
+		makedepends="$makedepends fwupd-efi-dev"
+		_uefi_capsule=enabled
+		subpackages="$subpackages $pkgname-grub"
+		;;
+	*)
+		_uefi_capsule=disabled
+		;;
+esac
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dconsolekit=enabled \
+		-Dfirmware-packager=true \
+		-Ddocs=disabled \
+		-Dhsi=enabled \
+		-Dlvfs=true \
+		-Dman=true \
+		-Dplugin_redfish=disabled \
+		-Dplugin_uefi_capsule=$_uefi_capsule \
+		-Dsystemd=disabled \
+		-Delogind=enabled \
+		-Dtests=true \
+		-Dudevdir=/lib/udev \
+		. output
+
+	meson compile -C output
+}
+
+check() {
+	# tests fail if usb is not available
+	[ -e /dev/bus/usb ] || return 0
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+
+	install -Dm755 "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
+	install -Dm644 "$srcdir"/$pkgname.confd "$pkgdir"/etc/conf.d/$pkgname
+}
+
+grub() {
+	pkgdesc="$pkgdesc (grub integration)"
+	depends=""
+	install_if="$pkgname=$pkgver-r$pkgrel grub"
+
+	amove etc/grub.d
+}
+
+udev() {
+	pkgdesc="$pkgdesc (udev integration)"
+	depends=""
+	install_if="$pkgname=$pkgver-r$pkgrel udev"
+
+	amove lib/udev
+}
+
+polkit() {
+	pkgdesc="$pkgdesc (polkit integration)"
+	depends=""
+	install_if="$pkgname=$pkgver-r$pkgrel polkit"
+
+	amove usr/share/polkit-1
+}
+
+sha512sums="
+1c50c444456f12a048d9b476c78fd539b11079e3a8a8eb87c1f6cfc0419c4e80691622e9615a38b5c92aec7ef9174d16dcf63fabbabf223cda34350eb196e220  fwupd-1.9.25.tar.xz
+2c34891ec273aa1a4d105602cd5e99add5a17d6e240fa93a015d5bb2e11e54937b04781de2a854c472be376524b50fc5bb48edf7b875afb54e3ca07dcda117b0  fwupd.initd
+0bf773a2c52b0306e99e5192d259f38cce8a25487e95a41b6e0200a1ed629235971795a1f9ba12a633cd902671d888610695658f2cc2c750e2afca70f87ee589  fwupd.confd
+"

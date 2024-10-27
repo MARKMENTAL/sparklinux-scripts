@@ -1,0 +1,24 @@
+# Maintainer: Ariadne Conill <ariadne@dereferenced.org>
+pkgname=batctl
+pkgver=2024.1
+pkgrel=0
+pkgdesc="B.A.T.M.A.N. advanced control and management tool"
+url="https://www.open-mesh.org/"
+arch="all"
+license="GPL-2.0-only AND MIT"
+makedepends="libnl3-dev linux-headers"
+subpackages="$pkgname-doc"
+source="https://downloads.open-mesh.org/batman/releases/batman-adv-$pkgver/batctl-$pkgver.tar.gz"
+options="!check" # No test suite.
+
+build() {
+	make PREFIX=/usr
+}
+
+package() {
+	make PREFIX=/usr DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+b627f05834cfd58decae7ab6c23a778c4559e6cbc6f3f008ac964d0d90f8592ba838828a6924d5d3288f9a0c6d4bde48ef3185f52b3869102c6d7896f00d15b5  batctl-2024.1.tar.gz
+"

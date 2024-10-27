@@ -1,0 +1,32 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Maintainer: André Klitzing <aklitzing@gmail.com>
+pkgname=dos2unix
+pkgver=7.5.2
+pkgrel=0
+pkgdesc="Text file format converters"
+url="https://waterlan.home.xs4all.nl/dos2unix.html"
+arch="all"
+license="BSD-2-Clause"
+checkdepends="gettext-dev perl-utils"
+subpackages="$pkgname-doc"
+source="https://waterlan.home.xs4all.nl/dos2unix/dos2unix-$pkgver.tar.gz"
+
+build() {
+	make ENABLE_NLS= LDFLAGS_USER="$LDFLAGS"
+}
+
+check() {
+	make check
+}
+
+package() {
+	make prefix=/usr \
+		docsubdir=$pkgname \
+		ENABLE_NLS= \
+		DESTDIR="$pkgdir" \
+		install
+}
+
+sha512sums="
+d76d799435dd248850f72cc50af2144a51e99f04ea83a1447c4edd828625c83f0afba367da51aa83defced4cbf34f3b75387a0821010f7b212225571036efbb2  dos2unix-7.5.2.tar.gz
+"

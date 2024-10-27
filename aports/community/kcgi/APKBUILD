@@ -1,0 +1,35 @@
+# Contributor: David Demelier <markand@malikania.fr>
+# Maintainer: David Demelier <markand@malikania.fr>
+pkgname=kcgi
+pkgver=0.13.3
+_pkgver=${pkgver//./_}
+pkgrel=0
+pkgdesc="CGI and FastCGI library for C/C++ web applications"
+url="https://kristaps.bsd.lv/kcgi"
+arch="all"
+license="ISC"
+makedepends="bmake zlib-dev"
+checkdepends="curl-dev"
+subpackages="$pkgname-static $pkgname-dev $pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/kristapsdz/kcgi/archive/VERSION_$_pkgver.tar.gz"
+builddir="$srcdir/kcgi-VERSION_$_pkgver"
+
+build() {
+	# https://github.com/kristapsdz/kcgi/issues/91
+	echo HAVE_SECCOMP_FILTER=0 > configure.local
+
+	./configure PREFIX=/usr MANDIR=/usr/share/man SBINDIR=/usr/sbin
+	bmake
+}
+
+package() {
+	bmake DESTDIR="$pkgdir" install
+}
+
+check() {
+	bmake regress
+}
+
+sha512sums="
+a1b64788e4b1a77a7de6a6876df0d9c5169b8c3187a743accdfbf1cf76c9b00f3f1608d0f9f3c72b06c898584e558bf41c5e05efbbcfaae7c93fdb0cd6dca2f5  kcgi-0.13.3.tar.gz
+"

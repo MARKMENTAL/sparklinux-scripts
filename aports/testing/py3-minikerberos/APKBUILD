@@ -1,0 +1,44 @@
+# Contributor: Jonas <3426-spameier@users.gitlab.alpinelinux.org>
+# Maintainer: Jonas <3426-spameier@users.gitlab.alpinelinux.org>
+pkgname=py3-minikerberos
+_pyname=minikerberos
+pkgver=0.4.4
+pkgrel=1
+pkgdesc="Kerberos manipulation library in pure Python"
+url="https://github.com/skelsec/minikerberos"
+arch="noarch"
+license="MIT"
+depends="
+	py3-asn1crypto
+	py3-asysocks
+	py3-oscrypto
+	py3-six
+	py3-tqdm
+	py3-unicrypto
+	python3
+	"
+makedepends="
+	py3-gpep517
+	py3-wheel
+	py3-setuptools
+	"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/skelsec/minikerberos/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/$_pyname-$pkgver"
+options="!check" # test suite requires connection to a KDC service (see /tests/config.py)
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+	rm -rf "$pkgdir"/usr/lib/python3.*/site-packages/tests/ # remove tests
+}
+
+sha512sums="
+3e7e5e464eaf2c0b94e11ead13a1d2fd56e45a36fb9592aaa5d6de4beeecb8960df523ab647b1e9ab0e8104cec557803bd3dbfa1ae1dbf3333f4ecbd4d6fa198  py3-minikerberos-0.4.4.tar.gz
+"

@@ -1,0 +1,53 @@
+# Maintainer: Donoban <donoban@riseup.net>
+pkgname=bubblejail
+pkgver=0.9.2
+pkgrel=0
+pkgdesc="Bubblewrap based sandboxing for desktop applications"
+url="https://github.com/igo95862/bubblejail"
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="
+	bubblewrap
+	libseccomp
+	py3-lxns
+	py3-tomli-w
+	py3-xdg
+	xdg-dbus-proxy
+	"
+makedepends="
+	meson
+	scdoc
+	py3-jinja2
+	"
+subpackages="
+	$pkgname-doc
+	$pkgname-pyc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-config
+	"
+source="bubblejail-$pkgver.tar.gz::https://github.com/igo95862/bubblejail/archive/refs/tags/$pkgver.tar.gz
+				site-packages.patch"
+options="!check" # No tests
+
+build() {
+	abuild-meson \
+		-Dversion_display="Alpine $pkgver" \
+		. output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+config() {
+	depends="$pkgname=$pkgver-r$pkgrel py3-qt6"
+	amove /usr/bin/bubblejail-config
+	amove /usr/lib/python3.*/site-packages/bubblejail/bubblejail_gui_qt.py
+}
+
+sha512sums="
+0a4710b6c06c8272374c37dd118e1f2926254579ea2342493cb50d33b9ca9763ee7ea2b35dbc5d3fee62e7113ac7e10b830578aa50c14d357ce79a020c947996  bubblejail-0.9.2.tar.gz
+af32915f02bfe8e85d54454cb020fb13fb18cd2a5efb5d740c8112c7932adfcd954157f868c9d1a367a0099507a3ba73060687f0b544f65f34e09ab8a6e906e2  site-packages.patch
+"

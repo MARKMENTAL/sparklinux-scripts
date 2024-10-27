@@ -1,0 +1,40 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=ovos-messagebus
+pkgver=0.0.6
+pkgrel=0
+pkgdesc="ovos-core metapackage for bus daemon"
+url="https://github.com/OpenVoiceOS/ovos-messagebus"
+arch="noarch"
+license="Apache-2.0"
+depends="
+	py3-ovos-config
+	py3-ovos-utils
+	py3-tornado
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="
+	py3-pytest
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/OpenVoiceOS/ovos-messagebus/archive/refs/tags/$pkgver.tar.gz"
+options="!check" # No tests
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+466c23be97df804e57767019d2845b7520d9e43e5b7d4772975019e30e3e176396935c1f035a0143f1d653b8e49ad023801a48441cdc4634998f1d2dc7ef0a34  ovos-messagebus-0.0.6.tar.gz
+"

@@ -1,0 +1,53 @@
+# Contributor: Will Sinatra <wpsinatra@gmail.com>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=libdrm
+pkgver=2.4.123
+pkgrel=0
+pkgdesc="Userspace interface to kernel DRM services"
+url="https://gitlab.freedesktop.org/mesa/drm"
+arch="all"
+# Requires a computer with gfx, no X running, build user in 'video' group..
+options="!check"
+license="MIT"
+depends_dev="linux-headers"
+makedepends="$depends_dev meson eudev-dev libpciaccess-dev xmlto"
+checkdepends="cunit-dev bash"
+subpackages="$pkgname-dev $pkgname-tests"
+source="https://gitlab.freedesktop.org/mesa/drm/-/archive/libdrm-$pkgver/drm-libdrm-$pkgver.tar.gz"
+builddir="$srcdir/drm-libdrm-$pkgver"
+
+build() {
+	CFLAGS="$CFLAGS -O2" \
+	CPPFLAGS="$CPPFLAGS -O2" \
+	CXXFLAGS="$CXXFLAGS -O2" \
+	abuild-meson \
+		-Db_lto=true \
+		-Dfreedreno=enabled \
+		-Dintel=enabled \
+		-Dtegra=enabled \
+		-Domap=enabled \
+		-Dexynos=enabled \
+		-Dvc4=enabled \
+		-Detnaviv=enabled \
+		-Dudev=true \
+		-Dinstall-test-programs=true \
+		-Dtests=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+tests() {
+	amove usr/bin
+}
+
+sha512sums="
+b593eb26be0f4e3aac44dfe8ec4e37d9e1a2666f9c86f2dcd3c32bd3e6fe376bfce7bd1c47af4d39b85b3d6f43ebf12f02704f055106872fb35f1d85b45286f3  drm-libdrm-2.4.123.tar.gz
+"

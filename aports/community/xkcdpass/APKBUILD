@@ -1,0 +1,39 @@
+# Contributor: Fabian Affolter <fabian@affolter-engineering.ch>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=xkcdpass
+pkgver=1.19.9
+pkgrel=1
+pkgdesc="Generate secure multiword passwords/passphrases"
+url="https://github.com/redacted/XKCD-password-generator"
+arch="noarch"
+license="BSD-3-Clause"
+depends="py3-xkcdpass"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+subpackages="py3-$pkgname-pyc py3-$pkgname:py3"
+source="https://files.pythonhosted.org/packages/source/x/xkcdpass/xkcdpass-$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 tests/test_xkcdpass.py
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+}
+
+py3() {
+	pkgdesc="Python library for $pkgname"
+
+	amove usr/lib/python*
+}
+
+sha512sums="
+b326160e181f0e0485514f10efa6cd8e98e139a8a89af37bad511713a7f46750f6da3ff1eeab20b850e0b5c607d0e329966d100d6bd4fe43b80d3edce090a2c1  xkcdpass-1.19.9.tar.gz
+"

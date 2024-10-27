@@ -1,0 +1,56 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=gnumeric
+pkgver=1.12.57
+pkgrel=1
+pkgdesc="GNOME Spreadsheet Program"
+url="https://www.gnome.org/projects/gnumeric"
+# s390x fails to build
+arch="all !s390x"
+license="GPL-2.0-or-later OR GPL-3.0-or-later"
+makedepends="
+	bison
+	desktop-file-utils
+	flex
+	goffice-dev
+	gtk+3.0-dev
+	itstool
+	intltool
+	libxml2-utils
+	libxslt-dev
+	py3-gobject3-dev
+	python3-dev
+	rarian
+	gtk-doc
+	"
+checkdepends="
+	perl-exporter
+	perl-file-basedir
+	perl-xml-parser
+	"
+subpackages="$pkgname-dbg $pkgname-dev $pkgname-doc $pkgname-lang"
+source="https://download.gnome.org/sources/gnumeric/${pkgver%.*}/gnumeric-$pkgver.tar.xz"
+options="!check" # failing tests
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--localstatedir=/var \
+		--with-python \
+		--disable-static
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+67886aff17338c41997cb71d2ee8fcac0f3b9dfc4ef1897b50866844e002ba7867f263daa3aadcaa10ba29746795fad0a4f852bdc22cdd4bc41293c952b69e9d  gnumeric-1.12.57.tar.xz
+"

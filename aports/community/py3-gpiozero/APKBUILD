@@ -1,0 +1,37 @@
+# Contributor: ScrumpyJack <scrumpyjack@st.ilet.to>
+# Maintainer: ScrumpyJack <scrumpyjack@st.ilet.to>
+pkgname=py3-gpiozero
+_pkgname=gpiozero
+pkgver=1.6.2
+pkgrel=2
+pkgdesc="A simple interface to everyday GPIO components used with Raspberry Pi"
+url="http://gpiozero.readthedocs.org"
+arch="aarch64 armhf armv7"
+license="BSD-3-Clause"
+depends="python3 py3-colorzero"
+makedepends="py3-setuptools"
+checkdepends="py3-pytest py3-mock"
+source="$_pkgname-$pkgver.tar.gz::https://github.com/gpiozero/gpiozero/archive/v$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+replaces="py-gpiozero" # Backwards compatibility
+provides="py-gpiozero=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	python3 setup.py build
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages test-env
+	test-env/bin/python3 setup.py install
+	# called_with not a thing?
+	test-env/bin/python3 -m pytest -k 'not test_spi_hardware_write'
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+ddb9e64425241cd2ea67d2261c440fd6482d9dd4a3242b16e5ceaba7336964e15b22e1a31466d800afda584859c90744b895be30790b80575784725f3b8b7837  gpiozero-1.6.2.tar.gz
+"

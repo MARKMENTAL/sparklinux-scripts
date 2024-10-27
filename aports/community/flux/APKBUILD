@@ -1,0 +1,58 @@
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=flux
+pkgver=2.3.0
+pkgrel=0
+pkgdesc="Open and extensible continuous delivery solution for Kubernetes"
+url="https://fluxcd.io/"
+arch="all"
+license="Apache-2.0"
+makedepends="go bash kustomize"
+subpackages="
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="https://github.com/fluxcd/flux2/archive/v$pkgver/flux-$pkgver.tar.gz"
+builddir="$srcdir/flux2-$pkgver"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+# secfixes:
+#   0.36.0-r0:
+#     - CVE-2022-39272
+
+build() {
+	bash ./manifests/scripts/bundle.sh
+
+	go build -v \
+		-ldflags "-X main.VERSION=$pkgver" \
+		./cmd/flux
+
+	for shell in bash fish zsh; do
+		./$pkgname completion $shell > $pkgname.$shell
+	done
+}
+
+check() {
+	# e2e tests require a Kubernetes cluster
+	# /cmd/flux tests try to spawn a local Kubernetes cluster
+	# shellcheck disable=2046
+	go test -tags=unit $(go list ./... | grep -v /cmd/flux)
+}
+
+package() {
+	install -Dm755 $pkgname -t "$pkgdir"/usr/bin/
+
+	install -Dm644 $pkgname.bash \
+		"$pkgdir"/usr/share/bash-completion/completions/$pkgname
+	install -Dm644 $pkgname.fish \
+		"$pkgdir"/usr/share/fish/vendor_completions.d/$pkgname.fish
+	install -Dm644 $pkgname.zsh \
+		"$pkgdir"/usr/share/zsh/site-functions/_$pkgname
+}
+
+sha512sums="
+64ae384a3ead62358f00a3ebc203eae111c4a5b5e3b0b4fceaedf9a0d4dc427b87438887b84763508bc0da5fdf5ae05944a800402b91be318f8044a6f5a54864  flux-2.3.0.tar.gz
+"

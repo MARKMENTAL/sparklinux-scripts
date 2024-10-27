@@ -1,0 +1,42 @@
+# Maintainer: kpcyrd <git@rxv.cc>
+pkgname=cargo-watch
+pkgver=8.5.2
+pkgrel=0
+pkgdesc="Utility for Cargo to compile projects when sources change"
+url="https://github.com/watchexec/cargo-watch"
+# s390x and riscv64 blocked by cargo
+# loongarch64: fails to build nix crate on loongarch64
+arch="all !s390x !riscv64 !loongarch64"
+license="CC0-1.0"
+makedepends="cargo cargo-auditable"
+subpackages="
+	$pkgname-doc
+	$pkgname-zsh-completion
+	"
+options="net"
+source="$pkgname-$pkgver.tar.gz::https://github.com/watchexec/cargo-watch/archive/v$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --release --frozen
+}
+
+check() {
+	PATH="$PWD/target/release:$PATH" cargo test --release --frozen
+}
+
+package() {
+	install -Dm755 target/release/$pkgname -t "$pkgdir"/usr/bin/
+
+	install -Dm644 $pkgname.1 -t "$pkgdir"/usr/share/man/man1/
+	install -Dm644 completions/zsh "$pkgdir"/usr/share/zsh/site-functions/_$pkgname
+}
+
+sha512sums="
+3653067ca5726b5a4914acc6129593ce4ec48aebf9d6947bcfd58595c0a52298ba7a71a046965cdabf0d59574d44789e5fe459c838975e26e87d9310e6df3b4f  cargo-watch-8.5.2.tar.gz
+"

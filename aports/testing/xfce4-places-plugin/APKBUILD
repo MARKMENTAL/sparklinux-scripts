@@ -1,0 +1,41 @@
+# Maintainer: Hakan Erduman <hakan@erduman.de>
+pkgname=xfce4-places-plugin
+pkgver=1.8.3
+pkgrel=0
+pkgdesc="Quick access to folders, documents, and removable media"
+url="https://docs.xfce.org/panel-plugins/xfce4-places-plugin/start"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="
+	exo-dev
+	libwnck3-dev
+	libxfce4ui-dev
+	xfce4-panel-dev
+	"
+subpackages="$pkgname-lang"
+source="https://archive.xfce.org/src/panel-plugins/xfce4-places-plugin/${pkgver%.*}/xfce4-places-plugin-$pkgver.tar.bz2"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--localstatedir=/var \
+		--disable-static
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+31ab8a47606c6406e93a753c55eb902fb25828f2c89c31814c11534dde327e656678ffcd590b41ebfab0a761bfcf0dae72e1ca3bb84eef5d0592f52114556ac9  xfce4-places-plugin-1.8.3.tar.bz2
+"

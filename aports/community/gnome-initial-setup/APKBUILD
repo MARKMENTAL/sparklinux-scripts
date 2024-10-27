@@ -1,0 +1,57 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: team/gnome <ablocorrea@hotmail.com>
+pkgname=gnome-initial-setup
+pkgver=47.0
+pkgrel=0
+pkgdesc="A simple, easy,and safe way to prepare a new system"
+url="https://gitlab.gnome.org/GNOME/gnome-initial-setup"
+# limited by gnome-shell
+arch="all !armhf !s390x"
+license="GPL-2.0-or-later"
+depends="
+	dbus:org.freedesktop.Secrets
+	gsettings-desktop-schemas
+	iso-codes
+	"
+makedepends="
+	accountsservice-dev
+	cheese-dev
+	fontconfig-dev
+	ibus-dev
+	krb5-dev
+	meson
+	networkmanager-dev
+	polkit-dev
+	gdm-dev
+	geoclue-dev
+	geocode-glib-dev>=3.26.4-r1
+	gnome-desktop-dev
+	gnome-online-accounts-dev
+	gtk4.0-dev
+	libadwaita-dev
+	libgweather4-dev
+	libnma-dev
+	libpwquality-dev
+	libsecret-dev
+	rest1-dev
+	webkit2gtk-6.0-dev
+	"
+options="!check" # no tests
+subpackages="$pkgname-lang"
+source="https://download.gnome.org/sources/gnome-initial-setup/${pkgver%%.*}/gnome-initial-setup-$pkgver.tar.xz"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dsystemd=false \
+		. output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+4a9f5cdd7d38b507fdcf3df0d7e5ff5570018f168cb08f389ef788c34b96532976b0578f5520151b2cc124e4f924657bbf2e0ea4a987b5fce2750b260aca03f4  gnome-initial-setup-47.0.tar.xz
+"

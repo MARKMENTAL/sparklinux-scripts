@@ -1,0 +1,52 @@
+# Contributor: Jose-Luis Rivas <ghostbar@riseup.net>
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=libuv
+pkgver=1.49.0
+pkgrel=0
+pkgdesc="Cross-platform asychronous I/O"
+url="https://libuv.org/"
+arch="all"
+license="MIT"
+makedepends_build="automake autoconf libtool"
+makedepends_host="linux-headers"
+subpackages="$pkgname-dbg $pkgname-static $pkgname-dev"
+source="https://dist.libuv.org/dist/v$pkgver/libuv-v$pkgver.tar.gz"
+builddir="$srcdir/$pkgname-v$pkgver"
+
+# secfixes:
+#   1.48.0-r0:
+#     - CVE-2024-24806
+#   1.39.0-r0:
+#     - CVE-2020-8252
+
+prepare() {
+	default_prepare
+	sh autogen.sh
+}
+
+build() {
+	CFLAGS="$CFLAGS -O2" \
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	install -Dm644 LICENSE \
+		"$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+}
+
+sha512sums="
+36da82ff3f9b54ebfc8bdbf668ef2ae8845591a9fd01daf4f1ea4d1ac4db93c3f7877f6fc5f0a542eb4ff1eade5fd747a0905d98fe1c55a6effabc1f4131d59d  libuv-v1.49.0.tar.gz
+"

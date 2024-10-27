@@ -1,0 +1,36 @@
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=py3-pyvcd
+pkgver=0.4.0
+pkgrel=1
+pkgdesc="Python package for writing Value Change Dump (VCD) files"
+url="https://github.com/westerndigitalcorporation/pyvcd"
+arch="noarch"
+license="MIT"
+depends="python3"
+makedepends="py3-setuptools py3-gpep517 py3-installer py3-setuptools_scm py3-wheel"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="https://github.com/westerndigitalcorporation/pyvcd/archive/refs/tags/$pkgver/py3-pyvcd-$pkgver.tar.gz"
+builddir="$srcdir/pyvcd-$pkgver"
+
+build() {
+	export SETUPTOOLS_SCM_PRETEND_VERSION=$pkgver
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages test-env
+	test-env/bin/python3 -m installer .dist/*.whl
+	test-env/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+245eeb440ca31ef2eda202d46dee002703bfec06e14ba3ff5d03a5cd19991133915221c94fbcffb672f6ac105296b03834f1fe9c2cf449550d6054de6b964e5e  py3-pyvcd-0.4.0.tar.gz
+"

@@ -1,0 +1,43 @@
+# Contributor: shrizza <shrizza@gmail.com>
+# Maintainer: shrizza <shrizza@gmail.com>
+pkgname=avara
+pkgver=0.7.1
+pkgrel=0
+pkgdesc="Port of the original 1996 Mac OS game from Ambrosia Software"
+url="https://github.com/avaraline/Avara"
+# videogame
+arch="all !armhf !s390x"
+license="MIT"
+makedepends="
+	directfb-dev
+	glu-dev
+	sdl2-dev
+	sdl2_mixer-dev
+	sdl2_net-dev
+	rsync
+	"
+options="!check"
+source="
+	$pkgname-$pkgver.tar.gz::https://github.com/avaraline/Avara/archive/refs/tags/$pkgver.tar.gz
+	avara
+	nullptr.patch
+	"
+builddir="$srcdir/Avara-$pkgver"
+
+build() {
+	make CC=${CC:-cc} CXX=${CXX:-c++} GIT_HASH=$pkgver GIT_BRANCH=alpine
+}
+
+package() {
+	install -Dm755 "$srcdir"/avara -t "$pkgdir"/usr/bin
+	mkdir -p "$pkgdir"/var/games/avara
+	cp -r build/Avara "$pkgdir"/var/games/avara/
+	cp -r build/levels "$pkgdir"/var/games/avara/
+	cp -r build/rsrc "$pkgdir"/var/games/avara/
+}
+
+sha512sums="
+1ccb3419b11bd95b7ec529b5078bad2341737b4dd43215ffdbda020cf71e7832b5ec0f6c637a99c89ccd23ebb3f55fdcb6fc18d4f57b71f24aa83081b8be96b2  avara-0.7.1.tar.gz
+c0bb030ef44d732bb7a493df9d3b7d120159d37f25440711e2edfd3e11a896764ce88b58ae1f5e1f51d81809c95a7c6570122d042bb9c95af919f78d50524d9e  avara
+92aaca8946ded9fd956fb1ab55c36b401918034b918407b326cbca136b5ce29f64a337a14fe18feb71018f6d3ca2ed53b03ce924d2a545d3686420d903e7fbbd  nullptr.patch
+"

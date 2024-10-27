@@ -1,0 +1,70 @@
+# Contributor: Lucas Ramage <lucas.ramage@infinite-omicron.com>
+# Contributor: qaqland <qaq@qaq.land>
+# Maintainer: Lucas Ramage <lucas.ramage@infinite-omicron.com>
+pkgname=mustach
+pkgver=1.2.8
+pkgrel=0
+pkgdesc="C implementation of the mustache template specification"
+url="https://gitlab.com/jobol/mustach"
+arch="all"
+license="0BSD"
+checkdepends="valgrind"
+subpackages="$pkgname-doc lib$pkgname-core:split lib$pkgname-core-dev:core_dev"
+source="https://gitlab.com/jobol/mustach/-/archive/$pkgver/mustach-$pkgver.tar.bz2
+	01-pkg-config.patch
+	"
+
+_jsonlibs="json-c cjson jansson"
+for _j in $_jsonlibs; do
+	makedepends="$makedepends $_j-dev"
+	subpackages="$subpackages lib$pkgname-$_j:split lib$pkgname-$_j-dev:json_dev"
+done
+
+# armv7: Segmentation fault (valgrind error #15759)
+# armhf,riscv64,loongarch64: doesn't have valgrind
+case "$CARCH" in
+armv7|armhf|riscv64|loongarch64) checkdepends=""; export NOVALGRIND=1
+esac
+
+build() {
+	make tool=jsonc libs=split
+}
+
+check() {
+	make tool=jsonc libs=none basic-tests
+}
+
+package() {
+	make tool=jsonc libs=split -j1 DESTDIR="$pkgdir" PREFIX="/usr" install
+
+	mkdir -p "$pkgdir"/usr/share/doc/$pkgname/
+	install -m644 AUTHORS README.md \
+		"$pkgdir"/usr/share/doc/$pkgname/
+}
+
+split() {
+	pkgdesc="$pkgdesc ($subpkgname library)"
+	amove usr/lib/$subpkgname.so.*
+}
+
+core_dev() {
+	pkgdesc="$pkgdesc (libmustach-core development files)"
+	amove usr/include/mustach/mustach.h usr/include/mustach/mustach-wrap.h
+	amove usr/lib/pkgconfig/libmustach-core.pc
+	amove usr/lib/libmustach-core.so
+}
+
+json_dev() {
+	local jsonlib=${subpkgname#libmustach-}; jsonlib=${jsonlib%-dev}
+	pkgdesc="$pkgdesc (libmustach-$jsonlib development files)"
+	# libmustach-<jsonlib>-dev works with <jsonlib>-dev
+	depends="$depends $jsonlib-dev"
+	amove usr/include/mustach/mustach-"$jsonlib".h
+	amove usr/lib/pkgconfig/libmustach-"$jsonlib".pc
+	amove usr/lib/libmustach-"$jsonlib".so
+}
+
+sha512sums="
+01262e4ef4e1e372b41852a312c2992770295759274958dcb18a142693e789b726721f969c4af7b84ab0557ce1ae4388832696bc344235bee1c488ac00fac3fb  mustach-1.2.8.tar.bz2
+b0f36d46e04d5deb8b7d3f1801c0805f34dc609366b77bcd7ae3c55a3bc7a9d6da97c692b17393d465dece7271259fe513bd73eab7384a4d47003e52a7faeb50  01-pkg-config.patch
+"

@@ -1,0 +1,92 @@
+# Contributor: Łukasz Jendrysik
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=chrony
+pkgver=4.6
+pkgrel=0
+pkgdesc="NTP client and server programs"
+url="https://chrony-project.org/"
+pkgusers="$pkgname"
+pkggroups="$pkgname"
+arch="all"
+license="GPL-2.0-or-later"
+install="$pkgname.pre-install $pkgname.pre-upgrade"
+makedepends="asciidoctor libcap-dev texinfo nettle-dev gnutls-dev libseccomp-dev"
+checkdepends="bash"
+subpackages="$pkgname-dbg $pkgname-doc $pkgname-openrc"
+source="https://chrony-project.org/releases/chrony-$pkgver.tar.gz
+	max_resolve_interval.patch
+
+	chronyd.confd
+	chronyd.initd
+	chrony.conf
+	timepps.h
+	"
+
+# secfixes:
+#   3.5.1-r0:
+#     - CVE-2020-14367
+
+prepare() {
+	default_prepare
+
+	# We copy timepps.h to the local build directory instead of
+	# creating a pps-tools-dev package for ppstime.h
+	# (See https://github.com/ago/pps-tools)
+	mkdir -p pps-tools/sys
+	cp "$srcdir"/timepps.h pps-tools/sys/
+}
+
+build() {
+	CPPFLAGS="$CPPFLAGS -I./pps-tools/" \
+	CFLAGS="$CFLAGS -flto=auto" \
+	./configure \
+		--prefix=/usr \
+		--mandir=/usr/share/man \
+		--sysconfdir=/etc/$pkgname \
+		--chronyrundir=/run/chrony \
+		--disable-readline \
+		--with-user=$pkgname \
+		--with-sendmail=/usr/sbin/sendmail \
+		--enable-ntp-signd \
+		--enable-scfilter
+	make all docs
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	mkdir -p "$pkgdir"/etc/logrotate.d
+	install -Dm644 examples/chrony.logrotate "$pkgdir"/etc/logrotate.d/chrony
+
+	mkdir -p "$pkgdir"/usr/share/doc/chrony
+	install -m644 examples/*.example "$pkgdir"/usr/share/doc/chrony/
+	install -Dm755 "$srcdir"/chronyd.initd "$pkgdir"/etc/init.d/chronyd
+	install -Dm644 "$srcdir"/chronyd.confd "$pkgdir"/etc/conf.d/chronyd
+
+	install -dm2750 -g wheel "$pkgdir"/var/log/chrony
+
+	mkdir -p "$pkgdir"/var/lib/chrony \
+		"$pkgdir"/etc/chrony
+
+	# chrony.drift must be writable by chrony user
+	chown $pkgusers:$pkggroups "$pkgdir"/etc/chrony
+	install -m644 "$srcdir"/chrony.conf "$pkgdir"/etc/chrony/chrony.conf
+	chown root:root "$pkgdir"/etc/chrony/*
+
+	chown $pkgusers:$pkggroups "$pkgdir"/var/lib/chrony
+	touch "$pkgdir"/var/lib/chrony/chrony.drift
+}
+
+sha512sums="
+84926b6c9eb90824ab98333412b001b18de9342dacb898d195ee8de52868b1945700a8b161de6b603c231460d290e02df6712c1dcb7f034ba45754b38466c8bd  chrony-4.6.tar.gz
+f6f2056d1e70785f66b0fbec6e3ec9b0184785eac262e28e2a2c4d5a49762bf780ed7c2c7990a93f6ef063c167cea01fb8828705be558d0b8ff8c07d6962239f  max_resolve_interval.patch
+c1ce577ed1af9f3d88a6a2880a4834ae0c6a7f45870d9396d2aacd7716eb8de346ce458e1a45fdd48b1e8b8f5cd3afcba9534ac47fedb517604c9d910a342fac  chronyd.confd
+cc19b01a2a2cc26738f52c2c15d88db47240dcd00987ce5e75ba69fae8385b83a2643946f390d7ce0b73826b8de878989788b36ae5e43b2daac4477cbf9752f6  chronyd.initd
+663c6316bcca762de119d88e4bb6536bfe0fea19939fe1b673900847619e7f1d6783b789b38ebba97b5dc3778dedf798bafd65f00f8bd7e312bfed7df0caaf71  chrony.conf
+eb11fc19243d1789016d88eb7645bfe67c46304547781489bf36eb1dd4c252d523681ff835a6488fa0ef62b6b9e2f781c672279f4439f5d5640a3f214a113048  timepps.h
+"

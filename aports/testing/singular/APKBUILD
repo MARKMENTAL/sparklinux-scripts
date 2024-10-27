@@ -1,0 +1,73 @@
+# Contributor: Grigory Kirillov <txgk@bk.ru>
+# Maintainer:
+pkgname=singular
+pkgver=4.3.2
+pkgrel=2
+pkgdesc="Computer algebra system for polynomial computations"
+url="https://www.singular.uni-kl.de/"
+# s390x: blocked by flint-dev
+arch="all !s390x"
+license="GPL-2.0-only OR GPL-3.0-only"
+depends="python3"
+makedepends="
+	cddlib-dev
+	gmp-dev
+	flint-dev
+	perl
+	"
+source="https://www.singular.uni-kl.de/ftp/pub/Math/Singular/SOURCES/${pkgver//./-}/singular-${pkgver}.tar.gz"
+subpackages="
+	$pkgname-static
+	$pkgname-dev:_dev
+	$pkgname-emacs:_emacs:noarch
+	$pkgname-doc
+	"
+
+build() {
+	export CXXFLAGS="${CXXFLAGS/-Os/-O3}" # gotta go fast
+
+	./configure \
+		--target="$CTARGET" \
+		--build="$CBUILD" \
+		--host="$CHOST" \
+		--prefix=/usr \
+		--libexecdir=/usr/lib \
+		--enable-bigintm-module \
+		--enable-Order-module \
+		--enable-python-module \
+		--enable-gfanlib-module \
+		--enable-polymake-module
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	# Perhaps it is better to get rid of 36mb of HTML and images.
+	rm -rf "$pkgdir"/usr/share/doc
+}
+
+_dev() {
+	pkgdesc="$pkgdesc (development files)"
+	amove usr/bin/libpolys-config
+	amove usr/bin/libsingular-config
+	amove usr/include
+	amove usr/lib/pkgconfig
+	amove usr/lib/libSingular.so
+	amove usr/lib/libfactory.so
+	amove usr/lib/libomalloc.so
+	amove usr/lib/libpolys.so
+	amove usr/lib/libsingular_resources.so
+}
+
+_emacs() {
+	pkgdesc="Emacs completions for singular"
+	amove usr/share/singular/emacs
+}
+
+sha512sums="
+14df5d9c6e983543dc67b1b2237644a5f70d0eeb128f8414732fd8b44d72b038a365cbdd9ec52983999690d4dc8817b02c7ed719c8b6a0851ba8b341c12a182a  singular-4.3.2.tar.gz
+"

@@ -1,0 +1,42 @@
+# Maintainer: Antoni Aloy <aaloytorrens@gmail.com>
+pkgname=schismtracker
+pkgver=20231029
+pkgrel=0
+pkgdesc="Oldschool sample-based music composition tool"
+url="https://schismtracker.org/"
+arch="all"
+license="GPL-2.0-or-later"
+depends="python3"
+makedepends="
+	alsa-lib-dev
+	automake
+	autoconf
+	flac-dev
+	libxext-dev
+	libxv-dev
+	python3-dev
+	sdl2-dev
+	"
+subpackages="$pkgname-doc"
+source="https://github.com/schismtracker/schismtracker/releases/download/$pkgver/schismtracker-$pkgver.source.tar.gz"
+builddir="$srcdir"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+42b01e6945380f346d2bca6c650fcd282df29ddcec0692014e1abb3d215110b455ae95cb0c11de981369adf8d03109e3517c34fb433081d01170d7bc8c29a67d  schismtracker-20231029.source.tar.gz
+"

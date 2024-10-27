@@ -1,0 +1,66 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Contributor: Frankie Robertson <frankie@robertson.name>
+# Maintainer:
+pkgname=hfst
+pkgver=3.16.0
+pkgrel=2
+pkgdesc="Helsinki Finite-State Transducer Technology toolkit"
+url="https://hfst.github.io/"
+arch="all"
+license="LGPL-3.0-or-later"
+makedepends="
+	bison
+	icu-dev
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	python3-dev
+	swig
+	"
+subpackages="$pkgname-dev $pkgname-doc py3-$pkgname:py3 $pkgname-libs"
+source="https://github.com/hfst/hfst/releases/download/v$pkgver/hfst-$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+	update_config_sub
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--enable-proc \
+		--without-foma \
+		--enable-lexc \
+		--enable-all-tools \
+		--disable-static \
+		PYTHON=python3
+	make
+
+	cd python
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	cd python
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+}
+
+py3() {
+	pkgdesc="$pkgdesc (python3 bindings)"
+	depends="python3"
+
+	amove usr/lib/python3*
+}
+
+sha512sums="
+7c12b8641cd22f1c550c26741d5f46e8a9e1fbd3f9a8b462ce500e38ddac9641e33c59fe3d3474de5499217896fc056605da5fc9bd564fbac254c9949a80f36b  hfst-3.16.0.tar.gz
+"

@@ -1,0 +1,65 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+pkgname=py3-imbalanced-learn
+_pkgorig=imbalanced-learn
+pkgver=0.12.3
+pkgrel=0
+pkgdesc="Toolbox for imbalanced dataset in machine learning"
+url="https://imbalanced-learn.org"
+arch="noarch"
+license="MIT"
+depends="
+	py3-numpy
+	py3-pandas
+	py3-scikit-learn
+	py3-scipy
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="
+	py3-pytest-xdist
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://files.pythonhosted.org/packages/source/i/imbalanced-learn/imbalanced-learn-$pkgver.tar.gz
+	exclude-tests.patch"
+builddir="$srcdir/$_pkgorig-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+
+	local skipped_tests="
+		test_all_estimators
+		and not test_classification_report_imbalanced_multiclass_with_unicode_label
+		and not test_rusboost
+		and not test_cluster_centroids_n_jobs
+		and not test_fit_docstring
+		and not keras
+		and not test_function_sampler_validate
+		and not test_fetch
+		and not check_samplers_preserve_dtype
+		and not test_pipeline_fit_then_sample_with_sampler_last_estimator
+		and not test_pipeline_fit_then_sample_3_samplers_with_sampler_last_estimator"
+
+	# shellcheck disable=SC2116
+	.testenv/bin/python3 -m pytest -k "not $(echo $skipped_tests)" -n auto
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+429ef2b4466e46e72276ffc8a1b038a42ac3086f9813496d60c627ab83e0e909a6da69cefccfa267c6626101aeb40c6b03b61eb8afa88e3153beade7f1727b8d  py3-imbalanced-learn-0.12.3.tar.gz
+57a181476c728451b4c54ae535d0f236ac7228b525c8dcbe118bfc8837f1f270fd8185beef59dcbf8fe9c12a67af9c4064339de5df1caf18743c1a4c475db9b0  exclude-tests.patch
+"

@@ -1,0 +1,50 @@
+# Contributor: knuxify <knuxify@gmail.com>
+# Maintainer: team/gnome <knuxify@gmail.com>
+pkgname=xdg-desktop-portal-gnome
+pkgver=47.1
+pkgrel=1
+pkgdesc="backend implementation for xdg-desktop-portal for the GNOME desktop environment"
+url="https://gitlab.gnome.org/GNOME/xdg-desktop-portal-gnome"
+# s390x: nautilus -> localsearch -> exempi
+arch="all !s390x"
+license="LGPL-2.1-or-later"
+depends="
+	nautilus
+	xdg-desktop-portal
+	xdg-desktop-portal-gtk
+	"
+makedepends="
+	gnome-desktop-dev
+	gsettings-desktop-schemas-dev
+	gtk4.0-dev
+	libadwaita-dev
+	meson
+	xdg-desktop-portal-dev
+	"
+subpackages="$pkgname-lang"
+source="https://download.gnome.org/sources/xdg-desktop-portal-gnome/${pkgver%.*}/xdg-desktop-portal-gnome-$pkgver.tar.xz
+	gsettings-desktop-schemas-dep.patch
+	"
+options="!check"  # no tests
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dsystemduserunitdir=/DELETEME \
+	.  output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+	rm -rf "$pkgdir"/DELETEME
+}
+
+sha512sums="
+bc4118b56baed90c42ae75c99c911d11d1541c8e2d4629672621d29217bc49bfa37218a9b27bd4b2712d95d2b6dbab36212687a6d15bca33467bb8dbde047ef3  xdg-desktop-portal-gnome-47.1.tar.xz
+5414b5b647d78d4a5d2f97483902dc7f54e1f4c5b9f5a73a3113aa0a7f235a32e0c0a3f0577bd31e82246f1106b30972229b7e15440946aaee641e3c8f6ae017  gsettings-desktop-schemas-dep.patch
+"

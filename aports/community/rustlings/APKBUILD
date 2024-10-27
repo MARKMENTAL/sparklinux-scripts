@@ -1,0 +1,40 @@
+# Contributor: qaqland <qaq@qaq.land>
+# Maintainer: qaqland <qaq@qaq.land>
+pkgname=rustlings
+pkgver=6.3.0
+pkgrel=0
+pkgdesc="Small exercises to get you used to reading and writing Rust code"
+url="https://rustlings.cool"
+arch="all"
+license="MIT"
+depends="rust-clippy cargo rustfmt"
+makedepends="cargo-auditable"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/rust-lang/rustlings/archive/refs/tags/v$pkgver.tar.gz"
+options="net" # cargo fetch
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test --frozen
+	cargo run -- dev check --require-solutions
+}
+
+package() {
+	install -Dm755 target/release/rustlings "$pkgdir"/usr/bin/rustlings
+
+	install -Dm644 LICENSE "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+	install -Dm644 README.md "$pkgdir"/usr/share/doc/$pkgname
+}
+
+sha512sums="
+3c43c293300d6e231b09a7481aa4332c3252f2eef33ec57968f22d2f0ff65c1e06edfbfa53871dc92c9a6ea45357afce51bd3a1917f216f1070092499647377f  rustlings-6.3.0.tar.gz
+"

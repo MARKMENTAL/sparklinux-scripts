@@ -1,0 +1,45 @@
+# Contributor: Saijin-Naib <Saijin-Naib_package-maintenance@outlook.com>
+# Maintainer: Saijin-Naib <Saijin-Naib_package-maintenance@outlook.com>
+pkgname=orage
+pkgver=4.18.0
+pkgrel=0
+pkgdesc="Calendar for Xfce"
+url="https://docs.xfce.org/apps/orage/start"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="
+	dbus-dev
+	dbus-glib-dev
+	glib-dev
+	gtk+3.0-dev
+	libical-dev
+	libnotify-dev
+	libxfce4ui-dev
+	popt-dev
+	xfce4-dev-tools
+	xfce4-panel-dev
+	"
+subpackages="$pkgname-lang"
+source="$pkgname-$pkgver.tar.gz::https://gitlab.xfce.org/apps/orage/-/archive/orage-$pkgver/orage-orage-$pkgver.tar.gz"
+builddir="$srcdir/$pkgname-$pkgname-$pkgver/"
+
+prepare() {
+	default_prepare
+	./autogen.sh
+}
+
+build() {
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make install DESTDIR="$pkgdir" prefix=/usr
+}
+
+sha512sums="
+27ee0a5d54f0e31a5f177c087db614859aed3916dbe2972c8a93b44d13ed943f321ff26d022a053d599ff1e85f37b4d28b65aff22e6efd96bc2e43b6d2e23093  orage-4.18.0.tar.gz
+"

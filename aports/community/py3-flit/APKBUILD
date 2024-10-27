@@ -1,0 +1,73 @@
+# Contributor: Kevin Daudt <kdaudt@alpinelinux.org>
+# Maintainer: Kevin Daudt <kdaudt@alpinelinux.org>
+pkgname=py3-flit
+pkgver=3.9.0
+pkgrel=1
+pkgdesc="simple packaging tool for simple packages"
+url="https://flit.readthedocs.io/"
+arch="noarch"
+license="BSD-3-Clause"
+depends="
+	py3-docutils
+	py3-flit-core
+	py3-requests
+	py3-tomli-w
+	"
+makedepends="
+	py3-installer
+	"
+checkdepends="
+	py3-pytest-cov
+	py3-responses
+	py3-testpath
+	"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/f/flit/flit-$pkgver.tar.gz
+	tests-use-python3.patch
+	"
+builddir="$srcdir/flit-$pkgver"
+
+build() {
+	# temp hack to not pull in all of py3-build
+	mkdir dist
+	python3 - <<-EOF
+		import flit_core.buildapi as buildapi
+		name = buildapi.build_wheel('./dist')
+		print(name)
+	EOF
+}
+
+check() {
+	# Necessary for sdist tests
+	git init -q
+	git add .
+	git -c user.email='test@test.test' -c user.name='test' commit -qm. || true
+
+	# pep621 - needs pip
+	# install_reqs_my_python_if_needed - needs pip
+	# invalid_classifier - needs network access
+	# install_reqs_my_python_if_needed - needs pip
+	# test_symlink_data_dir - needs pip
+	# test_install_data_dir - needs pip
+	local _disabled_tests="
+		test_install_module_pep621
+		and not test_symlink_module_pep621
+		and not test_invalid_classifier
+		and not install_reqs_my_python_if_needed
+		and not test_symlink_data_dir
+		and not test_install_data_dir"
+
+	# shellcheck disable=SC2116
+	pytest -v -k "not $(echo $_disabled_tests)"
+	rm -rf .git
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		dist/flit-$pkgver-py3-none-any.whl
+}
+
+sha512sums="
+3cbca4530fe463e27fb43130e0d00681e63434bdd552bd61b4a2f3b7967729d9d9a49c69b1a2380ed99bcca1e66a38e592f41cbe38a471d3e7297ab00cdabc29  flit-3.9.0.tar.gz
+0230150d17cfa1590fc8cc7fee06896d4dcc52dada50415d1035332f5a2d5d6f2970bf5e6adf34750761649c8285fa1969cc0261c60f470e89231bac466c88fb  tests-use-python3.patch
+"

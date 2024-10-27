@@ -1,0 +1,54 @@
+# Contributor: Jean-Louis Fuchs <jean-louis.fuchs@adfinis-sygroup.ch>
+# Maintainer: Jean-Louis Fuchs <jean-louis.fuchs@adfinis-sygroup.ch>
+pkgname=py3-attrs
+pkgver=24.2.0
+pkgrel=0
+pkgdesc="Python classes without boilerplate"
+url="http://www.attrs.org"
+arch="noarch"
+license="MIT"
+depends="python3"
+makedepends="
+	py3-gpep517
+	py3-hatch-vcs
+	py3-hatchling
+	"
+checkdepends="
+	py3-hypothesis
+	py3-pytest
+	"
+subpackages="$pkgname-pyc"
+source="py-attrs-$pkgver.tar.gz::https://github.com/python-attrs/attrs/archive/$pkgver.tar.gz
+	no-fancy.patch
+	check.py
+	"
+builddir="$srcdir/attrs-$pkgver"
+options="!check" # circular dependency with py3-hypothesis
+
+replaces="py-attrs" # Backwards compatibility
+provides="py-attrs=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	SETUPTOOLS_SCM_PRETEND_VERSION=$pkgver \
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 "$srcdir"/check.py
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+1577c4a668498eb37bf94c4d5790e4a63e5520bdc2cc61c71886cc35a9cc2a8a66bdbdee391ef1751f6e9de286be9616429e99153255565e23f7377920e1172e  py-attrs-24.2.0.tar.gz
+d8afa99de8d4a8e027962452e757be1c70b1ca2d7ca0473aed562b45e8c79640f7d4e43ca9e0144af076e95cfea03cdf8b06efac65e678d85c02755ccea78c3f  no-fancy.patch
+36bcb4ec145f29e79fc019dc39672f13dc94e1c07225968af51f19e17b2aede0b23dafdff265f1e77a251e53af9802bcf1db5068900ee0a03e1bfc1051c01ef9  check.py
+"

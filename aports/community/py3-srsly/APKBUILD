@@ -1,0 +1,47 @@
+# Contributor: Oleg Titov <oleg.titov@gmail.com>
+# Maintainer: Oleg Titov <oleg.titov@gmail.com>
+pkgname=py3-srsly
+pkgver=2.4.8
+pkgrel=1
+pkgdesc="Modern high-performance serialization utilities for Python"
+url="https://github.com/explosion/srsly"
+arch="all"
+license="MIT"
+depends="python3 py3-numpy py3-tz"
+options="!check" # fail to find self for some reason
+makedepends="python3-dev
+	     py3-setuptools
+	     cython
+	     py3-wheel
+	     py3-gpep517
+	     py3-installer"
+checkdepends="py3-pytest py3-pytest-timeout py3-mock"
+subpackages="$pkgname-doc $pkgname-pyc"
+source="srsly-$pkgver.tar.gz::https://github.com/explosion/srsly/archive/v$pkgver.tar.gz
+	cython3.patch"
+builddir="$srcdir/srsly-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -vv
+}
+
+package() {
+	python -m installer -d "$pkgdir" .dist/*.whl
+
+	install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+
+	rm -r "$pkgdir"/usr/lib/python3*/site-packages/srsly/tests
+}
+
+sha512sums="
+105aa0af6c40dc7153f3281221ea764ec57700c2b7bfa10bb6264cc59563a28260ef0b6cb706adbb01f976986f8199ad8849b73e60ccb1b8d1410f95d1a678fa  srsly-2.4.8.tar.gz
+1930afbaa879b741d9dfc34d00be0e39d73729a300b6661e5405649f4068d2c990a5333433ebae015ba23a72ce259f36f673d6869334b25e6db46fff135fe9f7  cython3.patch
+"

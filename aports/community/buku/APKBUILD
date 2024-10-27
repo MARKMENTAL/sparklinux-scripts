@@ -1,0 +1,34 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer:
+pkgname=buku
+pkgver=4.8
+pkgrel=1
+pkgdesc="Cmdline bookmark management utility"
+options="!check" # Requires unpackaged vcrpy
+url="https://github.com/jarun/Buku"
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="python3 py3-urllib3 py3-cryptography py3-html5lib py3-beautifulsoup4
+	py3-certifi"
+makedepends="py3-setuptools"
+subpackages="$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-zsh-completion
+	$pkgname-fish-completion
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/jarun/Buku/archive/v$pkgver.tar.gz"
+
+package() {
+	install -Dm0755 buku "$pkgdir"/usr/bin/buku
+	install -Dm0644 buku.1 "$pkgdir"/usr/share/man/man1/buku.1
+
+	install -Dm644 "$builddir"/auto-completion/bash/buku-completion.bash \
+			"$pkgdir"/usr/share/bash-completion/completions/buku
+	install -Dm644 "$builddir"/auto-completion/zsh/_buku \
+			"$pkgdir"/usr/share/zsh/site-functions/_buku
+	install -Dm644 "$builddir"/auto-completion/fish/buku.fish \
+			"$pkgdir"/usr/share/fish/vendor_completions.d/buku.fish
+}
+sha512sums="
+a87311adbd72ed614e870c24ecf890633672a6dab12d18f40017177049b2aaebbc66776740f893248b99f2f79d85b6d7b9e57c1fd1bbf6c95963ca57649dc2bf  buku-4.8.tar.gz
+"

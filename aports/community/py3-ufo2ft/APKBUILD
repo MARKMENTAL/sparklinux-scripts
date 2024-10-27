@@ -1,0 +1,62 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer:
+pkgname=py3-ufo2ft
+pkgver=2.33.4
+pkgrel=1
+pkgdesc="bridge from UFOs to FontTools objects"
+url="https://github.com/googlefonts/ufo2ft"
+arch="noarch"
+license="MIT"
+depends="
+	py3-booleanoperations
+	py3-cffsubr
+	py3-fonttools
+	py3-fs
+	py3-ufolib2
+	python3
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-setuptools_scm
+	py3-wheel
+	"
+checkdepends="
+	py3-compreffor
+	py3-pytest
+	py3-pytest-runner
+	py3-pytest-xdist
+	py3-skia-pathops
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/googlefonts/ufo2ft/archive/v$pkgver.tar.gz"
+builddir="$srcdir/ufo2ft-$pkgver"
+
+case "$CARCH" in
+s390x)
+	options="$options !check"
+	;;
+esac
+
+build() {
+	SETUPTOOLS_SCM_PRETEND_VERSION=$pkgver \
+		gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto -p no:warnings -k \
+		'not integration_test and not test_no_contour_glyphs'
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+8c1ae7fee0d9b18b5221654697de15b0f01b31af5bb38b728191536621e8c55a87d2d992a3237e177a033d078c2bed57a18995b60aec49e641152cfee6aba430  py3-ufo2ft-2.33.4.tar.gz
+"

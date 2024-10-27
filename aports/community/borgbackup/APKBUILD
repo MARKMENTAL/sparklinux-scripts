@@ -1,0 +1,143 @@
+# Contributor: Olivier Mauras <olivier@mauras.ch>
+# Contributor: Michał Polański <michal@polanski.me>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=borgbackup
+_pkgname=borg
+pkgver=1.4.0
+pkgrel=0
+pkgdesc="Deduplicating backup program"
+url="https://www.borgbackup.org/"
+arch="all"
+license="BSD-3-Clause"
+depends="
+	py3-msgpack
+	py3-packaging
+	python3
+	"
+makedepends="
+	acl-dev
+	attr-dev
+	linux-headers
+	lz4-dev
+	openssl-dev>3
+	py3-setuptools
+	py3-setuptools_scm
+	python3-dev
+	xxhash-dev
+	zstd-dev
+	"
+checkdepends="
+	cmd:fusermount3
+	py3-dateutil
+	py3-pytest
+	py3-pytest-benchmark
+	py3-pytest-xdist
+	"
+subpackages="
+	$pkgname-pyc
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="https://github.com/borgbackup/borg/releases/download/$pkgver/borgbackup-$pkgver.tar.gz
+	test-fusermount3.patch
+	"
+
+# secfixes:
+#   1.2.6-r0:
+#     - CVE-2023-36811
+
+case "$CARCH" in
+	armhf | armv7 | x86) ;;  # blocked by py3-pyfuse3
+	*) makedepends="$makedepends py3-pyfuse3"
+	   subpackages="$subpackages $pkgname-fuse::noarch";;
+esac
+
+export BORG_LIBLZ4_PREFIX="/usr/include"
+export BORG_LIBXXHASH_PREFIX="/usr/include"
+export BORG_LIBZSTD_PREFIX="/usr/include"
+export BORG_OPENSSL_PREFIX="/usr/include/openssl"
+export BORG_LIBACL_PREFIX="/usr/include"
+
+prepare() {
+	default_prepare
+
+	# Remove bundled libs to ensure these don't end up in our binaries.
+	cd src/borg/algorithms/
+	rm -rf lz4 xxh64 zstd
+}
+
+build() {
+	# CYTHON_FORCE_REGEN - don't use precompiled Cython code, always regenerate.
+	CYTHON_FORCE_REGEN=1 \
+	python3 setup.py build
+}
+
+check() {
+	[ -e /dev/fuse ] || export BORG_FUSE_IMPL='none'
+
+	PYTHONPATH="$(echo "$builddir"/build/lib.linux-*)" pytest -v -n auto \
+		--benchmark-skip --pyargs borg.testsuite
+
+	_delete_testsuite
+
+	# Run selftest to ensure that we haven't deleted some testsuite module that
+	# is needed for selftest. Note that borg runs selftest automatically before
+	# every operation, so it's crucial.
+	PYTHONPATH="$(echo build/lib.linux-*)" python3 -B <<-PYTHON
+		from borg.selftest import selftest
+		import logging
+
+		logging.basicConfig(level=logging.DEBUG)
+		selftest(logging)
+	PYTHON
+}
+
+package() {
+	# Run it again for the case we skipped check.
+	_delete_testsuite
+
+	python3 setup.py install --skip-build --root="$pkgdir"
+
+	install -Dm644 -t "$pkgdir"/usr/share/man/man1 docs/man/*.1
+
+	install -Dm644 scripts/shell_completions/bash/$_pkgname \
+		"$pkgdir"/usr/share/bash-completion/completions/$_pkgname
+
+	install -Dm644 scripts/shell_completions/fish/$_pkgname.fish \
+		"$pkgdir"/usr/share/fish/vendor_completions.d/$_pkgname.fish
+
+	install -Dm644 scripts/shell_completions/zsh/_$_pkgname \
+		"$pkgdir"/usr/share/zsh/site-functions/_$_pkgname
+
+	# clean some useless files
+	cd "$pkgdir"/usr/lib/python*/site-packages/borg
+	find . -name '*.h' -delete -o -name '*.c' -delete -o -name '*.pyx' -delete
+}
+
+fuse() {
+	pkgdesc="$pkgdesc (FUSE support)"
+	depends="$pkgname=$pkgver-r$pkgrel py3-pyfuse3"
+
+	mkdir -p "$subpkgdir"
+}
+
+# Delete testsuite but keep modules required for selftest (see src/borg/selftest.py).
+_delete_testsuite() {
+	cd build/lib.linux-*
+
+	find borg/testsuite/ -type f ! \( \
+		-name '__init__.*' -or \
+		-name 'crypto.*' -or \
+		-name 'chunker.*' -or \
+		-name 'hashindex.*' \) -delete
+	rm -f borg/testsuite/__pycache__/*-pytest-*.pyc
+
+	cd - >/dev/null
+}
+
+sha512sums="
+f5866ece2d153d1e43127a04fd288a09403a9ea2ae4c981cb9ff855bd303b53c133c006f0b1a77541edc4f64940431e9c4d49ec45a3646784a29fe3b8828237a  borgbackup-1.4.0.tar.gz
+b79f3ab4332f0606ef4fb3b1e76c2ffd88a839dfd6d42ca21ab08904c35a6b086ad4fc52daf6e5cecc4a7103d77154fcc878f26fb97d9054651af2591f9a441b  test-fusermount3.patch
+"

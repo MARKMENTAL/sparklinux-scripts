@@ -1,0 +1,45 @@
+# Contributor: Stuart Cardall <developer@it-offshore.co.uk>
+# Maintainer: Stuart Cardall <developer@it-offshore.co.uk>
+pkgname=opencl-icd-loader
+pkgver=2.3.2
+pkgrel=1
+pkgdesc="Generic OpenCL ICD Loader"
+url="https://github.com/OCL-dev/ocl-icd"
+arch="all"
+license="BSD-2-Clause"
+makedepends="ruby libtool autoconf automake"
+subpackages="$pkgname-doc $pkgname-dev cllayerinfo"
+source="$pkgname-$pkgver.tar.gz::https://github.com/OCL-dev/ocl-icd/archive/v$pkgver.tar.gz"
+builddir="$srcdir/ocl-icd-$pkgver"
+
+prepare() {
+	default_prepare
+	autoreconf -vif
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+cllayerinfo() {
+	amove usr/bin/cllayerinfo
+}
+
+sha512sums="
+5129975a10ffade76d20444345a59c82506914347391ad6c0b4c3826f51dcc641924b4a5abcc65c41766597af9cc7a76b9e5821f41898ff0251a05963e117796  opencl-icd-loader-2.3.2.tar.gz
+"

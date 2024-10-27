@@ -1,0 +1,35 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=py3-livestream
+_pkgname=PyLivestream
+pkgver=2.0.0
+pkgrel=2
+pkgdesc="Simple cross-platform FFmpeg-based live streaming to YouTube, Periscope, Facebook Live and more"
+url="https://github.com/scivision/PyLivestream"
+arch="noarch"
+license="AGPL-3.0-or-later"
+depends="ffmpeg ffplay"
+makedepends="python3-dev py3-gpep517 py3-installer py3-setuptools py3-wheel"
+checkdepends="py3-pytest py3-pytest-timeout xvfb-run"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/scivision/$_pkgname/archive/v$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 1
+}
+
+check() {
+	PYTHONPATH=src xvfb-run -a python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+98d6343b41354625d618b9e3c91da180c72c44526e1c62e8eb30f3a7cfa902849f33f7eca3d80ccb9f8eca7f1675e5397fefa4239310100c5f21b933e80a0825  py3-livestream-2.0.0.tar.gz
+"

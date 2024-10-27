@@ -1,0 +1,64 @@
+# Contributor: Duncan Bellamy <dunk@denkimushi.com>
+# Contributor: Jiri Kastner <cz172638@gmail.com>
+# Maintainer: Duncan Bellamy <dunk@denkimushi.com>
+_pyname=cheroot
+pkgname=py3-cheroot
+pkgver=10.0.1
+pkgrel=0
+pkgdesc="High-performance, pure-Python HTTP server used by CherryPy"
+url="https://cheroot.cherrypy.dev/"
+license="BSD-3-Clause"
+arch="noarch"
+depends="python3 py3-more-itertools py3-jaraco.functools"
+# py3-setuptools_scm is needed to set python module version
+makedepends="
+	py3-dateutil
+	py3-gpep517
+	py3-pbr
+	py3-portend
+	py3-setuptools
+	py3-setuptools_scm
+	py3-wheel
+	"
+checkdepends="
+	py3-jaraco.context
+	py3-jaraco.text
+	py3-openssl
+	py3-pypytools
+	py3-pytest
+	py3-pytest-cov
+	py3-pytest-mock
+	py3-requests-unixsocket
+	py3-requests-toolbelt
+	py3-pytest-xdist
+	py3-trustme
+	"
+subpackages="$pkgname-tests $pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/c/$_pyname/$_pyname-$pkgver.tar.gz"
+builddir="$srcdir/$_pyname-$pkgver"
+options="!check" # fail on deprecation warning
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+tests() {
+	depends="py3-cheroot"
+	amove usr/lib/python*/site-packages/cheroot/test
+}
+sha512sums="
+c878647a7bcf564509ee07481b3e371a2e09019d78240e79293bc4e0bfa872e8e2f947925c54eda56cc1790a3ff4d656c70066278c74073b44fc070627f5c71d  cheroot-10.0.1.tar.gz
+"

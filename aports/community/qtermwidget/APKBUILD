@@ -1,0 +1,39 @@
+# Maintainer: Antoni Aloy <aaloytorrens@gmail.com>
+pkgname=qtermwidget
+_pkgname=qtermwidget6
+pkgver=2.0.0
+pkgrel=0
+pkgdesc="Terminal widget for QTerminal"
+url="https://github.com/lxqt/qtermwidget"
+arch="all"
+license="LGPL-2.0-or-later"
+makedepends="cmake samurai lxqt-build-tools qt6-qtbase-dev qt6-qttools-dev"
+subpackages="$pkgname-dev $pkgname-lang"
+options="!check" # No testsuite
+source="https://github.com/lxqt/qtermwidget/releases/download/$pkgver/qtermwidget-$pkgver.tar.xz"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		$CMAKE_CROSSOPTS .
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --build build --target install
+}
+
+lang() {
+	install_if="lang $pkgname=$pkgver-r$pkgrel"
+	amove usr/share/$_pkgname/translations
+}
+
+sha512sums="
+4461737b92a113c3b6a48bc74a1c58296dc52659e8ffec13bf848aea3098c9b05685daea5cd3bf21925ebb28e32524c0accde964451b38c5d0d5b209db046b0b  qtermwidget-2.0.0.tar.xz
+"

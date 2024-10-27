@@ -1,0 +1,41 @@
+# Contributor: Alistair Francis <alistair@alistair23.me>
+# Maintainer: Alistair Francis <alistair@alistair23.me>
+pkgname=read-it-later
+pkgver=0.5.0
+pkgrel=0
+pkgdesc="Wallabag Client built with GTK"
+url="https://gitlab.gnome.org/World/read-it-later"
+# loongarch64: libc crate fails to build
+arch="all !loongarch64"
+license="GPL-3.0-only"
+makedepends="
+	bash
+	cargo
+	desktop-file-utils
+	gettext-dev
+	gtk4.0-dev
+	libadwaita-dev
+	meson
+	openssl-dev>3
+	rust
+	sqlite-dev
+	webkit2gtk-6.0-dev"
+source="https://gitlab.gnome.org/World/read-it-later/-/archive/$pkgver/read-it-later-$pkgver.tar.gz
+	"
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+3b83ce6e05de85c13489ac093209cc38e943c0cfa4f375c51569ef45f2f7b3dcc59e532b0a08173ff35dfef8b4fccf34f53028513f9fd56e4d390303e887a24a  read-it-later-0.5.0.tar.gz
+"

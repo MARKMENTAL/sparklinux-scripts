@@ -1,0 +1,31 @@
+# Contributor: Fabian Affolter <fabian@affolter-engineering.ch>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=ncdu
+pkgver=1.20
+pkgrel=0
+pkgdesc="Text-based disk usage viewer"
+url="https://dev.yorhel.nl/ncdu"
+options="!check" # no test suite
+arch="all"
+license="MIT"
+makedepends="ncurses-dev linux-headers"
+subpackages="$pkgname-doc"
+source="https://dev.yorhel.nl/download/ncdu-$pkgver.tar.gz"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+af9a45cc27bb3cdee7fd65236b9b48cb604f9e54208a762ed7b3b18333e07e87a8ae5a4cd0071496e7e382c60a7760734cad1f68fb69423a79fa3f050d2c09bb  ncdu-1.20.tar.gz
+"

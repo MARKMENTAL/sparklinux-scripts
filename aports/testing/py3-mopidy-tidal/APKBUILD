@@ -1,0 +1,44 @@
+# Maintainer: Willow Barraco <contact@willowbarraco.fr>
+pkgname=py3-mopidy-tidal
+_pyname=Mopidy-Tidal
+pkgver=0.3.2
+pkgrel=6
+pkgdesc="Mopidy extension for Tidal music service integration"
+url="https://github.com/tehkillerbee/mopidy-tidal"
+arch="noarch"
+license="Apache-2.0"
+depends="
+	gst-plugins-bad
+	mopidy
+	py3-pykka
+	py3-requests
+	py3-tidalapi
+	py3-typing-extensions
+	python3
+	"
+makedepends="py3-setuptools py3-wheel py3-gpep517"
+checkdepends="py3-pytest py3-pytest-mock py3-dateutil"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/${_pyname%${_pyname#?}}/$_pyname/$_pyname-$pkgver.tar.gz"
+builddir="$srcdir/$_pyname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	gpep517 install-wheel --destdir .testenv --prefix '' .dist/*.whl
+	.testenv/bin/python3 -m pytest tests
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+8ef77615cb33889c3743ef024a383466c64e7e8e88924c5a31e93918e1fe599e72bb409e6c1aa4a1f8b35342e3ca7a73aab32deb8a25a0ec8790348ccc7ccb23  Mopidy-Tidal-0.3.2.tar.gz
+"

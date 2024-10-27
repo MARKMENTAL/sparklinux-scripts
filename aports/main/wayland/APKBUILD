@@ -1,0 +1,75 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Contributor: Bartłomiej Piotrowski <bpiotrowski@alpinelinux.org>
+# Contributor: Valery Kartel <valery.kartel@gmail.com>
+# Maintainer: Peter Shkenev <santurysim@gmail.com>
+pkgname=wayland
+pkgver=1.23.1
+pkgrel=0
+pkgdesc="A computer display server protocol"
+url="https://wayland.freedesktop.org"
+arch="all"
+license="MIT"
+depends_dev="
+	expat-dev
+	libffi-dev
+	"
+makedepends="
+	$depends_dev
+	libxml2-dev
+	meson
+	"
+subpackages="
+	$pkgname-dbg
+	$pkgname-static
+	$pkgname-dev
+	$pkgname-libs-client:_libs
+	$pkgname-libs-egl:_libs
+	$pkgname-libs-cursor:_libs
+	$pkgname-libs-server:_libs
+	"
+source="https://gitlab.freedesktop.org/wayland/wayland/-/releases/$pkgver/downloads/wayland-$pkgver.tar.xz"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Ddocumentation=false \
+		-Ddefault_library=both \
+		. output
+
+	meson compile -C output
+}
+
+check() {
+	XDG_RUNTIME_DIR="$(mktemp -d)" \
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	depends="
+		$pkgname-libs-client=$pkgver-r$pkgrel
+		$pkgname-libs-cursor=$pkgver-r$pkgrel
+		$pkgname-libs-egl=$pkgver-r$pkgrel
+		$pkgname-libs-server=$pkgver-r$pkgrel
+		"
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+dev() {
+	amove usr/share
+	amove usr/bin
+	default_dev
+}
+
+_libs() {
+	depends=
+	local name=${subpkgname#"$pkgname"-libs-}
+	pkgdesc="$pkgdesc ($name library)"
+	case "$name" in
+		egl) replaces="mesa-libwayland-egl";;
+	esac
+	amove usr/lib/*-$name.so.*
+}
+
+sha512sums="
+818eda003e3f7aa15690eedb1ff227a6056b2ce54bf23d45ffe573dc40a914623c5a1358218b59444dcdc483db0503324f0d27091d0ea954412a8b290de5f50a  wayland-1.23.1.tar.xz
+"

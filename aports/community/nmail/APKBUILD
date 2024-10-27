@@ -1,0 +1,57 @@
+# Contributor: Celeste <cielesti@protonmail.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=nmail
+pkgver=4.67
+pkgrel=0
+pkgdesc="Terminal-based email client"
+url="https://github.com/d99kris/nmail"
+arch="all"
+license="MIT"
+depends="cyrus-sasl-login"
+makedepends="
+	cmake
+	cyrus-sasl-dev
+	file-dev
+	libetpan-dev
+	linux-headers
+	ncurses-dev
+	openssl-dev
+	samurai
+	sqlite-dev
+	util-linux-dev
+	xapian-core-dev
+	"
+subpackages="$pkgname-doc $pkgname-oauth::noarch"
+source="https://github.com/d99kris/nmail/archive/v$pkgver/nmail-$pkgver.tar.gz"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_BUILD_TYPE=None \
+		-DHAS_CUSTOM_LIBETPAN=OFF
+	cmake --build build
+}
+
+check() {
+	./build/nmail --version
+
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	install -Dvm644 LICENSE -t "$pkgdir"/usr/share/licenses/$pkgname/
+}
+
+oauth() {
+	pkgdesc="$pkgdesc (OAuth2 Python helper script)"
+	depends="$pkgname=$pkgver-r$pkgrel py3-requests"
+
+	amove usr/bin/oauth2nmail
+}
+
+sha512sums="
+df7a68a54e4c27c36b6723ab12e2dc2f6108887dc2306ff47657847f7419e52810d2cbce076db4398adcca1eeee3497aa5fce7c6e8e730192e70a0d7d94d4784  nmail-4.67.tar.gz
+"

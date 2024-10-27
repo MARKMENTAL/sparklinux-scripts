@@ -1,0 +1,31 @@
+# Contributor: Marian Buschsieweke <marian.buschsieweke@posteo.net>
+# Maintainer: Marian Buschsieweke <marian.buschsieweke@posteo.net>
+pkgname=py3-pyperclip
+_pkgname=pyperclip
+pkgver=1.8.2
+pkgrel=3
+pkgdesc="Python module for copy and paste clipboard functions"
+url="https://github.com/asweigart/pyperclip"
+arch="noarch"
+license="BSD-3-Clause"
+depends="python3"
+makedepends="py3-setuptools"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://files.pythonhosted.org/packages/source/${_pkgname:0:1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+builddir="$srcdir"/${_pkgname/-/_}-$pkgver
+options="!check" # bug in tests prevents them from even starting :-/
+
+build() {
+	python3 setup.py build
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+check() {
+	python3 setup.py test
+}
+sha512sums="
+ade0cdf2bfdbe3ce807a02b64bb1e839afc9955254ddeb3e0fe7c1dd9fd9fddc11f8386a02590690b039045b46e9103e4d094f1bad3e272f532fda4db5ed1c1a  py3-pyperclip-1.8.2.tar.gz
+"

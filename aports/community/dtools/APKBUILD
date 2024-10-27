@@ -1,0 +1,45 @@
+# Contributor: Mathias LANG <pro.mathias.lang@gmail.com>
+# Maintainer: Mathias LANG <pro.mathias.lang@gmail.com>
+#
+# There are 4 'public' tools in the repository as of v2.098.0
+# In addition, there are a few 'build' tools which could be
+# useful (and can be trivially added if needed).
+#
+# Out of those 4 public tools, only 'dman' has heavy dependencies,
+# as it rely on building dlang.org (and by extension DMD & co),
+# so it is excluded from this package.
+pkgname=dtools
+pkgver=2.109.1
+pkgrel=0
+pkgdesc="Ancillary tools for the D programming language compiler"
+url="https://github.com/dlang/tools"
+arch="x86_64"
+license="BSL-1.0"
+makedepends="chrpath dmd"
+source="tools-$pkgver.tar.gz::https://github.com/dlang/tools/archive/v$pkgver.tar.gz"
+builddir="$srcdir/tools-$pkgver/"
+options="!check" # todo
+
+build() {
+	msg "building rdmd"
+	dmd -v -of=dtools-rdmd -L=--build-id rdmd.d
+
+	for tool in DustMite/dustmite ddemangle catdoc detab tolf dget; do
+		msg "building $tool"
+		./dtools-rdmd -v --compiler=dmd --build-only -of=dtools-"$(basename $tool)" $tool.d
+	done
+}
+
+package() {
+	for tool in rdmd ddemangle catdoc detab tolf dget dustmite; do
+		install -Dm755 $pkgname-$tool -t "$pkgdir"/usr/bin
+	done
+	ln -s dtools-rdmd "$pkgdir"/usr/bin/rdmd
+	ln -s dtools-dustmite "$pkgdir"/usr/bin/dustmite
+	ln -s dtools-ddemangle "$pkgdir"/usr/bin/ddemangle
+	chrpath -d "$pkgdir"/usr/bin/*
+}
+
+sha512sums="
+f0e2858b0b6ed58128679beae30d15caa11eb5560368b760114d3df43e63fef5a6afeef1adfb76c3cef6d9e32c233c649cef7625adbf56bae161edbdfefdf106  tools-2.109.1.tar.gz
+"

@@ -1,0 +1,41 @@
+# Maintainer: Marian Buschsieweke <marian.buschsieweke@posteo.net>
+
+pkgname=libsigrokdecode
+pkgver=0.5.3
+pkgrel=4
+pkgdesc="A C library to decode protocol data captured by logic analyzers"
+url="https://sigrok.org/wiki/Libsigrokdecode"
+makedepends="glib-dev libserialport-dev libzip-dev libusb-dev libftdi1-dev
+	glibmm-dev libsigrok-dev python3-dev check-dev
+	autoconf automake libtool"
+arch="all"
+license="GPL-3.0-only"
+source="http://sigrok.org/download/source/libsigrokdecode/libsigrokdecode-$pkgver.tar.gz
+	version.patch
+	python-3.12.patch
+	"
+subpackages="$pkgname-dev"
+
+prepare() {
+	default_prepare
+	autoreconf -vif
+}
+
+build() {
+	./configure --prefix=/usr/
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+23393504b68135ed4ae8e8a654df024620af02e84fa3955956c61899388812229108155b4ae8d946e61f33dc8a8807db090d608350548a7a717d966442b07b9e  libsigrokdecode-0.5.3.tar.gz
+6d8fa69a891b4333fe77213cf75df218090e58b51d6c92197351d95a977634f2228a63c9c0c75fcb1d816c59ee9eaf410d5e79827ac7c79b0784262ea0f9c3fd  version.patch
+22227cafc70d493cba413956861d6f6a43ad071a27f07bf328a4c811c6b78d5241dd31ce461bc086b684d4a2057cd35db305750e8030ee0e2b30512668b5d5bd  python-3.12.patch
+"

@@ -1,0 +1,37 @@
+# Contributor: Erwan Rouchet <lucidiot@brainshit.fr>
+# Maintainer: Erwan Rouchet <lucidiot@brainshit.fr>
+pkgname=svgbob
+pkgver=0.7.2
+pkgrel=0
+pkgdesc="Convert your ascii diagram scribbles into happy little SVG"
+url="https://github.com/ivanceras/svgbob"
+# loongarch64: blocked by libc crate
+arch="all !s390x !riscv64 !loongarch64" # limited by rust/cargo
+license="Apache-2.0"
+makedepends="cargo cargo-auditable"
+source="$pkgname-$pkgver.tar.gz::https://github.com/ivanceras/svgbob/archive/$pkgver.tar.gz
+	update-cargo-lock.patch
+	"
+
+
+prepare() {
+	default_prepare
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test all --frozen
+}
+
+package() {
+	install -Dm0755 target/release/svgbob_cli "$pkgdir"/usr/bin/svgbob
+}
+
+sha512sums="
+0b6bfe8f29c14e30f8a5cb4e62a032cf0855a4e2ee7a4d998b4c99f48bebf3afe0ec34549de51323eb85431d2a1a10b7a3bd9a4b351caff4d935872b14fa3acc  svgbob-0.7.2.tar.gz
+c33c018a8e323211ce261ed256b203ef277803c49060ead44d406241d0a824e197c99ac2148f53c7bd1d048a3e687b0f3cd7fb78569c2844e5c0cd882a13fd0c  update-cargo-lock.patch
+"

@@ -1,0 +1,75 @@
+# Contributor: Martell Malone <martellmalone@gmail.com>
+# Contributor: fossdd <fossdd@pwned.life>
+# Maintainer: fossdd <fossdd@pwned.life>
+pkgname=py3-scipy
+pkgver=1.13.1
+pkgrel=0
+pkgdesc="Python library for scientific computing"
+url="https://www.scipy.org/"
+arch="all"
+license="BSD-3-Clause"
+depends="py3-pooch py3-numpy"
+makedepends="
+	cython
+	gfortran
+	openblas-dev
+	py3-gpep517
+	py3-meson-python
+	py3-numpy-dev
+	py3-numpy-f2py
+	py3-pybind11-dev
+	py3-setuptools
+	py3-wheel
+	python3-dev
+	pythran
+	"
+checkdepends="py3-hypothesis py3-pytest"
+subpackages="$pkgname-tests $pkgname-pyc"
+source="https://pypi.io/packages/source/s/scipy/scipy-$pkgver.tar.gz"
+builddir="$srcdir"/scipy-$pkgver
+
+replaces=py-scipy # Backwards compatibility
+provides=py-scipy=$pkgver-r$pkgrel # Backwards compatibility
+
+case "$CARCH" in
+	riscv64) options="!check";; # stuck
+esac
+
+build() {
+	case "$CARCH" in
+	ppc64le)
+		# Segmentation fault (core dumped)
+		sed -i '/test_propack.py/d' scipy/sparse/linalg/tests/meson.build
+		rm scipy/sparse/linalg/tests/test_propack.py
+		;;
+	esac
+
+	export CFLAGS="$CFLAGS -O3"
+	export CXXFLAGS="$CXXFLAGS -O3"
+
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	cd .testenv
+	bin/python -c "from scipy import test; test('full')"
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+tests() {
+	find "$pkgdir" -name tests -type d | while read -r p; do
+		amove "${p#"$pkgdir"}"
+	done
+}
+
+sha512sums="
+28aafdbcae7229a3d11f192683b703cb485d45e4d90413d6564df3d9005bc8fd4df8bd92caffe657666828cd7253e7e0363c0948c74a1b8f3f3b7d4f4cfd9b36  scipy-1.13.1.tar.gz
+"

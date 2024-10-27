@@ -1,0 +1,59 @@
+# Contributor: Andy Hawkins <andy@gently.org.uk>
+# Maintainer: Andy Hawkins <andy@gently.org.uk>
+pkgname=borg-space
+pkgver=2.2
+pkgrel=2
+pkgdesc="Report and track the size of your Borg repositories"
+url="https://pypi.org/project/borg-space/"
+license="GPL-3.0-or-later"
+# riscv64: py3-matplotlib missing
+# armhf: emborg
+arch="noarch !armhf !riscv64"
+depends="
+	py3-appdirs
+	py3-arrow
+	py3-docopt
+	py3-inform
+	py3-matplotlib
+	py3-nestedtext
+	py3-quantiphy
+	py3-shlib
+	py3-voluptuous
+	"
+makedepends="
+	py3-flit-core
+	py3-gpep517
+	"
+checkdepends="
+	py3-parametrize-from-file
+	py3-pytest
+	py3-pytest-tmp-files
+	py3-pytest-xdist
+	py3-re-assert
+	"
+subpackages="$pkgname-pyc"
+source="https://github.com/KenKundert/borg-space/archive/v$pkgver/borg-space-$pkgver.tar.gz
+	adapt-golden-restults-to-changes-in-voluptous-package.patch
+	"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/borg_space-$pkgver*-py3-none-any.whl
+}
+
+sha512sums="
+8951474f8f852187b877174d3eafb3cf1754bfc1c843c02f8be1d85b82ab98f4344a98370b26ff36e8a7baa2b5b7999b508e96f988c3b6e14672e84e00e566fb  borg-space-2.2.tar.gz
+f01c41c9392d0ca20a9a40a3cf42709f986ae28d8cbe0ff5796fc3fc1b9da7368492d6ec62f72c5a7d0634254aecd7f226641cd5f7e7a9e918b4add82f5452cb  adapt-golden-restults-to-changes-in-voluptous-package.patch
+"

@@ -1,0 +1,29 @@
+# Contributor: David Demelier <markand@malikania.fr>
+# Maintainer: David Demelier <markand@malikania.fr>
+pkgname=sord
+pkgver=0.16.16
+pkgrel=0
+pkgdesc="C library for storing RDF data in memory"
+url="https://drobilla.net/software/sord"
+arch="all"
+license="ISC"
+makedepends="meson pcre2-dev serd-dev zix-dev"
+subpackages="$pkgname-dev $pkgname-libs $pkgname-doc"
+source="https://download.drobilla.net/sord-$pkgver.tar.xz"
+
+build() {
+	abuild-meson -Db_lto=true . output
+	meson compile -C output
+}
+
+check() {
+	meson test --print-errorlogs --no-rebuild -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+8728fa01466e8f64c1a70a6d4ce727cdac3aaba78db0163ad511d7e959a260c95ab47405cce24ca0e076fb1f0da761687d788cddef87a96aa813757d10f0bfe0  sord-0.16.16.tar.xz
+"

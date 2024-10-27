@@ -1,0 +1,118 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: team/gnome <newbyte@postmarketos.org>
+pkgname=gnome
+pkgver=47.0
+pkgrel=0
+pkgdesc="GNOME Base - meta package"
+url="https://www.gnome.org/"
+arch="all !armhf !s390x !loongarch64" # GNOME isn't available on all arches yet
+options="!check" # No tests for a metapkg
+license="GPL-3.0-or-later"
+depends="
+	bolt
+	dbus-x11
+	gcr-ssh-agent
+	gdm
+	gnome-backgrounds
+	gnome-browser-connector
+	gnome-control-center
+	gnome-initial-setup
+	gnome-keyring
+	gnome-online-accounts
+	gnome-remote-desktop
+	gnome-shell
+	gnome-shell-extensions
+	gnome-tour
+	gnome-user-docs
+	gsettings-desktop-schemas
+	gvfs
+	iio-sensor-proxy
+	mesa
+	mesa-dri-gallium
+	networkmanager-elogind
+	pinentry-gnome
+	polkit-elogind
+	polkit-gnome
+	tinysparql
+	localsearch
+	udisks2
+	xdg-desktop-portal-gnome
+	xdg-desktop-portal-gtk
+	xdg-user-dirs
+"
+
+subpackages="
+	$pkgname-apps-core:_apps_core
+	$pkgname-dev-tools:_dev_tools
+"
+
+package() {
+	mkdir -p "$pkgdir"
+}
+
+_apps_core() {
+	pkgdesc="GNOME core apps - meta package"
+	# From https://apps.gnome.org
+	depends="
+		baobab
+		epiphany
+		evince
+		gnome-calculator
+		gnome-calendar
+		gnome-characters
+		gnome-clocks
+		gnome-connections
+		gnome-console
+		gnome-contacts
+		gnome-disk-utility
+		gnome-extensions-app
+		gnome-font-viewer
+		gnome-maps
+		gnome-music
+		gnome-software
+		gnome-software-plugin-apk
+		gnome-system-monitor
+		gnome-text-editor
+		gnome-tweaks
+		gnome-weather
+		grilo
+		grilo-plugins
+		gst-plugins-bad
+		gst-plugins-base
+		gst-plugins-good
+		gvfs-afc
+		gvfs-afp
+		gvfs-archive
+		gvfs-avahi
+		gvfs-cdda
+		gvfs-dav
+		gvfs-fuse
+		gvfs-goa
+		gvfs-gphoto2
+		gvfs-mtp
+		gvfs-nfs
+		gvfs-smb
+		loupe
+		nautilus
+		simple-scan
+		snapshot
+		totem
+		yelp
+	"
+
+	mkdir -p "$subpkgdir"
+}
+
+_dev_tools() {
+	pkgdesc="GNOME apps used for development and designing - meta package"
+	depends="
+		d-spy
+		dconf-editor
+		devhelp
+		gnome-boxes
+		gnome-builder
+		sysprof
+	"
+
+	mkdir -p "$subpkgdir"
+}

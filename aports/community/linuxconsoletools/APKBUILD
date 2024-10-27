@@ -1,0 +1,23 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=linuxconsoletools
+pkgver=1.8.1
+pkgrel=0
+pkgdesc="Tools for connecting joysticks & legacy devices to the kernels input subsystem"
+url="https://sourceforge.net/projects/linuxconsole/"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="linux-headers sdl2-dev"
+subpackages="$pkgname-doc"
+source="https://downloads.sourceforge.net/linuxconsole/linuxconsoletools-$pkgver.tar.bz2"
+
+build() {
+	make PREFIX=/usr
+}
+
+package() {
+	make PREFIX=/usr DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+407fcba552a3e45c60fb4f08217fe17106bedd6fde2fbce84aa6f4fa68ffc032f1683c6154f79daacaf1dcaf484fe943dd7391e787f0290d5bf42c7089c7c20c  linuxconsoletools-1.8.1.tar.bz2
+"

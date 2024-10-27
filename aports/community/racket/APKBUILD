@@ -1,0 +1,91 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+#
+# TODO: Separate packages into subpackages?
+# TODO: Install even packages from the full tarball?
+# TODO: Figure out how to run tests.
+pkgname=racket
+pkgver=8.14
+pkgrel=0
+pkgdesc="general purpose programming language in the Lisp-Scheme family"
+url="https://racket-lang.org/"
+arch="all"
+license="Apache-2.0 OR MIT"
+depends="
+	ca-certificates
+	libcrypto3
+	libssl3
+	"
+makedepends="
+	chrpath
+	libffi-dev
+	libucontext-dev
+	lz4-dev
+	ncurses-dev
+	zlib-dev
+	"
+subpackages="
+	$pkgname-dbg
+	$pkgname-dev
+	$pkgname-doc
+	"
+source="https://download.racket-lang.org/releases/$pkgver/installers/racket-minimal-$pkgver-src.tgz"
+builddir="$srcdir/$pkgname-$pkgver/src"
+
+_flags=
+case "$CARCH" in
+	# Racket CS (Chez Scheme backend) is not supported on these platforms,
+	# so build only BC (custom backend).
+	ppc64le | riscv64 | s390x)
+		pkgdesc="Racket BC - $pkgdesc"
+		license="($license) AND LGPL-3.0-or-later"
+		_flags="--enable-bconly --enable-bcdefault --enable-shared"
+	;;
+	*)
+		pkgdesc="Racket CS - $pkgdesc"
+		# NOTE: --enable-shared is not supported for CS.
+		_flags="--enable-csonly --enable-csdefault"
+	;;
+esac
+
+prepare() {
+	default_prepare
+	update_config_sub || true
+
+	# Remove bundled libffi to be sure that system-provided is used.
+	rm -Rf bc/foreign/libffi
+}
+
+build() {
+	export CFLAGS="${CFLAGS/-Os/-O2} -D_GNU_SOURCE"
+	export CPPFLAGS="${CPPFLAGS/-Os/-O2}"
+	export CXXFLAGS="${CXXFLAGS/-Os/-O2}"
+	export LDFLAGS="$LDFLAGS -lucontext"
+
+	# --enable-sharezo - this shouldn't be enabled for Racket CS because it
+	#   installs arch-dependent files to /usr/share, but
+	#   https://github.com/racket/racket/issues/3878#issuecomment-863358344
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--target=$CTARGET \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--disable-docs \
+		--disable-strip \
+		--enable-sharezo \
+		--enable-libz \
+		--enable-liblz4 \
+		$_flags
+	make
+}
+
+package() {
+	make install DESTDIR="$pkgdir"
+
+	rmdir "$pkgdir"/usr/share/applications
+}
+
+sha512sums="
+3e48190dcfaaff043cd9cdeed0741fee264f3e4dd78dad71b61d56b35b8c2743ad21add003ed661c2b47909641c45be58833c71f4df40a1345cb034668f0c16a  racket-minimal-8.14-src.tgz
+"

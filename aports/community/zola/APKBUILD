@@ -1,0 +1,63 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Contributor: Will Sinatra <wpsinatra@gmail.com>
+# Maintainer: Erwan Rouchet <lucidiot@brainshit.fr>
+pkgname=zola
+pkgver=0.19.2
+pkgrel=0
+pkgdesc="Opionated static site generator"
+url="https://github.com/getzola/zola"
+# armhf: build hangs
+arch="all !armhf"
+license="MIT"
+makedepends="
+	cargo
+	cargo-auditable
+	libsass-dev
+	oniguruma-dev
+	openssl-dev>3
+	"
+subpackages="
+	$pkgname-zsh-completion
+	$pkgname-fish-completion
+	$pkgname-bash-completion
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/getzola/zola/archive/v$pkgver.tar.gz
+	minimize-size.patch
+	"
+options="net" # fetch dependencies
+
+export RUSTONIG_SYSTEM_LIBONIG=1 # Link against system liboniguruma
+
+prepare() {
+	default_prepare
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+
+	mkdir -p completions
+	target/release/zola completion bash > completions/zola.bash
+	target/release/zola completion zsh > completions/_zola
+	target/release/zola completion fish > completions/zola.fish
+}
+
+check() {
+	cargo test all --frozen
+}
+
+package() {
+	install -Dm0755 target/release/zola "$pkgdir"/usr/bin/zola
+
+	install -Dm644 "$builddir"/completions/zola.bash \
+			"$pkgdir"/usr/share/bash-completion/completions/zola
+	install -Dm644 "$builddir"/completions/_zola \
+			"$pkgdir"/usr/share/zsh/site-functions/_zola
+	install -Dm644 "$builddir"/completions/zola.fish \
+			"$pkgdir"/usr/share/fish/vendor_completions.d/zola.fish
+}
+
+sha512sums="
+03ed18cc96f068092554695caa6d0499ff7b56deefa9202295bddba2b319593b24f8a4abb98b377df4da23396b974a8712949447eb0af1ed8367d8b01ba5bc32  zola-0.19.2.tar.gz
+35ff6626a0c495fd908a3a7f4ec3b95293b4553f195d3cec3627aa279f26920cf2212fce04ff2834a1fe3eaa64e794cc804118c39a0fdfdd571cf62fbe3bbe2e  minimize-size.patch
+"

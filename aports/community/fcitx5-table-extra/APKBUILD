@@ -1,0 +1,34 @@
+# Contributor: Lindsay Zhou <i@lin.moe>
+# Maintainer: Lindsay Zhou <i@lin.moe>
+pkgname=fcitx5-table-extra
+pkgver=5.1.6
+pkgrel=0
+pkgdesc="extra-table input method support for fcitx5"
+url="https://github.com/fcitx/fcitx5-table-extra"
+arch="noarch"
+license="GPL-3.0-or-later"
+makedepends="
+	cmake
+	extra-cmake-modules
+	gettext-dev
+	fcitx5-dev
+	libime-dev
+	samurai
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/fcitx/fcitx5-table-extra/archive/refs/tags/$pkgver.tar.gz"
+options="!check" # no tests
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+fd91e8ef32ffa8993d68e43f14dbb11798955c0008cd5508b0dc6ff81ecff3c4373afee58e1c801cfb1912ccffa700a491a061afc29700b2824d119ab24b7669  fcitx5-table-extra-5.1.6.tar.gz
+"

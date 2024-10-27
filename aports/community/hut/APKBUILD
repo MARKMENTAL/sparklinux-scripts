@@ -1,0 +1,38 @@
+# Contributor: Maxim Karasev <mxkrsv@disroot.org>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=hut
+pkgver=0.6.0
+pkgrel=1
+pkgdesc="command-line tool for sr.ht"
+url="https://sr.ht/~xenrox/hut"
+arch="all"
+license="AGPL-3.0-only"
+makedepends="go scdoc"
+subpackages="$pkgname-doc
+	$pkgname-zsh-completion
+	$pkgname-bash-completion
+	$pkgname-fish-completion"
+source="$pkgname-$pkgver.tar.gz::https://git.sr.ht/~xenrox/hut/archive/v$pkgver.tar.gz"
+builddir="$srcdir/$pkgname-v$pkgver"
+options="chmod-clean net" # fetch go dependencies
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	make GOFLAGS="$GOFLAGS" all
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr \
+		FISHCOMPDIR=/usr/share/fish/vendor_completions.d install
+}
+
+sha512sums="
+288acd443023297104cef963026b0b0d54713515e22870df767e562d4c4f031cad662ad4d341a6b4888661e4550e072300cc166fa1f1504926625121d56ae7a5  hut-0.6.0.tar.gz
+"

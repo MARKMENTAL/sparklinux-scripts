@@ -1,0 +1,37 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=gbinder-python
+pkgver=1.1.2
+pkgrel=1
+pkgdesc="Python bindings for libgbinder"
+url="https://github.com/erfanoabdi/gbinder-python"
+# s390x blocked by libgbinder
+arch="all !s390x"
+license="GPL-3.0-only"
+depends="python3"
+makedepends="
+	cython
+	libgbinder-dev
+	py3-setuptools
+	python3-dev
+	"
+source="https://github.com/erfanoabdi/gbinder-python/archive/$pkgver/gbinder-python-$pkgver.tar.gz"
+options="!check" # No properly runnable tests
+
+build() {
+	python3 setup.py build --cython
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+6f076a5cb265eed193d2ac2623921e76ced923230ca2131460efea941182f26b770d657f5155f6a29fa54a314f6dc62a8d5b96d14ee90a359389e60318a38b71  gbinder-python-1.1.2.tar.gz
+"

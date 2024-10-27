@@ -1,0 +1,36 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+pkgname=py3-autograd
+_pkgorig=autograd
+pkgver=1.7.0
+pkgrel=0
+pkgdesc="Efficiently computes derivatives of numpy code"
+url="https://github.com/HIPS/autograd"
+arch="noarch"
+license="MIT"
+options="!check" # no tests in pypi version/ no latest GH releases
+depends="
+	python3
+	py3-future
+	py3-numpy
+	py3-scipy
+	"
+makedepends="py3-gpep517 py3-hatchling"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://files.pythonhosted.org/packages/source/a/autograd/autograd-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgorig-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+935d902c357421972d03f25434836bfa400b42320573e84e6fe830d2f768fe06a8687e86cf2e65f65c56e44380a756f436aaaea80f0369371f480af435e4d44a  py3-autograd-1.7.0.tar.gz
+"

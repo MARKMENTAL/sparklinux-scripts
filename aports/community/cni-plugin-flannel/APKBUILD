@@ -1,0 +1,38 @@
+# Contributor: Robert Günzler <r@gnzler.io>
+# Maintainer: Lucas Ramage <lucas.ramage@infinite-omicron.com>
+pkgname=cni-plugin-flannel
+pkgver=1.1.2
+pkgrel=12
+pkgdesc="networking plugin, designed to work with flannel network fabric"
+url="https://github.com/flannel-io/cni-plugin/"
+arch="all"
+license="Apache-2.0"
+makedepends="go linux-headers"
+source="$pkgname-$pkgver.tar.gz::https://github.com/flannel-io/cni-plugin/archive/v$pkgver.tar.gz"
+builddir="$srcdir/cni-plugin-$pkgver"
+options="!check net"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	mkdir -p dist
+
+	go build -o dist/flannel \
+		-tags "netgo osusergo no_stage static_build" \
+		-ldflags "
+		-X main.Version=$pkgver
+		-X main.Program=flannel
+		-X main.Commit=alpine
+		"
+
+}
+
+package() {
+	install -Dm755 -t "$pkgdir"/usr/libexec/cni dist/flannel
+}
+
+sha512sums="
+09c98a1bbc499bedb75cb01192ad3c631df066aae5164f3de31be146ce7afa7bdd327dc7dc3314adf944fb9e27999792f55af811cbe8f0eadc3c0ba329ff48c9  cni-plugin-flannel-1.1.2.tar.gz
+"

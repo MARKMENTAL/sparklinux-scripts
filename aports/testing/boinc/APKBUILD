@@ -1,0 +1,99 @@
+# Contributor: Joe Searle <joe@jsearle.net>
+# Contributor: knuxify <knuxify@gmail.com>
+# Maintainer: Joe Searle <joe@jsearle.net>
+pkgname=boinc
+pkgver=7.24.3
+_pkgver=${pkgver%.*}
+pkgrel=0
+pkgdesc="Open-source software for volunteer computing and grid computing"
+url="https://boinc.berkeley.edu/"
+arch="all !riscv64"
+options="!check" # nothing is actually done by make check
+license="LGPL-3.0-or-later"
+depends="bash procps shadow"
+makedepends="
+	$depends_dev
+	autoconf
+	automake
+	clang
+	curl-dev
+	docbook2x
+	freeglut-dev
+	glu-dev
+	libjpeg-turbo-dev
+	libnotify-dev
+	libtool
+	libxi-dev
+	libxmu-dev
+	libxscrnsaver-dev
+	m4
+	mesa-dev
+	openssl-dev>3
+	sqlite-dev
+	wxwidgets-dev
+	"
+install="$pkgname.pre-install"
+pkgusers="boinc"
+pkggroups="boinc"
+subpackages="
+	$pkgname-doc
+	$pkgname-dev
+	$pkgname-gui
+	$pkgname-lang
+	$pkgname-libs
+	$pkgname-screensaver
+	"
+source="boinc-$pkgver.tar.gz::https://github.com/BOINC/boinc/archive/client_release/$_pkgver/$pkgver.tar.gz"
+builddir="$srcdir/$pkgname-client_release-$_pkgver-$pkgver"
+
+build() {
+	# GCC fails on non-x86 architectures
+	export CC=clang
+	export CXX=clang++
+	# a bunch of failures in vendored ancient libzip that is patched..
+	export CFLAGS="$CFLAGS -O2 -Wno-error=format-security"
+	export CXXFLAGS="$CXXFLAGS -O2 -Wno-error=format-security"
+
+	./_autosetup
+
+	./configure \
+		--build="$CBUILD" \
+		--host="$CHOST" \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--disable-server \
+		--disable-fcgi \
+		--enable-client \
+		--enable-boinczip \
+		--enable-install-headers \
+		--enable-libraries \
+		--with-x
+
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+gui() {
+	pkgdesc="$pkgdesc (manager)"
+
+	amove usr/bin/boincmgr
+}
+
+screensaver() {
+	pkgdesc="$pkgdesc (screensaver)"
+
+	amove usr/bin/boincscr
+}
+
+sha512sums="
+d66664df49b83fb71e8f06e6f9ca0aee720ec04b1fb95b08426ee9af365403605624ba6dc1f78f3fba3f966d365b610ed24ceffdc54b071509f4f0bf959e027c  boinc-7.24.3.tar.gz
+"

@@ -1,0 +1,34 @@
+# Maintainer:
+pkgname=xdg-desktop-portal-xapp
+pkgver=1.0.4
+pkgrel=0
+pkgdesc="xdg-desktop-portal backend for the xapp ecosystem"
+url="https://github.com/linuxmint/xdg-desktop-portal-xapp"
+arch="all"
+license="LGPL-2.0-or-later"
+depends="xdg-desktop-portal"
+makedepends="
+	glib-dev
+	gtk+3.0-dev
+	meson
+	xdg-desktop-portal-dev
+	"
+source="https://github.com/linuxmint/xdg-desktop-portal-xapp/archive/$pkgver/xdg-desktop-portal-xapp-$pkgver.tar.gz"
+options="!check" # no tests
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dsystemduserunitdir=/no \
+		. output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+	rm -r "$pkgdir"/no
+}
+
+sha512sums="
+3f861473a763c37a1af95e3beb13c3364a04f557310d5a6520845bc754941149eb3d80a4e2893699715ff11b135edb2859f6349b6aa6fbe0aa1e173263e22dba  xdg-desktop-portal-xapp-1.0.4.tar.gz
+"

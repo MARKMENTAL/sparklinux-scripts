@@ -1,0 +1,31 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=html2text
+pkgver=2.2.3
+pkgrel=1
+pkgdesc="html2text is a command line utility, written in C++, that converts HTML documents into plain text."
+url="https://github.com/grobian/html2text/"
+arch="all !s390x" # segfaults on s390x
+license="GPL"
+makedepends="bison bash"
+subpackages="$pkgname-doc"
+source="https://github.com/grobian/html2text/releases/download/v$pkgver/html2text-$pkgver.tar.gz"
+
+build() {
+	./configure --prefix=/usr
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	install -Dm755 "html2text" "$pkgdir"/usr/bin/html2text
+	install -Dm644 "html2text.1" "$pkgdir"/usr/share/man/man1/html2text.1
+	install -Dm644 "html2textrc.5" "$pkgdir"/usr/share/man/man5/html2textrc.5
+}
+
+sha512sums="
+ff851abdc0f672d6bf8de494d6595362d5b71eeb03f4f761e32afb50bb75fe12c0cede8c7ca4ca7290b1c9e0f08aaff9821946dd272e1a30ce3b585e452cf6ec  html2text-2.2.3.tar.gz
+"

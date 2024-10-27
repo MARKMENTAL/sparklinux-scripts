@@ -1,0 +1,27 @@
+# Contributor: Siva Mahadevan <me@svmhdvn.name>
+# Maintainer: Siva Mahadevan <me@svmhdvn.name>
+pkgname=retroforth
+pkgver=2024.1
+pkgrel=1
+pkgdesc="clean, elegant, and pragmatic dialect of Forth"
+url="https://retroforth.org"
+arch="all"
+license="ISC"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://git.sr.ht/~crc_/retroforth/archive/$pkgver.tar.gz"
+
+build() {
+	make
+}
+
+check() {
+	make test
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr MANDIR=/usr/share/man/man1 install
+}
+
+sha512sums="
+1119fde6fc338d0745d516a42161a50a2a4d9c5c60b979b3db0af8497bcb298c17244730c41271cc20d7707046baa1664a86ea614bd027c6ea06944aafdd3871  retroforth-2024.1.tar.gz
+"

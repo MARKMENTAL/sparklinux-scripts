@@ -1,0 +1,45 @@
+# Contributor: lauren n. liberda <lauren@selfisekai.rocks>
+# Maintainer:
+pkgname=py3-pycaption
+pkgver=2.2.14
+pkgrel=0
+pkgdesc="Python module to read/write popular video caption formats"
+url="https://github.com/pbs/pycaption"
+arch="noarch"
+license="Apache-2.0"
+depends="
+	python3
+	py3-beautifulsoup4
+	py3-cssutils
+	py3-lxml
+	py3-nltk
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="py3-pytest"
+source="https://github.com/pbs/pycaption/archive/refs/tags/$pkgver/pycaption-$pkgver.tar.gz"
+builddir="$srcdir/pycaption-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+	rm -rf "$pkgdir"/usr/lib/python3*/site-packages/tests
+}
+
+sha512sums="
+8fa6b5fe32fb756c24d76937131dcb1e48a6530ef0fa509520aabcdcca6b71afd8abc36e5bd0908d7f1cbe4cf4d02e0f2b7d2bca6205335ec6fe8ac190404c74  pycaption-2.2.14.tar.gz
+"

@@ -1,0 +1,145 @@
+# Contributor: Michał Polański <michal@polanski.me>
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=podman
+pkgver=5.2.2
+pkgrel=0
+pkgdesc="Simple management tool for pods, containers and images"
+url="https://podman.io/"
+license="Apache-2.0"
+# s390x, loongarch64: blocked by aardvark-dns and netavark
+arch="all !s390x !loongarch64"
+options="!check" # tests require root privileges
+depends="
+	conmon
+	oci-runtime
+	iptables
+	passt
+	shadow-subids
+	containers-common
+	netavark
+	aardvark-dns
+	catatonit
+	"
+makedepends="
+	bash
+	btrfs-progs-dev
+	go
+	go-md2man
+	gpgme-dev
+	grep
+	libassuan-dev
+	libseccomp-dev
+	mandoc
+	sqlite-dev
+	"
+install="$pkgname.post-install $pkgname.post-upgrade"
+subpackages="
+	$pkgname-doc
+	$pkgname-openrc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	$pkgname-remote:remote
+	$pkgname-docker:docker:noarch
+	$pkgname-docker-doc:docker_doc:noarch
+	"
+source="https://github.com/containers/podman/archive/v$pkgver/podman-$pkgver.tar.gz
+	no-systemd.patch
+
+	podman.initd
+	podman.confd
+	"
+
+# secfixes:
+#   5.0.3-r0:
+#     - CVE-2024-3727
+#   4.9.4-r0:
+#     - CVE-2024-1753
+#   4.9.2-r0:
+#     - CVE-2024-23651
+#     - CVE-2024-23652
+#     - CVE-2024-23653
+#   4.8.2-r1:
+#     - CVE-2023-48795
+#   4.4.3-r0:
+#     - CVE-2022-41723
+#   4.4.2-r0:
+#     - CVE-2023-0778
+#   4.3.0-r0:
+#     - CVE-2022-2989
+#   4.0.3-r0:
+#     - CVE-2022-27649
+#   3.4.4-r0:
+#     - CVE-2021-4024
+#     - CVE-2021-41190
+#   3.2.3-r0:
+#     - CVE-2021-3602
+#   3.0.0-r0:
+#     - CVE-2021-20199
+#   2.0.5-r0:
+#     - CVE-2020-14370
+#   1.8.1-r0:
+#     - CVE-2020-1726
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	# https://github.com/mattn/go-sqlite3/issues/1164
+	export CGO_CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE"
+
+	export BUILDTAGS="exclude_graphdriver_devicemapper seccomp apparmor libsqlite3"
+	make -j1 podman podman-remote rootlessport docs \
+		PREFIX=/usr \
+		GOMD2MAN="$(which go-md2man)"
+}
+
+package() {
+	make install.bin install.remote install.man install.completions \
+		PREFIX=/usr DESTDIR="$pkgdir"
+
+	install -Dm755 "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
+	install -Dm644 "$srcdir"/$pkgname.confd "$pkgdir"/etc/conf.d/$pkgname
+}
+
+remote() {
+	pkgdesc="Remote CLI for Podman"
+	amove usr/bin/podman-remote
+}
+
+docker() {
+	pkgdesc="Emulate Docker CLI using Podman"
+	depends="podman"
+	provides="docker"
+
+	cd "$builddir"
+
+	install -d "$subpkgdir"/usr/bin
+	make PREFIX=/usr DESTDIR="$subpkgdir" install.docker
+
+	# Remove man pages
+	rm -rf "${subpkgdir:?}"/usr/share
+}
+
+docker_doc() {
+	pkgdesc="Emulate Docker CLI using Podman (documentation)"
+	depends="$pkgname-doc"
+	install_if="docs $pkgname-docker=$pkgver-r$pkgrel"
+
+	# make target install.docker nor docker-docs are of any use,
+	# so lets create the symlinks manually:
+	cd "$builddir"/docs/build/man
+
+	mkdir -p "$subpkgdir"/usr/share/man/man1
+	for i in podman*.1; do
+		ln -s $i.gz "$subpkgdir"/usr/share/man/man1/${i/podman/docker}.gz
+	done
+}
+
+sha512sums="
+a6c06689d4af80a35fa5867f8f3ea0ae3134fc40e3b3c101707842900444621337cf73eb9af42235ac5ccd12a11d707d98b29094514b00e6d6f158b4fe1f2973  podman-5.2.2.tar.gz
+d6a17e6fe8c8c5701068bfd993c9e2934911c24512cd59ddd50298e15b7ee038583cbc99fe1c348043aa7b2286a0fa2bea9fca529b383ccdb8880717a2715a0a  no-systemd.patch
+f8941dc3f8c6b08b288e3347ef2d782140f6e46809da0353f3695338a2de75a971b312e57d09b0a0ea51557568d888b367e3b234be550aea8386321878f4a22f  podman.initd
+ec6e6d3f72d0ab6c90a30b2cca5152c0d0f1e402ae671289263d7bf3b5141de9d67c3593f20b6075cedd214b7fb1506e69ff7b4f9691b43b391389343ab9b9b1  podman.confd
+"

@@ -1,0 +1,55 @@
+# Contributor: Holger Jaekel <holger.jaekel@gmx.de>
+# Maintainer: fossdd <fossdd@pwned.life>
+pkgname=s2n-tls
+pkgver=1.5.1
+pkgrel=0
+pkgdesc="AWS C99 implementation of the TLS/SSL protocols"
+url="https://github.com/aws/s2n-tls"
+# s390x: fails a bunch of tests
+arch="all !s390x"
+license="Apache-2.0"
+depends_dev="openssl-dev"
+makedepends="
+	$depends_dev
+	cmake
+	linux-headers
+	samurai
+	"
+subpackages="$pkgname-dev"
+source="$pkgname-$pkgver.tar.gz::https://github.com/aws/s2n-tls/archive/refs/tags/v$pkgver.tar.gz"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		local crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	CFLAGS="$CFLAGS -flto=auto" \
+	CXXFLAGS="$CXXFLAGS -flto=auto" \
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=/usr/lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=None \
+		-DBUILD_TESTING="$(want_check && echo ON || echo OFF)" \
+		-DUNSAFE_TREAT_WARNINGS_AS_ERRORS=OFF \
+		$crossopts
+	cmake --build build
+}
+
+check() {
+	timeout 600 \
+	ctest --test-dir build --output-on-failure \
+		-E "(s2n_mem_usage_test|s2n_random_test|s2n_fork_generation_number_test|s2n_connection_test|s2n_self_talk_nonblocking_test)"
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+dev() {
+	default_dev
+	amove usr/lib/s2n
+}
+
+sha512sums="
+8b7156530b8918409fe23c5479dcdbcec53fcbd16924173f5ec61ab38bc229737371b1830b9adc83d68f9e75892fe97fd8b33777f3c150980f06443de3e56edf  s2n-tls-1.5.1.tar.gz
+"

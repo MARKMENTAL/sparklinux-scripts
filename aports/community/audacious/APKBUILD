@@ -1,0 +1,35 @@
+# Contributor: Łukasz Jendrysik <scadu@yandex.com>
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Ariadne Conill <ariadne@dereferenced.org>
+pkgname=audacious
+pkgver=4.4.1
+pkgrel=0
+pkgdesc="A playlist-oriented media player with multiple interfaces"
+url="https://audacious-media-player.org/"
+arch="all !s390x"
+license="BSD-2-Clause AND ISC"
+depends="qt6-qtsvg"
+depends_dev="qt6-qtbase-dev"
+makedepends="$depends_dev qt6-qtsvg-dev libxml2-dev meson"
+subpackages="$pkgname-dbg $pkgname-dev $pkgname-doc $pkgname-lang"
+source="http://distfiles.audacious-media-player.org/audacious-$pkgver.tar.bz2"
+options="!check" # no tests
+
+build() {
+	LDFLAGS="$LDFLAGS -lintl" \
+	abuild-meson \
+		-Db_lto=true \
+		-Dgtk=false \
+		-Dqt=true \
+		-Dbuildstamp="alpine-linux" \
+		. output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+68ba1f468b540dfeec82825b19352dab785243aa3dc456d2a5acfda97601d64a11dadd2de668a1b0adab3a42e232509d60b5658f0a0047e153791ab9318f2b76  audacious-4.4.1.tar.bz2
+"

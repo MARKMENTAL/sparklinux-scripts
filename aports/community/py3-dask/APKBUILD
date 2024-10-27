@@ -1,0 +1,121 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=py3-dask
+pkgver=2024.4.1
+pkgrel=0
+pkgdesc="Parallel computing with task scheduling"
+url="https://dask.org/"
+arch="noarch"
+license="BSD-3-Clause"
+depends="
+	py3-click
+	py3-cloudpickle
+	py3-dask-expr
+	py3-fsspec
+	py3-importlib-metadata
+	py3-numpy
+	py3-packaging
+	py3-pandas
+	py3-partd
+	py3-toolz
+	py3-yaml
+	"
+makedepends="
+	py3-gpep517
+	py3-python-versioneer
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="
+	py3-aiohttp
+	py3-flaky
+	py3-graphviz
+	py3-jinja2
+	py3-pandas-tests
+	py3-pyarrow
+	py3-pytest
+	py3-pytest-cov
+	py3-pytest-runner
+	py3-pytest-xdist
+	py3-requests
+	py3-scipy
+	"
+subpackages="$pkgname-pyc"
+source="https://pypi.python.org/packages/source/d/dask/dask-$pkgver.tar.gz"
+builddir="$srcdir/dask-$pkgver"
+
+# secfixes:
+#   2022.2.0-r0:
+#     - CVE-2021-42343
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	case "$CARCH" in
+	arm*)
+	.testenv/bin/python3 -m pytest \
+		--deselect dask/bytes/tests/test_http.py::test_bag \
+		--deselect dask/dataframe/io/tests/test_orc.py \
+		--deselect dask/dataframe/tests/test_dataframe.py::test_slice_on_filtered_boundary \
+		--deselect dask/dataframe/tests/test_groupby.py \
+		--deselect dask/tests/test_distributed.py::test_blockwise_dataframe_io \
+		--deselect dask/tests/test_distributed.py::test_default_scheduler_on_worker \
+		--deselect dask/tests/test_distributed.py::test_dataframe_broadcast_merge \
+		--deselect dask/dataframe/io/tests/test_parquet.py::test_pandas_timestamp_overflow_pyarrow \
+		--deselect dask/dataframe/tests/test_dataframe.py::test_memory_usage_dataframe \
+		--deselect dask/tests/test_distributed.py::test_serializable_groupby_agg \
+		--deselect dask/tests/test_distributed.py::test_futures_in_subgraphs
+	# dask/tests/test_distributed.py::test_serializable_groupby_agg Fatal Python error: Bus error
+	# dask/tests/test_distributed.py::test_futures_in_subgraphs Fatal Python error: Bus error
+		;;
+	x86)
+	.testenv/bin/python3 -m pytest \
+		--deselect dask/bytes/tests/test_http.py::test_bag \
+		--deselect dask/dataframe/io/tests/test_orc.py \
+		--deselect dask/dataframe/tests/test_dataframe.py::test_slice_on_filtered_boundary \
+		--deselect dask/dataframe/tests/test_groupby.py \
+		--deselect dask/tests/test_distributed.py::test_blockwise_dataframe_io \
+		--deselect dask/dataframe/tests/test_dataframe.py::test_memory_usage_dataframe
+		;;
+	s390x)
+	.testenv/bin/python3 -m pytest \
+		--deselect dask/bytes/tests/test_http.py::test_bag \
+		--deselect dask/dataframe/io/tests/test_orc.py \
+		--deselect dask/dataframe/tests/test_dataframe.py::test_slice_on_filtered_boundary \
+		--deselect dask/dataframe/tests/test_groupby.py \
+		--deselect dask/tests/test_distributed.py::test_blockwise_dataframe_io \
+		--deselect dask/dataframe/io/tests/test_parquet.py \
+		--deselect dask/bytes/tests/test_http.py::test_parquet
+		;;
+	*)
+	.testenv/bin/python3 -m pytest \
+		--deselect dask/bytes/tests/test_http.py::test_bag \
+		--deselect dask/dataframe/io/tests/test_orc.py \
+		--deselect dask/dataframe/tests/test_dataframe.py::test_slice_on_filtered_boundary \
+		--deselect dask/dataframe/tests/test_groupby.py \
+		--deselect dask/tests/test_distributed.py::test_blockwise_dataframe_io
+	esac
+# dask/bytes/tests/test_http.py::test_parquet[pyarrow] FAILED
+# dask/dataframe/io/tests/test_orc.py::* Fatal Python error: Aborted (core dumped)
+# dask/dataframe/tests/test_dataframe.py::test_slice_on_filtered_boundary[0] FAILED
+# dask/dataframe/tests/test_groupby.py::* ERROR unexpected keyword argument 'reruns'
+# dask/tests/test_distributed.py::test_blockwise_dataframe_io: -"-
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+
+	rm -r "$pkgdir"/usr/lib/python*/site-packages/dask/tests
+	rm -r "$pkgdir"/usr/lib/python*/site-packages/dask/*/tests
+}
+
+sha512sums="
+a29286528727e35ad03c958e0189521c0906b0072c3b23286f5169c62c28fe391acc8a64b091326c11a034c91094887ac5d69c487a344870241090b21ed50c56  dask-2024.4.1.tar.gz
+"

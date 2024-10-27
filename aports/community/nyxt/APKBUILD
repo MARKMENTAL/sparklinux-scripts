@@ -1,0 +1,46 @@
+# Contributor: Will Sinatra <wpsinatra@gmail.com>
+# Contributor: Benjamin Buccianti <bebuccianti@gmail.com>
+# Maintainer: Will Sinatra <wpsinatra@gmail.com>
+pkgname=nyxt
+pkgver=3.11.8
+pkgrel=0
+pkgdesc="Atlas Engineer Nyxt Browser"
+url="https://nyxt-browser.com/"
+arch="aarch64 x86_64"
+#SBCL must be compiled with thread support for Nyxt to work
+#SBCL thread is not supported on armv7
+#SBCL is only built on arches x86_64, aarch64, and armv7
+license="BSD-3-Clause"
+depends="
+	gobject-introspection
+	libffi
+	libcrypto3
+	libssl3
+	mesa-gles
+	so:libfixposix.so.4
+	so:libwebkit2gtk-4.1.so.0
+	"
+makedepends="libffi-dev libfixposix-dev sbcl webkit2gtk-4.1-dev"
+source="$pkgname-$pkgver.tar.xz::https://github.com/atlas-engineer/nyxt/releases/download/$pkgver/nyxt-$pkgver-source-with-submodules.tar.xz
+	001-libfixposix.patch
+	"
+options="!check !strip" #No testsuite exists; Stripping the package causes the
+# package to build, but the nyxt browser is unfunctional, dropping to an SBCL repl
+# instead of properly running.
+
+replaces=next
+provides=next=$pkgver-r$pkgrel
+builddir="$srcdir"
+
+build() {
+	make all
+}
+
+package() {
+	make PREFIX=/usr DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+f6b1fcbb4bc4436cc39b0766f7a6a4e57cee81b785e04b1897c04836c6f349a8b5149118869fe36c8cc4c89518c88df75a47118f422149149f25b606a192cdf2  nyxt-3.11.8.tar.xz
+cc836bb2069c30c2ec9190d831e9c47194bf72277369aa31577445d6e430bca20c7e2450946218f46c3f8ca7c4256bb97863038c96899fb32134363e21c510c9  001-libfixposix.patch
+"

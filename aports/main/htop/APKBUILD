@@ -1,0 +1,34 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Maintainer: Carlo Landmeter <clandmeter@alpinelinux.org>
+pkgname=htop
+pkgver=3.3.0
+pkgrel=0
+pkgdesc="Interactive process viewer"
+url="https://htop.dev/"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="ncurses-dev python3 linux-headers lm-sensors-dev"
+subpackages="$pkgname-doc"
+source="https://github.com/htop-dev/htop/releases/download/$pkgver/htop-$pkgver.tar.xz"
+options="!check" # no upstream/available test-suite
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--enable-cgroup \
+		--enable-taskstats
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" pixmapdir=/usr/share/icons/hicolor/128x128/apps install
+}
+
+sha512sums="
+f98d4a4370954969d0ae16993d80ca5ce48670a711f17445de979513ac9caf2b197291732d937ae07d48709ded660ea09601b3a41ad7c48b3abb87e7a67deb65  htop-3.3.0.tar.xz
+"

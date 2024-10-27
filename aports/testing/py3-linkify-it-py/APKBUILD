@@ -1,0 +1,35 @@
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=py3-linkify-it-py
+pkgver=2.0.3
+pkgrel=1
+pkgdesc="Links recognition library with full unicode support"
+url="https://github.com/tsutsu3/linkify-it-py"
+arch="noarch"
+license="MIT"
+depends="python3 py3-uc-micro-py"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/tsutsu3/linkify-it-py/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/linkify-it-py-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+6621533246a42f3b13fb7dd9f1366cadb0e3c291bcb92fd899bc6389cb9f7904ababf4b5dbae51a561a4f50f8a20597badf03c82653ae8db75d9a5a484bc1229  py3-linkify-it-py-2.0.3.tar.gz
+"

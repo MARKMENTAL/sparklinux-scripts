@@ -1,0 +1,40 @@
+# Contributor: omni <omni+alpine@hack.org>
+# Maintainer: omni <omni+alpine@hack.org>
+pkgname=got
+_pkgname=got-portable
+pkgver=0.103
+pkgrel=0
+pkgdesc="A VCS which prioritizes ease of use and simplicity over flexibility"
+url="https://gameoftrees.org/"
+arch="all"
+license="ISC"
+makedepends="
+	libbsd-dev
+	libevent-dev
+	libretls-dev
+	ncurses-dev
+	util-linux-dev
+	zlib-dev
+	"
+options="!check"
+subpackages="$pkgname-doc"
+source="https://gameoftrees.org/releases/portable/got-portable-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+build() {
+	./configure --prefix=/usr --exec_prefix=/usr --mandir=/usr/share/man \
+		--sysconfdir=/etc --localstatedir=/var
+	make
+}
+
+check() {
+	make tests
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+d394ee2a46f16e62fef66a045e5107f18b862bd1d8980e13936f748817e05434cb0e320f3dfe6a8909484e1b6a9b623c4496d418bdd007d370ddb4c1cb63f438  got-portable-0.103.tar.gz
+"

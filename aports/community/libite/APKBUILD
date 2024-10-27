@@ -1,0 +1,35 @@
+# Contributor: David Demelier <markand@malikania.fr>
+# Maintainer: David Demelier <markand@malikania.fr>
+pkgname=libite
+pkgver=2.6.1
+pkgrel=0
+pkgdesc="that missing frog DNA you've been looking for"
+url="https://github.com/troglobit/libite"
+arch="all"
+license="MIT"
+makedepends="autoconf automake libtool"
+subpackages="$pkgname-dev $pkgname-doc"
+source="https://github.com/troglobit/libite/releases/download/v$pkgver/libite-$pkgver.tar.xz"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+37320cc7093aad756b574e9415a3a2aed9d76a147720f2b6493a173943b4f2875723c6f4f1d79868e3bd5e312fd545349c7dbcd66a675cee4ee1fa9889bfc2ee  libite-2.6.1.tar.xz
+"

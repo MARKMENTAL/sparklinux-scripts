@@ -1,0 +1,24 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=tree-sitter-css
+pkgver=0.20.0
+pkgrel=0
+pkgdesc="CSS grammar for tree-sitter"
+url="https://github.com/tree-sitter/tree-sitter-css"
+arch="all"
+license="MIT"
+makedepends="tree-sitter-dev"
+install_if="tree-sitter-grammars"
+source="https://github.com/tree-sitter/tree-sitter-css/archive/v$pkgver/tree-sitter-css-$pkgver.tar.gz"
+options="!check"  # no tests for shared lib
+
+build() {
+	abuild-tree-sitter build
+}
+package() {
+	DESTDIR="$pkgdir" abuild-tree-sitter install
+}
+
+sha512sums="
+0b4c45de304a5a18834a85665b5da5eaf7adc968c509de6cb95b98a08b2987be7b13f2cbb7181da04cf23e199942d9daf788a12cd2f4b8d85767ef1250196825  tree-sitter-css-0.20.0.tar.gz
+"

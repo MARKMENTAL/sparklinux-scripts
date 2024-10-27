@@ -1,0 +1,43 @@
+# Maintainer: Antoni Aloy <aaloytorrens@gmail.com>
+pkgname=lxqt-sudo
+pkgver=2.0.0
+pkgrel=0
+pkgdesc="Tools to sudoure LXQt and the underlying operating system"
+url="https://github.com/lxqt/lxqt-sudo"
+arch="all !armhf" # blocked by liblxqt-dev
+license="LGPL-2.0-or-later"
+makedepends="
+	cmake samurai libxcursor-dev lxqt-build-tools qt6-qtbase-dev
+	qt6-qttools-dev xf86-input-libinput-dev
+	libxi-dev eudev-dev libqtxdg-dev liblxqt-dev
+	libkscreen-dev kwindowsystem-dev
+	"
+subpackages="$pkgname-doc $pkgname-lang"
+options="!check" # No testsuite
+source="https://github.com/lxqt/lxqt-sudo/releases/download/$pkgver/lxqt-sudo-$pkgver.tar.xz"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		$CMAKE_CROSSOPTS .
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --build build --target install
+}
+
+lang() {
+	install_if="lang $pkgname=$pkgver-r$pkgrel"
+	amove usr/share/lxqt/translations/$pkgname
+}
+
+sha512sums="
+8c79e782293f496c4e3a7d0bfbee06fb73fd682332b9bd4efa94b0ffd132e9980c64d4aa9d2719b805a7a209432595527231b9088e829b4638cc086c674f70a6  lxqt-sudo-2.0.0.tar.xz
+"

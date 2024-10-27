@@ -1,0 +1,95 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: team/kde <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=kde-other
+pkgname=digikam
+pkgver=8.4.0
+pkgrel=0
+pkgdesc="An advanced open-source digital photo management application"
+url="https://www.digikam.org/"
+# armhf blocked by extra-cmake-modules
+# riscv64, ppc64le, s390 and loongarch64 blocked by akonadi-contacts, marble and opencv
+# x86 and armv7 blocked by qt6-qtwebengine missing components
+arch="all !armhf !ppc64le !s390x !riscv64 !loongarch64 !x86 !armv7"
+license="LGPL-2.1-or-later AND GPL-2.0-or-later"
+makedepends="
+	akonadi-contacts-dev
+	bison
+	boost-dev
+	doxygen
+	eigen-dev
+	exiv2-dev
+	expat-dev
+	extra-cmake-modules
+	flex
+	gettext
+	graphviz
+	imagemagick-dev
+	jasper-dev
+	kcalendarcore-dev
+	kdoctools-dev
+	kfilemetadata-dev
+	lcms2-dev
+	lensfun-dev
+	libgphoto2-dev
+	libheif-dev
+	libksane-dev
+	libpng-dev
+	libxml2-dev
+	libxslt-dev
+	marble-dev
+	opencv-dev
+	qt6-qtmultimedia-dev
+	qt6-qtnetworkauth-dev
+	qt6-qtscxml-dev
+	qt6-qtwebengine-dev
+	samurai
+	tiff-dev
+	x265-dev
+	"
+checkdepends="xvfb-run"
+subpackages="$pkgname-dev $pkgname-doc $pkgname-lang"
+_repo_url="https://invent.kde.org/graphics/digikam.git"
+source="https://download.kde.org/stable/digikam/$pkgver/digiKam-$pkgver.tar.xz"
+options="net" # needed for test data (todo)
+
+build() {
+	cmake -B build -G Ninja \
+		-DBUILD_WITH_QT6=ON \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build build
+}
+
+check() {
+	local tests="
+		albums
+		digikam-advancedrename
+		digikam-detectblur
+		digikam-dimghistorygraph
+		digikam-printmetadata
+		digikam-queryrevision
+		digikam-setiptcpreview
+		digikam-tagsreadwrite
+		digikam-timestampupdate
+		frequentrequests
+		photos
+		userinfo
+		"
+	local skipped_tests="("
+	for test in $tests; do
+		skipped_tests="$skipped_tests|$test"
+	done
+	skipped_tests="$skipped_tests)_utest"
+	xvfb-run -a ctest --test-dir build --output-on-failure -E "$skipped_tests"
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+4342d18a7c04ab239821de3cf908f8e7d676598778f0174164aa336e8cfdc0a76327d31c64e6c4e47dcf0d6fbef46b01918312e4622ce3359888a9a94948a22b  digiKam-8.4.0.tar.xz
+"

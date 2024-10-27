@@ -1,0 +1,32 @@
+# Contributor: Natanael Copa <ncopa@alpinelinux.org>
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Maintainer: Sören Tempel <soeren+alpine@soeren-tempel.net>
+pkgname=debian-archive-keyring
+pkgver=2023.4
+pkgrel=0
+pkgdesc="GnuPG archive keys of the Debian archive"
+url="https://packages.debian.org/sid/debian-archive-keyring"
+arch="noarch"
+license="GPL-2.0-or-later"
+depends="gnupg"
+options="!check" # upstream doesn't have a test suite.
+subpackages="$pkgname-doc"
+source="https://deb.debian.org/debian/pool/main/d/debian-archive-keyring/debian-archive-keyring_${pkgver}_all.deb"
+
+unpack() {
+	cd "$srcdir"
+	for i in $source; do
+		case $i in
+			*.deb) ar x ${i##*/} ;;
+		esac
+	done
+}
+
+package() {
+	mkdir -p "$pkgdir"
+	unxz -c "$srcdir"/data.tar.xz | tar -x -C "$pkgdir"/
+}
+
+sha512sums="
+43360871728355eab0d5bbb5eee7fbb0adfdde97eb828972b0eebbb3f3b23369ac5825b232e444f0a212e00e47863dcd9d260db4f04394c9e1b7dfd282e44904  debian-archive-keyring_2023.4_all.deb
+"

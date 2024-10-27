@@ -1,0 +1,44 @@
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+pkgname=net-cpp
+pkgver=3.1.1
+pkgrel=2
+pkgdesc="A simple yet beautiful networking API for C++11"
+url="https://gitlab.com/ubports/core/lib-cpp/net-cpp"
+arch="all"
+license="LGPL-3.0-only"
+makedepends="cmake cmake-extras boost-dev curl-dev process-cpp-dev
+	properties-cpp-dev jsoncpp-dev gtest-dev samurai"
+checkdepends="py3-httpbin"
+subpackages="$pkgname-dev"
+source="https://gitlab.com/ubports/core/lib-cpp/net-cpp/-/archive/$pkgver/net-cpp-$pkgver.tar.gz
+	0001-Upgrade-C-standard-to-C-17.patch
+	python-init.patch
+	"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		$CMAKE_CROSSOPTS .
+	cmake --build build
+}
+
+check() {
+	cd build
+	CTEST_OUTPUT_ON_FAILURE=TRUE ctest
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+61579b6096a23c1a0fe55fac0f6579139b3e7d1999a7fcf57f7d580c164fe8e7a4b00944a6670442d02b878d1e863f31ff2493750c5069f0830077bb64e21784  net-cpp-3.1.1.tar.gz
+7311589a9023092a782a2661d8bc16608ea7dd17f84d533b521418e3dd85e1fb90d66e7336235b6b59dbd8e80d997ae629a622bae28a24a689e1d32358c62a2a  0001-Upgrade-C-standard-to-C-17.patch
+b67b50f159438513f8744daec4cce23d335025cd5c213534c36e59a29e2aac4ecf749487ad73f855971a8431bbde514e295918177b6d07d253b901aaa28d8582  python-init.patch
+"

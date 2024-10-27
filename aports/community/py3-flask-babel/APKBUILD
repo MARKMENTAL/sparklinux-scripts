@@ -1,0 +1,39 @@
+# Contributor: Fabian Affolter <fabian@affolter-engineering.ch>
+# Maintainer: Fabian Affolter <fabian@affolter-engineering.ch>
+pkgname=py3-flask-babel
+pkgver=4.0.0
+pkgrel=1
+pkgdesc="Flask i18n/l10n support"
+url="https://github.com/python-babel/flask-babel"
+arch="noarch"
+license="BSD-3-Clause"
+depends="python3 py3-flask py3-jinja2 py3-babel"
+makedepends="py3-poetry-core py3-gpep517"
+checkdepends="py3-tz py3-pytest py3-pytest-mock"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/python-babel/flask-babel/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir"/flask-babel-$pkgver
+
+replaces="py-flask-babel" # Backwards compatibility
+provides="py-flask-babel=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+c2ac57e4ebde67114d535e57eb8b4094c8e3af865ea3076cd8d0ae30ff4a189037b7481280faaf7a4742bbbddca1513b3c408e198d1156c1e61a7b90c05bfe6f  py3-flask-babel-4.0.0.tar.gz
+"

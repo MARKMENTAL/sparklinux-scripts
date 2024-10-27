@@ -1,0 +1,34 @@
+# Contributor: Francesco Camuffo <dev@fmac.xyz>
+# Maintainer: Simon Zeni <simon@bl4ckb0ne.ca>
+pkgname=senpai
+pkgver=0.3.0
+pkgrel=5
+pkgdesc="Your everyday IRC student"
+url="https://sr.ht/~delthas/senpai"
+arch="all"
+license="ISC"
+options="net"
+makedepends="go scdoc"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://git.sr.ht/~delthas/senpai/archive/v$pkgver.tar.gz"
+builddir="$srcdir/$pkgname-v$pkgver"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	make GOFLAGS="$GOFLAGS"
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	make PREFIX=/usr DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+5aa80cc8b3b80d29b503e51377e703cea5fb006c961d677b4afb9e096671b83128a6050c3e70c314ee653d2e8610cd19f47deb1e0a1bfbb125da28e35ca509a5  senpai-0.3.0.tar.gz
+"

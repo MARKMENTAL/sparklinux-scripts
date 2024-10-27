@@ -1,0 +1,47 @@
+# Contributor: knuxify <knuxify@gmail.com>
+# Maintainer: knuxify <knuxify@gmail.com>
+pkgname=eartag
+pkgver=0.6.2
+pkgrel=0
+pkgdesc="Small and simple music tag editor that doesn't try to manage your entire library"
+url="https://gitlab.gnome.org/World/eartag"
+arch="noarch"
+license="MIT"
+depends="python3
+	py3-gobject3
+	gtk4.0
+	libadwaita
+	py3-magic
+	py3-mutagen
+	py3-pillow
+	py3-pyacoustid
+	"
+makedepends="meson blueprint-compiler glib-dev desktop-file-utils"
+checkdepends="appstream-glib py3-pytest"
+subpackages="$pkgname-doc $pkgname-lang"
+source="https://gitlab.gnome.org/World/eartag/-/archive/$pkgver/eartag-$pkgver.tar.gz"
+
+if [ "$CARCH" = "s390x" ]; then
+	# test failure on s390x, likely caused by py3-magic, but only for
+	# rarely-used .wma files
+	options="!check"
+fi
+
+build() {
+	abuild-meson \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+	install -Dm644 COPYING "$pkgdir"/usr/share/licenses/$pkgname/COPYING
+}
+
+sha512sums="
+213270a1a7aabf1ee4c3fa27974ac8704f8a4129c6a06dd5fe2d8989a79602215537525118f3da0ba12b623f8b1db5fd37395450e40397d9857f88633d10fec8  eartag-0.6.2.tar.gz
+"

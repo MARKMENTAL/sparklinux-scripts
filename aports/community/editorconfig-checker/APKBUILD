@@ -1,0 +1,41 @@
+# Contributor: Anjandev Momi <anjan@momi.ca>
+# Maintainer: Anjandev Momi <anjan@momi.ca>
+pkgname=editorconfig-checker
+pkgver=2.7.0
+pkgrel=10
+pkgdesc="A tool to verify that your files are in harmony with your .editorconfig"
+url="https://editorconfig-checker.github.io/"
+license="MIT"
+arch="all"
+makedepends="go"
+options="chmod-clean"
+builddir="$srcdir/github.com/editorconfig-checker/$pkgname"
+source="$pkgname-$pkgver.tar.gz::https://github.com/editorconfig-checker/editorconfig-checker/archive/$pkgver.tar.gz"
+
+export GOPATH="$srcdir"
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+prepare() {
+	mkdir -p "$srcdir/github.com/editorconfig-checker"
+	mv "$srcdir/$pkgname-$pkgver" "$srcdir/github.com/editorconfig-checker/editorconfig-checker"
+	default_prepare
+}
+
+check() {
+	sed -i 's/-race//' Makefile # -buildmode=pie not supported when -race is enabled
+	make test
+}
+
+build() {
+	make build
+}
+
+package() {
+	install -Dm755 "$builddir/bin/ec" -t "$pkgdir/usr/bin"
+}
+
+sha512sums="
+697a0863d4ffa7de498654a266d0e09d71dca8975afec6150ae9131e030fffabd3e4bc7ddf60fc6411d91d7e91c359c1737ad35d02a08acda7ddc320b0d4bd5d  editorconfig-checker-2.7.0.tar.gz
+"

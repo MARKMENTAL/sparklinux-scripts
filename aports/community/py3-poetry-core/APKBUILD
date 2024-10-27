@@ -1,0 +1,61 @@
+# Contributor: Michał Polański <michal@polanski.me>
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=py3-poetry-core
+_pkgname=poetry-core
+pkgver=1.9.0
+pkgrel=0
+pkgdesc="PEP 517 build backend implementation for Poetry"
+url="https://github.com/python-poetry/poetry-core"
+license="MIT"
+arch="noarch"
+depends="
+	py3-fastjsonschema
+	py3-lark-parser
+	py3-packaging
+	"
+makedepends="py3-gpep517"
+checkdepends="
+	py3-build
+	py3-pip
+	py3-pytest
+	py3-pytest-mock
+	py3-setuptools
+	py3-tomli-w
+	py3-virtualenv
+	python3-dev
+	"
+subpackages="$pkgname-pyc"
+source="$_pkgname-$pkgver.tar.gz::https://github.com/python-poetry/poetry-core/archive/$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	# broken-ass test .c files
+	export CFLAGS="$CFLAGS -Wno-error=int-conversion"
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest \
+		--deselect tests/masonry/builders/test_sdist.py::test_includes_with_inline_table \
+		--deselect tests/masonry/builders/test_sdist.py::test_default_with_excluded_data \
+		--deselect tests/masonry/builders/test_wheel.py::test_default_src_with_excluded_data
+	.testenv/bin/python3 -m pytest --integration tests/integration \
+		--deselect tests/integration/test_pep517_backend.py::test_pip_install
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/poetry_core-$pkgver-py3-none-any.whl
+
+	# remove vendored versions of installed modules
+	local sitedir=$(python3 -c "import site; print(site.getsitepackages()[0])")
+	rm -r "$pkgdir/$sitedir"/poetry/core/_vendor
+}
+
+sha512sums="
+a2d63480f0df36fabe61c234377a4fa9ea0a1ddce449006162d6e49e849c92ad9c77d0a93aba7c51561bac16a77d5db00a95594bd5e2de328e1664f3f41f689b  poetry-core-1.9.0.tar.gz
+"

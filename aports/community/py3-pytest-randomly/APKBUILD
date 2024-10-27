@@ -1,0 +1,55 @@
+# Contributor: Antoine Martin (ayakael) <dev@ayakael.net>
+# Maintainer: Antoine Martin (ayakael) <dev@ayakael.net>
+pkgname=py3-pytest-randomly
+#_pkgreal is used by apkbuild-pypi to find modules at PyPI
+_pkgreal=pytest-randomly
+pkgver=3.15.0
+pkgrel=1
+pkgdesc="Pytest plugin to randomly order tests and control random.seed."
+url="https://github.com/pytest-dev/pytest-randomly"
+arch="noarch"
+license="MIT"
+depends="py3-pytest"
+checkdepends="
+	py3-pytest-xdist
+	py3-numpy
+	py3-importlib-metadata
+	py3-faker
+	py3-factory-boy
+	py3-coverage
+	py3-model-bakery
+	"
+makedepends="py3-setuptools py3-gpep517 py3-wheel"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/pytest-dev/pytest-randomly/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/$_pkgreal-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer "$builddir"/.dist/*.whl
+	# FAILED tests/test_pytest_randomly.py::test_files_reordered - AssertionError: assert ['collecting ...st_it PASSED'] == ['test_b.py::...st_it PASSED']
+	# FAILED tests/test_pytest_randomly.py::test_entrypoint_injection - AssertionError: assert [] == [call(1), cal...l(1), call(2)]
+	# FAILED tests/test_pytest_randomly.py::test_files_reordered_when_seed_not_reset - AssertionError: assert ['collecting ...st_it PASSED'] == ['test_b.py::...st_it PASSED']
+	# FAILED tests/test_pytest_randomly.py::test_test_functions_reordered - AssertionError: assert ['collecting ...est_a PASSED'] == ['test_one.py...est_d PASSED']
+	# FAILED tests/test_pytest_randomly.py::test_test_functions_reordered_when_randomness_in_module - AssertionError: assert ['collecting ...est_a PASSED'] == ['test_one.py...est_d PASSED']
+	# FAILED tests/test_pytest_randomly.py::test_doctests_reordered - AssertionError: assert ['collecting ... 2 items', ''] == ['test_one.py...e.foo PASSED']
+	# FAILED tests/test_pytest_randomly.py::test_classes_reordered - AssertionError: assert ['collecting ...est_b PASSED'] == ['test_one.py...est_a PASSED']
+	# FAILED tests/test_pytest_randomly.py::test_class_test_methods_reordered - AssertionError: assert ['collecting ...est_b PASSED'] == ['test_one.py...est_d PASSED']
+	# FAILED tests/test_pytest_randomly.py::test_doctests_in_txt_files_reordered - AssertionError: assert ['collecting ... 2 items', ''] == ['test2.txt::...t.txt PASSED']
+	.testenv/bin/python3 -m pytest -v -k 'not test_files_reordered and not test_entrypoint_injection and not test_functions_reordered and not test_doctests_reordered and not test_classes_reordered and not test_classes_reordered and not test_class_test_methods_reordered and not test_doctests_in_txt_files_reordered'
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+7ead074f0b2fbd20ab383258808986f3900ab83ef18bc68440ed55eae2ad21912a30b03be830091e86570cba768c1f13b5f15852f5aa0095ffd7e134e55c884f  py3-pytest-randomly-3.15.0.tar.gz
+"

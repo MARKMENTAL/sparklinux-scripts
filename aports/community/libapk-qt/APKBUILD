@@ -1,0 +1,39 @@
+# Maintainer: Alexey Minnekhanov <alexeymin@postmarketos.org>
+pkgname=libapk-qt
+pkgver=0.4.6
+pkgrel=0
+pkgdesc="Alpine Package Keeper (apk) Qt bindings"
+url="https://gitlab.com/postmarketOS/libapk-qt"
+# s390x: segfaults in tests
+arch="all !s390x"
+license="GPL-2.0-only"
+makedepends="apk-tools-dev cmake qt6-qtbase-dev samurai"
+source="https://gitlab.com/postmarketOS/libapk-qt/-/archive/v$pkgver/libapk-qt-v$pkgver.tar.gz"
+subpackages="$pkgname-dev $pkgname-dbg"
+builddir="$srcdir/libapk-qt-v$pkgver"
+case "$CARCH" in
+	# There is no Alpine stable release for riscv64 and loongarch64
+	riscv64|loongarch64) options="!check" ;;
+esac
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_TESTING=ON \
+		-DUSE_QT6=ON
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+51f5748e24a15da11a6904f30ba940cfb03aa5ff12662e3481bffe6e0d2f40fee5ab3c714444de1907ebf6c5ca42210584f223bf2fc6a7da6f28edb4d18ede52  libapk-qt-v0.4.6.tar.gz
+"

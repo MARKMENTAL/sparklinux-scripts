@@ -1,0 +1,42 @@
+# Contributor: Sascha Brawer <sascha@brawer.ch>
+# Maintainer: Sascha Brawer <sascha@brawer.ch>
+pkgname=libosmium
+pkgver=2.20.0
+pkgrel=1
+pkgdesc="Fast and flexible C++ library for working with OpenStreetMap data"
+url="https://github.com/osmcode/libosmium"
+arch="noarch"
+license="BSL-1.0"
+makedepends="
+	boost-dev
+	bzip2-dev
+	cmake
+	expat-dev
+	gdal-dev
+	geos-dev
+	lz4-dev
+	protozero-dev
+	samurai
+	zlib-dev
+	"
+subpackages="$pkgname-dev"
+source="libosmium-$pkgver.tar.gz::https://github.com/osmcode/libosmium/archive/refs/tags/v$pkgver.tar.gz"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBUILD_TESTING="$(want_check && echo ON || echo OFF)"
+	cmake --build build
+}
+
+check() {
+	ctest --output-on-failure --test-dir build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+72e881e221dc3e62d7459b5cd84bf65de4fc0149bed66fe0534107d0d4dc30e5d474df685b44af07e6065a690dd7b31b877b5b040b8e0b4b0b971738175c34a3  libosmium-2.20.0.tar.gz
+"

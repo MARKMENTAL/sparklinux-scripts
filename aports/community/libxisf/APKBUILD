@@ -1,0 +1,39 @@
+# Contributor: Clayton Craft <clayton@craftyguy.net>
+# Maintainer: Clayton Craft <clayton@craftyguy.net>
+pkgname=libxisf
+pkgver=0.2.12
+pkgrel=1
+pkgdesc="library to load and write XISF format from PixInsight"
+url="https://gitea.nouspiro.space/nou/libXISF"
+arch="all"
+license="GPL-3.0-or-later"
+makedepends="cmake samurai zlib-dev lz4-dev zstd-dev pugixml-dev"
+subpackages="$pkgname-dev"
+source="$pkgname-$pkgver.tar.gz::https://gitea.nouspiro.space/nou/libXISF/archive/v$pkgver.tar.gz"
+builddir="$srcdir/$pkgname"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		local crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=ON \
+		-DUSE_BUNDLED_LIBS=OFF \
+		-DCMAKE_BUILD_TYPE=None \
+		$crossopts
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+f946ecfb14a74d9d9526d11ae33a43453eb376988f77e679e231100df62c12ced2500a151d1f6cc3422c3858f99c83692e45f6e0504cefd0871b10b69615682a  libxisf-0.2.12.tar.gz
+"

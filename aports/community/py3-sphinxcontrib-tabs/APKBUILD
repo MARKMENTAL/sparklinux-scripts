@@ -1,0 +1,29 @@
+# Contributor: Duncan Bellamy <dunk@denkimushi.com>
+# Maintainer: Duncan Bellamy <dunk@denkimushi.com>
+pkgname=py3-sphinxcontrib-tabs
+pkgver=3.4.4
+pkgrel=1
+pkgdesc="Create tabbed content in Sphinx documentation when building HTML"
+url="https://github.com/executablebooks/sphinx-tabs"
+arch="noarch"
+license="MIT"
+#test files are not included in pypi archive
+options="!check"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/s/sphinx-tabs/sphinx-tabs-$pkgver.tar.gz"
+builddir="$srcdir/sphinx-tabs-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+041cf8e629a793629c92595e2769323da8734568bf148b57230ef6211de5de99a6eab4fd33a9e5d8a74d4e06748d42ac3554f5b2bbf4fdcb5a95bc5cf45b833f  sphinx-tabs-3.4.4.tar.gz
+"

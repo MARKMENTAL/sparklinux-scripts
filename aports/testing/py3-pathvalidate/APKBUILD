@@ -1,0 +1,37 @@
+# Contributor: lauren n. liberda <lauren@selfisekai.rocks>
+# Maintainer: lauren n. liberda <lauren@selfisekai.rocks>
+pkgname=py3-pathvalidate
+pkgver=3.2.1
+pkgrel=0
+pkgdesc="Python library to sanitize/validate a string such as filenames/file-paths/etc"
+url="https://github.com/thombashi/pathvalidate"
+arch="noarch"
+license="MIT"
+depends="python3"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-setuptools_scm
+	py3-wheel
+	"
+checkdepends="py3-pytest py3-click py3-faker"
+options="!check" # tests require unpackaged unmaintained dependencies
+subpackages="$pkgname-pyc"
+source="https://github.com/thombashi/pathvalidate/archive/refs/tags/v$pkgver/pathvalidate-$pkgver.tar.gz"
+builddir="$srcdir/pathvalidate-$pkgver"
+
+build() {
+	export SETUPTOOLS_SCM_PRETEND_VERSION="$pkgver"
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+094bb442258ba58fff11691f5b60976513924443247e808effbc26b9dd6c336f5f84d8e4563643b7def19d9f82170eb9ec6cd89491f9115df8d1634d2aa12206  pathvalidate-3.2.1.tar.gz
+"

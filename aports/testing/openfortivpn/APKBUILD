@@ -1,0 +1,41 @@
+# Maintainer: Taner Tas <taner76@gmail.com>
+pkgname=openfortivpn
+pkgver=1.21.0
+pkgrel=0
+pkgdesc="Openfortivpn is a client for PPP+SSL VPN tunnel services"
+url="https://github.com/adrienverge/openfortivpn"
+arch="all"
+license="GPL-3.0-only"
+depends="ppp-daemon"
+makedepends="
+	autoconf
+	automake
+	openssl-dev>3
+	"
+subpackages="$pkgname-doc"
+source="
+	$pkgname-$pkgver.tar.gz::https://github.com/adrienverge/openfortivpn/archive/v$pkgver.tar.gz
+	"
+options="!check" # No test suite
+
+prepare() {
+	default_prepare
+	autoreconf -fi
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+9751a1ce2f71fe51f8b15dec76afe600fc659b78a44397df9413ebdba9a77bc861fb75b1eb3540590c777447c15849e19033827cea3b494f2dac8075ec17142d  openfortivpn-1.21.0.tar.gz
+"

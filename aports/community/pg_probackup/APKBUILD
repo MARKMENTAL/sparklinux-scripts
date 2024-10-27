@@ -1,0 +1,55 @@
+# Maintainer: Leonardo Arena <rnalrd@alpinelinux.org>
+pkgname=pg_probackup
+pkgver=2.5.15
+_pgsqlver=16.3
+_pgsqlverm="${_pgsqlver%%.[0-9]*}"
+pkgrel=0
+pkgdesc="Backup and recovery manager for PostgreSQL"
+url="https://github.com/postgrespro/pg_probackup"
+arch="all !riscv64 !loongarch64" # blocked by postgresql15
+license="PostgreSQL"
+makedepends="postgresql$_pgsqlverm postgresql$_pgsqlverm-dev zlib-dev readline-dev libxml2-utils libxslt"
+source="pg_probackup-$pkgver.tar.gz::https://github.com/postgrespro/pg_probackup/archive/refs/tags/$pkgver.tar.gz
+	https://ftp.postgresql.org/pub/source/v$_pgsqlver/postgresql-$_pgsqlver.tar.bz2"
+builddir="$srcdir/postgresql-$_pgsqlver/contrib/pg_probackup-$pkgver"
+
+prepare() {
+	default_prepare
+
+	mv "$srcdir"/pg_probackup-$pkgver "$srcdir"/postgresql-$_pgsqlver/contrib
+
+	cd "$srcdir"/postgresql-$_pgsqlver
+	./configure --without-ldap
+
+	local _header
+	for _header in $(ls "$srcdir"/postgresql-$_pgsqlver/src/bin/pg_basebackup/*.h); do
+		ln -s $_header "$builddir"/src/
+	done
+}
+
+build() {
+	make -j1
+
+	# fail to build
+	# cd doc
+	# xmllint --noout --valid probackup.xml
+	# xsltproc stylesheet.xsl probackup.xml >pg-probackup.html
+}
+
+check() {
+	local _tmp=$(mktemp -u)
+	local _catalog="$(pwd)$_tmp"
+	./pg_probackup version
+	./pg_probackup init -B $_catalog
+}
+
+package() {
+	install -Dm755 ./pg_probackup \
+		"$pkgdir"/usr/bin/pg_probackup$_pgsqlverm
+	# install -Dm644 "$builddir"/doc/pg-probackup.html "$pkgdir"/usr/share/doc/pg_probackup/pg-probackup.html
+}
+
+sha512sums="
+10c241397895824db63a9f374e375a1de99822cdd0b2573986e9b99ceda513b255bba8234a99a9cb26506f9177d501b0d4565a939848e92082da72431b69e79e  pg_probackup-2.5.15.tar.gz
+dc1c8d4fbc8e53e9be91dcf1b644b3969bd634f11bf5a1c4fe16619fd386f3349a5509788d43e6a57d099ad75233026d4dd4e0bb180ffc747fd3c1a575c51a5f  postgresql-16.3.tar.bz2
+"

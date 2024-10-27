@@ -1,0 +1,44 @@
+# Contributor: Galen Abell <galen@galenabell.com>
+# Maintainer: Galen Abell <galen@galenabell.com>
+pkgname=py3-beartype
+_pyname=beartype
+pkgver=0.18.5
+pkgrel=0
+pkgdesc="Fast, pure-Python type checker"
+url="https://github.com/beartype/beartype"
+arch="noarch"
+license="MIT"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest py3-numpy py3-mypy py3-docutils py3-sphinx"
+subpackages="$pkgname-pyc"
+source="
+	$_pyname-$pkgver.tar.gz::https://github.com/beartype/beartype/archive/refs/tags/v$pkgver.tar.gz
+	"
+builddir="$srcdir/$_pyname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	# nuitka isn't packaged for alpine yet
+	# pyright isn't packaged anymore
+	# long type-check test fails on some architectures
+	python3 -m venv --clear --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest \
+		--deselect beartype_test/a90_func/z90_lib/a90_nuitka/test_nuitka.py \
+		--deselect beartype_test/a90_func/pep/test_pep561_static.py::test_pep561_pyright \
+		--deselect beartype_test/a00_unit/a70_decor/test_decorwrapper.py::test_wrapper_fail_obj_large
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+4805ccc618795f100d018e5fd5d1234254ea182d1e43aa1559655b73bf259c5b93f6804fd803e5e281942235019469c252f02ddf8136674b9399efe61ef98d71  beartype-0.18.5.tar.gz
+"

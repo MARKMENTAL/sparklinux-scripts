@@ -1,0 +1,54 @@
+# Contributor: Łukasz Jendrysik <scadu@yandex.com>
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Contributor: Jakub Skrzypnik <j.skrzypnik@openmailbox.org>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=libass
+pkgver=0.17.3
+pkgrel=0
+pkgdesc="Portable library for SSA/ASS subtitle rendering"
+url="https://github.com/libass/libass"
+arch="all"
+license="ISC"
+depends_dev="
+	enca-dev
+	fontconfig-dev
+	fribidi-dev
+	freetype-dev
+	harfbuzz-dev
+	libunibreak-dev
+	"
+makedepends="$depends_dev nasm"
+subpackages="$pkgname-dev"
+source="https://github.com/libass/libass/releases/download/$pkgver/libass-$pkgver.tar.xz"
+options="!check" # only has compare regression tests
+
+# secfixes:
+#   0.13.4-r0:
+#     - CVE-2016-7969
+#     - CVE-2016-7970
+#     - CVE-2016-7971
+#     - CVE-2016-7972
+
+build() {
+	CFLAGS="$CFLAGS -flto=auto" \
+	CXXFLAGS="$CXXFLAGS -flto=auto" \
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--localstatedir=/var \
+		--disable-static
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+c8da55d38159d45838b359547ac1f83aa40665448b71e404ec8bdce68e0b3f46e80ab88c0194697bff0275d88ca86d58a0cf8a8cbc6dfc3ee1dc40d33d532dfc  libass-0.17.3.tar.xz
+"

@@ -1,0 +1,37 @@
+# Contributor: Lindsay Zhou <i@lin.moe>
+# Maintainer: Lindsay Zhou <i@lin.moe>
+pkgname=fcitx5-hangul
+pkgver=5.1.4
+pkgrel=0
+pkgdesc="libhangul input method support for fcitx5"
+url="https://github.com/fcitx/fcitx5-hangul"
+arch="all"
+license="GPL-3.0-or-later"
+makedepends="
+	cmake
+	extra-cmake-modules
+	gettext-dev
+	fcitx5-dev
+	libhangul-dev
+	samurai
+	"
+subpackages="$pkgname-lang"
+source="$pkgname-$pkgver.tar.gz::https://github.com/fcitx/fcitx5-hangul/archive/refs/tags/$pkgver.tar.gz"
+options="!check" # no tests
+
+build() {
+	CXXFLAGS="$CXXFLAGS -flto=auto" \
+	CFLAGS="$CFLAGS -flto=auto" \
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+2363cd9e28053c97a4813d618734953ceddf129720fe8f9d30651b1385d7ec5048c74d4911f893f85f0e4d9ff04b401830b03816834f68aa06611eb6f1c9ce57  fcitx5-hangul-5.1.4.tar.gz
+"

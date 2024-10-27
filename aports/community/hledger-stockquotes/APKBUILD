@@ -1,0 +1,68 @@
+# Contributor: Dhruvin Gandhi <contact@dhru.vin>
+# Maintainer: Dhruvin Gandhi <contact@dhru.vin>
+pkgname=hledger-stockquotes
+pkgver=0.1.3.1
+pkgrel=1
+pkgdesc="hledger addon that pulls historical stock prices for commodities"
+url="https://github.com/prikhi/hledger-stockquotes"
+# temp disable due to it fails to build from source
+arch="x86_64" # limited by GHC
+license="BSD-3-Clause"
+makedepends="ghc cabal libffi-dev ncurses-dev zlib-dev"
+source="$pkgname-$pkgver.tar.gz::https://github.com/prikhi/hledger-stockquotes/archive/refs/tags/$pkgver.tar.gz
+	cabal.project.freeze
+	"
+options="!check" # fail to build for some reason
+
+export CABAL_DIR="$srcdir"/cabal
+
+cabal_update() {
+	msg "Freezing $pkgname dependencies"
+
+	# Resolve deps and generate fresh cabal.project.freeze with version constraints.
+	(
+		cd "$builddir"
+		cabal v2-update
+		cabal v2-freeze --strong-flags --shadow-installed-packages
+
+		# Add version tag at the first line.
+		sed -i "1i--$pkgver" "cabal.project.freeze"
+
+		mv "cabal.project.freeze" "$startdir/"
+	)
+
+	if ! abuild checksum; then
+		die "Failed to update checksum, run 'abuild checksum' manually"
+	fi
+}
+
+prepare() {
+	default_prepare
+
+	if [ "$(head -n 1 "$srcdir/cabal.project.freeze")" != "--$pkgver" ]; then
+		die "Requirements file is outdated, run 'abuild cabal_update'"
+	fi
+
+	ln -sf "$srcdir/cabal.project.freeze" "$builddir/"
+}
+
+build() {
+	cabal update
+	cabal build --prefix=/usr --enable-relocatable
+}
+
+check() {
+	cabal test
+}
+
+package() {
+	local ghcver=$(ghc --version | cut -d " " -f 8)
+	install -Dm755 \
+		"dist-newstyle/build/$arch-linux/ghc-$ghcver/$pkgname-$pkgver/x/$pkgname/build/$pkgname/$pkgname" \
+		"$pkgdir"/usr/bin/$pkgname
+}
+
+sha512sums="
+e8645c5604542766b662cba3603a46dfd9bfb93b9045282180849383b25eaae474f5c0e65ad29fc557b8f62776e44f9fbe37771892f9f9327c1f06b296b8e592  hledger-stockquotes-0.1.3.1.tar.gz
+b00304c5b814a4483f3ac94b81bfa7ef1b21b27911d7ada1f8d529066dd50804ac7bccc5f43b1a46aa3d2386d95d7760852500dba2b277b06c776e9c6db76dab  cabal.project.freeze
+"

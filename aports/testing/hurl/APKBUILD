@@ -1,0 +1,30 @@
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=hurl
+pkgver=5.0.1
+pkgrel=0
+pkgdesc="CLI to run HTTP requests defined in simple plain text format"
+url="https://hurl.dev/"
+arch="all"
+license="Apache-2.0"
+makedepends="cargo curl-dev libxml2-dev cargo-auditable"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/Orange-OpenSource/hurl/archive/refs/tags/$pkgver.tar.gz"
+options="!check" # tests require a running local web server
+
+prepare() {
+	default_prepare
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --release --frozen
+}
+
+package() {
+	install -Dm755 target/release/hurl target/release/hurlfmt -t "$pkgdir"/usr/bin/
+	install -Dm644 docs/manual/hurl.1 docs/manual/hurlfmt.1 -t "$pkgdir"/usr/share/man/man1/
+}
+
+sha512sums="
+bf15421139f455be92b212899864dedca8e291dcd31aa45a861bbf53536bfc581a44e24ea1c1189dc819eeb113c7cf20c2e1ba7d6c609dd08b7c5440ad56d5dd  hurl-5.0.1.tar.gz
+"

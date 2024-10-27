@@ -1,0 +1,28 @@
+# Contributor: Díaz Urbaneja Diego <sodomon2@gmail.com>
+# Maintainer: Díaz Urbaneja Diego <sodomon2@gmail.com>
+pkgname=typescript
+pkgver=5.4.5
+pkgrel=1
+pkgdesc="TypeScript is a superset of JavaScript that compiles to clean JavaScript output"
+url="https://www.typescriptlang.org/"
+arch="noarch"
+license="Apache-2.0"
+depends="nodejs"
+options="!check" # not implemented
+source="https://github.com/microsoft/TypeScript/releases/download/v$pkgver/typescript-$pkgver.tgz"
+builddir="$srcdir/package"
+
+package() {
+	local destdir="usr/share/node_modules/$pkgname"
+
+	mkdir -p "$pkgdir"/$destdir
+	cp -R "$builddir"/* "$pkgdir"/$destdir/
+
+	mkdir -p "$pkgdir"/usr/bin
+	ln -s /$destdir/bin/tsc "$pkgdir"/usr/bin/tsc
+	ln -s /$destdir/bin/tsserver "$pkgdir"/usr/bin/tsserver
+}
+
+sha512sums="
+bdc23852946083cd68211505c11d164881cab75d6727b48056560d22ef90a6a7b25cffa0a50272fd9e3e174686c5213832ac23c97bd6fd3ce090b031d80187c1  typescript-5.4.5.tgz
+"

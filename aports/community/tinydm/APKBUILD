@@ -1,0 +1,31 @@
+# Maintainer: Oliver Smith <ollieparaoid@postmarketos.org>
+pkgname=tinydm
+pkgver=1.2.0
+pkgrel=0
+pkgdesc="Wayland/X11 session starter for single user machines"
+url="https://gitlab.com/postmarketOS/tinydm"
+source="https://gitlab.com/postmarketOS/tinydm/-/archive/$pkgver/tinydm-$pkgver.tar.bz2"
+arch="noarch"
+license="GPL-3.0-or-later"
+options="!check" # No tests
+depends="autologin"
+subpackages="
+	$pkgname-openrc
+	$pkgname-x11
+	"
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+x11() {
+	pkgdesc="$pkgdesc (x11 dependencies)"
+	install_if="$pkgname=$pkgver-r$pkgrel xorg-server"
+	depends="xinit"
+
+	mkdir -p "$subpkgdir"
+}
+
+sha512sums="
+d480a993cdff5249a95fdae43f03c88d1d67673e29a5ea2499327efbd7f21c5411b458b4e0c66d3a848c40d02e4a89efb40383ff443a4ab6c4d52f90b76f76be  tinydm-1.2.0.tar.bz2
+"

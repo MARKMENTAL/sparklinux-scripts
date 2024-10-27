@@ -1,0 +1,51 @@
+# Contributor: August Klein <amatcoder@gmail.com>
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: August Klein <amatcoder@gmail.com>
+pkgname=meld
+pkgver=3.22.1
+pkgrel=1
+pkgdesc="Visual diff and merge tool"
+url="https://meldmerge.org"
+arch="noarch"
+license="GPL-2.0-or-later"
+depends="
+	dconf
+	gsettings-desktop-schemas
+	gtksourceview4
+	py3-cairo
+	py3-gobject3
+	python3
+	"
+makedepends="
+	glib-dev
+	gtksourceview4-dev
+	itstool
+	libxml2-utils
+	meson
+	py3-cairo-dev
+	py3-gobject3-dev
+	python3-dev
+	"
+checkdepends="
+	gtk-update-icon-cache
+	py3-pytest
+	"
+subpackages="$pkgname-lang $pkgname-doc $pkgname-pyc"
+source="https://download.gnome.org/sources/meld/${pkgver%.*}/meld-$pkgver.tar.xz"
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+check() {
+	pytest
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+7cb4c64a8134d02ee629c5459d5361c8ee1b1fb80efb02b9f3d2c577ecb69dca2ff66b90affb479682b7fceda41c60717ef859d93e3b93070a84901ae772b2cd  meld-3.22.1.tar.xz
+"

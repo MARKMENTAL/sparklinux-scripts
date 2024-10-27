@@ -1,0 +1,34 @@
+# Contributor: Oleg Titov <oleg.titov@gmail.com>
+# Maintainer: Oleg Titov <oleg.titov@gmail.com>
+pkgname=mynewt-newt
+pkgver=1.11.0
+_ver=${pkgver//./_}_tag
+pkgrel=5
+pkgdesc="Apache Newt is a smart build and package management tool for Apache Mynewt Operating System"
+url="https://mynewt.apache.org"
+arch="all"
+license="Apache-2.0"
+options="!check" # unreleased test suite in separate repository
+depends="git"
+makedepends="go"
+subpackages="$pkgname-doc"
+source="mynewt-newt-$pkgver.tar.gz::https://github.com/apache/mynewt-newt/archive/mynewt_$_ver.tar.gz"
+builddir="$srcdir/mynewt-newt-mynewt_$_ver"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	./build.sh
+}
+
+package() {
+	install -Dm 755 newt/newt "$pkgdir/usr/bin/newt"
+
+	install -Dm 644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md
+}
+
+sha512sums="
+3c00079255103563cb9a345537333be6b8bcd56445e23cb312972bb719d29e96f31606599af0f095421fa1dbea62665481f1f981af6adccd7ec9948499138083  mynewt-newt-1.11.0.tar.gz
+"

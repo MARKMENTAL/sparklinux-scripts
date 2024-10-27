@@ -1,0 +1,55 @@
+# Maintainer: prspkt <prspkt@protonmail.com>
+pkgname=py3-werkzeug
+_pkgname=werkzeug
+pkgver=3.0.3
+pkgrel=0
+pkgdesc="The WSGI swiss-army knife"
+url="https://werkzeug.palletsprojects.com/"
+arch="noarch"
+license="MIT"
+depends="python3 py3-markupsafe"
+makedepends="py3-gpep517 py3-flit-core"
+checkdepends="py3-pytest py3-requests py3-pytest-timeout"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/${_pkgname:0:1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+replaces="py-werkzeug" # Backwards compatibility
+provides="py-werkzeug=$pkgver-r$pkgrel" # Backwards compatibility
+
+# secfixes:
+#   2.2.2-r0:
+#     - CVE-2022-29361
+#   2.3.7-r0:
+#     - CVE-2023-46136
+
+prepare() {
+	default_prepare
+	# requires ephemeral-port-preserve
+	rm -fv tests/conftest.py
+	rm -fv tests/test_debug.py
+	# requires various pytest plugins
+	rm -fv tests/test_serving.py
+	rm -fv tests//middleware/test_http_proxy.py
+}
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+fc771c161b37a376a86930c29c8b8052f81fb869cedea8c3c83af1e8b1aba271358c918e3067f3b0ac6d4a1689c8c355bff410d521c73a1909fd0ffc90fee6c6  werkzeug-3.0.3.tar.gz
+"

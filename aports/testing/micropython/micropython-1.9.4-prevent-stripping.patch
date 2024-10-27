@@ -1,0 +1,24 @@
+--- a/py/mkenv.mk
++++ a/py/mkenv.mk
+@@ -52,7 +52,6 @@
+ LD = $(CROSS_COMPILE)ld
+ OBJCOPY = $(CROSS_COMPILE)objcopy
+ SIZE = $(CROSS_COMPILE)size
+-STRIP = $(CROSS_COMPILE)strip
+ AR = $(CROSS_COMPILE)ar
+ 
+ MAKE_MANIFEST = $(PYTHON) $(TOP)/tools/makemanifest.py
+--- a/py/mkrules.mk
++++ a/py/mkrules.mk
+@@ -211,11 +211,6 @@
+ # Do not pass COPT here - it's *C* compiler optimizations. For example,
+ # we may want to compile using Thumb, but link with non-Thumb libc.
+ 	$(Q)$(CC) -o $@ $^ $(LIB) $(LDFLAGS)
+-ifndef DEBUG
+-ifdef STRIP
+-	$(Q)$(STRIP) $(STRIPFLAGS_EXTRA) $@
+-endif
+-endif
+ 	$(Q)$(SIZE) $$(find $(BUILD) -path "$(BUILD)/build/frozen*.o") $@
+ 
+ clean: clean-prog

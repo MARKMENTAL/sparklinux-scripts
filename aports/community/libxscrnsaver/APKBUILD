@@ -1,0 +1,37 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=libxscrnsaver
+pkgver=1.2.4
+pkgrel=3
+pkgdesc="X.Org screen saver extension"
+url="https://cgit.freedesktop.org/xorg/lib/libXScrnSaver/"
+arch="all"
+license="MIT"
+makedepends="$depends_dev libxext-dev libx11-dev util-macros xorgproto"
+subpackages="$pkgname-dev $pkgname-doc"
+source="https://www.x.org/releases/individual/lib/libXScrnSaver-$pkgver.tar.xz"
+builddir="$srcdir"/libXScrnSaver-$pkgver
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--localstatedir=/var \
+		--disable-static
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+e4395af85f8496618afb23ffdaca1a75f5e3d213478d8dc73249cbc9840d7b993ba7513dbf6015cb38b48fe3f2223496365158a148dd5e1ac7475c5ee569e28c  libXScrnSaver-1.2.4.tar.xz
+"

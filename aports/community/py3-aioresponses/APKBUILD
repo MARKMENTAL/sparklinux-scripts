@@ -1,0 +1,37 @@
+# Contributor: Antoine Fontaine <antoine.fontaine@epfl.ch>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=py3-aioresponses
+pkgver=0.7.6
+pkgrel=2
+pkgdesc="Helper to mock/fake web requests in the aiohttp package"
+url="https://github.com/pnuckowski/aioresponses"
+arch="noarch"
+license="MIT"
+depends="py3-packaging"
+makedepends="py3-gpep517 py3-pbr py3-setuptools py3-wheel"
+checkdepends="py3-aiohttp py3-ddt py3-pytest"
+subpackages="$pkgname-pyc"
+source="aioresponses-$pkgver.tar.gz::https://github.com/pnuckowski/aioresponses/archive/$pkgver.tar.gz"
+builddir="$srcdir/aioresponses-$pkgver"
+
+build() {
+	export PBR_VERSION=$pkgver
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+7a56e2142f7c5779795c7f8e37116d32e3fd5e626884c545b0c7ef2b5945976349bbc8d0e82c1de57f4f0e3e539a75f17804b3612ee6be7f55e111e7fa7e5b50  aioresponses-0.7.6.tar.gz
+"

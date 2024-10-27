@@ -1,0 +1,42 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=groff
+pkgver=1.23.0
+pkgrel=2
+pkgdesc="GNU troff text-formatting system"
+url="https://www.gnu.org/software/groff/groff.html"
+arch="all"
+license="GPL-3.0-or-later"
+depends="perl"
+makedepends="bison zlib-dev texinfo"
+checkdepends="diffutils"
+subpackages="$pkgname-doc"
+source="https://ftp.gnu.org/gnu/groff/groff-$pkgver.tar.gz
+	"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--without-x \
+		--disable-rpath
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	rm -rf "$pkgdir"/usr/lib/charset.alias
+	rmdir -p "$pkgdir"/usr/lib 2>/dev/null || true
+
+	# Prevent conflict with mandoc-doc
+	rm -f "$pkgdir"/usr/share/man/man1/soelim.1 \
+		"$pkgdir"/usr/share/man/man7/roff.7
+}
+
+sha512sums="
+eff473fd1d0e6b27527318452ef2b7c6c7aba0b1c27fc529036496eccba5717f3639df0b81a297a57f700e27543196d7086b15e43d7e3c7bf075f95feb7f4089  groff-1.23.0.tar.gz
+"

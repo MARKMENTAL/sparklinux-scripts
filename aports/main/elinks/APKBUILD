@@ -1,0 +1,50 @@
+# Contributor: Dmitry Zakharchenko <dmitz@disroot.org>
+# Contributor: Natanael Copa <ncopa@alpinelinux.org>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=elinks
+pkgver=0.17.0
+pkgrel=1
+pkgdesc="Advanced and well-established feature-rich text mode web browser"
+url="https://github.com/rkd77/elinks"
+arch="all"
+license="GPL-2.0-or-later AND GPL-3.0-or-later AND MIT AND MPL-1.1"
+makedepends="
+	bsd-compat-headers
+	bzip2-dev
+	curl-dev
+	expat-dev
+	gettext-dev
+	gpm-dev
+	libidn2-dev
+	linux-headers
+	meson
+	openssl-dev
+	xmlto
+	zlib-dev
+	"
+subpackages="$pkgname-doc $pkgname-lang"
+source="https://github.com/rkd77/elinks/releases/download/v$pkgver/elinks-$pkgver.tar.xz"
+options="!check"
+
+build() {
+	LDFLAGS="$LDFLAGS -lintl" \
+	abuild-meson \
+		-Db_lto=true \
+		-Dgettext=true \
+		-Dhtml-highlight=true \
+		-Dbacktrace=false \
+		-D256-colors=true \
+		-Dtrue-color=true \
+		-Dtre=false \
+		-Dlibcss=false \
+		. output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+276c648174d067cdd92cbbf25e8a353a3a482a65a4f1080ff42f932cdc0239e5110a51653f5136188a0b9135be2928f2bd1a92f37fa83ce14d8fc1267b87cf56  elinks-0.17.0.tar.xz
+"

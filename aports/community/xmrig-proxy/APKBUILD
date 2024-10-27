@@ -1,0 +1,34 @@
+# Contributor: Oleg Titov <oleg.titov@gmail.com>
+# Maintainer: Oleg Titov <oleg.titov@gmail.com>
+pkgname=xmrig-proxy
+pkgver=6.22.0
+pkgrel=0
+pkgdesc="XMRig Proxy is a high performance Monero (XMR) Stratum protocol proxy"
+url="https://xmrig.com/proxy"
+arch="all"
+license="GPL-3.0-or-later"
+options="!check" # No test suite from upstream
+makedepends="
+	cmake
+	libuv-dev
+	openssl-dev>3
+	samurai
+	"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/xmrig/xmrig-proxy/archive/v$pkgver.tar.gz"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None
+	cmake --build build
+}
+
+package() {
+	install -Dm 755 build/xmrig-proxy "$pkgdir"/usr/bin/xmrig-proxy
+
+	install -Dm 644 -t "$pkgdir"/usr/share/doc/$pkgname/ README.md
+}
+
+sha512sums="
+0050ec1faac22312f177f99c1ed45f29c2d74992acd911f970d3c3caee57cedab755940c37d2e97453b4230bab27197759e85613879d7e91fb804b52e43ca1cc  xmrig-proxy-6.22.0.tar.gz
+"

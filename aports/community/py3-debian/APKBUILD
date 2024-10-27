@@ -1,0 +1,37 @@
+# Contributor: Dhruvin Gandhi <contact@dhru.vin>
+# Maintainer: Dhruvin Gandhi <contact@dhru.vin>
+pkgname=py3-debian
+pkgver=0.1.49
+pkgrel=3
+pkgdesc="Debian package related python modules"
+url="https://salsa.debian.org/python-debian-team/python-debian"
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="python3"
+makedepends="py3-setuptools py3-chardet"
+checkdepends="py3-pytest zstd dpkg"
+subpackages="$pkgname-pyc"
+source="https://salsa.debian.org/python-debian-team/python-debian/-/archive/$pkgver/python-debian-$pkgver.tar.gz"
+builddir="$srcdir/python-debian-$pkgver"
+
+prepare() {
+	sed "s/__CHANGELOG_VERSION__/$pkgver/" \
+		lib/debian/_version.py.in > lib/debian/_version.py
+	default_prepare
+}
+
+build() {
+	python3 setup.py build
+}
+
+check() {
+	pytest
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+63a6c9d8c72d7587c7d0b75e5201e011b102986453a97f4c909672188b9342fa2db62559550e41873bfc8fa99d527e951da9a4cffd5ab43cce103c8ab1d3cde8  python-debian-0.1.49.tar.gz
+"

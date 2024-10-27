@@ -1,0 +1,57 @@
+# Contributor: Holger Jaekel <holger.jaekel@gmx.de>
+# Maintainer: Holger Jaekel <holger.jaekel@gmx.de>
+pkgname=py3-shapely
+pkgver=2.0.5
+pkgrel=0
+pkgdesc="Manipulation and analysis of geometric objects in the Cartesian plane"
+url="https://pypi.org/project/Shapely"
+arch="all"
+license="BSD-3-Clause"
+depends="
+	py3-numpy
+	"
+makedepends="
+	cython
+	geos-dev
+	py3-gpep517
+	py3-matplotlib
+	py3-numpy-dev
+	py3-packaging
+	py3-setuptools
+	py3-wheel
+	python3-dev
+	"
+checkdepends="
+	py3-pytest
+	"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/s/shapely/shapely-$pkgver.tar.gz
+	"
+builddir="$srcdir/shapely-$pkgver"
+
+build() {
+	# Workaround for build with GCC 14
+	# https://github.com/shapely/shapely/issues/2081
+	CFLAGS="$CFLAGS -Wno-error=incompatible-pointer-types" \
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	mv shapely backup
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -x
+	mv backup shapely
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+	rm -r "$pkgdir"/usr/lib/python3.*/site-packages/shapely/tests
+}
+
+sha512sums="
+b9047f0c9c155ea1c6f248874153e2322e2994973b14fa3a369f0e85939ebe99310708f32b80ce905e0aa61ad17679b31f1347c8f0d28ebe885a865708932e24  shapely-2.0.5.tar.gz
+"

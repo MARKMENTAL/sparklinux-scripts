@@ -1,0 +1,30 @@
+# Contributor: Maxim Karasev <mxkrsv@disroot.org>
+# Maintainer:
+pkgname=nvim-treesitter
+pkgver=0.0.0_git20221013
+_commit=d3ca4de41faf996258b72924ecb1ecc2df69846e
+pkgrel=1
+pkgdesc="nvim treesitter configurations and abstraction layer"
+url="https://github.com/nvim-treesitter/nvim-treesitter"
+arch="noarch"
+license="Apache-2.0"
+subpackages="$pkgname-doc"
+source="https://github.com/nvim-treesitter/nvim-treesitter/archive/$_commit/nvim-treesitter-$pkgver.tar.gz"
+builddir="$srcdir/nvim-treesitter-$_commit"
+options="!check" # requires entire neovim tree
+
+package() {
+	install -d "$pkgdir"/usr/share/nvim/site
+	cp -ra lua autoload doc plugin queries \
+		"$pkgdir"/usr/share/nvim/site
+	install -Dm644 README.md -t "$pkgdir"/usr/share/doc/$pkgname
+}
+
+doc() {
+	default_doc
+	amove usr/share/nvim/site/doc
+}
+
+sha512sums="
+2ddd2ae92a5044e3c092e87b04385aff3d9bf0b8e886cd2375aa81281cfe82eeda2e8a59a040a270eb45646c3ca9afe4f24a70fc1ec7ce2c8edfc283e6ee89f4  nvim-treesitter-0.0.0_git20221013.tar.gz
+"

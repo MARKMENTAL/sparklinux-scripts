@@ -1,0 +1,53 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=gegl
+pkgver=0.4.48
+pkgrel=0
+pkgdesc="Graph based image processing framework"
+url="https://www.gegl.org/"
+arch="all"
+license="GPL-3.0-or-later AND LGPL-3.0-or-later"
+makedepends="
+	babl-dev
+	ffmpeg-dev
+	gdk-pixbuf-dev
+	gobject-introspection-dev
+	json-glib-dev
+	libjpeg-turbo-dev
+	libpng-dev
+	libraw-dev
+	librsvg-dev
+	libwebp-dev
+	meson
+	pango-dev
+	vala
+	"
+checkdepends="diffutils"
+subpackages="$pkgname-dev $pkgname-lang"
+source="https://download.gimp.org/pub/gegl/${pkgver%.*}/gegl-$pkgver.tar.xz
+	arm-neon-v1.patch
+	"
+
+# secfixes:
+#   0.4.34-r0:
+#     - CVE-2021-45463
+
+build() {
+	CFLAGS="$CFLAGS -O2" \
+	abuild-meson \
+		-Db_lto=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+8f47e6445062894c16d54eeeec4a55cccc32fc49c9fb9be3428a591daaeb21b1a5b8529a68d82613fd75f107bb8c0418c9e5337346bd94da3226e545189c226b  gegl-0.4.48.tar.xz
+add122d409354b3aaa205adaa6fac5003fbc83f23ffcf5d230edf2b390b36c168fbfd89c47a5bdf41c06254403eff4347c2c667e18d84cdf00857e743c29b03b  arm-neon-v1.patch
+"

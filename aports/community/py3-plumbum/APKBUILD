@@ -1,0 +1,36 @@
+# Contributor: Anjandev Momi <anjan@momi.ca>
+# Maintainer: Anjandev Momi <anjan@momi.ca>
+pkgname=py3-plumbum
+_pkgreal=plumbum
+pkgver=1.8.2
+pkgrel=1
+pkgdesc="Plumbum: shell combinators library"
+url="https://pypi.org/project/plumbum"
+arch="noarch"
+license="MIT"
+depends="python3"
+checkdepends="python3-dev"
+makedepends="py3-hatchling py3-hatch-vcs py3-gpep517 py3-installer"
+_pypiprefix="${_pkgreal%"${_pkgreal#?}"}"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/$_pypiprefix/$_pkgreal/$_pkgreal-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgreal-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 1
+}
+
+check() {
+	PYTHONPATH=. python3 -c 'import plumbum'
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+636d10ea1c727cb24d4692537f3c0005077f86c3d9d2ae244f86ef5dd9621f8b51e0b5efffaa7acf66d6ba5552fddd641d4a1796c7fd760ac0a27d029f685c20  plumbum-1.8.2.tar.gz
+"

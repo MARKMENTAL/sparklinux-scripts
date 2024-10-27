@@ -1,0 +1,27 @@
+# Contributor: Patrycja Rosa <alpine@ptrcnull.me>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=dfl-applications
+pkgver=0.2.0
+pkgrel=0
+pkgdesc="Thin wrapper around QApplication, QGuiApplication and QCoreApplication"
+url="https://gitlab.com/desktop-frameworks/applications/"
+arch="all"
+license="GPL-3.0-only"
+makedepends="qt5-qtbase-dev meson dfl-ipc-dev"
+subpackages="$pkgname-dev"
+source="$pkgname-$pkgver.tar.gz::https://gitlab.com/desktop-frameworks/applications/-/archive/v$pkgver/applications-v$pkgver.tar.gz"
+builddir="$srcdir/applications-v$pkgver"
+options="!check" # no test suite
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+3265053d39c90ffa2a35b430bedb22c0c8ea11068146eb87dac021554757475ac7c9085e67c892f6e128e36f6ffc34de082e72e178e8e99ae6d65ecb73632cbe  dfl-applications-0.2.0.tar.gz
+"

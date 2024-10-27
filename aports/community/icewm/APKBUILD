@@ -1,0 +1,55 @@
+# Contributor: Paul Bredbury <brebs@sent.com>
+# Contributor: gay <gay@disroot.org>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=icewm
+pkgver=3.6.0
+pkgrel=0
+pkgdesc="Window manager designed for speed, usability and consistency"
+url="https://github.com/ice-wm/icewm"
+arch="all"
+license="LGPL-2.0-only"
+makedepends="
+	alsa-lib-dev
+	cmake
+	fribidi-dev
+	glib-dev
+	imlib2-dev
+	libao-dev
+	libintl
+	librsvg-dev
+	libsm-dev
+	libsndfile-dev
+	libxcomposite-dev
+	libxdamage-dev
+	libxft-dev
+	libxinerama-dev
+	libxpm-dev
+	libxrandr-dev
+	markdown
+	perl
+	samurai
+	"
+subpackages="$pkgname-doc $pkgname-lang"
+source="https://github.com/ice-wm/icewm/releases/download/$pkgver/icewm-$pkgver.tar.lz"
+options="!check" # No test suite
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCFGDIR=/etc/icewm \
+		-DENABLE_NLS=OFF \
+		-DCONFIG_IMLIB2=ON \
+		-DCONFIG_LIBRSVG=ON \
+		-DENABLE_LTO=ON \
+		-DDOCDIR=/usr/share/doc/icewm
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+510c342ab98fe248bfaf4e925a92059ffc7e23e6f47725c274970e1ab751ce57405e52ac5de0e05a1dfa65260c64a4db3c87f8b560e27528aea88ba45cd83920  icewm-3.6.0.tar.lz
+"

@@ -1,0 +1,37 @@
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=dooit
+pkgver=2.2.0
+pkgrel=1
+pkgdesc="TUI todo manager"
+url="https://github.com/kraanzu/dooit"
+arch="noarch"
+license="MIT"
+depends="
+	python3
+	py3-appdirs
+	py3-dateparser
+	py3-dateutil
+	py3-pyperclip
+	py3-textual
+	py3-tzlocal
+	py3-yaml
+	"
+makedepends="py3-gpep517 py3-poetry-core"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/kraanzu/dooit/archive/refs/tags/v$pkgver.tar.gz"
+options="!check" # no testsuite
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+9b95da5c667e2dfcb98deee8726800dd07837202140ce5c0f53052151cedf474133d3ad2263f1f66ca86bfe7e916a30ebc3618148454084144775c676eddb080  dooit-2.2.0.tar.gz
+"

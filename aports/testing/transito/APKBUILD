@@ -1,0 +1,43 @@
+# Maintainer: Hugo Osvaldo Barrera <hugo@whynothugo.nl>
+pkgname=transito
+pkgver=0.7.0
+pkgrel=1
+pkgdesc="Public transportation planner"
+url="https://git.sr.ht/~mil/transito"
+arch="all !armv7 !armhf"
+license="GPLv3-or-later"
+makedepends="
+	go
+	libxcursor-dev
+	libxkbcommon-dev
+	libxkbcommon-x11
+	mesa-egl
+	vulkan-headers
+	wayland-dev
+	mesa-dev
+	"
+depends="xdg-utils tzdata mesa-gles"
+subpackages="$pkgname-doc"
+source="transito-$pkgver.tar.gz::https://git.sr.ht/~mil/transito/archive/v$pkgver.tar.gz"
+builddir="$srcdir/$pkgname-v$pkgver"
+options="!check net"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	sh build.sh blinux
+}
+
+package() {
+	sed -i "s#/usr/#$pkgdir/usr/#g" build.sh
+	sh build.sh install
+
+	cd doc
+	find . -type f -exec install -Dm 644 {} "$pkgdir/usr/share/doc/transito/{}" \;
+}
+
+sha512sums="
+49de4efed0fa1de250f8674ba569c74206b4c2ea57d36e55b5657af3ef9bb4fad12c67ad5135decef3d398e8aacada3f865c5fb81f95b44c077b18eb1579afd4  transito-0.7.0.tar.gz
+"

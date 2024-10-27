@@ -1,0 +1,33 @@
+# Contributor: Fabian Affolter <fabian@affolter-engineering.ch>
+# Maintainer: Fabian Affolter <fabian@affolter-engineering.ch>
+pkgname=py3-flask-flatpages
+pkgver=0.8.2
+pkgrel=2
+pkgdesc="Flask static pages extension"
+url="https://pypi.org/project/Flask-FlatPages"
+arch="noarch"
+license="BSD-3-Clause"
+depends="python3 py3-flask py3-jinja2 py3-markdown py3-yaml"
+makedepends="py3-setuptools py3-pytest-runner py3-gpep517 py3-wheel"
+checkdepends="py3-pygments"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/F/Flask-FlatPages/Flask-FlatPages-$pkgver.tar.gz"
+builddir="$srcdir"/Flask-FlatPages-$pkgver
+
+replaces="py-flask-flatpages"                  # Backwards compatibility
+provides="py-flask-flatpages=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+b46d32df54b08a91a5f0a8f9c311bb1d86a6f88270125f251c6b22d2c5c59ecf72c2cb52e9257d9ed2a3f64c324d087b7d2f93154ced832ff28837bc6c22a919  Flask-FlatPages-0.8.2.tar.gz
+"

@@ -1,0 +1,25 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=tree-sitter-cpp
+pkgver=0.22.0
+pkgrel=1
+pkgdesc="C++ grammar for tree-sitter"
+url="https://github.com/tree-sitter/tree-sitter-cpp"
+arch="all"
+license="MIT"
+makedepends="tree-sitter-dev"
+install_if="tree-sitter-grammars"
+source="https://github.com/tree-sitter/tree-sitter-cpp/archive/v$pkgver/tree-sitter-cpp-v$pkgver.tar.gz"
+options="!check"  # no tests for shared lib
+
+build() {
+	CFLAGS="$CFLAGS -std=c11" abuild-tree-sitter build
+}
+
+package() {
+	DESTDIR="$pkgdir" abuild-tree-sitter install
+}
+
+sha512sums="
+68ec7378a6abc3154090bf7f14b95f646c44ac09e309ec5161906f42641e568171412fd4c30360680982af5e621cac4d51a1cfe03695117560a3a5eeed73d22d  tree-sitter-cpp-v0.22.0.tar.gz
+"

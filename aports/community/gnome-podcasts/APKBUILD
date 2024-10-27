@@ -1,0 +1,56 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=gnome-podcasts
+pkgver=0.7.1
+pkgrel=0
+pkgdesc="Podcast app for GNOME"
+url="https://wiki.gnome.org/Apps/Podcasts"
+# loongarch64: blocked by libc crate
+arch="all !loongarch64"
+license="GPL-3.0-or-later"
+depends="gst-plugins-good"
+makedepends="
+	bash
+	cargo
+	dbus-dev
+	desktop-file-utils
+	gst-plugins-bad-dev
+	gst-plugins-base-dev
+	gstreamer-dev
+	gtk4.0-dev
+	libadwaita-dev
+	meson
+	openssl-dev>3
+	sqlite-dev
+	"
+checkdepends="
+	appstream-glib
+	xvfb-run
+	"
+options="!check" # needs the thing to be installed first
+subpackages="$pkgname-lang"
+source="https://gitlab.gnome.org/World/podcasts/-/archive/$pkgver/podcasts-$pkgver.tar.gz"
+builddir="$srcdir/podcasts-$pkgver"
+
+prepare() {
+	default_prepare
+
+	sed 's| /bin/bash|/bin/sh|' -i scripts/test.sh
+}
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+check() {
+	xvfb-run meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+93fcc7b26675ddc19d753c97fc7b34f8438072611abbb5686984a03a7498e51124e09c81988a7a2ad0bf06da9585866eb01705576f0663fb203522fd1276f959  podcasts-0.7.1.tar.gz
+"

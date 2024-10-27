@@ -1,0 +1,33 @@
+# Contributor: Anjandev Momi <anjan@momi.ca>
+# Maintainer: Anjandev Momi <anjan@momi.ca>
+pkgname=bandwhich
+pkgver=0.23.0
+pkgrel=0
+pkgdesc="Terminal bandwidth utilization tool"
+url="https://github.com/imsnif/bandwhich"
+arch="all"
+license="MIT"
+makedepends="cargo cargo-auditable"
+source="https://github.com/imsnif/bandwhich/archive/v$pkgver/bandwhich-$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test --frozen || true
+}
+
+package() {
+	install -D -m755 target/release/$pkgname -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+888c5fa568b944c28ae6903a8cdf6e4faf3a82b3484d579766dddfe048d1f1680951e0a136947287ef1ba47369a44a5306fbac9bfe7d5c6066b0ebb7126afb28  bandwhich-0.23.0.tar.gz
+"

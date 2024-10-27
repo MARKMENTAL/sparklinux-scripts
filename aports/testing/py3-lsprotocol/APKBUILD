@@ -1,0 +1,44 @@
+# Maintainer:
+pkgname=py3-lsprotocol
+pkgver=2023.0.1
+pkgrel=1
+pkgdesc="Python implementation of the Language Server Protocol"
+url="https://github.com/microsoft/lsprotocol"
+arch="noarch"
+license="MIT"
+depends="
+	py3-attrs
+	py3-cattrs
+	"
+makedepends="
+	py3-flit-core
+	py3-gpep517
+	"
+checkdepends="
+	py3-jsonschema
+	py3-pyhamcrest
+	py3-pytest
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/microsoft/lsprotocol/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/lsprotocol-$pkgver"
+
+build() {
+	cd packages/python
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	pytest tests/python
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		packages/python/.dist/*.whl
+}
+
+sha512sums="
+e929125f259240feb757c55a62ca4ee021e9727884dc5b7465894aa5d5a3cf13235f9b863af862ae1f1c04f1eaa3de6356cf7abecc6efa1979facaecbfb45e64  py3-lsprotocol-2023.0.1.tar.gz
+"

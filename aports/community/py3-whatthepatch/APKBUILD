@@ -1,0 +1,36 @@
+# Contributor: Clayton Craft <clayton@craftyguy.net>
+# Maintainer: Clayton Craft <clayton@craftyguy.net>
+pkgname=py3-whatthepatch
+pkgver=1.0.6
+pkgrel=0
+pkgdesc="library for parsing and applying patch files"
+url="https://github.com/cscorley/whatthepatch"
+arch="noarch"
+license="MIT"
+depends="python3"
+makedepends="py3-gpep517 py3-installer py3-setuptools py3-wheel"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/cscorley/whatthepatch/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/whatthepatch-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m installer -d testenv .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+07f16db3f9e901ef1d9fb3ade89b1a6cc06220529d8be554aa66df64a991b1308273cfb1e6bf6d4ee8cf8d30f1abee5489ed24ceb65ddda8f8c54e8c181dc4b3  py3-whatthepatch-1.0.6.tar.gz
+"

@@ -1,0 +1,31 @@
+# Contributor: Natanael Copa <ncopa@alpinelinux.org>
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: team/gnome <ablocorrea@hotmail.com>
+pkgname=gsettings-desktop-schemas
+pkgver=47.1
+pkgrel=0
+pkgdesc="A collection of GSettings schemas"
+url="https://gitlab.gnome.org/GNOME/gsettings-desktop-schemas"
+arch="noarch"
+license="LGPL-2.0-or-later"
+depends_dev="$pkgname=$pkgver-r$pkgrel"
+makedepends="glib-dev gobject-introspection-dev meson"
+subpackages="$pkgname-dev $pkgname-lang"
+source="https://download.gnome.org/sources/gsettings-desktop-schemas/${pkgver%.*}/gsettings-desktop-schemas-$pkgver.tar.xz"
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+8c4575958f6dd351e4a1a60d61f9080933979942b2fcef5c1211ab508b99a91325c857a9ac8d92e372968fad4736d55aa7b746f185aae9ecd1f691ced9ff53a0  gsettings-desktop-schemas-47.1.tar.xz
+"

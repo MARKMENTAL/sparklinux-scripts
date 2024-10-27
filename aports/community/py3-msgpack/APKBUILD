@@ -1,0 +1,40 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Fabian Affolter <fabian@affolter-engineering.ch>
+pkgname=py3-msgpack
+_pkgname=msgpack-python
+pkgver=1.0.8
+pkgrel=1
+pkgdesc="Python3 module for MessagePack serialization/deserialization"
+url="https://msgpack.org/"
+arch="all"
+license="Apache-2.0"
+depends="python3"
+makedepends="python3-dev py3-gpep517 py3-setuptools cython py3-wheel"
+checkdepends="py3-pytest-xdist py3-pluggy"
+subpackages="$pkgname-pyc"
+source="$_pkgname-$pkgver.tar.gz::https://github.com/msgpack/msgpack-python/archive/v$pkgver.tar.gz"
+builddir="$srcdir/msgpack-python-$pkgver"
+
+replaces="py-msgpack" # Backwards compatibility
+provides="py-msgpack=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+a4d37bbc5b640ef49cc44cd2cb99710b149c94c112fb92e26a30c72de3fa7e206430c3242b03c88527874bc10b13a9d1862f61d782f202a612e2496aef7a8dbb  msgpack-python-1.0.8.tar.gz
+"

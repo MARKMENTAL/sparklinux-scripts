@@ -1,0 +1,34 @@
+# Maintainer: Cowington Post <cowingtonpost@gmail.com>
+pkgname=mdbook-katex
+pkgver=0.8.1
+pkgrel=0
+pkgdesc="Preprocessor for mdbook to render LaTeX equations in HTML"
+url="https://github.com/lzanini/mdbook-katex"
+# loongarch64: blocked by libc crate
+arch="all !loongarch64"
+license="MIT"
+depends="mdbook"
+makedepends="
+	cargo
+	cargo-auditable
+	"
+source="https://github.com/lzanini/mdbook-katex/archive/refs/tags/v$pkgver/mdbook-katex-$pkgver.tar.gz"
+options="!check" # no tests
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+package() {
+	install -Dm755 target/release/mdbook-katex "$pkgdir"/usr/bin/mdbook-katex
+}
+
+sha512sums="
+9f27e06d18eee97915113df0ce0ea543fe22f345e3f8d65014b0367d7e6eac1816a0acf433ee751c09e3b5133b2ba6eabf1cc85a5ba55aa3021051b1ee34c7cc  mdbook-katex-0.8.1.tar.gz
+"

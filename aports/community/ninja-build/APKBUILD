@@ -1,0 +1,54 @@
+# Maintainer: Simon Zeni <simon@bl4ckb0ne.ca>
+pkgname=ninja-build
+pkgver=1.12.1
+pkgrel=0
+pkgdesc="a small build system with a focus on speed"
+url="https://ninja-build.org/"
+arch="all"
+license="Apache-2.0"
+install="$pkgname.post-install"
+makedepends="
+	cmake
+	samurai
+	"
+checkdepends="
+	gtest-dev
+	"
+subpackages="ninja-is-really-ninja:reallyreally:noarch"
+source="$pkgname-$pkgver.tar.gz::https://github.com/ninja-build/ninja/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/ninja-$pkgver"
+
+build() {
+	# this intentionally does not install to PATH,
+	# because we only want to use samurai for aports,
+	# and this would get a cmd: provider otherwise, as
+	# well as as conflict with samurai.
+	# add /usr/lib/ninja-build/bin to PATH or invoke it directly to use it.
+	# or, add the compat subpackage here.
+	CXXFLAGS="$CXXFLAGS -O2 -flto=auto -DNDEBUG" \
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr/lib/ninja-build \
+		-DBUILD_TESTING="$(want_check && echo ON || echo OFF)"
+	cmake --build build
+}
+
+check() {
+	./build/ninja_test
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+reallyreally() {
+	depends="$pkgname=$pkgver-r$pkgrel !samurai"
+	pkgdesc="compat symlink to make ninja really ninja"
+
+	mkdir -p "$subpkgdir"/usr/bin
+	ln -sfv ../lib/ninja-build/bin/ninja "$subpkgdir"/usr/bin/ninja
+}
+
+sha512sums="
+d6e6f0e89a4844a69069ff0c7cefc07704a41c7b0c062a57534de87decdde63e27928147b321111b806aa7efa1061f031a1319b074391db61b0cbdccf096954c  ninja-build-1.12.1.tar.gz
+"

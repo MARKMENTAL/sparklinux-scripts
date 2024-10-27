@@ -1,0 +1,44 @@
+# Contributor: Leonardo Arena <rnalrd@alpinelinux.org>
+# Maintainer: Will Sinatra <wpsinatra@gmail.com>
+pkgname=py3-django-taggit
+pkgver=6.0.0
+pkgrel=0
+pkgdesc="Simple tagging for django"
+options="!check" # Testsuite for coverage and flake8
+url="https://github.com/jazzband/django-taggit"
+arch="noarch"
+license="BSD-3-Clause"
+depends="py3-django"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+subpackages="$pkgname-lang $pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/jazzband/django-taggit/archive/$pkgver.tar.gz"
+builddir="$srcdir"/django-taggit-$pkgver
+
+replaces="py-djanog-taggit" # Backwards compatibility
+provides="py-djanog-taggit=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+lang() {
+	pkgdesc="translations for $pkgname"
+	install_if="$pkgname=$pkgver-r$pkgrel lang"
+
+	amove usr/lib/python3*/site-packages/taggit/locale/
+}
+
+sha512sums="
+513a368cb1180ef418ab84f2dc268dd32135d694b3feb35370df01729891ad5139e35e375eb64199c7bbd51070f0e46da15e4d79286d28ea9c17fabd6981eb85  py3-django-taggit-6.0.0.tar.gz
+"

@@ -1,0 +1,26 @@
+# Contributor: guddaff <guddaff@protonmail.com>
+# Maintainer: guddaff <guddaff@protonmail.com>
+pkgname=diskus
+pkgver=0.7.0
+pkgrel=2
+pkgdesc="fast alternative for du"
+url="https://github.com/sharkdp/diskus"
+arch="all !riscv64 !loongarch64" # the `libc` crate fails
+options="!check" #size_of_single_file test timout on armhf
+license="MIT"
+makedepends="cargo cargo-auditable"
+source="$pkgname-$pkgdir.tar.gz::https://github.com/sharkdp/diskus/archive/refs/tags/v$pkgver.tar.gz"
+
+
+build() {
+	cargo auditable build --release --locked
+}
+
+package() {
+	cargo auditable install --locked --path . --root="$pkgdir/usr"
+	rm "$pkgdir"/usr/.crates*
+}
+
+sha512sums="
+092e3640000fb233d975efa2513cec1020376f93a106b9a2c19a390c27f37298dc3b412a0853cb3c1ab267f5b16cfc7379307c2e6599b9396369e1e1dcc5803a  diskus-.tar.gz
+"

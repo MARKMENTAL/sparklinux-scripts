@@ -1,0 +1,76 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=cfengine
+# Upgrade to LTS versions only: https://cfengine.com/supported-versions/
+pkgver=3.23.0
+pkgrel=0
+pkgdesc="A systems administration tool for networks"
+url="https://www.cfengine.com/"
+arch="all"
+license="GPL-3.0-only"
+install="$pkgname.post-install"
+makedepends="$depends_dev lmdb-dev openssl-dev>3 bison flex-dev
+	acl-dev pcre-dev linux-headers"
+depends="procps"
+subpackages="$pkgname-doc $pkgname-masterfiles::noarch"
+source="https://cfengine-package-repos.s3.amazonaws.com/tarballs/cfengine-community-$pkgver.tar.gz
+	https://cfengine-package-repos.s3.amazonaws.com/tarballs/cfengine-masterfiles-$pkgver.tar.gz"
+
+_builddirmasterfiles="$srcdir"/cfengine-masterfiles-${pkgver%_p*}
+options="!check" # testsuite shows some unknown errors
+
+# secfixes:
+#   3.12.2-r0:
+#     - CVE-2019-9929
+
+prepare() {
+	default_prepare
+	update_config_sub
+
+	# Also extract masterfiles
+	cd $srcdir
+	tar xf $pkgname-masterfiles-$pkgver.tar.gz
+	cd "$_builddirmasterfiles"
+	update_config_guess
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--with-pic \
+		--prefix=/usr \
+		--enable-fhs \
+		--localstatedir=/var \
+		--mandir=/usr/share/man \
+		--with-lmdb \
+		--without-pam
+	make
+
+	cd "$_builddirmasterfiles"
+	./configure \
+		--prefix=/var/lib/cfengine
+	make
+}
+
+package() {
+	make install DESTDIR="$pkgdir"
+
+	# not FHS but the tools seems to require those
+	install -d "$pkgdir"/var/lib/cfengine/bin
+	for i in "$pkgdir"/usr/bin/*; do
+		ln -s ../../../../usr/bin/${i##*/} "$pkgdir"/var/lib/cfengine/bin/
+	done
+}
+
+masterfiles() {
+	pkgdesc="Cfengine default masterfiles"
+	depends="cfengine"
+
+	cd "$_builddirmasterfiles"
+	make install DESTDIR="$subpkgdir"
+}
+
+sha512sums="
+fddaeeeac9b3d8777c3854b87680a29ef9a60490585550fcbd863bd261fa09363ef90bbdf42d2fa050b831ad586b75142943c673809a59bf6c95c5e73e667440  cfengine-community-3.23.0.tar.gz
+9c9bef74a08c9372e526f7ce0358e3dee87888a52f422abe25f95ab6d4e0fe276a9fb14217f964aac5f5fdf10548d3bf9d3f897b95286ae1274d4fa197df7f4f  cfengine-masterfiles-3.23.0.tar.gz
+"

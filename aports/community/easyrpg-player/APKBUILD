@@ -1,0 +1,56 @@
+# Contributor: knuxify <knuxify@gmail.com>
+# Maintainer: knuxify <knuxify@gmail.com>
+pkgname=easyrpg-player
+pkgver=0.8
+pkgrel=2
+pkgdesc="RPG Maker 2000/2003 and EasyRPG games interpreter"
+url="https://easyrpg.org/player/"
+arch="all"
+license="MIT"
+makedepends="cmake
+	fmt-dev
+	freetype-dev
+	harfbuzz-dev
+	liblcf-dev
+	libpng-dev
+	libsamplerate-dev
+	libsndfile-dev
+	libvorbis-dev
+	mpg123-dev
+	opusfile-dev
+	pixman-dev
+	samurai
+	sdl2-dev
+	zlib-dev
+"
+subpackages="$pkgname-doc $pkgname-bash-completion"
+source="https://easyrpg.org/downloads/player/$pkgver/easyrpg-player-$pkgver.tar.xz
+	$pkgname-$pkgver-fmt10.patch::https://github.com/EasyRPG/Player/commit/a4672d2e30db4e4918c8f3580236faed3c9d04c1.patch
+	"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-GNinja \
+		$CMAKE_CROSSOPTS
+	cmake --build build
+}
+
+check() {
+	cmake --build build --target check
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+b1caf45284e29706bdd885d132fe7605d1f2972a3b3e238ba2fbd40058ae1c31aac5277fced23bd216153feb9a440a2652ef696b6b310b907fbc3c1376aa03ad  easyrpg-player-0.8.tar.xz
+cfd43e825ad5a36e4fbae7e67399ba3c02fd872b51d2f206cf89b408115387afc5cbed7e18eea985779423e0346fc2a019df501495301cd7229729722f36093b  easyrpg-player-0.8-fmt10.patch
+"

@@ -1,0 +1,40 @@
+# Contributor: Antoine Fontaine <antoine.fontaine@epfl.ch>
+# Maintainer: Krassy Boykinov <kboykinov@teamcentrixx.com>
+pkgname=sdbus-cpp
+pkgver=1.5.0
+pkgrel=0
+pkgdesc="unofficial, high-level C++ dbus bindings"
+url="https://github.com/Kistler-Group/sdbus-cpp/"
+arch="all"
+license="LGPL-2.1-or-later"
+makedepends="cmake elogind-dev expat-dev gtest-dev samurai"
+subpackages="$pkgname-dev $pkgname-doc"
+source="sdbus-cpp-$pkgver.tar.gz::https://github.com/Kistler-Group/sdbus-cpp/archive/v$pkgver.tar.gz"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=None \
+		-DBUILD_CODE_GEN=True \
+		$CMAKE_CROSSOPTS .
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+dev() {
+	default_dev
+	# the code generator is a development tool
+	amove usr/bin/sdbus-c++-xml2cpp
+}
+
+sha512sums="
+08dd88f59049c1d0760677561c1a441698e8a154143197e78721ac3ba144ae58f0ad856ca3a718e37d91cd8c83bfdd3bef90d83436adc529c68441283a2a7fbd  sdbus-cpp-1.5.0.tar.gz
+"

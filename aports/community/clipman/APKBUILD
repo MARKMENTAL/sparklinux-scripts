@@ -1,0 +1,31 @@
+# Contributor: Galen Abell <galen@galenabell.com>
+# Maintainer: Galen Abell <galen@galenabell.com>
+pkgname=clipman
+pkgver=1.6.4
+pkgrel=3
+pkgdesc="A simple clipboard manager for Wayland"
+url="https://github.com/chmouel/clipman"
+arch="all"
+license="GPL-3.0-only"
+depends="wl-clipboard"
+makedepends="go"
+options="!check net" # no tests
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/chmouel/clipman/archive/v$pkgver.tar.gz"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -o $pkgname
+}
+
+package() {
+	install -Dm755 $pkgname "$pkgdir"/usr/bin/$pkgname
+	install -Dm644 docs/clipman.1 -t "$pkgdir"/usr/share/man/man1
+}
+
+sha512sums="
+3501615de4320da7985493672d9107de0ef47eeb6a5fcb2d6d75ee7ac7282f5e45b735f3a88e3e946629c7d46bdb2e1740469bcbf3e6b3cdb67078ab7a8897b3  clipman-1.6.4.tar.gz
+"

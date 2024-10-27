@@ -1,0 +1,34 @@
+# Maintainer: Steve McMaster <code@mcmaster.io>
+pkgname=snort-extra
+pkgver=3.3.5.0
+pkgrel=0
+pkgdesc="External plugins for snort"
+url="https://github.com/snort3/snort3_extra"
+# snort
+arch="all !ppc64le !riscv64 !loongarch64"
+license="GPL-2.0-only"
+makedepends="
+	daq-dev
+	cmake
+	samurai
+	snort-dev
+	"
+source="snort3_extra-$pkgver.tar.gz::https://github.com/snort3/snort3_extra/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/snort3_extra-$pkgver"
+options="!check" # doesn't have any tests
+
+build() {
+	CXXFLAGS="$CXXFLAGS -flto=auto" \
+	cmake -B build -G Ninja -Wno-dev \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+554905ae9633a25b00ce981d8e82bc407f6bd170c4bf4a0571271bcbdaa51f92acefa00198acb989a5b0e84d0c08442aadbe9eeab6582d6581ab9c41fd5bb8c8  snort3_extra-3.3.5.0.tar.gz
+"

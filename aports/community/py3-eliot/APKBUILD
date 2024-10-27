@@ -1,0 +1,39 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer:
+pkgname=py3-eliot
+pkgver=1.15.0
+pkgrel=2
+pkgdesc="Logging system that tells you why it happened"
+# Requires unpackaged dask and cffi for testing journald
+options="!check"
+url="https://github.com/itamarst/eliot"
+arch="noarch"
+license="Apache-2.0"
+depends="python3 py3-six py3-zope-interface py3-pyrsistent py3-boltons
+	py3-twisted"
+makedepends="py3-setuptools py3-gpep517 py3-wheel"
+checkdepends="py3-hypothesis py3-testtools py3-pytest"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver-1.tar.gz::https://github.com/itamarst/eliot/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/eliot-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	gpep517 install-wheel --destdir .testenv --prefix '' .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+031f5b60bc9ee90ef301ad9c43257bf2a39fa516101883576cb426fc6dc124fbd11e5d9b00b610829f3f2366fd6655af23a373abe8dfc52f59c882740e7cce6a  py3-eliot-1.15.0-1.tar.gz
+"

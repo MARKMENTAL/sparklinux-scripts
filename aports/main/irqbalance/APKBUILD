@@ -1,0 +1,47 @@
+# Contributor: Łukasz Jendrysik <scadu@yandex.com>
+# Maintainer: Leonardo Arena <rnalrd@alpinelinux.org>
+pkgname=irqbalance
+pkgver=1.9.4
+pkgrel=1
+pkgdesc="Daemon that distributes interrupts over the processors"
+url="https://github.com/Irqbalance/irqbalance"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="$depends_dev glib-dev autoconf automake libtool ncurses-dev numactl-dev"
+subpackages="$pkgname-doc $pkgname-openrc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/Irqbalance/irqbalance/archive/v$pkgver.tar.gz
+	irqbalance.confd
+	irqbalance.initd
+	"
+
+prepare() {
+	default_prepare
+	./autogen.sh
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	install -m755 -D "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
+	install -m644 -D "$srcdir"/$pkgname.confd "$pkgdir"/etc/conf.d/$pkgname
+}
+
+sha512sums="
+abdcac9dccabb18ae644b73dc2a8528c03279811c1f9182a5a5b0af43b30c5982d7bb14e79d4430b5d4f2cea8e17115e6038851c74de1ff3bdfc4e303392479a  irqbalance-1.9.4.tar.gz
+90e7ed187b4dccd6f6c4383ba54d6e1aed1645240e44aaf02db1b70b56594b1a828644d671e6db91212417981b1d5e53d1ecfd4b366496dbcb484d1064d7d24c  irqbalance.confd
+52fcf4333513238f1f45c4c6689706f26a59466384247d1c58a7431557fa2abab6ae82b6ff8b58d984785fe50aba8860e18f06fa8c1b61eaa85cfb12061891a5  irqbalance.initd
+"

@@ -1,0 +1,57 @@
+# Contributor: Kevin Daudt <kdaudt@alpinelinux.org>
+# Maintainer: Kevin Daudt <kdaudt@alpinelinux.org>
+pkgname=dnstwist
+pkgver=20240116
+pkgrel=2
+pkgdesc="Domain name permutation engine"
+url="https://dnstwist.it"
+arch="noarch"
+license="Apache-2.0"
+depends="
+	py3-dnspython
+	py3-geoip2
+	py3-idna
+	py3-requests
+	py3-tld
+	py3-whois
+	python3
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+subpackages="$pkgname-dictionaries $pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/elceef/dnstwist/archive/$pkgver.tar.gz"
+options="!check" # no testsuite
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+dictionaries() {
+	pkgdesc="Dictionaries for dnstwist"
+	depends=""
+
+	mkdir -p "$subpkgdir"/usr/share/dnstwist/dictionaries
+	for dict in "$builddir"/dictionaries/*.dict; do
+		install -Dm0644 "$dict" "$subpkgdir"/usr/share/dnstwist/dictionaries/"$(basename $dict)"
+	done
+}
+
+sha512sums="
+3eaee43ddb0a17dc81956252bdd46403c822c55f63a59ccb0cc9e2eeb0e41158919a1571d0dc5335884399254e2eabc902bfe616051d7089a6c917a102927c09  dnstwist-20240116.tar.gz
+"

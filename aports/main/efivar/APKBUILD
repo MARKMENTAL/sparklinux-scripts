@@ -1,0 +1,37 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Maintainer: Lucas Ramage <ramage.lucas@protonmail.com>
+pkgname=efivar
+pkgver=39
+pkgrel=0
+pkgdesc="Tools and library to manipulate EFI variables"
+url="https://github.com/rhboot/efivar"
+arch="all !s390x"
+license="LGPL-2.1-only"
+makedepends="popt-dev linux-headers mandoc"
+subpackages="$pkgname-dev $pkgname-doc $pkgname-libs"
+source="$pkgname-$pkgver.tar.gz::https://github.com/rhboot/efivar/archive/refs/tags/$pkgver.tar.gz
+	ppc64le-compat.patch
+	"
+
+prepare() {
+	default_prepare
+	sed -i 's/#include <sys\/cdefs.h>//g' "$builddir/src/compiler.h"
+}
+
+build() {
+	libdir="/usr/lib" make
+}
+
+package() {
+	libdir="/usr/lib" make DESTDIR="$pkgdir" install
+}
+
+check() {
+	LD_LIBRARY_PATH="$builddir"/src \
+		"$builddir"/src/efivar --help > /dev/null
+}
+
+sha512sums="
+04493c30efbfc2773abac9a3dd93aa13403c05e29e3bfc72877d2054930811fae99119aadcb1729b6ca85abf5a24db786ea0c27c16d5458ef1b19e74696f5ff7  efivar-39.tar.gz
+6a1210b51c647fe6b24d05e1e39518531c3ec2cdd781f0627ec878ec11515949c38021c27e8f8b0138e53e9aafb5a4b266b7b8588d5bcdfd57f45d6316d4ccb0  ppc64le-compat.patch
+"

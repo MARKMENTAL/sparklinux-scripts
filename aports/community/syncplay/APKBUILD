@@ -1,0 +1,35 @@
+# Contributor: Alex Denes <caskd@redxen.eu>
+# Maintainer: Alex Denes <caskd@redxen.eu>
+pkgname=syncplay
+pkgver=1.7.1
+pkgrel=1
+pkgdesc="Synchronize watching movies on mplayer2, vlc, mpv, and mpc-hc across many computers"
+url="https://syncplay.pl/"
+# riscv64, armhf, loongarch64: blocked by py3-pyside6
+arch="noarch !armhf !riscv64 !loongarch64"
+license="Apache-2.0"
+depends="
+	python3
+	py3-twisted
+	py3-pyside6
+	"
+makedepends="py3-setuptools_scm"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/Syncplay/syncplay/archive/v$pkgver.tar.gz"
+options="!check" # testing requires pip
+
+build() {
+	python3 setup.py build
+}
+
+check() {
+	python3 setup.py test
+}
+
+package() {
+	python3 setup.py install --root "$pkgdir"
+}
+
+sha512sums="
+aca2eb0503ab853175414663301813f1bc7ebfd38836d3f67d072c4721dc84aa9c4559ef00377641ec25e842ee479af31771ef004fc57f466c0c92df31940276  syncplay-1.7.1.tar.gz
+"

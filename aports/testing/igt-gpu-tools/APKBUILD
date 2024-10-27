@@ -1,0 +1,61 @@
+# Contributor: Dennis Krupenik <dennis@krupenik.com>
+# Maintainer: Dennis Krupenik <dennis@krupenik.com>
+pkgname=igt-gpu-tools
+pkgver=1.27.1
+pkgrel=1
+pkgdesc="collection of tools for development and testing of the DRM drivers"
+url="https://gitlab.freedesktop.org/drm/igt-gpu-tools/"
+arch="x86_64" # intel gpus, aarch64 fails to build
+license="MIT"
+depends_dev="
+	alsa-lib-dev
+	cairo-dev
+	curl-dev
+	elfutils-dev
+	eudev-dev
+	gsl-dev
+	json-c-dev
+	kmod-dev
+	libdrm-dev
+	liboping-dev
+	libpciaccess-dev
+	libunwind-dev
+	libxrandr-dev
+	libxv-dev
+	pixman-dev
+	procps-compat-dev
+	xmlrpc-c-dev
+	"
+makedepends="
+	$depends_dev
+	bison
+	flex
+	meson
+	"
+checkdepends="bash"
+subpackages="$pkgname-dev"
+source="https://gitlab.freedesktop.org/drm/igt-gpu-tools/-/archive/v$pkgver/igt-gpu-tools-v$pkgver.tar.gz
+	musl.patch
+	"
+builddir="$srcdir/igt-gpu-tools-v$pkgver"
+
+build() {
+	abuild-meson \
+		-Dvalgrind=disabled \
+		-Dversion_hash=$pkgver \
+		. build
+	meson compile -C build
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C build
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C build
+}
+
+sha512sums="
+b77d28f95098e4c51678a0a73ad755a5dd28748c77cf8e8c4f46f6d65444939032d2d0ed3c637e4968682d72a5d8cbabd7b8f47737f7fa279b02667fd4ddae9b  igt-gpu-tools-v1.27.1.tar.gz
+f372d8e60519c6d9d72efd32d87fc9851eace59cf7c0b66dc5f8795dcfb9efd4aae5f316cd52396ebaba9e0c338f166f1d4ccf828ea473276ea6ed07f71fae32  musl.patch
+"

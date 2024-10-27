@@ -1,0 +1,50 @@
+# Contributor: Thomas Boerger <thomas@webhippie.de>
+# Maintainer: omni <omni+alpine@hack.org>
+pkgname=mycli
+pkgver=1.27.2
+pkgrel=1
+pkgdesc="MySQL CLI with autocompletion and syntax highlighting"
+url="https://www.mycli.net/"
+arch="noarch"
+license="BSD-3-Clause"
+depends="
+	python3
+	py3-pyaes
+	py3-click
+	py3-pygments
+	py3-prompt_toolkit
+	py3-pymysql
+	py3-sqlglot
+	py3-sqlparse
+	py3-configobj
+	py3-cryptography
+	py3-cli_helpers
+	py3-pyperclip
+	"
+makedepends="python3-dev py3-gpep517 py3-paramiko py3-setuptools py3-wheel"
+checkdepends="py3-pytest py3-mock"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/m/mycli/mycli-$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	# click 8.1 output differs
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -v test
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+	rm -rf "$pkgdir"/usr/lib/python3*/site-packages/test/
+}
+
+sha512sums="
+f37ce0f45422312bd345e900d0249f2185de3593bd8bc221075b222e7c775e56d2b15672da29038023ebb0c974fee651c1685288b51506601739ac5b6f618f65  mycli-1.27.2.tar.gz
+"

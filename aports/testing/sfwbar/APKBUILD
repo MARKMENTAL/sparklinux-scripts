@@ -1,0 +1,32 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=sfwbar
+pkgver=1.0_beta15
+pkgrel=0
+pkgdesc="Sway Floating Window Bar"
+url="https://github.com/LBCrion/sfwbar"
+arch="all"
+license="GPL-3.0-only AND MIT"
+makedepends="
+	gtk+3.0-dev
+	gtk-layer-shell-dev
+	json-c-dev
+	meson
+	pulseaudio-dev
+	"
+subpackages="$pkgname-doc"
+source="https://github.com/LBCrion/sfwbar/archive/v$pkgver/sfwbar-$pkgver.tar.gz"
+options="!check"  # no tests provided
+
+build() {
+	abuild-meson -Db_lto=true . output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+69828e9859c0dda88889195bc0d7932b37f9c09d9ff0f61ba3399821fe6002b6758d28a1231cf14de5e6460777eb5b1ce2871d8d7dc8655c0a38967bb017e8c5  sfwbar-1.0_beta15.tar.gz
+"

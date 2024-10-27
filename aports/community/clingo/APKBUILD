@@ -1,0 +1,39 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=clingo
+pkgver=5.7.1
+pkgrel=1
+pkgdesc="Grounder and solver for logic programs"
+url="https://potassco.org/clingo/"
+arch="all"
+license="MIT"
+depends="!clasp" # both provide /usr/bin/clasp
+makedepends="python3-dev cmake samurai"
+subpackages="$pkgname-dev $pkgname-libs py3-$pkgname:py"
+options="!check"
+source="https://github.com/potassco/clingo/archive/v$pkgver/clingo-$pkgver.tar.gz"
+replaces="gringo" # backwards compatibility
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCLINGO_BUILD_TESTS="$(want_check && echo ON || echo OFF)"
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+py() {
+	pkgdesc="Python bindings for clingo"
+	depends="python3"
+
+	amove usr/lib/python*
+}
+
+sha512sums="
+e0903c06e45af0988887baa87b7ea455f74f639026508176f1c90be5ddc5db37b4d91bbb51ea542c944ebedc2c80f962bd0844fd8f226787cdc841785be99e30  clingo-5.7.1.tar.gz
+"

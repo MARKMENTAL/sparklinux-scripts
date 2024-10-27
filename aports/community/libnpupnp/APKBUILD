@@ -1,0 +1,31 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Sodface <sod@sodface.com>
+pkgname=libnpupnp
+pkgver=6.2.0
+pkgrel=0
+pkgdesc="UPnP library based on libupnp, but extensively rewritten"
+url="https://www.lesbonscomptes.com/upmpdcli/npupnp-doc/libnpupnp.html"
+arch="all"
+options="!check" # no test suite
+license="BSD-3-Clause"
+makedepends="
+	curl-dev
+	expat-dev
+	libmicrohttpd-dev
+	meson
+	"
+subpackages="$pkgname-dev"
+source="https://www.lesbonscomptes.com/upmpdcli/downloads/libnpupnp-$pkgver.tar.gz"
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+6c5bf0e26e61c5eecf93c1afe6a051db8b4d35a8d77f829afebae82cca0bfe2fe10ca20911f2f030eb6833acdeb2d001ea2b5ea863202559457347f6a6d41a07  libnpupnp-6.2.0.tar.gz
+"

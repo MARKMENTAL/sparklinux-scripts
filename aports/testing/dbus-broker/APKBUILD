@@ -1,0 +1,29 @@
+# Maintainer: Hugo Osvaldo Barrera <hugo@whynothugo.nl>
+pkgname=dbus-broker
+pkgver=35
+pkgrel=0
+pkgdesc="Linux D-Bus Message Broker"
+url="https://github.com/bus1/dbus-broker"
+arch="all"
+license="Apache-2.0"
+makedepends="meson linux-headers py3-docutils"
+subpackages="$pkgname-doc"
+source="https://github.com/bus1/dbus-broker/releases/download/v$pkgver/dbus-broker-$pkgver.tar.xz"
+
+build() {
+	# launcher: requires systemd
+	abuild-meson . build -Dlauncher=false -Ddocs=true
+	meson compile -C build
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C build
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C build
+}
+
+sha512sums="
+409e415889bd53b78e92ba077455e5583852a071e233e4b23dcbb23d8a367f177d6c8138e6fc113dcfe48440b68d594c1a076cb43ef445d472645f671d5ae033  dbus-broker-35.tar.xz
+"

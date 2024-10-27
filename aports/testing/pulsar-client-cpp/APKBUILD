@@ -1,0 +1,57 @@
+# Contributor: Alex Yam <alex@alexyam.com>
+# Maintainer: Alex Yam <alex@alexyam.com>
+pkgname=pulsar-client-cpp
+pkgver=3.1.2
+pkgrel=4
+pkgdesc="Apache Pulsar C++ client"
+url="https://github.com/apache/pulsar-client-cpp"
+arch="all"
+#    Apache-2.0	: pulsar
+#  BSD-2-Clause	: pulsar-client-cpp/lib/lz4/lz4.{h,c}
+# 	   Zlib	: pulsar-client-cpp/lib/checksum/crc32c_sw.cc
+license="Apache-2.0 AND BSD-2-Clause AND Zlib"
+subpackages="$pkgname-dev"
+options="!check" # test requires docker/java/pulsar-server
+depends_dev="$pkgname=$pkgver-r$pkgrel"
+makedepends="
+	boost-dev
+	cmake
+	curl-dev
+	openssl-dev>3
+	protobuf-dev
+	samurai
+	snappy-dev
+	zstd-dev
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/apache/pulsar-client-cpp/archive/refs/tags/v$pkgver.tar.gz
+	cxx17.patch
+	no-werror.patch
+	"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_SKIP_BUILD_RPATH=ON \
+		-DBUILD_DYNAMIC_LIB=ON \
+		-DBUILD_PERF_TOOLS=OFF \
+		-DBUILD_STATIC_LIB=OFF \
+		-DBUILD_TESTS=OFF \
+		-DLIBRARY_VERSION=$pkgver \
+		$CMAKE_CROSSOPTS .
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+9339eab337ab08a7ba3c52d96e017bc11fbfd604e65a9820d78348ed4adba285d3380738a063311b0cb542d17299b2770936f8a2be6d5cb8fa85b0e339bd6f0b  pulsar-client-cpp-3.1.2.tar.gz
+20591a050403d9e49a75c52cba1555a3568d7ec85212d051808ac6e308d8adcc846df25e2f0d14dda0a75ccadace346e9b95a13508b31c31be661a96cbf9e2f4  cxx17.patch
+6a757a63ae380de1d9b068a8567aad34a90cf8caa01dee48091d1cfa6c5584cd619392896c4bbfa4695e3def5934e87b5cdcf363217a0020f1784e36a976f08d  no-werror.patch
+"

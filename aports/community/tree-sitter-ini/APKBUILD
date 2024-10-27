@@ -1,0 +1,25 @@
+# Contributor: Matthias Ahouansou <matthias@ahouansou.cz>
+# Maintainer: Matthias Ahouansou <matthias@ahouansou.cz>
+pkgname=tree-sitter-ini
+pkgver=1.2.0
+pkgrel=0
+pkgdesc="tree-sitter grammar/parser for INI files"
+url="https://github.com/justinmk/tree-sitter-ini"
+arch="all"
+license="Apache-2.0"
+makedepends="tree-sitter-dev"
+install_if="tree-sitter-grammars"
+source="$pkgname-$pkgver.tar.gz::https://github.com/justinmk/tree-sitter-ini/archive/refs/tags/v$pkgver.tar.gz"
+options="!check" # no tests for shared lib
+
+build() {
+	abuild-tree-sitter build
+}
+
+package() {
+	DESTDIR="$pkgdir" abuild-tree-sitter install
+}
+
+sha512sums="
+e96ac23ad620e824b3ffd6a28ce5883d262028f3f8615d3208c78ed6bd06b05f25bdb1e9ecada6ad88c7f465506a62a8102ba43a7991e3b30593bc81c1676808  tree-sitter-ini-1.2.0.tar.gz
+"

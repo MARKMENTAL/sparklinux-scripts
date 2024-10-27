@@ -1,0 +1,40 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+pkgname=py3-niaclass
+_pkgorig=niaclass
+pkgver=0.2.0
+pkgrel=3
+pkgdesc="Framework for solving classification tasks using nature-inspired algorithms"
+url="https://github.com/firefly-cpp/NiaClass"
+arch="noarch"
+license="MIT"
+depends="python3 py3-numpy py3-pandas py3-niapy py3-scikit-learn"
+checkdepends="py3-pytest-xdist"
+makedepends="py3-poetry-core py3-gpep517"
+subpackages="$pkgname-doc $pkgname-pyc"
+source="https://github.com/firefly-cpp/NiaClass/archive/$pkgver/$_pkgorig-$pkgver.tar.gz"
+builddir="$srcdir/NiaClass-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/niaclass-$pkgver-py3-none-any.whl
+
+	install -Dm644 CITATION.cff -t "$pkgdir"/usr/share/doc/$pkgname
+	install -Dm644 CITATION.md -t "$pkgdir"/usr/share/doc/$pkgname
+}
+
+sha512sums="
+1af4af4a72ad279783e35d4171d536a8b42691e70a509eff67d5d9b984ad397e848446e6f7e9d533dc56373ea761f2b93af67094c1ee274965042638d425a30b  niaclass-0.2.0.tar.gz
+"

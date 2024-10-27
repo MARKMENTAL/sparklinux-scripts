@@ -1,0 +1,84 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Contributor: Timo Teräs <timo.teras@iki.fi>
+# Maintainer: Timo Teräs <timo.teras@iki.fi>
+pkgname=pcsc-lite
+pkgver=2.2.3
+pkgrel=1
+pkgdesc="Middleware to access a smart card using SCard API (PC/SC)"
+url="https://pcsclite.apdu.fr/"
+arch="all"
+license="BSD-3-Clause AND BSD-2-Clause AND ISC"
+depends_dev="
+	$pkgname-libs=$pkgver-r$pkgrel
+	eudev-dev
+	"
+makedepends="
+	$depends_dev
+	flex
+	libcap-ng-utils
+	meson
+	perl-dev
+	"
+install="$pkgname.pre-install $pkgname.pre-upgrade"
+subpackages="
+	$pkgname-static
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-spy-libs:spylibs
+	$pkgname-libs
+	$pkgname-openrc
+	"
+source="https://pcsclite.apdu.fr/files/pcsc-lite-$pkgver.tar.xz
+	pcscd.initd
+	"
+
+build() {
+	abuild-meson . build \
+		-D default_library=both \
+		-D libusb=false \
+		-D libudev=true \
+		-D polkit=false \
+		-D libsystemd=false
+
+	meson compile -C build
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C build
+}
+
+package() {
+	license="$license AND GPL-3.0-or-later"
+
+	meson install --no-rebuild --destdir "$pkgdir" -C build
+
+	install -D -m755 "$srcdir"/pcscd.initd "$pkgdir"/etc/init.d/pcscd
+
+	mkdir -p "$pkgdir"/usr/lib/pcsc/drivers
+}
+
+spylibs() {
+	pkgdesc="$pkgdesc (log/debug/spy libraries)"
+	license="GPL-3.0-or-later"
+
+	amove usr/lib/libpcscspy.so.*
+}
+
+libs() {
+	pkgdesc="$pkgdesc (libraries)"
+
+	amove usr/lib
+}
+
+dev() {
+	default_dev
+
+	# move back the /usr/lib/libpcsclite.so
+	# see http://bugs.alpinelinux.org/issues/3236 (and 6392)
+	mv "$subpkgdir"/usr/lib/libpcsclite.so "$pkgdir"/usr/lib/libpcsclite.so
+}
+
+sha512sums="
+417410f92a14eff78231ff6007ed801d71ae89c62914a88f21e8cd199e4792f00df09c28604e138efe269c7a6df9c8fd891401c6be77fb8cd8639b7890a9e00c  pcsc-lite-2.2.3.tar.xz
+5a8b3cb5b4ed9884c1032ec3c4c51167b8771185e8ea4122e40de4a92135cc3687a1df43bc877cf5ebcfe9392a17035873d8c052d58243eb681a3e93a44c5773  pcscd.initd
+"

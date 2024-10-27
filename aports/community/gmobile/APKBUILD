@@ -1,0 +1,34 @@
+# Maintainer: team/phosh <fossdd@pwned.life>
+pkgname=gmobile
+pkgver=0.2.1
+pkgrel=0
+pkgdesc="Functions useful in mobile related, glib based projects"
+url="https://gitlab.gnome.org/World/Phosh/gmobile"
+arch="all"
+license="GPL-3.0-only"
+makedepends="
+	meson
+	glib-dev
+	json-glib-dev
+	gobject-introspection-dev
+	"
+subpackages="$pkgname-dev"
+replaces="phoc"
+source="https://sources.phosh.mobi/releases/gmobile/gmobile-$pkgver.tar.xz"
+
+build() {
+	abuild-meson build
+	meson compile -C build
+}
+
+check() {
+	meson test -C build
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C build
+}
+
+sha512sums="
+f572900d177f12554357fe467aca98a61ea9b95f0ceffa64f877d78d627d32c7dbc4ca2665c2602ca16097d6aab53fddfc413055f4810e10d55c331c5ebf147c  gmobile-0.2.1.tar.xz
+"

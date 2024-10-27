@@ -1,0 +1,62 @@
+# Maintainer: David Heidelberg <david@ixit.cz>
+pkgname=piglit
+pkgver=0_git20240918
+_gitrev=e9ab30aeaed97b69868cf4d6d6a3f70f3b53c362
+pkgrel=0
+pkgdesc="a collection of automated tests for OpenGL, Vulkan, and OpenCL implementations"
+url="https://gitlab.freedesktop.org/mesa/piglit"
+arch="all"
+license="MIT AND GPL-2.0-only AND GPL-3.0-or-later AND GPL-2.0-or-later AND LGPL-2.1-or-later AND LGPL-3.0-or-later AND BSD-3-clause"
+depends="
+	py3-mako
+"
+makedepends="
+	binutils
+	cmake
+	freeglut-dev
+	glslang-dev
+	glu-dev
+	libx11-dev
+	libxcb-dev
+	libxkbcommon-dev
+	mesa-dev
+	opencl-headers
+	opencl-icd-loader-dev
+	py3-lxml
+	py3-mako
+	py3-numpy
+	python3
+	samurai
+	vulkan-loader-dev
+	waffle-dev
+	wayland-protocols"
+
+source="$pkgname-$pkgver.tar.gz::https://gitlab.freedesktop.org/mesa/piglit/-/archive/$_gitrev/piglit-$_gitrev.tar.gz"
+
+builddir="$srcdir/piglit-$_gitrev"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DSBINDIR=/usr/bin \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DPIGLIT_USE_WAFFLE=1 \
+		-DPIGLIT_BUILD_GLES1_TESTS=0 \
+		-DPIGLIT_BUILD_GLES2_TESTS=1 \
+		-DPIGLIT_BUILD_GLES3_TESTS=1 \
+		-DPIGLIT_BUILD_CL_TESTS=1 \
+		-DPIGLIT_BUILD_VK_TESTS=0  # disable Vulkan due to multiple deps
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+4fe20a3f1be64b461a50957b9896a75f10cec1f3af9d6fb9a8d63133acea401cec8cdb3dee78ae8109511a4ac3e3f553ec2c448c050c77e9c57ea97139d50379  piglit-0_git20240918.tar.gz
+"

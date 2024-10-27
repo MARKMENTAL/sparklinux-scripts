@@ -1,0 +1,47 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: team/kde <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=kde-applications
+pkgname=kruler
+pkgver=24.08.1
+pkgrel=0
+# armhf blocked by extra-cmake-modules
+arch="all !armhf"
+url="https://kde.org/applications/graphics/org.kde.kruler"
+pkgdesc="An on-screen ruler for measuring pixels"
+license="GPL-2.0-or-later AND GFDL-1.2-only"
+makedepends="
+	extra-cmake-modules
+	kdoctools-dev
+	ki18n-dev
+	knotifications-dev
+	kstatusnotifieritem-dev
+	kwindowsystem-dev
+	kxmlgui-dev
+	qt6-qtbase-dev
+	samurai
+	"
+subpackages=" $pkgname-lang"
+_repo_url="https://invent.kde.org/graphics/kruler.git"
+source="https://download.kde.org/stable/release-service/$pkgver/src/kruler-$pkgver.tar.xz"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+85109b8eaef1f89562ae7d8365526fe1e1461e515e32a4effa8d34405ef64edaf4c3778448a7e3388a8c646d9bcc6656658e06b1c4713771cd974f9f3b83936a  kruler-24.08.1.tar.xz
+"

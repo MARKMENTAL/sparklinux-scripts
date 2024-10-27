@@ -1,0 +1,37 @@
+# Maintainer: Michael Koloberdin <koloberdin@gmail.com>
+pkgname=optipng
+pkgver=0.7.8
+pkgrel=0
+pkgdesc="Compresses PNG files to a smaller size, without losing any information."
+url="https://optipng.sourceforge.net/"
+arch="all"
+license="Zlib"
+makedepends="libpng-dev"
+subpackages="$pkgname-doc"
+source="https://downloads.sourceforge.net/sourceforge/optipng/optipng-$pkgver.tar.gz"
+
+# secfixes:
+#   0.7.8-r0:
+#     - CVE-2023-43907
+
+build() {
+	./configure \
+		--prefix=/usr \
+		-with-system-libs
+	make
+}
+
+check() {
+	make test
+}
+
+package() {
+	make prefix="$pkgdir/usr" mandir="$pkgdir/usr/share/man" install
+
+	# install license
+	install -Dm0644 LICENSE.txt "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
+sha512sums="
+def47bb2898d9409773df55a99fec84af2a26b58192127ac4624b2ff504762bc4735b5b945e788174eac695cc81be1b062088b42683b9c889dc42f94431210c3  optipng-0.7.8.tar.gz
+"

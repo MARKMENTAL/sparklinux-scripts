@@ -1,0 +1,44 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=bctoolbox
+pkgver=5.3.38
+pkgrel=0
+pkgdesc="Utilities library used by Belledonne Communications softwares like belle-sip, mediastreamer2 and linphone"
+url="https://github.com/BelledonneCommunications/bctoolbox"
+arch="all"
+license="GPL-3.0-or-later"
+options="!check" # bcunit not available
+makedepends="cmake mbedtls-dev samurai"
+subpackages="$pkgname-dev"
+source="$pkgname-$pkgver.tar.gz::https://github.com/BelledonneCommunications/bctoolbox/archive/$pkgver.tar.gz
+	fix-cmake-path.patch
+	"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_MODULE_PATH=/usr/lib/cmake \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DCMAKE_SKIP_INSTALL_RPATH=ON \
+		-DENABLE_MBEDTLS=YES \
+		-DENABLE_POLARSSL=NO \
+		-DENABLE_STATIC=NO \
+		-DENABLE_STRICT=NO \
+		-DENABLE_TESTS_COMPONENT=OFF \
+		-DBUILD_SHARED_LIBS=YES
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+dbf95ff60b537b16596761a9e45f77e47baf9615813dd884694cd1a78decf447e25a4da629b8907f2caaef7a7f2b4e33241899b27f491acb1e18a5ed3b821a0e  bctoolbox-5.3.38.tar.gz
+78011cadf2602834a2f1eb819cdb302d59d0d00b296d99ce79fb8834c1a93611b73022727697ede07bfe0ec36797a7e71740264962d12995385fd09ae4f799bd  fix-cmake-path.patch
+"

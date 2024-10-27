@@ -1,0 +1,38 @@
+# Contributor: Fabian Affolter <fabian@affolter-engineering.ch>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=py3-markupsafe
+_pkgname=MarkupSafe
+pkgver=2.1.5
+pkgrel=2
+pkgdesc="Implements a XML/HTML/XHTML Markup safe string"
+url="https://github.com/pallets/markupsafe"
+arch="all"
+license="BSD-3-Clause"
+depends="python3"
+makedepends="python3-dev py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="pytest"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/${_pkgname:0:1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+replaces="py-markupsafe" # Backwards compatibility
+provides="py-markupsafe=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel --wheel-dir .dist --output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+	find "$pkgdir" -name "*.c" -delete
+}
+
+sha512sums="
+3ba5af43d23c266377f5d32b11e1faa7955ea8c67eb1c32886c308527f93e75e387294d0eec7794c0c20aad0c705b27f3d1f86b04202f3b63068d12d4053cc71  MarkupSafe-2.1.5.tar.gz
+"

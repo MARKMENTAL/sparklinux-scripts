@@ -1,0 +1,95 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=nftables
+pkgver=1.1.0
+pkgrel=1
+pkgdesc="Netfilter tables userspace tools"
+url="https://netfilter.org/projects/nftables"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="
+	asciidoc
+	bison
+	docbook2x
+	flex
+	gmp-dev
+	jansson-dev
+	libmnl-dev
+	libnftnl-dev
+	ncurses-dev
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	readline-dev
+	"
+install="$pkgname.post-upgrade"
+subpackages="
+	$pkgname-static
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-openrc
+	py3-$pkgname-pyc
+	py3-$pkgname:_py3:noarch
+	"
+source="https://netfilter.org/projects/nftables/files/nftables-$pkgver.tar.xz
+	nftables.confd
+	nftables.initd
+	nftables.nft
+	Revert-cache-recycle-existing-cache-with-incremental.patch
+	"
+options="!check"
+
+prepare() {
+	default_prepare
+
+	sed -i '1i#include "config.h"' "$builddir"/src/proto.c
+}
+
+build() {
+	CONFIG_MAN=y DB2MAN=docbook2x-man ./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/usr/share \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--localstatedir=/var \
+		--disable-python \
+		--enable-static=yes \
+		--with-json \
+		--with-cli=readline
+	make
+
+	cd py
+	gpep517 build-wheel \
+		--wheel-dir "$builddir"/.dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+
+	install -Dm755 "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
+	install -Dm644 "$srcdir"/$pkgname.confd "$pkgdir"/etc/conf.d/$pkgname
+	install -Dm644 "$srcdir"/nftables.nft "$pkgdir"/etc/nftables.nft
+	install -dm755 "$pkgdir"/etc/nftables.d
+	install -dm750 "$pkgdir"/var/lib/nftables
+}
+
+_py3() {
+	pkgdesc="$pkgdesc (Python interface)"
+	depends="$pkgname=$pkgver-r$pkgrel"
+
+	amove usr/lib/python3*
+}
+
+sha512sums="
+0b0c6789b7d987289b9770ea2d26e640c50bc7f300685476c4fc367b5ad3d6980fca63b8fe701f727fb3a94328eb7dc560ed5745b5ce44f171022de5714d3a86  nftables-1.1.0.tar.xz
+5a298ea01df60b434791fea94306d5b14f7ce684329e4122cc78bb52d1c272fcc48b06eaae154fd082c05f7030792fe42e73814caf3c7be3c446bb265fe25642  nftables.confd
+93a4d3109e3b7d36bcd0901755e1ee4dba3b5555deddc5eecdee2ccbcce15c08f122bf8f1c879c3f696f6a5a13d283536a0ff5e1af82289c3263b6aeb9d116d0  nftables.initd
+b524c124a11f870ae789d5ad05de8a49d365d6c2cb3cd94c21669c5ae0e453481c671a1700ee6518372b10c491b50c5d81ea59fa941092a9161d1b13be7a13b6  nftables.nft
+16b777d9608e3778ff92ce51f274df3a6f25fbee6bc718be21aa90524e1291c993c4522c70ae30d90c3631059bf4b43538c23df59899f43e403267a5e7b5c71b  Revert-cache-recycle-existing-cache-with-incremental.patch
+"

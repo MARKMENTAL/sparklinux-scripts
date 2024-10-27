@@ -1,0 +1,52 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=ruby-pkg-config
+_gemname=pkg-config
+pkgver=1.5.6
+pkgrel=0
+pkgdesc="pkg-config implemented by pure Ruby"
+url="https://github.com/ruby-gnome/pkg-config"
+arch="noarch"
+license="LGPL-2.0-or-later"
+depends="ruby"
+checkdepends="
+	cairo-dev
+	ruby-dev
+	ruby-test-unit
+	"
+source="https://github.com/ruby-gnome/pkg-config/archive/$pkgver/ruby-pkg-config-$pkgver.tar.gz
+	gemspec.patch
+	"
+builddir="$srcdir/$_gemname-$pkgver"
+
+build() {
+	gem build $_gemname.gemspec
+}
+
+check() {
+	# test_cflags*: pkg-config returns -I flags in a different order.
+	ruby test/run-test.rb \
+		--ignore-name test_cflags \
+		--ignore-name test_cflags_only_I
+}
+
+package() {
+	local gemdir="$pkgdir/$(ruby -e 'puts Gem.default_dir')"
+
+	gem install \
+		--local \
+		--install-dir "$gemdir" \
+		--ignore-dependencies \
+		--no-document \
+		--verbose \
+		$_gemname
+
+	# Remove unnecessary files and rubbish...
+	cd "$gemdir"
+	rm -r cache build_info doc
+}
+
+sha512sums="
+8b69ed93a56687d4ecb1afb967fa38cac76ccd0bb332a405ebf02ab6881e341fbbd2fed746d9bf0d0bd6ecb047dea875cdeb1e585b0ce2befc91ce414b47c858  ruby-pkg-config-1.5.6.tar.gz
+d3dc12c47ca186ae0cde00788272a71d2a9256df280e9164a9a3c54ca8f27a681cc7808ce16546c15ae7af19d379da7ca0dd48f72ba740aa0fa0b8b5d7a8e650  gemspec.patch
+"

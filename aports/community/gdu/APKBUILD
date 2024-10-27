@@ -1,0 +1,63 @@
+# Contributor: Kevin Daudt <kdaudt@alpinelinux.org>
+# Maintainer: Kevin Daudt <kdaudt@alpinelinux.org>
+pkgname=gdu
+pkgver=5.29.0
+_majorver=${pkgver%%.*}
+pkgrel=1
+pkgdesc="Fast disk usage calculator with console interface"
+url="https://github.com/dundee/gdu"
+arch="all"
+license="MIT"
+makedepends="go gzip"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/dundee/gdu/archive/refs/tags/v$pkgver.tar.gz
+	ash.patch
+	"
+
+export GOFLAGS="$GOFLAGS -modcacherw"
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+prepare() {
+	default_prepare
+
+	rm -rf vendor/
+}
+
+build() {
+	local versionflags
+	versionflags="
+	-X github.com/dundee/gdu/v$_majorver/build.Version=$pkgver
+	-X github.com/dundee/gdu/v$_majorver/build.User=buildozer
+	-X 'github.com/dundee/gdu/v$_majorver/build.Time=$(date)'
+	"
+	go build -v \
+		-ldflags="$versionflags" \
+		./cmd/gdu
+
+	gzip gdu.1
+}
+
+check() {
+	# These tests are failing on 32-bit with: "error:
+	# cannot allocate memory while mmapping
+	# /tmp/badger/000002.vlog with size: 2147483646"
+	case "$CARCH" in
+	arm*|x86)
+		go test -skip 'TestStoredAnalyzer|TestRemoveStoredFile|Test.*Storage' -v ./... ;;
+	*)
+		go test -v ./... ;;
+	esac
+}
+
+package() {
+	install -Dm0755 gdu -t "$pkgdir"/usr/bin/
+	install -Dm0644 gdu.1.gz -t "$pkgdir"/usr/share/man/man1/
+	install -Dm0644 LICENSE.md -t "$pkgdir"/usr/share/licenses/gdu/
+}
+
+sha512sums="
+38db4b6b24d4f07d647eb81492310e2ca53ee6e3ac845d2765f3ff257a737ccbdc540bb446a649e6a0656fc3b91ba6cb0a95824bd31026a4815295dd16c8ca57  gdu-5.29.0.tar.gz
+cc85da4cb2c015166c916ea33768c6b486b8c12bdfce37ffcf1b9c8b7e9c6504de25425d6f71d3d03750fc82732ee69ab34c5f494b0ef3d8c5cc4e4f79e79cd7  ash.patch
+"

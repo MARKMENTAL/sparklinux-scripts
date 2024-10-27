@@ -1,0 +1,34 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=volatility3
+pkgver=2.7.0
+pkgrel=0
+pkgdesc="Volatile memory forensics toolkit"
+url="https://github.com/volatilityfoundation/volatility3"
+arch="noarch !armhf !armv7" # py3-yara
+license="custom"
+depends="py3-crypto py3-capstone py3-yara py3-pefile"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+subpackages="$pkgname-doc $pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/volatilityfoundation/volatility3/archive/v$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 setup.py check
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+
+	install -Dm644 LICENSE.txt \
+		-t "$pkgdir"/usr/share/licenses/$pkgname/
+}
+
+sha512sums="
+bb9f79604ce2e647d42a1003941802a69ecdf845c1400b1d3f67e13494a228c99269478d635fbcdcde8ae67b792b73e07e7e26ce9a8e2e7b80185af7cc7ac3c0  volatility3-2.7.0.tar.gz
+"

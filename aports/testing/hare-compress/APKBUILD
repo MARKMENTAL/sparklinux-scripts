@@ -1,0 +1,29 @@
+# Contributor: fossdd <fossdd@pwned.life>
+# Maintainer: fossdd <fossdd@pwned.life>
+pkgname=hare-compress
+pkgver=0_git20240623
+_commit=9597005edca5365000c77f1a6e2f892484348ff1
+pkgrel=0
+pkgdesc="Compression algorithms for Hare"
+url="https://git.sr.ht/~sircmpwn/hare-compress"
+arch="noarch !armhf !armv7 !ppc64le !s390x !x86 !loongarch64" # blocked by hare
+license="MPL-2.0"
+makedepends="hare"
+source="$pkgname-$_commit.tar.gz::https://git.sr.ht/~sircmpwn/hare-compress/archive/$_commit.tar.gz"
+builddir="$srcdir/$pkgname-$_commit"
+
+build() {
+	make -j1 PREFIX=/usr
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr install
+}
+
+sha512sums="
+30a824cea44169032a480b3e2f06be59370defa15d7b5e604aa35d990eb6be37a7ee87cd9c12ff16488d7460d4eb26858b8b3b2e9594f8cb1a6d88a6986d421a  hare-compress-9597005edca5365000c77f1a6e2f892484348ff1.tar.gz
+"

@@ -1,0 +1,52 @@
+# Contributor: Celeste <cielesti@protonmail.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=halloy
+pkgver=2024.12
+pkgrel=0
+pkgdesc="Rust graphical IRC client supporting IRCv3.2 capabilities"
+url="https://github.com/squidowl/halloy"
+# loongarch64: fails to build linux-raw-sys & rustix crates
+arch="all !loongarch64"
+license="GPL-3.0-or-later"
+makedepends="
+	alsa-lib-dev
+	cargo
+	cargo-auditable
+	openssl-dev
+	"
+source="https://github.com/squidowl/halloy/archive/$pkgver/halloy-$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	local appid="org.squidowl.halloy"
+
+	install -Dm755 target/release/halloy -t "$pkgdir"/usr/bin
+
+	install -Dm644 assets/linux/$appid.desktop \
+		-t "$pkgdir"/usr/share/applications
+	install -Dm644 assets/linux/$appid.appdata.xml \
+		-t "$pkgdir"/usr/share/metainfo
+
+	local size; for size in 16 24 32 48 64 96 128 256 512; do
+		install -Dm644 \
+		assets/linux/icons/hicolor/"$size"x"$size"/apps/$appid.png \
+		-t "$pkgdir"/usr/share/icons/hicolor/"$size"x"$size"/apps
+	done
+}
+
+sha512sums="
+72fbda2d00496dea3ef5401fe0ab3f4c77b0b00443abc8b0ece0c7d4fe5cb38e24c45df91d7bb3acb4f11e831f8c7df3efdc5db47ddef2db030b464aa9ad9981  halloy-2024.12.tar.gz
+"

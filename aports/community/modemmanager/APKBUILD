@@ -1,0 +1,88 @@
+# Contributor: Stuart Cardall <developer@it-offshore.co.uk>
+# Maintainer: Stuart Cardall <developer@it-offshore.co.uk>
+pkgname=modemmanager
+pkgver=1.22.0
+pkgrel=0
+pkgdesc="ModemManager library"
+url="https://www.freedesktop.org/wiki/Software/ModemManager"
+arch="all"
+license="GPL-2.0-or-later AND LGPL-2.1-or-later"
+depends="dbus polkit libmm-glib=$pkgver-r$pkgrel"
+depends_dev="libmm-glib=$pkgver-r$pkgrel"
+makedepends="
+	$depends_dev
+	bash-completion-dev
+	elogind-dev
+	gobject-introspection-dev
+	gtk-doc
+	libgudev-dev
+	libmbim-dev
+	libqmi-dev
+	linux-headers
+	meson
+	polkit-dev
+	vala
+	"
+checkdepends="glib-dev py3-gobject3 py3-dbus"
+options="!check" # https://bugs.freedesktop.org/show_bug.cgi?id=101197
+subpackages="
+	$pkgname-lang
+	$pkgname-doc
+	libmm-glib:libmm
+	$pkgname-dev
+	$pkgname-openrc
+	$pkgname-bash-completion
+	"
+source="https://gitlab.freedesktop.org/mobile-broadband/ModemManager/-/archive/$pkgver/ModemManager-$pkgver.tar.gz
+	$pkgname.rules
+	$pkgname.initd
+	"
+builddir="$srcdir"/ModemManager-$pkgver
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dsystemdsystemunitdir=no \
+		-Ddbus_policy_dir=/usr/share/dbus-1/system.d \
+		-Dgtk_doc=true \
+		-Dpolkit=permissive \
+		-Dsystemd_journal=false \
+		-Dsystemd_suspend_resume=true \
+		-Dvapi=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+	rm -rf "$pkgdir"/usr/share/dbus-1/system-services #systemd-service
+	install -m644 -D "$srcdir/$pkgname.rules" \
+		"$pkgdir/usr/share/polkit-1/rules.d/01-org.freedesktop.ModemManager.rules"
+	install -m755 -D "$srcdir/$pkgname.initd" \
+		"$pkgdir/etc/init.d/$pkgname"
+
+	# post-install message
+	mkdir -p "$pkgdir/usr/share/doc/$pkgname"
+	cat > "$pkgdir"/usr/share/doc/$pkgname/README.alpine <<- EOF
+	If your USB modem shows up as a Flash drive when you plug it in:
+
+	install 'usb-modeswitch' to automatically switch to USB modem mode whenever you plug it in.
+	To control your modem without the root password: add your user account to the 'plugdev' group.
+	EOF
+}
+
+libmm() {
+	depends=""
+	amove usr/lib/girepository-1.0
+	amove usr/lib/libmm-glib.so*
+}
+
+sha512sums="
+f612ec26fc42943abc546fb246619b03d1a8d4f925edfb78231ffa9ee5f559d701e547fd8152f77d3aee16a78b397464abb948c72764ac2d2846edf07d8c0fcc  ModemManager-1.22.0.tar.gz
+6fab86c27502b29be0c6610d835a3249a4a81993eb986cff2c3ea9393fadd3f693ba4bb0532ae0e50a83d359559511859dd05f7ea2f0cb52839f535a7e49f8a0  modemmanager.rules
+9f74a2473b9cc7be42a467809639f5720ab251d13f29f8bbd4fd9a13edb80c10c5ee50fbe50819bfe67f231805b92f007c3e7403c46ab998dc843e1f9549659b  modemmanager.initd
+"

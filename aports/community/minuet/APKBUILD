@@ -1,0 +1,50 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: team/kde <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=kde-applications
+pkgname=minuet
+pkgver=24.08.1
+pkgrel=0
+_commit="353639d99eb54d251516a13db5032b71bd67b47c"
+arch="all !armhf" # armhf blocked by qt6-qtdeclarative
+url="https://minuet.kde.org/"
+pkgdesc="Minuet Music Education"
+license="GPL-2.0-or-later AND GFDL-1.2-only"
+makedepends="
+	extra-cmake-modules
+	fluidsynth-dev
+	kcoreaddons-dev
+	kcrash-dev
+	kdoctools-dev
+	ki18n-dev
+	qt6-qtbase-dev
+	qt6-qtdeclarative-dev
+
+	qt6-qtsvg-dev
+	samurai
+	"
+subpackages="$pkgname-doc $pkgname-lang $pkgname-dev"
+_repo_url="https://invent.kde.org/education/minuet.git"
+source="https://download.kde.org/stable/release-service/$pkgver/src/minuet-$pkgver.tar.xz"
+
+build() {
+	cmake -B build -G Ninja \
+		-DBUILD_WITH_QT6=ON \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+f524db5c5bbd0d7d111cdaff9b6c8762eadc828531a26623ac627f080d097fe25b892be85ccf3aad61f4079a073397d66626348d2f3647134b55a917aeda882a  minuet-24.08.1.tar.xz
+"

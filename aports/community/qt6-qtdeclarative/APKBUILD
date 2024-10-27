@@ -1,0 +1,75 @@
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=qt6
+pkgname=qt6-qtdeclarative
+pkgver=6.7.2
+pkgrel=0
+pkgdesc="Classes for QML and JavaScript languages"
+url="https://qt.io/"
+arch="all"
+license="LGPL-2.1-only AND LGPL-3.0-only AND GPL-3.0-only AND Qt-GPL-exception-1.0"
+depends_dev="
+	qt6-qtshadertools-dev
+	vulkan-headers
+	"
+makedepends="
+	$depends_dev
+	cmake
+	lttng-ust-dev
+	perl
+	qt6-qtbase-dev
+	qt6-qtlanguageserver-dev
+	samurai
+	"
+subpackages="$pkgname-dev"
+options="!check" # No tests
+builddir="$srcdir/qtdeclarative-everywhere-src-${pkgver/_/-}"
+
+case $pkgver in
+	*_alpha*|*_beta*|*_rc*) _rel=development_releases;;
+	*) _rel=official_releases;;
+esac
+
+source="https://download.qt.io/$_rel/qt/${pkgver%.*}/${pkgver/_/-}/submodules/qtdeclarative-everywhere-src-${pkgver/_/-}.tar.xz"
+
+_qt6_prefix=usr/lib/qt6
+
+build() {
+	export PATH="$PATH:/usr/lib/qt6/bin"
+	export CFLAGS="$CFLAGS -flto=auto"
+	export CXXFLAGS="$CXXFLAGS -flto=auto"
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DINSTALL_PUBLICBINDIR=usr/bin \
+		-DCMAKE_INSTALL_PREFIX=/usr
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	# install symlinks for user-facing tools
+	cd "$pkgdir"
+	mkdir -p usr/bin
+	local line
+	while read -r line; do
+		ln -sfv $line
+	done < "$builddir"/build/user_facing_tool_links.txt
+}
+
+dev() {
+	default_dev
+
+	# move created symlinks- all dev binaries
+	amove usr/bin
+
+	find "$pkgdir"/"$_qt6_prefix"/bin/ -type f -not -name "qmlscene" | while read -r f; do
+		file=$(basename $f)
+		amove "$_qt6_prefix"/bin/$file
+	done
+}
+
+sha512sums="
+ca172e79af317f481d6f5e6388dc074fc6f99966b896135ab9991fa1a9502e46b0ac21b7f2bc38278448939e77882c5fd17252e3e6460c1665f8156fa99bceaf  qtdeclarative-everywhere-src-6.7.2.tar.xz
+"

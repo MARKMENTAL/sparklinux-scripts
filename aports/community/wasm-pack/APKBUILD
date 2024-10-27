@@ -1,0 +1,59 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=wasm-pack
+pkgver=0.13.0
+pkgrel=1
+pkgdesc="rust to wasm build tool"
+url="https://github.com/rustwasm/wasm-pack"
+arch="all"
+license="Apache-2.0"
+depends="
+	cargo
+	rustc-dev
+	rust-wasm
+	"
+makedepends="
+	bzip2-dev
+	cargo-auditable
+	cmake
+	curl-dev
+	openssl-dev>3
+	wasi-sdk
+	zstd-dev
+	"
+source="https://github.com/rustwasm/wasm-pack/archive/refs/tags/v$pkgver/wasm-pack-v$pkgver.tar.gz"
+options="net !check" # most tests fail outside of x86_64
+
+export OPENSSL_NO_VENDOR=1
+
+prepare() {
+	default_prepare
+
+	# Rust target triple.
+	local target=$(rustc -vV | sed -n 's/host: //p')
+
+	# Build against system-provided libzstd.
+	mkdir -p .cargo
+	cat >> .cargo/config.toml <<-EOF
+		[target.$target]
+		zstd = { rustc-link-lib = ["zstd"] }
+	EOF
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --release --frozen
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm755 target/release/wasm-pack \
+		-t "$pkgdir"/usr/bin
+}
+
+sha512sums="
+1b379c2f3b814ec29245226d8e65fd119e179897f8a3ab115680a5a13bf71b4c1eb64d9c64f496dd3ccb9afe9e7a74f0d692799656eedb884b537fa97657c900  wasm-pack-v0.13.0.tar.gz
+"

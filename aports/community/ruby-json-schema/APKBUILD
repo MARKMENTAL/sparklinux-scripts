@@ -1,0 +1,51 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+pkgname=ruby-json-schema
+_gemname=${pkgname#ruby-}
+pkgver=5.0.0
+pkgrel=0
+pkgdesc="Ruby JSON Schema Validator"
+url="https://github.com/voxpupuli/json-schema"
+arch="noarch"
+license="MIT"
+depends="ruby ruby-addressable"
+checkdepends="
+	ruby-minitest
+	ruby-rake
+	ruby-test-unit
+	"
+source="https://github.com/voxpupuli/$_gemname/archive/v$pkgver/ruby-json-schema-$pkgver.tar.gz"
+builddir="$srcdir/$_gemname-$pkgver"
+options="!check" # missing dependency: ruby-webmock
+
+build() {
+	gem build $_gemname.gemspec
+}
+
+check() {
+	rake test
+}
+
+package() {
+	local gemdir="$pkgdir/$(ruby -e 'puts Gem.default_dir')"
+	local geminstdir="$gemdir/gems/$_gemname-$pkgver"
+
+	gem install --local \
+		--install-dir "$gemdir" \
+		--ignore-dependencies \
+		--no-document \
+		--verbose \
+		$_gemname
+
+	# Remove unnecessary files.
+	cd "$gemdir"
+	rm -r cache/ build_info/ doc/ extensions/ plugins/
+
+	cd "$geminstdir"
+	rm -rf ./*.md
+
+}
+
+sha512sums="
+2f8c7aaa6b5e53b73c804ebccff1d5b33057d3a27d5de02392a51f0d563376fca6de24d23df659b7afce1f0bb719e5fbcae515043bebd8225586f010ca8b0962  ruby-json-schema-5.0.0.tar.gz
+"

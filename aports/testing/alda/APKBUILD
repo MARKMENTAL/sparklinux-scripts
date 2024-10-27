@@ -1,0 +1,49 @@
+# Contributor: Patrycja Rosa <alpine@ptrcnull.me>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=alda
+pkgver=2.3.1
+pkgrel=0
+pkgdesc="Music programming language for musicians"
+url="https://github.com/alda-lang/alda"
+arch="x86_64"
+# aarch64: segfaults on gradle build
+# everything else: blocked by openjdk17
+license="EPL-2.0"
+depends="openjdk17"
+makedepends="go openjdk17-jdk gradle"
+source="$pkgname-$pkgver.tar.gz::https://github.com/alda-lang/alda/archive/refs/tags/release-$pkgver.tar.gz
+	alda-player
+	"
+builddir="$srcdir/$pkgname-release-$pkgver"
+# !check: no tests provided by upstream
+# net: gradle dependencies
+options="!check net"
+
+build() {
+	(
+		cd player
+		gradle --no-daemon build
+	)
+
+	(
+		cd client
+		go generate
+		go build
+	)
+}
+
+package() {
+	install -Dm755 client/client \
+		"$pkgdir"/usr/bin/alda
+
+	install -Dm644 player/build/libs/alda-player-fat.jar \
+		-t "$pkgdir"/usr/share/alda/
+
+	install -Dm755 "$srcdir"/alda-player \
+		-t "$pkgdir"/usr/bin
+}
+
+sha512sums="
+cee191d24c854f4f11270a37093e883a5fa097ebc44e9b58c13c68a64ed1abc28695a3b349cbdd83f70102170c0477e61e5c294a6e5b196c821d408da4539041  alda-2.3.1.tar.gz
+77d841e2b7873eb0de06723a5ea5373cc251ff8e82e1d542bc6e1fd297808e94bb9c322783366cbbea31f40284b073ed584296d02f30e36f9ac29158ad53430c  alda-player
+"

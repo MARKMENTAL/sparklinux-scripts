@@ -1,0 +1,46 @@
+# Contributor: Natanael Copa <ncopa@alpinelinux.org>
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=json-glib
+pkgver=1.10.0
+pkgrel=0
+pkgdesc="JSON library built on GLib"
+arch="all"
+url="https://wiki.gnome.org/Projects/JsonGlib"
+license="LGPL-2.1-or-later"
+makedepends="gobject-introspection-dev glib-dev meson"
+subpackages="$pkgname-dev  $pkgname-lang $pkgname-tests $pkgname-dbg"
+source="https://download.gnome.org/sources/json-glib/${pkgver%.*}/json-glib-$pkgver.tar.xz"
+
+build() {
+	abuild-meson \
+		-Dgtk_doc=disabled \
+		.  build
+	meson compile -C build
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C build
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C build
+}
+
+dev() {
+	default_dev
+	mkdir -p "$subpkgdir"/usr/
+	mv "$pkgdir"/usr/bin "$subpkgdir"/usr/
+}
+
+tests() {
+	pkgdesc="Tests for the json-glib package"
+	mkdir -p "$subpkgdir"/usr/
+	mv "$pkgdir"/usr/share \
+		"$pkgdir"/usr/libexec \
+		"$subpkgdir"/usr/
+}
+
+sha512sums="
+cafe813c465e69bc002965483359354be0c0af1af8302e93416e25f835103cb9cd2c07ae51783dc28b69512562b3fdd6f62fdcc4c5952d59e667b3fc7740df06  json-glib-1.10.0.tar.xz
+"

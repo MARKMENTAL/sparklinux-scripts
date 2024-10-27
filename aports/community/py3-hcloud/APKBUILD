@@ -1,0 +1,34 @@
+# Contributor: Michał Polański <michal@polanski.me>
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=py3-hcloud
+pkgver=2.2.1
+pkgrel=0
+pkgdesc="Official Hetzner Cloud Python library"
+url="https://github.com/hetznercloud/hcloud-python"
+license="MIT"
+arch="noarch"
+depends="py3-dateutil py3-requests"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="https://github.com/hetznercloud/hcloud-python/archive/v$pkgver/py3-hcloud-$pkgver.tar.gz"
+builddir="$srcdir/hcloud-python-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/hcloud-$pkgver-py3-none-any.whl
+}
+
+sha512sums="
+32ac9da7e88817ee16bfa31eef51404c7e973511f00950c575a857722418a29641d852dffec9554185a39999dd3951c7c7fddc3f4df2d3f9b5b614426c9d7e78  py3-hcloud-2.2.1.tar.gz
+"

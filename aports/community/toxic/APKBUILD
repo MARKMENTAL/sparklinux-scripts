@@ -1,0 +1,78 @@
+# Contributor: Jonathan Sieber <mail@strfry.org>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=toxic
+pkgver=0.15.1
+pkgrel=0
+pkgdesc="ncurses-based Tox client"
+url="https://github.com/JFreegman/toxic"
+arch="all"
+license="GPL-3.0-or-later"
+depends="$pkgname-common=$pkgver-r$pkgrel"
+makedepends="
+	curl-dev
+	libconfig-dev
+	libnotify-dev
+	libqrencode-dev
+	libvpx-dev
+	libx11-dev
+	linux-headers
+	ncurses-dev
+	openal-soft-dev
+	opus-dev
+	toxcore-dev
+	"
+subpackages="$pkgname-doc $pkgname-common::noarch $pkgname-nox"
+source="$pkgname-$pkgver.tar.gz::https://github.com/JFreegman/toxic/archive/refs/tags/v$pkgver.tar.gz
+	fix-makefile.patch
+	"
+
+build() {
+	# Do not remove ENABLE_RELEASE=1, otherwise Toxic
+	# will segfault while adding contacts to the friends
+	# list due to -fstack-clash-protection being enabled.
+
+	export USER_CFLAGS="$CFLAGS"
+	export USER_LDFLAGS="$LDFLAGS"
+
+	msg "Building full variant"
+	make \
+		PREFIX=/usr \
+		ENABLE_RELEASE=1
+
+	msg "Building no-x variant"
+	make BUILD_DIR="$builddir/build-nox" \
+		PREFIX=/usr \
+		ENABLE_RELEASE=1 \
+		DISABLE_DESKTOP_NOTIFY=1 \
+		DISABLE_X11=1
+}
+
+check() {
+	./build/toxic --version
+	./build-nox/toxic --version
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr install
+
+	install -Dvm755 build-nox/toxic \
+		"$pkgdir"/usr/bin/toxic-nox
+}
+
+common() {
+	pkgdesc="$pkgdesc (common files)"
+	depends=
+
+	amove usr/share
+}
+
+nox() {
+	pkgdesc="$pkgdesc (without X11 & libnotify support)"
+
+	amove usr/bin/toxic-nox
+}
+
+sha512sums="
+8bb6eef248413b00124f39b798bdaf029f8c4a13c0faf0be8f061bd0b27369ae1b44e052efd25353e5bf59724a2b02892eb95fdad7a0f8d7540212475f8a17b6  toxic-0.15.1.tar.gz
+53e82b9a8cb7b57867fd77a8b4f4a0d7d9e9246479f1bb7b23b9586c68d1712271316e8c17545e9fd1daee3ecd1ac587b2c7dcdb42518d00537c580594c53059  fix-makefile.patch
+"

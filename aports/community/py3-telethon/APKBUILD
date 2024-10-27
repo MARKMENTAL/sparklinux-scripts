@@ -1,0 +1,50 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Lindsay Zhou <i@lin.moe>
+pkgname=py3-telethon
+pkgver=1.36.0
+pkgrel=0
+pkgdesc="Full-featured Telegram client library"
+url="https://docs.telethon.dev/"
+arch="noarch"
+license="MIT"
+depends="
+	py3-pyaes
+	py3-rsa
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="
+	py3-pytest
+	py3-pytest-asyncio
+	"
+subpackages="$pkgname-pyc"
+source="
+	https://github.com/LonamiWebs/Telethon/archive/v$pkgver/Telethon-v$pkgver.tar.gz
+	fix-imghdr-and-doc-tests.patch
+	"
+builddir="$srcdir/Telethon-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -k 'not test_all_methods_present'
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+022b787f81d0cfe5832b56856966ac2f3dfccb573cfba731816b3772b9a36c41559873f7db8fd9115b0b9ac0bb6207f90483e43231d52d2b05910dfc462ae756  Telethon-v1.36.0.tar.gz
+ead43b025d3717d901a7c9dc4d6c42c54f7288cf2e4b6910496817ba7cf011c95afdfcf908f4dea7ff888b67abdc9a60c1a44832d859566310b5f36d17ef5685  fix-imghdr-and-doc-tests.patch
+"

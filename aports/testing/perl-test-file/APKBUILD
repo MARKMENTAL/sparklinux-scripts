@@ -1,0 +1,33 @@
+# Contributor: Stuart Cardall <developer@it-offshore.co.uk>
+# Maintainer: Stuart Cardall <developer@it-offshore.co.uk>
+pkgname=perl-test-file
+_pkgreal=Test-File
+pkgver=1.993
+pkgrel=1
+pkgdesc="test file attributes"
+url="https://github.com/briandfoy/test-file"
+arch="noarch"
+license="Artistic-2.0"
+depends="perl"
+checkdepends="perl-test-utf8"
+subpackages="$pkgname-doc"
+source="https://cpan.metacpan.org/authors/id/B/BD/BDFOY/Test-File-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgreal-$pkgver"
+
+build() {
+	PERL_MM_USE_DEFAULT=1 perl Makefile.PL INSTALLDIRS=vendor
+	make
+}
+
+check() {
+	make test
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	find "$pkgdir" \( -name perllocal.pod -o -name .packlist \) -delete
+}
+
+sha512sums="
+0e14580a11afc2f3115d5594be226237803ad8e462c314a2b775ca96bf491cfeea84bd90ae92a70c58d3d8fc7c0f21d38b54a58d29dd01a2c082c0cbfecb0aaf  Test-File-1.993.tar.gz
+"

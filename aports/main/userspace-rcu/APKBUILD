@@ -1,0 +1,55 @@
+# Contributor: Michael Jeanson <mjeanson@efficios.com>
+# Contributor: Fabian Affolter <fabian@affolter-engineering.ch>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=userspace-rcu
+pkgver=0.14.1
+pkgrel=1
+pkgdesc="Userspace RCU (read-copy-update) library"
+url="https://liburcu.org/"
+arch="all"
+license="LGPL-2.1-or-later"
+makedepends="bash perl perl-utils"
+subpackages="$pkgname-static $pkgname-dev $pkgname-doc"
+source="https://lttng.org/files/urcu/userspace-rcu-$pkgver.tar.bz2"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--localstatedir=/var
+	make V=1
+}
+
+check() {
+	make check
+	#make regtest # Somewhat long regression tests
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	install -Dm644 LICENSE "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+}
+
+dev() {
+	default_dev
+	# Move back examples files that are wrongly included
+	# by the default dev splitfunc
+	cp -pr "$subpkgdir"/usr/share/doc/$pkgname \
+		"$pkgdir"/usr/share/doc/
+	rm -rf "$subpkgdir"/usr/share/doc/
+}
+
+static() {
+	depends=""
+	pkgdesc="$pkgdesc (static libraries)"
+	mkdir -p "$subpkgdir"/usr/lib
+	mv "$pkgdir"/usr/lib/*.a "$subpkgdir"/usr/lib
+}
+
+sha512sums="
+46137525854164df05326202909689b62f8f3aa6e04127eb9157a83aed8180f35a68332ec66e4e4fc9b0c046b64c64b492caed4b64f86f87a31579e4209ec345  userspace-rcu-0.14.1.tar.bz2
+"

@@ -1,0 +1,44 @@
+# Contributor: Patrycja Rosa <alpine@ptrcnull.me>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=py3-zopfli
+pkgver=0.2.3
+pkgrel=2
+pkgdesc="Python bindings to zopfli"
+url="https://github.com/fonttools/py-zopfli"
+arch="all"
+license="Apache-2.0"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-setuptools_scm
+	py3-wheel
+	python3-dev
+	zopfli-dev
+	"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="https://github.com/fonttools/py-zopfli/archive/refs/tags/v$pkgver/py3-zopfli-$pkgver.tar.gz"
+builddir="$srcdir/py-zopfli-$pkgver"
+
+build() {
+	export SETUPTOOLS_SCM_PRETEND_VERSION=$pkgver
+	export USE_SYSTEM_ZOPFLI=1
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+071e897270a5af893670a3744d5bec9557cc80ea3ad29dd7bf44e990e8db8a9d1eaa6b8e8bfab38094cfba00d18ee3ff393f729aa95242a52bdfac3535097efb  py3-zopfli-0.2.3.tar.gz
+"

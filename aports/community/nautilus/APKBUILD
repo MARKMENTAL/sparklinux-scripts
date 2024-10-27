@@ -1,0 +1,82 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: team/gnome <ablocorrea@hotmail.com>
+pkgname=nautilus
+pkgver=47.0
+pkgrel=0
+pkgdesc="GNOME file manager"
+url="https://wiki.gnome.org/Apps/Nautilus"
+# s390x: localsearch -> exempi
+arch="all !s390x"
+license="GPL-2.0-or-later"
+depends="
+	desktop-file-utils
+	gsettings-desktop-schemas
+	localsearch
+	"
+depends_dev="
+	gnome-autoar-dev
+	gnome-desktop-dev
+	"
+makedepends="
+	$depends_dev
+	docbook-xml
+	docbook-xsl
+	gexiv2-dev
+	gst-plugins-base-dev
+	itstool
+	jpeg-dev
+	libadwaita-dev
+	libcloudproviders-dev
+	libexif-dev
+	libportal-dev
+	librsvg-dev
+	libseccomp-dev
+	libxml2-dev
+	libxml2-utils
+	libxslt
+	meson
+	tiff-dev
+	tinysparql-dev
+	"
+checkdepends="dbus appstream-glib"
+subpackages="$pkgname-dev $pkgname-lang"
+source="https://download.gnome.org/sources/nautilus/${pkgver%%.*}/nautilus-$pkgver.tar.xz
+	meson-fix-mixed-list.patch
+	"
+
+if [ "$CARCH" = "armhf" ]; then
+	options="!check" # one test fails on armhf
+fi
+
+# secfixes:
+#   3.32.1-r0:
+#     - CVE-2019-11461
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dtests=headless \
+		. output
+	meson compile -C output
+}
+
+check() {
+	test_list=$(meson test --list -C output) 2> /dev/null
+	# Remove test known to fail upstream
+	# https://gitlab.gnome.org/GNOME/nautilus/-/issues/3115
+	# https://gitlab.gnome.org/GNOME/localsearch/-/issues/278
+	test_list=${test_list//test-nautilus-search-engine-tracker}
+
+	XDG_RUNTIME_DIR="$(mktemp -d -p "$builddir")" \
+	dbus-run-session -- \
+	meson test --no-rebuild --print-errorlogs -C output $test_list
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+e124f56069cee26d0be352f5c8f33016f9f5059144cf089c9d84b791d792597d1fc95d90b7187955abef877b7188a3608cd287195e3246e27f7a34b0d169907c  nautilus-47.0.tar.xz
+379478e4d9dda3e6c6a3a86873f68f54bc88edd5d0066e1b2877a29a7f27aec251a9d0d741d6ed4a4d05cf39ac4ce73583a6d98838771a96a865510bfa12b54e  meson-fix-mixed-list.patch
+"

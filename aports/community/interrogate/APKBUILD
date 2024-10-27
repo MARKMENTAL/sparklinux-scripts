@@ -1,0 +1,35 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+pkgname=interrogate
+pkgver=1.6.0
+pkgrel=1
+pkgdesc="Interrogate a codebase for docstring coverage"
+url="https://github.com/econchick/interrogate"
+arch="noarch"
+license="MIT"
+depends="py3-attrs py3-click py3-colorama py3-py py3-setuptools py3-tabulate py3-toml"
+makedepends="py3-gpep517 py3-wheel"
+checkdepends="py3-pytest-xdist py3-pytest-cov py3-pytest-mock"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://files.pythonhosted.org/packages/source/i/interrogate/interrogate-$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+4dca69dcc61ca1c3c131681fd0fa995617441dd1154fe596a5c41d273e6c92fca2d24ff68ae0abe97e7491cb457d39443c6e1b5b5fe815b1771ab1aa5c5e1639  interrogate-1.6.0.tar.gz
+"

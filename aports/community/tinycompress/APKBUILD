@@ -1,0 +1,49 @@
+# Contributor: Minecrell <minecrell@minecrell.net>
+# Maintainer: Minecrell <minecrell@minecrell.net>
+pkgname=tinycompress
+pkgver=1.2.8
+pkgrel=1
+pkgdesc="Userspace library for ALSA compressed APIs"
+url="https://alsa-project.org/"
+arch="all"
+license="BSD-3-Clause OR LGPL-2.1-only"
+makedepends="linux-headers ffmpeg-dev"
+subpackages="$pkgname-dev $pkgname-fcplay"
+source="https://alsa-project.org/files/pub/tinycompress/tinycompress-$pkgver.tar.bz2"
+
+prepare(){
+	default_prepare
+	update_config_sub
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--enable-fcplay
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+fcplay() {
+	pkgdesc="$pkgdesc (fcplay tool)"
+	license="LGPL-2.1-only"
+
+	mkdir -p "$subpkgdir"/usr/bin
+	mv "$pkgdir"/usr/bin/fcplay "$subpkgdir"/usr/bin/fcplay
+}
+
+sha512sums="
+c4aa3f5f95d6f98c7ea9d22e03020d324ab6de05e044d653c8f840464ebae12520f450bb9e81c7b76f836a2c75ca4d399a373163f544ddc7ab5ba01052916347  tinycompress-1.2.8.tar.bz2
+"

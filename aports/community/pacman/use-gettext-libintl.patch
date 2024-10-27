@@ -1,0 +1,31 @@
+Force build system to use libintl coming with gettext.
+
+--- a/meson.build
++++ b/meson.build
+@@ -365,7 +365,7 @@
+   pacman_sources,
+   include_directories : includes,
+   link_with : [libalpm, libcommon],
+-  dependencies : [libarchive],
++  dependencies : [libarchive, libintl],
+   install : true,
+ )
+ 
+@@ -374,7 +374,7 @@
+   pacman_conf_sources,
+   include_directories : includes,
+   link_with : [libalpm, libcommon],
+-  dependencies : [libarchive],
++  dependencies : [libarchive, libintl],
+   install : true,
+ )
+ 
+@@ -383,7 +383,7 @@
+   testpkg_sources,
+   include_directories : includes,
+   link_with : [libalpm],
+-  dependencies : [libarchive],
++  dependencies : [libarchive, libintl],
+   install : true,
+ )
+ 

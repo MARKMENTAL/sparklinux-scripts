@@ -1,0 +1,97 @@
+diff --git a/Ghidra/Debug/Debugger-rmi-trace/build.gradle b/Ghidra/Debug/Debugger-rmi-trace/build.gradle
+index 40fbc17ab06..17de41dc95c 100644
+--- a/Ghidra/Debug/Debugger-rmi-trace/build.gradle
++++ b/Ghidra/Debug/Debugger-rmi-trace/build.gradle
+@@ -44,12 +44,8 @@ task generateProtoPy {
+ 	ext.outdir = file("build/generated/source/proto/main/py")
+ 	outputs.dir(outdir)
+ 	inputs.files(src)
+-	dependsOn(configurations.protocArtifact)
+ 	doLast {
+-		def exe = configurations.protocArtifact.first()
+-		if (!isCurrentWindows()) {
+-			exe.setExecutable(true)
+-		}
++		def exe = "protoc"
+ 		exec {
+ 			commandLine exe, "--python_out=$outdir", "-I$srcdir"
+ 			args src
+diff --git a/Ghidra/Debug/Framework-AsyncComm/Module.manifest b/Ghidra/Debug/Framework-AsyncComm/Module.manifest
+index 89174007c96..582747e6540 100644
+--- a/Ghidra/Debug/Framework-AsyncComm/Module.manifest
++++ b/Ghidra/Debug/Framework-AsyncComm/Module.manifest
+@@ -1 +1 @@
+-MODULE FILE LICENSE: lib/protobuf-java-3.21.8.jar BSD-3-GOOGLE
++MODULE FILE LICENSE: lib/protobuf-java-3.24.4.jar BSD-3-GOOGLE
+diff --git a/Ghidra/Debug/Framework-AsyncComm/build.gradle b/Ghidra/Debug/Framework-AsyncComm/build.gradle
+index a84e1568088..5ff4fa75eee 100644
+--- a/Ghidra/Debug/Framework-AsyncComm/build.gradle
++++ b/Ghidra/Debug/Framework-AsyncComm/build.gradle
+@@ -22,7 +22,7 @@ apply plugin: 'eclipse'
+ eclipse.project.name = 'Debug Framework-AsyncComm'
+ 
+ dependencies {
+-	api 'com.google.protobuf:protobuf-java:3.21.8'
++	api 'com.google.protobuf:protobuf-java:3.24.4'
+ 	api project(':Generic')
+ 	api project(':Graph')
+ 	api project(':ProposedUtils')
+diff --git a/gradle/debugger/hasProtobuf.gradle b/gradle/debugger/hasProtobuf.gradle
+index 23b4ce74bb1..0d9194f53d1 100644
+--- a/gradle/debugger/hasProtobuf.gradle
++++ b/gradle/debugger/hasProtobuf.gradle
+@@ -17,40 +17,10 @@
+ 	id 'com.google.protobuf' version '0.8.10'
+ }*/
+ 
+-configurations {
+-	allProtocArtifacts
+-	protocArtifact
+-}
+-
+ def platform = getCurrentPlatformName()
+ 
+ 
+ dependencies {
+-	allProtocArtifacts 'com.google.protobuf:protoc:3.21.8:windows-x86_64@exe'
+-	allProtocArtifacts 'com.google.protobuf:protoc:3.21.8:linux-x86_64@exe'
+-	allProtocArtifacts 'com.google.protobuf:protoc:3.21.8:linux-aarch_64@exe'
+-	allProtocArtifacts 'com.google.protobuf:protoc:3.21.8:osx-x86_64@exe'
+-	allProtocArtifacts 'com.google.protobuf:protoc:3.21.8:osx-aarch_64@exe'
+-
+-	if (isCurrentWindows()) {
+-		protocArtifact 'com.google.protobuf:protoc:3.21.8:windows-x86_64@exe'
+-	}
+-	if (isCurrentLinux()) {
+-		if (platform.endsWith("x86_64")) {
+-			protocArtifact 'com.google.protobuf:protoc:3.21.8:linux-x86_64@exe'
+-		}
+-		else {
+-			protocArtifact 'com.google.protobuf:protoc:3.21.8:linux-aarch_64@exe'
+-		}
+-	}
+-	if (isCurrentMac()) {
+-		if (platform.endsWith("x86_64")) {
+-			protocArtifact 'com.google.protobuf:protoc:3.21.8:osx-x86_64@exe'
+-		}
+-		else {
+-			protocArtifact 'com.google.protobuf:protoc:3.21.8:osx-aarch_64@exe'
+-		}
+-	}
+ }
+ 
+ /*protobuf {
+@@ -67,12 +37,8 @@ task generateProto {
+ 	ext.outdir = file("build/generated/source/proto/main/java")
+ 	outputs.dir(outdir)
+ 	inputs.files(src)
+-	dependsOn(configurations.protocArtifact)
+ 	doLast {
+-		def exe = configurations.protocArtifact.first()
+-		if (!isCurrentWindows()) {
+-			exe.setExecutable(true)
+-		}
++		def exe = "protoc"
+ 		exec {
+ 			commandLine exe, "--java_out=$outdir", "-I$srcdir"
+ 			args src

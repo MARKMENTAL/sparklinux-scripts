@@ -1,0 +1,179 @@
+# Maintainer: streaksu <streaksu@mailbox.org>
+pkgname=limine
+pkgver=8.0.13
+pkgrel=0
+pkgdesc="Advanced, portable, multiprotocol bootloader"
+url="https://limine-bootloader.org"
+# only these supported
+arch="aarch64 x86 x86_64 riscv64 loongarch64"
+license="BSD-2-Clause"
+install="
+	$pkgname.post-install
+	$pkgname-efi-updater.post-upgrade
+	"
+makedepends="
+	clang
+	lld
+	llvm
+	mtools
+	nasm
+	"
+subpackages="
+	$pkgname-doc
+	$pkgname-dev
+	$pkgname-cd:_cd
+	$pkgname-efi-updater:updater
+	"
+source="https://github.com/limine-bootloader/limine/releases/download/v$pkgver/limine-$pkgver.tar.gz
+	limine-efi-updater.sh
+	limine-efi.conf
+	"
+options="!check" # no tests in tarball
+
+case "$CARCH" in
+aarch64|x86_64)
+	# can't build these on all targets.
+	subpackages="
+		$subpackages
+		$pkgname-sys
+		$pkgname-pxe
+		$pkgname-x86_32:_32
+		$pkgname-x86_64:_64
+		$pkgname-aarch64:_64_arm
+		$pkgname-riscv64:_64_riscv
+		$pkgname-loongarch64:_64_loongarch
+		"
+	_conf="--enable-all"
+	;;
+riscv64)
+	# riscv64 disabled all targets on llvm but riscv64, so we try to follow
+	# their lead.
+	subpackages="
+		$subpackages
+		$pkgname-riscv64:_64_riscv
+		"
+	_conf="
+		--enable-uefi-riscv64
+		--enable-uefi-cd
+		"
+	;;
+x86)
+	subpackages="
+		$subpackages
+		$pkgname-sys
+		$pkgname-pxe
+		$pkgname-x86_32:_32
+		"
+	_conf="
+		--enable-bios
+		--enable-bios-cd
+		--enable-bios-pxe
+		--enable-uefi-cd
+		--enable-uefi-ia32
+		"
+	;;
+loongarch64)
+	# Same as riscv64
+	subpackages="
+		$subpackages
+		$pkgname-loongarch64:_64_loongarch
+		"
+	_conf="
+		--enable-uefi-loongarch64
+		--enable-uefi-cd
+		"
+	;;
+esac
+
+build() {
+	./configure \
+		--host=$CHOST \
+		--prefix=/usr \
+		$_conf
+	make
+}
+
+package() {
+	provides="$pkgname-enroll-config=$pkgver-r$pkgrel $pkgname-deploy=$pkgver-r$pkgrel"
+	make DESTDIR="$pkgdir" install
+
+	install -Dm644 "$srcdir"/limine-efi.conf -t "$pkgdir"/etc/limine/
+	install -Dm755 "$srcdir"/limine-efi-updater.sh -t "$pkgdir"/usr/bin/
+}
+
+_cd() {
+	pkgdesc="$pkgdesc (cd/efi files)"
+	depends="$pkgname=$pkgver-r$pkgrel $pkgname-sys=$pkgver-r$pkgrel"
+
+	amove usr/share/limine/limine-*-cd.bin
+}
+
+pxe() {
+	pkgdesc="$pkgdesc (pxe executable)"
+	depends="$pkgname=$pkgver-r$pkgrel $pkgname-sys=$pkgver-r$pkgrel"
+
+	amove usr/share/limine/limine-bios-pxe.bin
+}
+
+sys() {
+	pkgdesc="$pkgdesc (sys file)"
+	depends="$pkgname=$pkgver-r$pkgrel"
+
+	amove usr/share/limine/limine-bios.sys
+}
+
+_32() {
+	pkgdesc="$pkgdesc (32-bit x86 uefi image)"
+	depends="$pkgname=$pkgver-r$pkgrel"
+
+	# renamed to be less vague
+	provides="$pkgname-32=$pkgver-r$pkgrel"
+	replaces="$pkgname-32"
+
+	amove usr/share/limine/BOOTIA32.EFI
+}
+
+_64() {
+	pkgdesc="$pkgdesc (64-bit x86 uefi image)"
+	depends="$pkgname=$pkgver-r$pkgrel"
+
+	# renamed to be less vague
+	provides="$pkgname-64=$pkgver-r$pkgrel"
+	replaces="$pkgname-64"
+
+	amove usr/share/limine/BOOTX64.EFI
+}
+
+_64_arm() {
+	pkgdesc="$pkgdesc (64-bit aarch64 uefi image)"
+	depends="$pkgname=$pkgver-r$pkgrel"
+
+	amove usr/share/limine/BOOTAA64.EFI
+}
+
+_64_riscv() {
+	pkgdesc="$pkgdesc (64-bit riscv64 uefi image)"
+	depends="$pkgname=$pkgver-r$pkgrel"
+
+	amove usr/share/limine/BOOTRISCV64.EFI
+}
+
+_64_loongarch() {
+	pkgdesc="$pkgdesc (64-bit loongarch64 uefi image)"
+	depends="$pkgname=$pkgver-r$pkgrel"
+
+	amove usr/share/limine/BOOTLOONGARCH64.EFI
+}
+
+updater() {
+	pkgdesc="Limine auto-updater for EFI payload"
+
+	amove etc/limine/limine-efi.conf
+	amove usr/bin/limine-efi-updater.sh
+}
+
+sha512sums="
+9f03b38dfdc178e6593c46eee84313d30174ef00f422ea7a5bd2f9ec1564c417301ed07eed716ec246e4f8b19d62a0bfe840bc5b297fa9e232e88511f1287ec2  limine-8.0.13.tar.gz
+e4a92c519e5a17bae16ec31dcdc7faeefbbaf12531744839e4ce5335a347a15c3955ac2c36ddf848abc33651b2e9536d298356dac8f2c6a54f9a8dff34a69a0d  limine-efi-updater.sh
+394c5067b850eb7b8b236c172471c6b9d152a4ef823d2f6b71396199fbe798638ef4031e60402fdfdfc9425aed0b7e119d15625fc0007622d35fbfadf9457cf8  limine-efi.conf
+"

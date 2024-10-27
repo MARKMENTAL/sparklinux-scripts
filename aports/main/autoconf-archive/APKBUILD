@@ -1,0 +1,33 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Contributor: Roberto Oliveira <robertoguimaraes8@gmail.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=autoconf-archive
+pkgver=2023.02.20
+pkgrel=1
+pkgdesc="Collection of re-usable GNU Autoconf macros"
+url="https://www.gnu.org/software/autoconf-archive/"
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="autoconf"
+subpackages="$pkgname-doc"
+source="https://ftp.gnu.org/gnu/autoconf-archive/autoconf-archive-$pkgver.tar.xz"
+options="!check" # no tests
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+a744f5aa0c1a813b81ad1528aebf7511bde7f470f34626d2057ed6664127120182e031fec5d22027d4a204544266135f202b8ef453bff70a3b0315c506c82528  autoconf-archive-2023.02.20.tar.xz
+"

@@ -1,0 +1,58 @@
+# Contributor: Fabian Affolter <fabian@affolter-engineering.ch>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=p11-kit
+pkgver=0.25.5
+pkgrel=1
+pkgdesc="Library for loading and sharing PKCS#11 modules"
+url="https://p11-glue.freedesktop.org/"
+arch="all"
+license="BSD-3-Clause"
+makedepends="meson libtasn1-dev libffi-dev"
+subpackages="$pkgname-dev $pkgname-doc $pkgname-trust $pkgname-server"
+source="https://github.com/p11-glue/p11-kit/releases/download/$pkgver/p11-kit-$pkgver.tar.xz"
+
+# secfixes:
+#   0.23.22-r0:
+#     - CVE-2020-29361
+#     - CVE-2020-29362
+#     - CVE-2020-29363
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dbackend_max_links=4 \
+		-Dtest="$(want_check && echo true || echo false)" \
+		-Dtrust_paths=/etc/ssl/certs/ca-certificates.crt \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+	install -Dm644 "$pkgdir"/etc/pkcs11/pkcs11.conf.example -t "$pkgdir"/usr/share/doc/$pkgname
+}
+
+trust() {
+	pkgdesc="System trust module from $pkgname"
+
+	amove \
+		usr/share/p11-kit/modules/p11-kit-trust.module \
+		usr/lib/pkcs11/p11-kit-trust.so \
+		usr/bin/trust
+}
+
+server() {
+	pkgdesc="Server and client commands for $pkgname"
+
+	amove \
+		usr/lib/pkcs11/p11-kit-client.so \
+		usr/libexec/p11-kit/p11-kit-server
+}
+
+sha512sums="
+177ec6ff5eb891901078306dce2bf3f5c1a0e5c2a8c493bdf5a08ae1ff1240fdf6952961e973c373f80ac3d1d5a9927e07f4da49e4ff92269d992e744889fc94  p11-kit-0.25.5.tar.xz
+"

@@ -1,0 +1,83 @@
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=buf
+pkgver=1.34.0
+pkgrel=0
+pkgdesc="CLI to work with Protocol Buffers"
+url="https://buf.build/"
+# 32bit: fail tests with int overflow
+arch="all !x86 !armhf !armv7"
+license="Apache-2.0"
+makedepends="go"
+checkdepends="protobuf-dev protoc-gen-go"
+subpackages="
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	$pkgname-protoc-plugins:_protoc
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/bufbuild/buf/archive/refs/tags/v$pkgver.tar.gz
+	remove-deprecated-testcorpus-field.patch
+	"
+options="net" # download Go modules
+
+# private/bufpkg/bufstudioagent tests time out
+case "$CARCH" in
+	riscv64|ppc64le) options="$options !check"
+esac
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	for binary in buf protoc-gen-buf-breaking protoc-gen-buf-lint; do
+		go build -v ./cmd/$binary
+	done
+
+	for shell in bash fish zsh; do
+		./buf completion $shell > buf.$shell
+	done
+
+	# These programs are required for check phase
+	mkdir -p "$builddir"/bin
+	go build -v -o bin/ ./private/buf/cmd/buf/command/generate/internal/protoc-gen-top-level-type-names-yaml
+	for cmd in writer receiver; do
+		go build -v -o bin/ ./private/buf/cmd/buf/command/alpha/protoc/internal/protoc-gen-insertion-point-$cmd
+	done
+}
+
+check() {
+	export PATH="$PATH:$builddir/bin"
+
+	# TestCompareGeneratedStubsGoogleapisGo fails due to difference in protoc versions
+	# TestCompareGoogleapis fails (TODO: investigate more)
+	# TestGitCloner tries to clone a remote repository
+	# TestWorkspaceGit checks the project root whether it is a git repo
+	go test -skip 'TestCompareGeneratedStubsGoogleapisGo|TestCompareGoogleapis|TestGitCloner|TestWorkspaceGit' ./...
+}
+
+package() {
+	install -Dm755 buf -t "$pkgdir"/usr/bin/
+
+	install -Dm644 buf.bash \
+		"$pkgdir"/usr/share/bash-completion/completions/buf
+	install -Dm644 buf.fish \
+		"$pkgdir"/usr/share/fish/vendor_completions.d/buf.fish
+	install -Dm644 buf.zsh \
+		"$pkgdir"/usr/share/zsh/site-functions/_buf
+
+	install -Dm755 protoc-gen-buf-breaking protoc-gen-buf-lint \
+		-t "$pkgdir"/usr/bin/
+}
+
+_protoc() {
+	pkgdesc="$pkgdesc (protoc plugins)"
+	depends="protoc"
+
+	amove usr/bin/protoc-gen-buf-*
+}
+
+sha512sums="
+42ac632084fb225f86a386a665d0274b137e8c4af96d492f2780347b6eb4670293e7686917d3cffe513709533e0587100f2f3f580a3becac4a3c2cb7fb3e788f  buf-1.34.0.tar.gz
+0fa6fef80d2eba7d59344c458ecf5ddaa448dee338c3bc4d24d4a29748eedd98ab2046847ddbf96e09f8c99b7c0dcb1ecb69389e344c042169c838a6a91b8ea9  remove-deprecated-testcorpus-field.patch
+"

@@ -1,0 +1,109 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Contributor: Nicolas Lorin <androw95220@gmail.com>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=mimalloc1
+_projname=mimalloc
+pkgver=1.8.6
+pkgrel=0
+_pkgdesc="A compact general purpose allocator with excellent performance"
+pkgdesc="$_pkgdesc (in secure mode)"
+url="https://github.com/microsoft/mimalloc"
+# ppc64le: tests segfault in secure mode
+arch="all !ppc64le"
+license="MIT"
+makedepends="cmake samurai"
+provides="mimalloc=$pkgver-r$pkgrel"
+subpackages="
+	$pkgname-dev
+	$pkgname-insecure
+	$pkgname-debug
+	"
+source="https://github.com/microsoft/mimalloc/archive/v$pkgver/$_projname-$pkgver.tar.gz
+	fix-align-issue-on-32bit-musl.patch
+	cmake-add-insecure-suffix.patch
+	"
+builddir="$srcdir/$_projname-$pkgver"
+
+_buildtypes='debug insecure secure'
+
+build() {
+	# https://github.com/microsoft/mimalloc/issues/597
+	export CFLAGS="$CFLAGS -D__USE_ISOC11"
+	_build out/debug -DCMAKE_BUILD_TYPE=Debug -DMI_DEBUG_FULL=ON
+
+	# This is called "release" build by upstream.
+	_build out/insecure -DCMAKE_BUILD_TYPE=Release -DMI_SECURE=OFF
+
+	_build out/secure -DCMAKE_BUILD_TYPE=Release -DMI_SECURE=ON
+}
+
+_build() {
+	local outdir="$1"; shift
+
+	local crossopts=
+	[ "$CBUILD" = "$CHOST" ] \
+		|| crossopts='-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux'
+
+	CFLAGS=${CFLAGS/-Os/} cmake -B "$outdir" -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_VERBOSE_MAKEFILE=ON \
+		-DMI_INSTALL_TOPLEVEL=ON \
+		$crossopts \
+		"$@" .
+	cmake --build "$outdir"
+}
+
+check() {
+	local btype; for btype in $_buildtypes; do
+		msg "Testing $btype build"
+
+		cd "$builddir"/out/$btype
+		CTEST_OUTPUT_ON_FAILURE=TRUE ctest --timeout 300
+	done
+}
+
+package() {
+	local btype; for btype in $_buildtypes; do
+		DESTDIR="$pkgdir" cmake --install out/$btype
+	done
+
+	cd "$pkgdir"
+	ln -s libmimalloc-secure.so usr/lib/libmimalloc.so
+	ln -s libmimalloc-secure.so.${pkgver%%.*} usr/lib/libmimalloc.so.${pkgver%%.*}
+	ln -s libmimalloc-secure.so.${pkgver%.*} usr/lib/libmimalloc.so.${pkgver%.*}
+	ln -s libmimalloc-secure.a usr/lib/libmimalloc.a
+
+	sed 's/-secure/-insecure/g' usr/lib/cmake/mimalloc/mimalloc-release.cmake \
+		> usr/lib/cmake/mimalloc/mimalloc-insecure.cmake
+	mv usr/lib/cmake/mimalloc/mimalloc-release.cmake usr/lib/cmake/mimalloc/mimalloc-secure.cmake
+	ln -s mimalloc-secure.cmake usr/lib/cmake/mimalloc/mimalloc-release.cmake
+
+	rm -f usr/lib/*.o
+}
+
+dev() {
+	provides="mimalloc-dev=$pkgver-r$pkgrel"
+
+	default_dev
+}
+
+insecure() {
+	pkgdesc="$_pkgdesc (in insecure mode)"
+	provides="mimalloc-insecure=$pkgver-r$pkgrel"
+
+	amove usr/lib/libmimalloc-insecure.*
+}
+
+debug() {
+	pkgdesc="$_pkgdesc (debug build)"
+	provides="mimalloc-debug=$pkgver-r$pkgrel"
+	options="!strip"
+
+	amove usr/lib/libmimalloc-debug.*
+}
+
+sha512sums="
+9fc05c77b2f34f9074397f53d0fbd1729a885b943473fcbb4012af31230f67e8cdf91059ab16511c4b7569efb6ded5f3438a06af0ca64038c83ea0d4d6f1f918  mimalloc-1.8.6.tar.gz
+6c17d01de467018d328f65c220676ff51e313f22143cb3fda4d980db203d5b2168c84482d91fa3db6981efdcb0b716ac2fbae60c2032b15a5152999d4ffc7a19  fix-align-issue-on-32bit-musl.patch
+9cfaa68a6dcf377a52a60e37a1e83f81fc9ba94afb55f10bb089e24561e791c318e7e0860c17944ef2aaa11546a32fa4a3510afe3aefefcc0a393dc2f334ef3d  cmake-add-insecure-suffix.patch
+"

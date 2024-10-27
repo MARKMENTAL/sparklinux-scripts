@@ -1,0 +1,139 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=gpgme
+pkgver=1.23.2
+pkgrel=1
+pkgdesc="gnupg made easy"
+url="https://www.gnupg.org/related_software/gpgme/"
+arch="all"
+license="LGPL-2.1-or-later GPL-3.0-or-later"
+# NOTE: gpgme needs at least gpg or gpgsm, but most programs use only gpg.
+# Some packages depending on gpgme need more GnuPG components (e.g.
+# gnupg-dirmngr); these must be explicitly defined in the package's depends
+# (not here!).
+depends="gpg gpg-agent gpgsm"
+makedepends="
+	libassuan-dev
+	libgpg-error-dev
+	py3-setuptools
+	py3-wheel
+	python3-dev
+	qt5-qtbase-dev
+	qt6-qtbase-dev
+	swig
+	texinfo
+	"
+checkdepends="gnupg"
+install="$pkgname.post-upgrade gpgmepp.post-upgrade qgpgme.post-upgrade"
+subpackages="
+	$pkgname-dev
+	$pkgname-doc
+	gpgmepp
+	py3-gpgme-pyc
+	py3-gpgme:py3
+	q$pkgname
+	q${pkgname}6
+	$pkgname-lisp::noarch
+	"
+source="https://www.gnupg.org/ftp/gcrypt/gpgme/gpgme-$pkgver.tar.bz2
+	lfs64.patch
+	"
+
+case "$CARCH" in
+x86|armhf|armv7)
+	# the tests fail here despite some fixes above;
+	#
+	# FAIL!  : AddExistingSubkeyJobTest::testAddExistingSubkeyWithExpiration() Compared values are not the same
+	#    Actual   (result.code())                     : 1
+	#    Expected (static_cast<int>(GPG_ERR_INV_TIME)): 161
+	#    Loc: [t-addexistingsubkey.cpp(238)]
+	options="$options !check"
+	;;
+esac
+
+prepare() {
+	default_prepare
+
+	# can't build qt5+qt6 at once or share the same tree
+	cp -r "$builddir" "$srcdir"/qt6
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--localstatedir=/var \
+		--enable-languages="python cl qt cpp" \
+		--enable-static \
+		--disable-dependency-tracking
+	make
+
+	cd "$srcdir"/qt6
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--localstatedir=/var \
+		--enable-languages="qt6 cpp" \
+		--enable-static \
+		--disable-dependency-tracking
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	make -C "$srcdir"/qt6 DESTDIR="$pkgdir" install
+
+	local eggdir="$(echo "$pkgdir"/usr/lib/python3*/site-packages/gpg-$pkgver-*.egg)"
+	mv "$eggdir"/gpg "$pkgdir"/usr/lib/python3*/site-packages/
+	mv "$eggdir"/EGG-INFO "${eggdir/-linux*/.egg-info}"
+	rm -r "$eggdir"
+}
+
+check() {
+	make check
+}
+
+lisp() {
+	pkgdesc="Common Lisp bindings for GPGME"
+	depends="$depends $pkgname=$pkgver-r$pkgrel"
+
+	amove usr/share
+}
+
+gpgmepp() {
+	pkgdesc="C++ bindings for GPGME"
+
+	amove usr/lib/libgpgmepp.so.*
+}
+
+py3() {
+	pkgdesc="Python 3 bindings for $pkgname"
+	depends="$depends $pkgname=$pkgver-r$pkgrel python3"
+
+	amove usr/lib/python3*
+}
+
+qgpgme() {
+	pkgdesc="Qt5 bindings for GPGME"
+
+	amove usr/lib/libqgpgme.so.*
+}
+
+qgpgme6() {
+	pkgdesc="Qt6 bindings for GPGME"
+
+	amove usr/lib/libqgpgmeqt6.so.*
+}
+
+sha512sums="
+6cfcd07e81a93de240582de5a46545420cee93d1f27fe20ea2c983780fdd3036b69fdba073cf549d68a20791e189bf4b3cdde14a43f912d2ab9ef3414c83ac75  gpgme-1.23.2.tar.bz2
+14856041423365463d0e479b85c721f88761e507b480dfde3cda2deb2a323055f016125651a55f7c1b821cec76d2721196407c40c37dbe256959d9b3e1fdecf5  lfs64.patch
+"

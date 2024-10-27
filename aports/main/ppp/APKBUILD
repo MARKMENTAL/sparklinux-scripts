@@ -1,0 +1,219 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=ppp
+pkgver=2.5.0
+pkgrel=5
+pkgdesc="A daemon which implements the PPP protocol for dial-up networking"
+url="https://ppp.samba.org/"
+arch="all"
+license="BSD-3-Clause AND BSD-4-Clause AND BSD-4-Clause-Shortened AND GPL-2.0-or-later AND HPND AND LGPL-2.0-or-later AND Public-Domain AND RSA-MD"
+# for compatibility reasons the 'ppp' package is an empty meta package
+# that pulls in all except -dev and -doc subpackages
+depends="
+	$pkgname-chat
+	$pkgname-radius
+	$pkgname-atm
+	$pkgname-pppoe
+	$pkgname-l2tp
+	$pkgname-winbind
+	$pkgname-passprompt
+	$pkgname-passwordfd
+	$pkgname-minconn
+	$pkgname-daemon
+	"
+makedepends="
+	autoconf
+	automake
+	bsd-compat-headers
+	libpcap-dev
+	libtool
+	linux-headers
+	openssl-dev>3
+	"
+subpackages="
+	$pkgname-doc
+	$pkgname-dev
+	$pkgname-chat
+	$pkgname-radius
+	$pkgname-atm
+	$pkgname-pppoe
+	$pkgname-l2tp
+	$pkgname-winbind
+	$pkgname-passprompt
+	$pkgname-passwordfd
+	$pkgname-minconn
+	$pkgname-openrc
+	$pkgname-daemon
+	"
+source="https://github.com/paulusmack/ppp/archive/ppp-$pkgver.tar.gz
+	0011-build-sys-don-t-put-connect-errors-log-to-etc-ppp.patch
+	fix-paths.patch
+	musl-fix-headers.patch
+	0001-Revert-lock-path-to-var-lock-435.patch
+	ip-down
+	ip-up
+	pppd.initd
+	pppd.confd
+	"
+builddir="$srcdir"/$pkgname-$pkgname-$pkgver
+options="!check"
+
+# secfixes:
+#   2.4.9-r6:
+#     - CVE-2022-4603
+#   2.4.8-r1:
+#     - CVE-2020-8597
+
+prepare() {
+	default_prepare
+
+	autoreconf -fvi
+}
+
+build() {
+	# fix CFLAGS
+	# -D_GNU_SOURCE is needed for IPv6 to work apparently
+	export CFLAGS="$CFLAGS -D_GNU_SOURCE"
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--localstatedir=/var \
+		--sysconfdir=/etc \
+		--with-runtime-dir=/run/ppp \
+		--with-logfile-dir=/var/log/ppp \
+		--enable-cbcp \
+		--enable-microsoft-extensions \
+		--enable-multilink \
+		--enable-peap \
+		--disable-systemd
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	install -Dm644 include/net/ppp_defs.h \
+		"$pkgdir"/usr/include/net/ppp_defs.h
+	install -D -m755 "$srcdir"/ip-up "$pkgdir"/etc/ppp/ip-up
+	install -D -m755 "$srcdir"/ip-down "$pkgdir"/etc/ppp/ip-down
+	install -D -m755 "$srcdir"/pppd.initd "$pkgdir"/etc/init.d/pppd
+	install -D -m644 "$srcdir"/pppd.confd "$pkgdir"/etc/conf.d/pppd
+
+	mkdir -p "$pkgdir"/var/log/ppp/
+
+	# busybox ifup/ifdown needs pon/poff
+	install -D -m644 scripts/pon.1 "$pkgdir"/usr/share/man/man1/pon.1
+	install -D -m755 scripts/pon "$pkgdir"/usr/bin/pon
+	install -D -m755 scripts/poff "$pkgdir"/usr/bin/poff
+
+	install -d "$pkgdir"/usr/share/doc/ppp
+	for i in scripts/*; do
+		case $i in
+		pon|poff|*.1|Makefile*) continue;
+		esac
+		if [ -f "$i" ]; then
+			cp $i "$pkgdir"/usr/share/doc/ppp/
+		fi
+	done
+	install -d "$pkgdir"/etc/ppp/peers
+}
+
+atm() {
+	pkgdesc="pppd plugin to implement PPPoATM protocol"
+	depends="ppp-daemon"
+	license="GPL-2.0-or-later AND LGPL-2.0-or-later"
+	_mv usr/lib/pppd/$pkgver/pppoatm.so 755
+}
+
+minconn() {
+	pkgdesc="pppd plugin to implement a 'minconnect' option"
+	depends="ppp-daemon"
+	license="BSD-4-Clause"
+	_mv usr/lib/pppd/$pkgver/minconn.so 755
+}
+
+winbind() {
+	pkgdesc="WINBIND plugin for pppd"
+	depends="ppp-daemon"
+	license="GPL-2.0-or-later"
+	_mv usr/lib/pppd/$pkgver/winbind.so 755
+}
+
+passprompt() {
+	pkgdesc="pppd plugin to invoke an external PAP password prompter"
+	depends="ppp-daemon"
+	license="GPL-2.0-or-later"
+	_mv usr/lib/pppd/$pkgver/passprompt.so 755
+}
+
+passwordfd() {
+	pkgdesc="pppd plugin let's you pass the password via a file descriptor"
+	depends="ppp-daemon"
+	_mv usr/lib/pppd/$pkgver/passwordfd.so 755
+}
+
+chat() {
+	pkgdesc="a program for automatic ppp session establishment"
+	depends=
+	license="Public-Domain"
+	_mv usr/sbin/chat 755
+}
+
+l2tp() {
+	pkgdesc="pppd plugin to implement PPPoL2TP protocol"
+	depends="ppp-daemon"
+	license="GPL-2.0-or-later"
+	_mv usr/lib/pppd/$pkgver/openl2tp.so 755
+	_mv usr/lib/pppd/$pkgver/pppol2tp.so 755
+}
+
+pppoe() {
+	pkgdesc="pppd plugin for kernel-mode PPPoE on Linux"
+	depends="ppp-daemon"
+	license="GPL-2.0-or-later"
+	_mv usr/lib/pppd/$pkgver/pppoe.so 755
+	_mv usr/sbin/pppoe-discovery 755
+}
+
+radius() {
+	pkgdesc="RADIUS plugin for pppd"
+	depends="ppp-daemon"
+	license="GPL-2.0-or-later AND HPND"
+	_mv usr/lib/pppd/$pkgver/radius.so 755
+	_mv usr/lib/pppd/$pkgver/radattr.so 755
+	_mv usr/lib/pppd/$pkgver/radrealms.so 755
+	install -d "$subpkgdir"/etc/radiusclient
+	cp -r "$builddir"/pppd/plugins/radius/etc/* "$subpkgdir"/etc/radiusclient
+	mv "$subpkgdir"/etc/radiusclient/radiusclient.conf.in "$subpkgdir"/etc/radiusclient/radiusclient.conf
+	sed -i "s:@pkgsysconfdir@:/etc/radiusclient:g" "$subpkgdir"/etc/radiusclient/radiusclient.conf
+	sed -i "s:@sbindir@:/usr/sbin:g" "$subpkgdir"/etc/radiusclient/radiusclient.conf
+}
+
+_mv() {
+	install -m $2 -D "$pkgdir"/$1 "$subpkgdir"/$1
+	rm "$pkgdir"/$1
+}
+
+daemon() {
+	pkgdesc="A daemon which implements the PPP protocol"
+	depends=
+	license="BSD-3-Clause AND BSD-4-Clause AND BSD-4-Clause-Shortened AND GPL-2.0-or-later AND LGPL-2.0-or-later AND Public-Domain AND RSA-MD"
+	mkdir -p "$subpkgdir"
+	mv "$pkgdir"/* "$subpkgdir"/
+}
+
+openrc() {
+	default_openrc
+	install_if="ppp-daemon=$pkgver-r$pkgrel openrc"
+}
+
+sha512sums="
+cf62410a952053f9aa71c5179453831152e958fcad9e77df2ddac864e39aa71af0b746e54b91e8fa3ad6295d6d2b1bb736e36dc05521b495f573468679133324  ppp-2.5.0.tar.gz
+1e1962503ea7639b2683920c73a848d680d1daf444fb978a42639f1671b2c38282d181be120fbf035220bcfe8768229897b7e5a59e6ddf09d4edb3666ebf3399  0011-build-sys-don-t-put-connect-errors-log-to-etc-ppp.patch
+f8ad85423ccf19a6cea66e9debea81dc1842bf499b279b77c058cc2ff10aae7f48c3430a63050b97c4f535f5dcca449261fc7476f90cb2d30dfca9359490d6bd  fix-paths.patch
+8efb0750fb64cc6cbb3e5fce4a79e842db3c7fd08c3c1899cda4201a80f9ec7a4c88d88be833579b9470c1d851f01fbf2cd82b51912ebc4f05bbb168f6e73bc3  musl-fix-headers.patch
+218f5ae25f059f4ab614d6c613f8317dd136a59378f31e3b7c868f79869a17a79f1d88bf226828e7a21db07337f5c2328ce3f4579d747b9bfe1082b1023193f0  0001-Revert-lock-path-to-var-lock-435.patch
+160260bd2a788beaac395eadb38efbfd1e0e1a458fe151555acacf2c4f3a12381d644672c664f9793db6e3459a4f05a54e3ff6d407b0d37e8014b15bd0f11bcc  ip-down
+8258c95a6b6e8e94d6001b5cd3a99bd3270f29ba0f2e5050a26c8d5f1b67eead8d039e71ce86a784d45e620047b0a2bb14b258d80a9ea62084ba588a4c2e2d84  ip-up
+845d99cefd9e3ebfd4ff61dbf86d5bc1a698abbf204fed5a577fbc873e378c6d5d35712331b97dfd9fa37d1f7157a034f2584521f3a28ec18b883ab8d420e028  pppd.initd
+9ffc7c98662491694f305bd4b2e245acef0a6b36d31a8b6b8d7aea742c350369b780285745b111529373a4b5b7fe46f4673efd60b4a3250030d33204a30f5b8c  pppd.confd
+"

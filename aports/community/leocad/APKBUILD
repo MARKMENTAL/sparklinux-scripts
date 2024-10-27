@@ -1,0 +1,34 @@
+# Contributor: mio <miyopan@e.email>
+# Maintainer: mio <miyopan@e.email>
+pkgname=leocad
+pkgver=23.03
+_libver=23.01
+pkgrel=0
+pkgdesc="CAD application for creating virtual LEGO models"
+url="https://www.leocad.org/"
+license="GPL-2.0-only"
+arch="all"
+makedepends="qt5-qtbase-dev qt5-qttools-dev zlib-dev"
+subpackages="$pkgname-doc"
+source="https://github.com/leozide/leocad/archive/v$pkgver/leocad-v$pkgver.tar.gz
+	https://github.com/leozide/leocad/releases/download/v$pkgver/Library-$_libver.zip
+	"
+options="!check" # No tests
+
+build() {
+	DISABLE_UPDATE_CHECK=1 LDRAW_LIBRARY_PATH=/usr/share/leocad \
+		qmake-qt5 leocad.pro
+	make
+}
+
+package() {
+	INSTALL_ROOT="$pkgdir" make install
+	# Install parts library
+	mkdir -p "$pkgdir"/usr/share/leocad
+	mv "$srcdir"/library.bin "$pkgdir"/usr/share/leocad/
+}
+
+sha512sums="
+cacc98fe3e9797bd3d3a9c0ca7b0d5c1f4230810fff8c0a196d30e395419b2db5db1e27ac7e9f28da68de9cedfa6c2ab90d31b3970dcfc3c925948a673ef2547  leocad-v23.03.tar.gz
+3272ed53643e3fcec96ca9522ec2e0b75b182339785ed95ab03e81885e43df385698bff03a4bc66bf0a50441c5e06f7aa9bbbdc868d25b45053af56ab373ebdd  Library-23.01.zip
+"

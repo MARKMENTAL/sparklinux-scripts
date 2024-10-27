@@ -1,0 +1,59 @@
+# Maintainer: Pedro Lucas Porcellis <porcellis@eletrotupi.com>
+pkgname=solvespace
+pkgver=3.1
+pkgrel=1
+_dxtlibver=0b7b7b709d9299565db603f878214656ef5e9ddf
+_solvespace_commit=70bde63cb32a7f049fa56cbdf924e2695fcb2916
+_mimalloc_commit=f819dbb4e4813fab464aee16770f39f11476bfea
+pkgdesc="A parametric 3D CAD program"
+options="!check" # No testsuite
+arch="all"
+url="https://solvespace.com"
+license="GPL-3.0-only"
+makedepends="
+	cmake
+	eigen-dev
+	glew-dev
+	gtkmm3-dev
+	json-c-dev
+	pangomm-dev
+	samurai
+	"
+subpackages="$pkgname-dev"
+source="
+	$pkgname-$pkgver.tar.gz::https://github.com/solvespace/solvespace/archive/v$pkgver.tar.gz
+	dtxlib-$_dxtlibver.tar.gz::https://github.com/solvespace/libdxfrw/archive/$_dxtlibver.tar.gz
+	mimalloc-$_mimalloc_commit.tar.gz::https://github.com/microsoft/mimalloc/archive/$_mimalloc_commit.tar.gz
+"
+
+prepare() {
+	default_prepare
+
+	rm -r extlib/libdxfrw
+	ln -s "$srcdir"/libdxfrw-$_dxtlibver extlib/libdxfrw
+	rm -r extlib/mimalloc
+	ln -s "$srcdir"/mimalloc-$_mimalloc_commit extlib/mimalloc
+
+	sed -i CMakeLists.txt \
+		-e 's/include(GetGitCommitHash)/#\0/g' \
+		-e "s/# set(GIT_COMMIT_HASH.*/set(GIT_COMMIT_HASH $_solvespace_commit)/g"
+	mkdir build
+}
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=/usr/lib/"$pkgname" \
+		-DCMAKE_BUILD_TYPE=None
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+76794c4b103036f423471c72209521c273b40edcf9a725d2407e757b8dded033863f58640f1bcdf19d7dd1b296334f8745a632875e06604fa4d5b261dd23ba98  solvespace-3.1.tar.gz
+9ab498aa7f369be79d800e8ca5ec55fa54be79d0778937b81d4c8da776b3419cb8a75400b54b205efc338da32e2e781afd0bed1bd8efed1a0b212dc8682a2615  dtxlib-0b7b7b709d9299565db603f878214656ef5e9ddf.tar.gz
+b02a76d8a7668a4d3dc8c761473f609060b834761918b58d2143d54dbeb4c342e213010f9402d1c55035b04860936c2f8df73b84e111f5e90b3d58db62c5f85f  mimalloc-f819dbb4e4813fab464aee16770f39f11476bfea.tar.gz
+"

@@ -1,0 +1,41 @@
+# Contributor: Orhun Parmaksız <orhunparmaksiz@gmail.com>
+# Maintainer: Orhun Parmaksız <orhunparmaksiz@gmail.com>
+pkgname=heh
+pkgver=0.6.1
+pkgrel=0
+pkgdesc="A terminal UI to edit bytes by the nibble"
+url="https://github.com/ndd7xv/heh"
+# loongarch64: blocked by libc crate
+arch="all !s390x !x86 !loongarch64" # FTBFS
+license="MIT"
+makedepends="
+	cargo
+	cargo-auditable
+	"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/ndd7xv/heh/archive/refs/tags/v$pkgver.tar.gz"
+options="net"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --release --frozen
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm 755 "target/release/$pkgname" -t "$pkgdir/usr/bin"
+	install -Dm 644 README.md -t "$pkgdir/usr/share/doc/$pkgname"
+	install -Dm 644 LICENSE -t "$pkgdir/usr/share/licenses/$pkgname"
+}
+
+sha512sums="
+43203cf3b077ac41c90388da6ff578e44aaf1e4355acf8bd8f044a0d0a1404a26a93f9421fefe7cd20a752ecdefe11985cd5ac018ce8d8a5e40daaf355feb665  heh-0.6.1.tar.gz
+"

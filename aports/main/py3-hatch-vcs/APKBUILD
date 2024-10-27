@@ -1,0 +1,35 @@
+# Contributor: Duncan Bellamy <dunk@denkimushi.com>
+# Maintainer: Duncan Bellamy <dunk@denkimushi.com>
+pkgname=py3-hatch-vcs
+pkgver=0.4.0
+pkgrel=2
+pkgdesc="Hatch plugin for versioning with your preferred VCS"
+url="https://github.com/ofek/hatch-vcs"
+arch="noarch"
+license="MIT"
+depends="python3 py3-hatchling py3-setuptools_scm"
+makedepends="py3-gpep517 py3-installer py3-wheel"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/h/hatch-vcs/hatch_vcs-$pkgver.tar.gz"
+builddir="$srcdir/hatch_vcs-$pkgver"
+options="!check" #pytest circular dep
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+8689d3939b384b66c8153b88e82c55c4ec59a971dae6138c8d70995d332d62c870d611f0be5d2e47640f6c80cb55d1d8e556d6b3f0085f94dd505aaf7fdb93bd  hatch_vcs-0.4.0.tar.gz
+"

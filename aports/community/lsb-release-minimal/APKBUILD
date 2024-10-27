@@ -1,0 +1,27 @@
+# Maintainer: Simon Rupf <simon@rupf.net>
+pkgname=lsb-release-minimal
+pkgver=12.0
+pkgrel=2
+pkgdesc="Minimal fake lsb-release that uses os-release"
+url="https://salsa.debian.org/gioele/lsb-release-minimal"
+arch="noarch"
+license="ISC"
+makedepends="perl"
+subpackages="$pkgname-doc"
+source="https://salsa.debian.org/gioele/lsb-release-minimal/-/archive/v$pkgver/lsb-release-minimal-v$pkgver.tar.gz"
+builddir="$srcdir/lsb-release-minimal-v$pkgver"
+options="!check" # just a shell script
+
+provides="lsb-release=$pkgver-r$pkgrel"
+
+build() {
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+b8a41bdfb0a798e956c754702b2cef53536465cb05085a13475aa37acb24fa23defa724a0cc3e64d045589c346d8f6e6e471ab4445cc4599e55254fceb9e843a  lsb-release-minimal-v12.0.tar.gz
+"

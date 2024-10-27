@@ -1,0 +1,86 @@
+# Contributor: Sergei Lukin <sergej.lukin@gmail.com>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=libsndfile
+pkgver=1.2.2
+pkgrel=0
+pkgdesc="C library for reading and writing files containing sampled sound"
+url="https://libsndfile.github.io/libsndfile/"
+arch="all"
+license="LGPL-2.1-or-later"
+subpackages="$pkgname-static $pkgname-dev $pkgname-doc"
+depends_dev="opus-dev"
+makedepends="
+	$depends_dev
+	alsa-lib-dev
+	cmake
+	flac-dev
+	libogg-dev
+	libvorbis-dev
+	linux-headers
+	python3
+	samurai
+	"
+source="https://github.com/libsndfile/libsndfile/releases/download/$pkgver/libsndfile-$pkgver.tar.xz"
+
+# arm: sporadic testsuite failures
+# s390x: broken opus support but opus is required to make
+#        external libraries work at all (all libraries or none).
+#        See: https://gitlab.alpinelinux.org/alpine/aports/-/merge_requests/12659)
+case $CARCH in
+arm*)   options="!check" ;; # sporadic testsuite failures
+s390x*) options="!check" ;; # broken opus support
+esac
+
+# secfixes:
+#   1.0.28-r8:
+#     - CVE-2019-3832
+#     - CVE-2018-19758
+#   1.0.28-r6:
+#     - CVE-2017-17456
+#     - CVE-2017-17457
+#     - CVE-2018-19661
+#     - CVE-2018-19662
+#   1.0.28-r4:
+#     - CVE-2018-13139
+#   1.0.28-r2:
+#     - CVE-2017-12562
+#   1.0.28-r0:
+#     - CVE-2017-7585
+#     - CVE-2017-7741
+#     - CVE-2017-7742
+#   1.0.28-r1:
+#     - CVE-2017-8361
+#     - CVE-2017-8362
+#     - CVE-2017-8363
+#     - CVE-2017-8365
+
+build() {
+	CFLAGS="$CFLAGS -flto=auto" \
+	cmake -B build-shared -G Ninja \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBUILD_TESTING=OFF
+	cmake --build build-shared
+
+	cmake -B build-static -G Ninja \
+		-DBUILD_SHARED_LIBS=OFF \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBUILD_TESTING="$(want_check && echo ON || echo OFF)"
+	cmake --build build-static
+}
+
+check() {
+	cd build-static
+	CTEST_OUTPUT_ON_FAILURE=TRUE ctest
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build-static
+	DESTDIR="$pkgdir" cmake --install build-shared
+}
+
+sha512sums="
+a6e3ea3ac5d91befaa99f6a31a3fac44e7b7c11f1de4698167317a461d5a19a2651d47486a920b34400f18367b4f6173bf0c1c9ba80eb682cece1b5beee352a0  libsndfile-1.2.2.tar.xz
+"

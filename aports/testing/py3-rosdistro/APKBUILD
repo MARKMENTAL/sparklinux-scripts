@@ -1,0 +1,33 @@
+# Contributor: Russ Webber <russ@rw.id.au>
+# Maintainer: Russ Webber <russ@rw.id.au>
+pkgname=py3-rosdistro
+_pkgname=rosdistro
+pkgver=0.9.0
+pkgrel=3
+pkgdesc="Tools to work with catkinized rosdistro files"
+url="https://github.com/ros-infrastructure/rosdistro"
+arch="noarch"
+license="BSD-3-Clause"
+depends="python3 py3-yaml py3-catkin-pkg"
+makedepends="py3-setuptools"
+checkdepends="py3-nose py3-mock"
+
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/ros-infrastructure/rosdistro/archive/$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+build() {
+	python3 setup.py build
+}
+
+check() {
+	nosetests --with-xunit test
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+f3212c8dbceb2862ad8680da537cfdddb347fc302929afa0b0a8601dfa56fd328406eeb9a0d44aba2afa3c1c53fa934dc7721fc3fb2b2c9b0d3f2b9444e78174  py3-rosdistro-0.9.0.tar.gz
+"

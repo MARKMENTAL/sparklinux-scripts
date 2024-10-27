@@ -1,0 +1,31 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=drone-cli
+pkgver=1.8.0
+pkgrel=5
+pkgdesc="Drone CLI"
+url="https://github.com/harness/drone-cli"
+license="Apache-2.0"
+arch="all"
+makedepends="go"
+source="drone-cli-$pkgver.tar.gz::https://github.com/harness/drone-cli/archive/v$pkgver.tar.gz"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -ldflags "-X main.version=$pkgver" -o bin/drone ./drone
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	install -Dm755 "$builddir"/bin/drone "$pkgdir"/usr/bin/drone
+}
+
+sha512sums="
+d9b87df975f7f3c4b6ba3cc427e66e5c19c9f5de51aed521b1b34db3d12f03ac88324dae1ae3acdc24d5fa6251ca57e332f101a73cb0a53c7d01194cf1892d2c  drone-cli-1.8.0.tar.gz
+"

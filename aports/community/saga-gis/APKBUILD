@@ -1,0 +1,94 @@
+# Contributor: Holger Jaekel <holger.jaekel@gmx.de>
+# Maintainer: Holger Jaekel <holger.jaekel@gmx.de>
+pkgname=saga-gis
+pkgver=9.5.1
+pkgrel=0
+pkgdesc="System for Automated Geoscientific Analyses"
+url="https://saga-gis.sourceforge.io/en/index.html"
+arch="all"
+license="GPL-2.0-or-later"
+depends="$pkgname-common"
+_makedepends_mandatory="
+	cmake
+	gdal-dev
+	proj-dev
+	samurai
+	tiff-dev
+	unixodbc-dev
+	wxwidgets-dev
+	"
+_makedepends_optional="
+	curl-dev
+	libharu-dev
+	libpq-dev
+	pdal-dev
+	python3-dev
+	qhull-dev
+	swig
+	vigra-dev
+	"
+# opencv not on s390, riscv64, loongarch64 and ppc64le
+# openmp not on armhf and s390x
+case "$CARCH" in
+	s390x)
+		;;
+	armhf)
+		_makedepends_optional="$_makedepends_optional opencv-dev"
+		;;
+	riscv64|ppc64le|loongarch64)
+		_makedepends_optional="$_makedepends_optional openmp-dev"
+		;;
+	*)
+		_makedepends_optional="$_makedepends_optional opencv-dev openmp-dev"
+		;;
+esac
+makedepends="$_makedepends_mandatory $_makedepends_optional"
+subpackages="$pkgname-dev $pkgname-doc py3-$pkgname:py3 $pkgname-api $pkgname-gdi $pkgname-common::noarch"
+source="https://downloads.sourceforge.net/project/saga-gis/SAGA%20-%209/SAGA%20-%20$pkgver/saga-$pkgver.tar.gz"
+builddir="$srcdir/saga-$pkgver/$pkgname"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		local crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_BUILD_TYPE=None \
+		-DWITH_MRMR=ON \
+		$crossopts
+	cmake --build build
+}
+
+check() {
+	./build/src/saga_core/saga_cmd/saga_cmd -h | grep -q $pkgver
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+api() {
+	pkgdesc="$pkgdesc (shared library files)"
+	amove "usr/lib/libsaga_api.so.*"
+}
+
+gdi() {
+	pkgdesc="$pkgdesc (shared library files for developing graphical modules)"
+	amove "usr/lib/libsaga_gdi.so.*"
+}
+
+common() {
+	pkgdesc="$pkgdesc (architecture independent files)"
+	amove "usr/share/saga"
+}
+
+py3() {
+	pkgdesc="$pkgdesc (Python3 bindings)"
+	amove usr/lib/python3*
+}
+
+sha512sums="
+9c642f01d5eca18ffcb92f9af724babbd5c730db415085dfb42bbcb4649362fa9ee832c28889a4810a6007e880350e4cfef1ffbcf8667a55c52f3295e5a0f283  saga-9.5.1.tar.gz
+"

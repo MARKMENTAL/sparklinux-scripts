@@ -1,0 +1,77 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: team/gnome <newbyte@postmarketos.org>
+pkgname=gnome-builder
+pkgver=46.3
+pkgrel=1
+pkgdesc="Develop software for GNOME"
+url="https://wiki.gnome.org/Apps/Builder"
+# limited by polkit -> flatpak
+# armhf: libpeas2
+# ppc64le: libdex
+# loongarch64: test failure
+arch="all !armhf !ppc64le !s390x !riscv64 !loongarch64"
+license="GPL-3.0-or-later"
+depends="flatpak-builder py3-lxml py3-gobject3"
+makedepends="
+	clang-dev
+	cmark-dev
+	ctags
+	desktop-file-utils
+	devhelp-dev
+	d-spy-dev
+	editorconfig-dev
+	enchant2-dev
+	flatpak-dev
+	glib-dev
+	gobject-introspection-dev
+	gspell-dev
+	gtk4.0-dev
+	gtkmm3-dev
+	gtksourceview5-dev
+	json-glib-dev
+	jsonrpc-glib-dev
+	libadwaita-dev
+	libdazzle-dev
+	libdex-dev
+	libgit2-glib-dev
+	libpanel-dev
+	libpeas2-dev
+	libportal-dev
+	libxml2-dev
+	llvm-dev
+	meson
+	pango-dev
+	pcre2-dev
+	template-glib-dev
+	vala
+	vte3-dev
+	webkit2gtk-6.0-dev
+	"
+checkdepends="appstream-glib xvfb-run mesa-dri-gallium"
+subpackages="$pkgname-pyc $pkgname-dev $pkgname-lang"
+source="
+	https://download.gnome.org/sources/gnome-builder/${pkgver%.*}/gnome-builder-$pkgver.tar.xz
+	"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dplugin_sysprof=false \
+		-Dtracing=false \
+		. output
+	meson compile -C output
+}
+
+check() {
+	# Increase the timeout, this can take pretty long, especially on armhf
+	dbus-run-session -- \
+	xvfb-run -a meson test --print-errorlogs -C output -t 10
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+1d765f9a4da17d6c1cda688c0590d34b9fc8da8c2d427e4fde57e35b4b78b13905792da065d630d1b351d90ca25a276cc7a680c3b02fd9d5ba4c236a150325cc  gnome-builder-46.3.tar.xz
+"

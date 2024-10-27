@@ -1,0 +1,36 @@
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=jaq
+pkgver=1.6.0
+pkgrel=0
+pkgdesc="jq clone focused on correctness, speed and simplicity"
+url="https://github.com/01mf02/jaq"
+arch="all"
+license="MIT"
+makedepends="cargo cargo-auditable"
+source="
+	https://github.com/01mf02/jaq/archive/v$pkgver/jaq-$pkgver.tar.gz
+	cargo-update.patch
+	"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm755 target/release/jaq -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+1ad7f313f175b3dc373d3627f8afde224e557c01c5c0e4ad17fce35034c1e85feb169ec3282aa44585a61ca08129a116e9aa2c72eaa471bb7395b2ad6331b3a1  jaq-1.6.0.tar.gz
+44b5fb2e3d00835de1ef9252aa354ea6689d515d3c42ca12721a59f853672c3b32a9a3d0795a3c1f9b14b8d819c4d1c25294d3e309bab47e10fc51ea549d9522  cargo-update.patch
+"

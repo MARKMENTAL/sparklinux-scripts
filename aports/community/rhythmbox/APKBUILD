@@ -1,0 +1,62 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=rhythmbox
+pkgver=3.4.7
+pkgrel=2
+pkgdesc="GNOME audio player"
+url="https://wiki.gnome.org/Apps/Rhythmbox"
+# s390x and riscv64 blocked by gnome-desktop -> gtk4
+arch="all !riscv64 !s390x"
+license="GPL-2.0-or-later"
+depends_dev="gnome-desktop-dev libpeas-dev"
+makedepends="
+	$depends_dev
+	appstream-glib
+	desktop-file-utils
+	docbook-xml
+	docbook-xsl
+	gmime-dev
+	grilo-dev
+	gst-plugins-base-dev
+	gstreamer-dev
+	itstool
+	json-glib-dev
+	libgpod-dev
+	libmtp-dev
+	libnotify-dev
+	libsecret-dev
+	libsoup3-dev
+	libxml2-utils
+	libxslt
+	meson
+	py3-gobject3-dev
+	tdb-dev
+	totem-pl-parser-dev
+	"
+subpackages="$pkgname-dev $pkgname-doc $pkgname-lang $pkgname-python"
+source="https://download.gnome.org/sources/rhythmbox/${pkgver%.*}/rhythmbox-$pkgver.tar.xz"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+python() {
+	pkgdesc="$pkgdesc (python plugin support)"
+	depends="py3-gobject3 libpeas-python3 python3"
+
+	mkdir -p "$subpkgdir"
+}
+
+sha512sums="
+58de6e51d046920857ba0905043f4863ef443d5eca28cdf93c1a25e3053322664eb1f894c102d5629f8261c507626e215c097ee166f13a3e7cd82fb35c891cb4  rhythmbox-3.4.7.tar.xz
+"

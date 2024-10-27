@@ -1,0 +1,30 @@
+# Maintainer: Guy Godfroy <guy.godfroy@gugod.fr>
+pkgname=py3-omemo-dr
+_pkgname=omemo-dr
+pkgver=1.0.1
+pkgrel=1
+pkgdesc="OMEMO Crypto Library for python"
+url="https://dev.gajim.org/gajim/omemo-dr/"
+arch="all"
+license="GPL-3.0-or-later"
+depends="python3 py3-protobuf py3-cryptography"
+makedepends="py3-setuptools py3-gpep517 py3-wheel python3-dev"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/${_pkgname:0:1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+options="!check" # no test suite
+builddir="$srcdir"/$_pkgname-$pkgver
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+38306e88de1e384eb42848029d8eee7d5aed0bcc3b9ed2867c75fd5bac09daba31c136d10cb815153f21ea6ab6ccae4cfa2d3453db0863e2dc4b065fce8f24e3  omemo-dr-1.0.1.tar.gz
+"

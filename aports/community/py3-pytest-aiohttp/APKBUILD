@@ -1,0 +1,30 @@
+# Contributor: Antoine Fontaine <antoine.fontaine@epfl.ch>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=py3-pytest-aiohttp
+pkgver=1.0.5
+pkgrel=3
+pkgdesc="pytest plugin for aiohttp support"
+url="https://github.com/aio-libs/pytest-aiohttp/"
+arch="noarch"
+license="Apache-2.0"
+depends="py3-aiohttp py3-pytest-asyncio"
+makedepends="py3-setuptools py3-setuptools_scm py3-wheel py3-gpep517"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/p/pytest-aiohttp/pytest-aiohttp-$pkgver.tar.gz"
+builddir="$srcdir/pytest-aiohttp-$pkgver"
+options="!check" # no testsuite
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+b8421c63e4d5caa9742a013a6d1fd3c010b5e4a48e4f5c1a07ddfb7b05853ce6a7a0d65ce78493fd607f59c669d31c75d97a9022048e6a60cbc90a19a48dd02c  pytest-aiohttp-1.0.5.tar.gz
+"

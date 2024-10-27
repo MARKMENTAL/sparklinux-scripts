@@ -1,0 +1,41 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Contributor: Stuart Cardall <developer@it-offshore.co.uk>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=xxhash
+pkgver=0.8.2
+pkgrel=2
+pkgdesc="Extremely fast non-cryptographic hash algorithm"
+url="https://cyan4973.github.io/xxHash/"
+arch="all"
+license="BSD-2-Clause"
+subpackages="$pkgname-dev $pkgname-doc lib$pkgname:libs"
+source="$pkgname-$pkgver.tar.gz::https://github.com/Cyan4973/xxHash/archive/v$pkgver.tar.gz"
+builddir="$srcdir/xxHash-$pkgver"
+
+build() {
+	export CFLAGS="$CFLAGS -DXXH_FORCE_MEMORY_ACCESS=1 -flto=auto -O2"
+
+	case "$CARCH" in
+	x86*)
+		# only implemented for x86/x86_64
+		local dispatch="1"
+		;;
+	*)
+		local dispatch="0"
+		;;
+	esac
+	make DISPATCH="$dispatch"
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr install
+	rm -rf "$pkgdir"/usr/lib/libxxhash.a
+}
+
+sha512sums="
+3e3eef21432fe88bc4dd9940ccad0308fdea3537b06fa5ac0e74c1bde53413dff29c8b3fc617a8a42b9ce88fcf213311d338a31b1ce73b3729342c9e68f06c78  xxhash-0.8.2.tar.gz
+"

@@ -1,0 +1,33 @@
+# Contributor: Kevin Daudt <kdaudt@alpinelinux.org>
+# Maintainer: Kevin Daudt <kdaudt@alpinelinux.org>
+pkgname=icdiff
+pkgver=2.0.7
+pkgrel=2
+pkgdesc="Improved colored diff"
+url="https://www.jefftk.com/icdiff"
+arch="noarch"
+license="Python-2.0"
+depends="python3"
+makedepends="py3-gpep517 py3-setuptools py3-wheel bash"
+checkdepends="black py3-flake8"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/jeffkaufman/icdiff/archive/release-$pkgver.tar.gz"
+builddir="$srcdir/icdiff-release-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	./test.sh python3
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+0fb3a8f91120ecd5dd55254fdea0f055bc46905c3b257efcd1b8b0b47927b2b2575b7255e3e260c97b76cd2f40548c8a3653a622a7a1aaac528a4cdae64a8b16  icdiff-2.0.7.tar.gz
+"

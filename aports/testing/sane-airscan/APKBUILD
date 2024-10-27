@@ -1,0 +1,38 @@
+# Contributor: Alex Yam <alex@alexyam.com>
+# Maintainer: Alex Yam <alex@alexyam.com>
+pkgname=sane-airscan
+pkgver=0.99.29
+pkgrel=0
+pkgdesc="SANE backend for AirScan (eSCL) and WSD document scanners"
+url="https://github.com/alexpevzner/sane-airscan"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="
+	avahi-dev
+	gnutls-dev
+	libjpeg-turbo-dev
+	libpng-dev
+	libxml2-dev
+	meson
+	sane-dev
+	tiff-dev
+	"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/alexpevzner/sane-airscan/archive/refs/tags/$pkgver.tar.gz"
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+a75a3db66aa1c77508a946dc7647f322d0be9c8defc6b4b6fdf1015f5a81ea02209efb7aa2c5284813e257bc2b8727a430804385368c8c7b97df24d61adda483  sane-airscan-0.99.29.tar.gz
+"

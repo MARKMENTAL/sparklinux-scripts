@@ -1,0 +1,31 @@
+# Contributor: Marvin Preuss <marvin@xsteadfastx.org>
+# Maintainer: Marvin Preuss <marvin@xsteadfastx.org>
+pkgname=libupnpp
+pkgver=0.26.7
+pkgrel=0
+pkgdesc="C++ wrapper for libupnp"
+url="https://framagit.org/medoc92/libupnpp"
+arch="all"
+license="LGPL-2.0-or-later"
+options="!check" # no test suite
+makedepends="
+	curl-dev
+	expat-dev
+	libnpupnp-dev
+	meson
+	"
+subpackages="$pkgname-dev"
+source="libupnpp-$pkgver.tar.gz::https://www.lesbonscomptes.com/upmpdcli/downloads/libupnpp-$pkgver.tar.gz"
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+d1a73c3b2c31bce02ca4ccd0a67afcd4267c1812712fd6b91445bcf1b09473d25f3beb1b2111567149be0a78342bc7b025dc68c62a0c0ae3cde2d2589590603b  libupnpp-0.26.7.tar.gz
+"

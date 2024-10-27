@@ -1,0 +1,31 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=py3-testtools
+_pkgname=testtools
+pkgver=2.7.2
+pkgrel=0
+pkgdesc="Extensions to the Python standard library unit testing framework"
+url="https://pypi.org/project/testtools"
+arch="noarch"
+license="MIT"
+depends="python3 py3-hatch-vcs py3-fixtures"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/${_pkgname:0:1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+builddir="$srcdir"/$_pkgname-$pkgver
+options="!check" # needs community/py3-twisted and testscenarios from pypi
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+5815519d2b72d6b1e9f453c02793c70eb7d3b6580a211fb3708cd6121aed3c6100ceb1e35321f481a63b1f999ede030e43f1ae91d3621faf461c1908db767551  testtools-2.7.2.tar.gz
+"

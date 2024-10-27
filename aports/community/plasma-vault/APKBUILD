@@ -1,0 +1,56 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: team/kde <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=kde-plasma
+pkgname=plasma-vault
+pkgver=6.1.5
+pkgrel=0
+pkgdesc="Plasma applet and services for creating encrypted vaults"
+# armhf blocked by extra-cmake-modules
+arch="all !armhf"
+url="https://kde.org/plasma-desktop/"
+license="(GPL-2.0-only OR GPL-3.0-only) AND (LGPL-2.1-only AND LGPL-3.0-only)"
+makedepends="
+	extra-cmake-modules
+	kconfig-dev
+	kconfigwidgets-dev
+	kcoreaddons-dev
+	kdbusaddons-dev
+	ki18n-dev
+	kio-dev
+	kitemmodels-dev
+	kwidgetsaddons-dev
+	libksysguard-dev
+	networkmanager-qt-dev
+	plasma-activities-dev
+	libplasma-dev
+	qt6-qtbase-dev
+	samurai
+	"
+
+case "$pkgver" in
+	*.90*) _rel=unstable;;
+	*) _rel=stable;;
+esac
+subpackages="$pkgname-lang"
+_repo_url="https://invent.kde.org/plasma/plasma-vault.git"
+source="https://download.kde.org/stable/plasma/$pkgver/plasma-vault-$pkgver.tar.xz"
+# No tests
+options="!check"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+74e10a58ba55b5452e109e0fbb942073bc6471595d03de0f6afeb0eaf1d1fbd0766992c246c21a3817474605e80fc62f8a1c6ef993f859ab858ae67e12cf2604  plasma-vault-6.1.5.tar.xz
+"

@@ -1,0 +1,24 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=vim-editorconfig
+_projname=editorconfig-vim
+pkgver=1.2.0
+pkgrel=0
+pkgdesc="EditorConfig plugin for vim written in vimscript only"
+url="https://github.com/editorconfig/editorconfig-vim"
+arch="noarch"
+license="MIT"
+source="https://github.com/editorconfig/editorconfig-vim/archive/v$pkgver/$_projname-$pkgver.tar.gz"
+builddir="$srcdir/$_projname-$pkgver"
+options="!check"  # there are no tests
+
+package() {
+	local destdir="$pkgdir/usr/share/vim/vimfiles"
+
+	mkdir -p "$destdir"
+	cp -r autoload doc ftdetect plugin "$destdir"/
+}
+
+sha512sums="
+1101562e71f2a9f356a3773cc32f4f091d5a0b67c85a8d78d70f76a73ec3b709f5ac5b7db7448972409031d37176190922912945be05037b627d1cf766bbb731  editorconfig-vim-1.2.0.tar.gz
+"

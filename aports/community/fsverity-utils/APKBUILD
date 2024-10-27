@@ -1,0 +1,29 @@
+# Contributor: Milan P. Stanić <mps@arvanta.net>
+# Maintainer: Milan P. Stanić <mps@arvanta.net>
+pkgname=fsverity-utils
+pkgver=1.6
+pkgrel=0
+pkgdesc="userspace utilities for fs-verity"
+url="https://git.kernel.org/pub/scm/fs/fsverity/fsverity-utils.git/"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="openssl-dev linux-headers"
+subpackages="$pkgname-dev $pkgname-doc"
+source="https://git.kernel.org/pub/scm/fs/fsverity/fsverity-utils.git/snapshot/fsverity-utils-$pkgver.tar.gz"
+
+build() {
+	make PREFIX=/usr
+}
+
+check() {
+	make check
+}
+
+package() {
+	make PREFIX=/usr DESTDIR="$pkgdir" install
+	install -Dm644 README.md "$pkgdir"/usr/share/doc/$pkgname/README.md
+}
+
+sha512sums="
+9a05264f75b270472dc8d18b0d5a7cb17c24f8b77aa5d1a06ad5dd7813526c06070ceb47a43aa999a542ea4cf5ce7e1500287e7944ce676a97a3cafb985dc4b8  fsverity-utils-1.6.tar.gz
+"

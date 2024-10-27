@@ -1,0 +1,52 @@
+# Contributor: Antoine Martin (ayakael) <dev@ayakael.net>
+# Maintainer: Antoine Martin (ayakael) <dev@ayakael.net>
+pkgname=py3-model-bakery
+_pyname="model_bakery"
+pkgver=1.19.5
+pkgrel=0
+arch="noarch"
+pkgdesc="Smart object creation facility for Django"
+url="https://pypi.python.org/project/model-bakary"
+license="Apache-2.0"
+depends="py3-django"
+makedepends="
+	py3-setuptools
+	py3-gpep517
+	py3-wheel
+	py3-hatchling
+	"
+checkdepends="
+	black
+	py3-pytest-django
+	py3-coverage
+	py3-pillow
+	py3-mypy
+	ruff
+	"
+source="
+	$pkgname-$pkgver.tar.gz::https://github.com/model-bakers/model_bakery/archive/refs/tags/$pkgver.tar.gz
+	remove-django-5.1-classifier.patch
+	"
+builddir="$srcdir"/$_pyname-$pkgver
+subpackages="$pkgname-pyc"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -v
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+sha512sums="
+f3e00c6e0740a37c1147b40f1b9063654bf0bd7117a93833632a6ef1b1ec391efa20729133f432d2a962948353771bab742720c032ab7f8211aba3444e748864  py3-model-bakery-1.19.5.tar.gz
+8db93f8e935df7dbaa9f56410aa549279e673c5603d39d45dd00b6b96cf2f474c23eafebf391f24f59dc3ecbea4e7ad1215dd0f198d73ee509ad2c54ed69a730  remove-django-5.1-classifier.patch
+"

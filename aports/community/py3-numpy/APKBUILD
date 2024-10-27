@@ -1,0 +1,80 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Contributor: Martell Malone <martellmalone@gmail.com>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=py3-numpy
+pkgver=1.25.2
+pkgrel=1
+pkgdesc="Scientific tools for Python"
+url="https://www.numpy.org/"
+arch="all"
+license="BSD-3-Clause"
+options="!check"
+replaces="py-numpy"
+depends_dev="$pkgname=$pkgver-r$pkgrel"
+makedepends="
+	cython
+	gfortran
+	libbsd-dev
+	openblas-dev
+	py3-gpep517
+	py3-nose
+	py3-setuptools
+	py3-wheel
+	python3-dev
+	"
+subpackages="
+	$pkgname-dev
+	$pkgname-tests
+	$pkgname-pyc
+	$pkgname-f2py::noarch
+	"
+source="https://github.com/numpy/numpy/releases/download/v$pkgver/numpy-$pkgver.tar.gz
+	numpy-1.17.0-musl.patch
+	s390x-hwcap.patch
+	site.cfg"
+builddir="$srcdir/numpy-$pkgver"
+
+export Atlas=None
+export LDFLAGS="$LDFLAGS -shared"
+# numpy is a huge library (~26 MiB) optimized for performance, so compiling
+# with -Os to sacrifice performance for ~1 MiB doesn't make sense.
+export CFLAGS="${CFLAGS/-Os/-O3} -flto=auto"
+export CXXFLAGS="${CXXFLAGS/-Os/-O3} -flto=auto"
+
+prepare() {
+	default_prepare
+	cp "$srcdir"/site.cfg "$builddir"/
+}
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+f2py() {
+	pkgdesc="f2py for numpy (for python3)"
+	depends="py3-numpy=$pkgver-r$pkgrel python3-dev"
+	install_if="$pkgname-f2py=$pkgver-r$pkgrel python3"
+
+	amove usr/bin/f2py*
+}
+
+tests() {
+	find "$pkgdir" -name tests -type d | while read -r p; do
+		amove "${p#"$pkgdir"}"
+	done
+}
+
+sha512sums="
+6846d558c227329b6e700965ffa4c7886a7ca5f35234a56d734bc8201d19f7ac87d8ea081094bca13685130dce7bfb98ee4aa3a9dbd538288f10f1d9d82fb699  numpy-1.25.2.tar.gz
+a66a953408dc4f1a9763eaf64ad0400696581c70551c457f0c773aa34bd3de0b21b239484270c08227b6ba60fc1e605c94245ba9279df452d6ec9bf94c8eacfb  numpy-1.17.0-musl.patch
+cf353102400ecd45e611f7fc7e6a576b7eddf4b27979dd54501a5fcc4d9a301b105de66ef6b44a97e649436a40117ed28deb7a4668a3e7a01216b3d139ca7fc0  s390x-hwcap.patch
+3540b5a37a8ea1a09001e1627bee53cf847800f67a24214636f18be43e20a080b0de97ce1036db2ea05e166fd302cc137d632967c443ae422f7dce6dca67c264  site.cfg
+"

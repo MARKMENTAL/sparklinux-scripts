@@ -1,0 +1,25 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=tree-sitter-java
+pkgver=0.21.0
+pkgrel=0
+pkgdesc="Java grammar for tree-sitter"
+url="https://github.com/tree-sitter/tree-sitter-java"
+arch="all"
+license="MIT"
+makedepends="tree-sitter-dev"
+install_if="tree-sitter-grammars"
+source="https://github.com/tree-sitter/tree-sitter-java/archive/refs/tags/v$pkgver/tree-sitter-java-$pkgver.tar.gz"
+options="!check"  # no tests for shared lib
+
+build() {
+	abuild-tree-sitter build
+}
+
+package() {
+	DESTDIR="$pkgdir" abuild-tree-sitter install
+}
+
+sha512sums="
+236159990182f2cab0fd50ab1f43898f021243a37e7517f7c8df039296f08e1fe615889a0fd0677eae3abd6a495333ed56be5164f43855cb9ef8e0cc4f2b70c9  tree-sitter-java-0.21.0.tar.gz
+"

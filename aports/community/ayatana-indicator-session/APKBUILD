@@ -1,0 +1,50 @@
+# Contributor: Luca Weiss <luca@lucaweiss.eu>
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+pkgname=ayatana-indicator-session
+pkgver=24.5.0
+pkgrel=1
+pkgdesc="Ayatana Indicator Session Applet"
+url="https://github.com/AyatanaIndicators/ayatana-indicator-session"
+arch="all"
+license="GPL-3.0-only"
+makedepends="
+	cmake
+	cmake-extras
+	glib-dev
+	gtest-dev
+	intltool
+	libayatana-common-dev
+	librda-dev
+	samurai
+	"
+checkdepends="dbus"
+subpackages="$pkgname-lang"
+source="https://github.com/AyatanaIndicators/ayatana-indicator-session/archive/$pkgver/ayatana-indicator-session-$pkgver.tar.gz"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DENABLE_TESTS=ON \
+		$CMAKE_CROSSOPTS .
+	cmake --build build
+}
+
+check() {
+	cd build
+	# https://github.com/AyatanaIndicators/ayatana-indicator-session/issues/90
+	CTEST_OUTPUT_ON_FAILURE=TRUE ctest -E test-service
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+101d438904ada01e93090dc38b2d43a235771fd721b74dce3fc49a08d9bafe591a5ed9d85cb9aee2de631d37ae9828feb5fa0504789b5b6a27d3c07673f5be94  ayatana-indicator-session-24.5.0.tar.gz
+"

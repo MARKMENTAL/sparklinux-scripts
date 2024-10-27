@@ -1,0 +1,101 @@
+# Maintainer: Thomas Liske <thomas@fiasko-nw.net>
+pkgname=pypy
+pkgver=7.3.12
+_pkgver=${pkgver/_/}
+pkgrel=0
+pkgdesc="A fast, compliant alternative implementation of Python 2.7"
+url="https://www.pypy.org/"
+arch="x86 x86_64 s390x aarch64 ppc64le"
+license="MIT"
+subpackages="$pkgname-dev $pkgname-tkinter"
+provides="pypy-bootstrap"
+provider_priority=100 # highest
+makedepends="
+	bzip2-dev
+	expat-dev
+	gdbm-dev
+	libffi-dev
+	linux-headers
+	ncurses-dev
+	openssl-dev>3
+	perl
+	py3-virtualenv
+	pypy-bootstrap
+	readline-dev
+	rsync
+	sqlite-dev
+	tk-dev
+	util-linux-misc
+	xz-dev
+	zlib-dev
+	"
+[ "$CARCH" = "x86" ] && options="textrels" # libpypy-c.so on x86 has textrels
+source="https://downloads.python.org/pypy/pypy2.7-v$_pkgver-src.tar.bz2
+	"
+
+case "$CARCH" in
+x86_64)
+	;;
+*)
+	# ignore failing tests on some archs for now
+	options="$options !check"
+	;;
+esac
+
+build() {
+	cd pypy2.7-v$_pkgver-src/pypy/goal
+
+	if [ "$JOBS" -gt 16 ]; then
+		export JOBS=16
+	fi
+
+	# translate with JIT
+	pypy ../../rpython/bin/rpython --opt=jit --shared --make-jobs $JOBS targetpypystandalone
+
+	# compile binary modules
+	PYTHONPATH=../.. ./pypy-c ../../lib_pypy/pypy_tools/build_cffi_imports.py
+}
+
+check() {
+	./pypy-c -u ../test_all.py ../module/pypyjit/test_pypy_c
+}
+
+package() {
+	cd src/pypy2.7-v$_pkgver-src
+
+	install -Dm755 pypy/goal/pypy-c "$pkgdir"/usr/lib/pypy/bin/pypy-c
+	install -Dm755 pypy/goal/libpypy-c.so "$pkgdir"/usr/lib/pypy/bin/libpypy-c.so
+
+	rsync -r --exclude='__pycache__' --exclude='*.c' --exclude '*.o' lib_pypy/ "$pkgdir"/usr/lib/pypy/lib_pypy/
+
+	rsync -r --exclude='__pycache__' --exclude='test' --exclude='tests' lib-python/ "$pkgdir"/usr/lib/pypy/lib-python/
+
+	rsync -r --include='*.h' -f 'hide,! */' include/ "$pkgdir"/usr/lib/pypy/include/
+
+	# Install symlinks
+	mkdir -p "$pkgdir"/usr/bin "$pkgdir"/usr/lib
+	ln -s ../lib/pypy/bin/pypy-c "$pkgdir"/usr/bin/pypy
+	ln -s pypy/bin/libpypy-c.so "$pkgdir"/usr/lib/libpypy-c.so
+}
+
+dev() {
+	default_dev
+
+	# pyconfig.h is needed runtime so we move it back
+	mkdir -p "$pkgdir"/usr/lib/pypy/include
+	mv "$subpkgdir"/usr/lib/pypy/include/pyconfig.h \
+		"$pkgdir"/usr/lib/pypy/include/
+}
+
+tkinter() {
+	pkgdesc="Writing Tk applications with Pypy"
+
+	amove \
+		usr/lib/pypy/lib_pypy/_tkinter \
+		usr/lib/pypy/lib-python/2.7/lib-tk \
+		usr/lib/pypy/lib-python/2.7/idlelib
+}
+
+sha512sums="
+35ec35376f1e7c1a5dea9dc5bce6819a94c2df2645806c83185487587470b47ab529c25ecb8ca200505319f40789859a2919c61902b693421e2001313b46e5f4  pypy2.7-v7.3.12-src.tar.bz2
+"

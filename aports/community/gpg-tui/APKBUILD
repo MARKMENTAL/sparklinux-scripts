@@ -1,0 +1,43 @@
+# Contributor: Michał Polański <michal@polanski.me>
+# Maintainer: Orhun Parmaksız <orhunparmaksiz@gmail.com>
+pkgname=gpg-tui
+pkgver=0.11.0
+pkgrel=0
+pkgdesc="Terminal user interface for GnuPG"
+url="https://github.com/orhun/gpg-tui"
+license="MIT"
+# loongarch64: fail to build nix
+arch="all !s390x !loongarch64" # FTBFS
+makedepends="cargo gpgme-dev libxcb-dev libxkbcommon-dev libgpg-error-dev cargo-auditable"
+subpackages="
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="https://github.com/orhun/gpg-tui/archive/v$pkgver/gpg-tui-$pkgver.tar.gz"
+
+build() {
+	cargo auditable build --release --locked
+
+	mkdir completions
+	OUT_DIR=completions cargo run --release --bin gpg-tui-completions
+}
+
+check() {
+	cargo test --release --locked
+}
+
+package() {
+	install -Dm755 target/release/$pkgname -t "$pkgdir"/usr/bin/
+
+	install -Dm644 man/$pkgname.1 -t "$pkgdir"/usr/share/man/man1/
+
+	install -Dm644 completions/$pkgname.bash "$pkgdir"/usr/share/bash-completion/completions/$pkgname
+	install -Dm644 completions/$pkgname.fish "$pkgdir"/usr/share/fish/vendor_completions.d/$pkgname.fish
+	install -Dm644 completions/_$pkgname "$pkgdir"/usr/share/zsh/site-functions/_$pkgname
+}
+
+sha512sums="
+a04b45d601794ff0ed3a11bd9d418bf75fba312c2421390a511fe47ca1f2590cc3280d592f5d1a17cc52893e4a2144a0d332ae3c4e8b7e988c3344ae572f7758  gpg-tui-0.11.0.tar.gz
+"

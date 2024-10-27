@@ -1,0 +1,39 @@
+# Maintainer: Pedro Filipe <xpecex@outlook.com>
+pkgname=py3-patiencediff
+pkgver=0.2.14
+pkgrel=1
+pkgdesc="Patiencediff Python and C implementations"
+url="https://www.breezy-vcs.org/"
+arch="all"
+license="GPL-2.0-or-later"
+depends="python3"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	python3-dev
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/breezy-team/patiencediff/archive/v$pkgver.tar.gz"
+builddir="$srcdir/patiencediff-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m unittest discover
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+ce08633b275030318fc165393c4cc3694816a2d044c29b7412e26f029fac6fe6530a56f9f2910e6c843623363663fb11251f7d1cd024247a6fa7d1b617a55b2e  py3-patiencediff-0.2.14.tar.gz
+"

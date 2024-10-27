@@ -1,0 +1,68 @@
+# Contributor: Michał Polański <michal@polanski.me>
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=maddy
+pkgver=0.7.1
+pkgrel=5
+pkgdesc="Composable all-in-one mail server"
+url="https://maddy.email/"
+license="GPL-3.0-or-later"
+arch="all"
+makedepends="go scdoc linux-pam-dev sqlite-dev"
+subpackages="$pkgname-openrc $pkgname-doc $pkgname-vim::noarch"
+pkgusers="$pkgname"
+pkggroups="$pkgname"
+install="$pkgname.pre-install"
+source="https://github.com/foxcpp/maddy/archive/v$pkgver/maddy-$pkgver.tar.gz
+	$pkgname.initd
+	use-syslog.patch
+	"
+
+# secfixes:
+#   0.6.3-r0:
+#     - CVE-2023-27582
+
+export GOFLAGS="$GOFLAGS -trimpath -mod=readonly -modcacherw -tags=libsqlite3"
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	ldflags="-extldflags \"$LDFLAGS\"
+		-X github.com/foxcpp/maddy.Version=$pkgver
+		"
+
+	go build -ldflags="$ldflags" -v -o bin/maddy ./cmd/maddy
+
+	scdoc <docs/man/maddy.1.scd >maddy.1
+}
+
+check() {
+	# disable failing remote_test
+	# pam-helper fails to build due to strict-prototypes; "int run()" w/o prototype invalid
+	go test $(go list ./... | grep -Ev '(internal/target/remote|maddy-pam-helper)')
+}
+
+package() {
+	install -Dm755 bin/maddy -t "$pkgdir"/usr/bin/
+
+	install -Dm644 maddy.conf "$pkgdir"/etc/maddy/maddy.conf
+
+	install -Dm755 "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
+
+	install -Dm644 maddy.1 -t "$pkgdir"/usr/share/man/man1/
+}
+
+vim() {
+	pkgdesc="$pkgdesc (vim syntax)"
+	depends=""
+	install_if="vim $pkgname=$pkgver-r$pkgrel"
+
+	mkdir -p "$subpkgdir"/usr/share/vim
+	cp -r "$builddir"/dist/vim "$subpkgdir"/usr/share/vim/vimfiles
+}
+
+sha512sums="
+1aca8c03a232e8556655c84721211eca829174f6aa4a371fd0b15fbfdf82ab24c841338f214a742b05118a8a31d21d513bd8667513559bb32ba0870c427062fe  maddy-0.7.1.tar.gz
+c521763df519f86063ecfcb65c6689df880ea6478a83584ee1a7ebbfa5d95d1adf52ea9355f918a5a1c41f78d8b3a690e049fb43faac718ca5b6c519e10b0f23  maddy.initd
+76dbb8d7f4b389f2fc1e4e9ecbf93bd7e9a002a8520d93067e39b7a8d35e74e92af7151c116d38aa9d7548747cdd107b38392204f7d3a8944914aee236f7934e  use-syslog.patch
+"

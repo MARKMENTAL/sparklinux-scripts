@@ -1,0 +1,50 @@
+# Contributor: Michał Polański <michal@polanski.me>
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=git-warp-time
+pkgver=0.8.0
+pkgrel=0
+pkgdesc="Reset timestamps of Git repository files to the time of the last modifying commit"
+url="https://github.com/alerque/git-warp-time"
+license="GPL-3.0-only"
+arch="all"
+makedepends="cargo cargo-auditable"
+subpackages="$pkgname-bash-completion $pkgname-fish-completion $pkgname-zsh-completion"
+options="net"
+source="https://github.com/alerque/git-warp-time/archive/v$pkgver/git-warp-time-$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+
+	# Doc-tests from README.md expect to be ran in a Git repository
+	git init -q .
+	git config --local user.name "example"
+	git config --local user.email "example@example.com"
+	git add .
+	git commit -q -m "init"
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm755 target/release/$pkgname -t "$pkgdir"/usr/bin/
+
+	# shell completions
+	find target/release -name $pkgname.bash \
+		-exec install -Dm644 {} "$pkgdir"/usr/share/bash-completion/completions/$pkgname \;
+	find target/release -name $pkgname.fish \
+		-exec install -Dm644 {} "$pkgdir"/usr/share/fish/vendor_completions.d/$pkgname.fish \;
+	find target/release -name _$pkgname \
+		-exec install -Dm644 {} "$pkgdir"/usr/share/zsh/site-functions/_$pkgname \;
+}
+
+sha512sums="
+96082d70b94abe1aa3f149c5ad89dfe5a0f7fbaee00ed5342b30974facf6ce20e15e79370b2205b5b582e1b997c41bb97e30cc36c48d76145be58610c744821a  git-warp-time-0.8.0.tar.gz
+"

@@ -1,0 +1,30 @@
+# Contributor: Christian Kampka <christian@kampka.net>
+# Maintainer: Kevin Daudt <kdaudt@alpinelinux.org>
+pkgname=dockerize
+pkgver=0.7.0
+pkgrel=8
+pkgdesc="Utility to simplify running applications in docker containers."
+url="https://github.com/jwilder/dockerize"
+arch="all"
+license="MIT"
+options="!check" # No test suite
+makedepends="go"
+source="$pkgname-$pkgver.tar.gz::https://github.com/jwilder/dockerize/archive/v$pkgver.tar.gz"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -ldflags "-X main.buildVersion=$pkgver"
+}
+
+package() {
+	install -Dm0755 dockerize "$pkgdir"/usr/bin/dockerize
+	install -dm0755 "$pkgdir"/usr/share/dockerize/
+	cp -r examples "$pkgdir"/usr/share/dockerize/
+}
+
+sha512sums="
+694c9e7ce4c42b886ae5a9b6aaed8f255410f43d76440e6c9347c59821212ef37ceb46342e9569f34ee44dab07cf8dadde9c6011421694d9a9df195f0cfee3b8  dockerize-0.7.0.tar.gz
+"

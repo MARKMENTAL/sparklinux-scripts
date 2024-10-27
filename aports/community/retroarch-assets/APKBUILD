@@ -1,0 +1,24 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: David Demelier <markand@malikania.fr>
+pkgname=retroarch-assets
+# Needs to be upgraded in sync with the retroarch aport
+pkgver=1.19.0
+pkgrel=0
+arch="noarch"
+url="https://www.libretro.com"
+pkgdesc="Assets needed for RetroArch - e.g. menu drivers, etc"
+license="CC-BY-4.0"
+source="$pkgname-$pkgver.tar.gz::https://github.com/libretro/retroarch-assets/archive/v$pkgver.tar.gz"
+options="!check" # No code to test
+
+build() {
+	make
+}
+
+package() {
+	DESTDIR="$pkgdir" make install
+}
+
+sha512sums="
+4e02e4c5d9b546ad12bf10d54aae51b43f18879e603edc7f90f02907712fff78c8cfd23adaa8fbce6b054aea91254ad942fc4ade60daf925906ba85e9b6ec9fb  retroarch-assets-1.19.0.tar.gz
+"

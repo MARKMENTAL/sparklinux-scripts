@@ -1,0 +1,48 @@
+# Contributor: Antoine Martin (ayakael) <dev@ayakael.net>
+# Maintainer: Antoine Martin (ayakael) <dev@ayakael.net>
+pkgname=py3-duo_client
+_pyname=duo_client
+pkgver=5.3.0
+pkgrel=1
+arch="noarch"
+pkgdesc="Reference client for Duo Security APIs"
+url="https://pypi.python.org/project/duo_client"
+license="BSD-3-Clause"
+depends="
+	py3-six
+	"
+makedepends="
+	py3-setuptools
+	py3-wheel
+	py3-gpep517
+	"
+checkdepends="
+	py3-pytest
+	py3-nose2
+	py3-flake8
+	py3-mock
+	py3-tz
+	py3-freezegun
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/duosecurity/duo_client_python/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir"/${_pyname}_python-$pkgver
+subpackages="$pkgname-pyc"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	pytest -v
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+3513159ed0c7bd74d0ff575231d3def5b15425844fcd7e9eed1b3854e877c064989ef18f5c93bd9597126942d3da1817ecc149704102989ac7b062f2599606dc  py3-duo_client-5.3.0.tar.gz
+"

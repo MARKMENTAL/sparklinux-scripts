@@ -1,0 +1,75 @@
+# Contributor: Duncan Bellamy <dunk@denkimushi.com>
+# Maintainer: Duncan Bellamy <dunk@denkimushi.com>
+pkgname=vectorscan
+pkgver=5.4.11
+pkgrel=1
+pkgdesc="High-performance regular expression matching library"
+url="https://www.hyperscan.io"
+# requires SSSE3, Neon, or VSX
+arch="x86_64 aarch64 ppc64le"
+license="BSD-3-Clause"
+_llvmver=16
+makedepends="
+	boost-dev
+	chrpath
+	clang$_llvmver
+	cmake
+	llvm$_llvmver-dev
+	pcre-dev
+	ragel
+	samurai
+	sqlite-dev
+	"
+subpackages="$pkgname-doc $pkgname-dev $pkgname-utils"
+source="$pkgname-$pkgver.tar.gz::https://github.com/VectorCamp/vectorscan/archive/refs/tags/vectorscan/$pkgver.tar.gz
+	gcc12.patch
+	no-march-native.patch
+	"
+builddir="$srcdir/$pkgname-$pkgname-$pkgver"
+
+build() {
+	export PATH="$PATH:/usr/lib/llvm$_llvmver/bin"
+	export CC=clang
+	export CXX=clang++
+	export CFLAGS="$CFLAGS -flto=thin"
+	export CXXFLAGS="$CXXFLAGS -flto=thin"
+
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_SKIP_INSTALL_RPATH=ON \
+		-DBUILD_SHARED_LIBS=ON \
+		-DFAT_RUNTIME=OFF \
+		$CMAKE_CROSSOPTS
+	cmake --build build --target all
+}
+
+check() {
+	cd build
+	./bin/unit-hyperscan
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	for _f in hsbench hscheck; do
+		chrpath -d "$builddir/build/bin/$_f"
+		install -Dm755 "$builddir/build/bin/$_f" -t "$pkgdir"/usr/bin/
+	done
+}
+
+utils() {
+	pkgdesc="$pkgdesc (utils)"
+
+	amove usr/bin/hsbench usr/bin/hscheck
+}
+
+sha512sums="
+ed74e441c1106a90b344898320d20b74726db86af338dee8c908db941a88e73355ca87c6d64e212eb860bf76a96121021ebaabd48ce359b47634caaee9df3e5e  vectorscan-5.4.11.tar.gz
+f41f5f0b86226e23b926236bfec15d79ab54c8f91647abbeb8ed0dcdef223a162bea1a93933b29f56cfe67f2f22fe214198cf167b2cfb19d2a93c417a449803d  gcc12.patch
+b2bb242cccd5eca4e546e70fd28cc4a4e1180cd4bbdf269e2b860740d7d64e0c93562c3687cbcd99badbd2b5412d659d136c08b3f8c4204701a283090ad50805  no-march-native.patch
+"

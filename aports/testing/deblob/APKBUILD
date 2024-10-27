@@ -1,0 +1,30 @@
+# Contributor: lauren n. liberda <lauren@selfisekai.rocks>
+# Maintainer: lauren n. liberda <lauren@selfisekai.rocks>
+pkgname=deblob
+pkgver=0.7
+pkgrel=0
+pkgdesc="Remove binary executables (blobs) from a directory"
+url="https://hacktivis.me/projects/deblob"
+arch="aarch64 riscv64 x86_64"	# hare
+license="BSD-3-Clause"
+makedepends="hare"
+subpackages="$pkgname-doc"
+source="
+	deblob-$pkgver.tar.gz::https://git.sr.ht/~lanodan/deblob/archive/$pkgver.tar.gz
+	"
+
+build() {
+	make
+}
+
+check() {
+	make test
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr install
+}
+
+sha512sums="
+92fe9d9a4fc7c3a33f53e9f414005da6820b00dbc835a31560cc0fde28e9ecf75b53b23cecbbf93c287052da1ca7166d46233546fd69b7bd7760f10d15487509  deblob-0.7.tar.gz
+"

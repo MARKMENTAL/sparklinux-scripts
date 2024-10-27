@@ -1,0 +1,98 @@
+# Maintainer: Marian Buschsieweke <marian.buschsieweke@posteo.net>
+# Contributor: Holger Jaekel <holger.jaekel@gmx.de>
+pkgname=qscintilla
+pkgver=2.14.1
+pkgrel=2
+pkgdesc="QScintilla is a port to Qt of Neil Hodgson's Scintilla C++ editor control"
+url="https://www.riverbankcomputing.com/software/qscintilla"
+arch="all"
+license="GPL-3.0-only"
+subpackages="
+	$pkgname-designer:designer
+	$pkgname-dev
+	$pkgname-lang::noarch
+	"
+makedepends="
+	py3-ply
+	py3-pyqt-builder
+	py3-sip
+	python3-dev
+	qt5-qtbase-dev
+	qt5-qttools-dev
+	"
+source="https://www.riverbankcomputing.com/static/Downloads/QScintilla/$pkgver/QScintilla_src-$pkgver.tar.gz"
+builddir="$srcdir/QScintilla_src-$pkgver"
+
+# py3-qscintilla is blocked by py3-qt5 on armhf
+_with_python3_bindings="no"
+case "$CARCH" in
+	armhf) ;;
+	*)
+		makedepends="$makedepends py3-qt5"
+		subpackages="$subpackages py3-$pkgname:py3"
+		_with_python3_bindings="yes"
+		;;
+esac
+
+build() {
+	cd "$builddir"/src
+	qmake-qt5
+	make
+
+	cd "$builddir"/designer
+	qmake-qt5 INCLUDEPATH+=../src QMAKE_LIBDIR+=../src
+	make
+
+	if [ "$_with_python3_bindings" = "yes" ]; then
+		cd "$builddir"/Python
+		mv pyproject-qt5.toml pyproject.toml
+		sip-build \
+			--no-make \
+			--qmake /usr/bin/qmake-qt5 \
+			--qsci-features-dir ../src/features \
+			--qsci-include-dir ../src \
+			--qsci-library-dir ../src \
+			--api-dir /usr/share/qt5/qsci/api/python
+		cd build
+		make
+	fi
+}
+
+check() {
+	cd src
+	make check
+}
+
+package() {
+	make -C src DESTDIR="$pkgdir" INSTALL_ROOT="$pkgdir" install
+	make -C designer DESTDIR="$pkgdir" INSTALL_ROOT="$pkgdir" install
+
+	if [ "$_with_python3_bindings" = "yes" ]; then
+		make -C Python/build DESTDIR="$pkgdir" INSTALL_ROOT="$pkgdir" install
+	fi
+}
+
+designer() {
+	pkgdesc="$pkgname (Qt5 designer plugin)"
+	depends="$pkgname=$pkgver-r$pkgrel"
+
+	amove usr/lib/qt5/plugins/designer
+}
+
+py3() {
+	pkgdesc="$pkgname (Python3 bindings)"
+	depends="py3-qt5"
+
+	amove usr/lib/python3*
+	amove usr/share/qt5/qsci/api/python/QScintilla.api
+}
+
+lang() {
+	install_if="lang $pkgname=$pkgver-r$pkgrel"
+
+	amove usr/share/qt5/translations
+}
+
+sha512sums="
+19e2f9e0a14947501c575018df368d24eb7f8c74e74faa5246db36415bf28dc0beee507ed0e73107c02b36a99bbaf55f0ef3349f479d2332e1b92b2c4a32788a  QScintilla_src-2.14.1.tar.gz
+"

@@ -1,0 +1,36 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=pcsc-tools
+pkgver=1.7.2
+pkgrel=0
+pkgdesc="tools to test a PC/SC driver, card or reader or send commands"
+url="https://pcsc-tools.apdu.fr/"
+arch="all"
+license="GPL-2.0-or-later"
+depends="pcsc-perl"
+makedepends="pcsc-lite-dev"
+subpackages="$pkgname-doc"
+source="https://pcsc-tools.apdu.fr/pcsc-tools-$pkgver.tar.bz2"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+24fcdbc51de370194f31ef7a74bdc03bc37f8531db44af316c52e4ed1fa76b7ec995bbdaf08063bfe6e8b2f129f2f2fd0fe6c738d867ac10b746d4550ab2cf90  pcsc-tools-1.7.2.tar.bz2
+"

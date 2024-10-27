@@ -1,0 +1,79 @@
+# Contributor: Díaz Urbaneja Diego <sodomon2@gmail.com>
+# Maintainer: Díaz Urbaneja Diego <sodomon2@gmail.com>
+pkgname=warzone2100
+pkgver=4.5.1
+pkgrel=0
+pkgdesc="3D realtime strategy game on a future Earth"
+url="https://wz2100.net/"
+# huge videogame
+arch="x86_64 aarch64" # Officially supported in the releases
+license="GPL-2.0-or-later"
+# todo: bundles some font-dejavu/font-noto-cjk, but needs patching
+makedepends="
+	asciidoctor
+	cmake
+	curl-dev
+	freetype-dev
+	fmt-dev
+	fribidi-dev
+	gawk
+	harfbuzz-dev
+	libpng-dev
+	libsodium-dev
+	libtheora-dev
+	libvorbis-dev
+	libzip-dev
+	mesa-dev
+	miniupnpc-dev
+	openal-soft-dev
+	opencl-dev
+	opus-dev
+	physfs-dev
+	qt5-qtscript-dev
+	samurai
+	sdl2-dev
+	sqlite-dev
+	vulkan-headers
+	zip
+	zstd-dev
+	"
+subpackages="$pkgname-doc $pkgname-lang $pkgname-data::noarch"
+source="$pkgname-$pkgver.tar.xz::https://github.com/Warzone2100/warzone2100/releases/download/$pkgver/warzone2100_src.tar.xz
+	samurai.patch
+	use-system-fmt.patch
+	"
+builddir="$srcdir/warzone2100"
+options="!check" # who tests videogames
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		local crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DWZ_DISTRIBUTOR="AlpineLinux" \
+		-DWZ_ENABLE_WARNINGS_AS_ERRORS=OFF \
+		-DENABLE_DISCORD=OFF \
+		-Wno-dev \
+		$crossopts
+	cmake --build build
+}
+
+package() {
+	depends="$pkgname-data=$pkgver-r$pkgrel"
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+data() {
+	pkgdesc="Data files for warzone2100"
+
+	amove usr/share/warzone2100
+}
+
+sha512sums="
+7463ef07041e198383bd634b99c1e19b917e24a81dd43b623470ac9cf20c226966ca621074dd820b6438e660e5699273b130201a64dff522008ba6bf8fdac11e  warzone2100-4.5.1.tar.xz
+49e825754bcee28642ed3b83c66bee246b63560bbd74833f2c74919c19445baffd4b9ed08e5792cebda5b094b1d603c67fdf304d3092b28bb645a995b63c42ce  samurai.patch
+2f5f89d8dc6b68365a54f3dc83cead639242d67e92ba2827b6471efaae96598e2f6b0d5acfe5b0a98ceb01b868e123462988d346b902a16fa414f0a5957f38b3  use-system-fmt.patch
+"

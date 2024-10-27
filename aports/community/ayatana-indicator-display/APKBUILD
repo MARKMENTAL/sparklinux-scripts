@@ -1,0 +1,50 @@
+# Contributor: Luca Weiss <luca@lucaweiss.eu>
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+pkgname=ayatana-indicator-display
+pkgver=24.5.0
+pkgrel=1
+pkgdesc="Ayatana Indicator Display"
+url="https://github.com/AyatanaIndicators/ayatana-indicator-display"
+arch="all"
+license="GPL-3.0-only"
+makedepends="
+	accountsservice-dev
+	cmake
+	cmake-extras
+	geoclue-dev
+	glib-dev
+	intltool
+	libayatana-common-dev
+	libgudev-dev
+	properties-cpp-dev
+	samurai
+	"
+subpackages="$pkgname-lang"
+source="https://github.com/AyatanaIndicators/ayatana-indicator-display/archive/$pkgver/ayatana-indicator-display-$pkgver.tar.gz"
+options="!check" # requires unpackaged dependencies (at least libqtdbusmock & libqtdbustest)
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		$CMAKE_CROSSOPTS .
+	cmake --build build
+}
+
+check() {
+	cd build
+	CTEST_OUTPUT_ON_FAILURE=TRUE ctest
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+397f34f08fbd7093d9645f91604694588327644a73f20fff1e8786b3973363b578d90aede9c2ad6fa36bfc0f17d82aa2661c919a44f4bfea41ec78731dee28b8  ayatana-indicator-display-24.5.0.tar.gz
+"

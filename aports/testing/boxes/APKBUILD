@@ -1,0 +1,31 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=boxes
+pkgver=2.2.1
+pkgrel=0
+pkgdesc="Text mode box and comment drawing filter"
+url="https://boxes.thomasjensen.com"
+arch="all"
+license="GPL-2.0"
+makedepends="bison flex libunistring-dev pcre2-dev"
+checkdepends="bash"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/ascii-boxes/boxes/archive/refs/tags/v$pkgver.tar.gz"
+
+build() {
+	make -j1 GLOBALCONF=/etc/boxes-config
+}
+
+check() {
+	make test
+}
+
+package() {
+	install -D -m 644 doc/boxes.1 $pkgdir/usr/share/man/man1/boxes.1
+	install -D -m 644 boxes-config $pkgdir/etc/boxes-config
+	install -D -m 755 out/boxes $pkgdir/usr/bin/boxes
+}
+
+sha512sums="
+0afa115d5ec01944878ef4d8f33e2887d123b172a0589eda53a04ba671916d9ef1d8299f9df9aeac8989807f86ca1b96b1c34aed03856643a89a07586b82e3b6  boxes-2.2.1.tar.gz
+"

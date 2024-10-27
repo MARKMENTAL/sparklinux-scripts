@@ -1,0 +1,64 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=kde-other
+pkgname=kaidan
+pkgver=0.9.2
+pkgrel=0
+pkgdesc="Kaidan, a simple and user-friendly Jabber/XMPP client for every device and platform"
+# armhf blocked by qt5-qtdeclarative
+# riscv64 blocked by kquickimageeditor5
+arch="all !armhf !riscv64"
+url="https://invent.kde.org/network/kaidan"
+license="GPL-3.0-or-later-with-openssl-exception AND GPL-3.0-or-later AND MIT AND AND Apache-2.0 AND CC-BY-SA-4.0 AND CC-BY-SA-3.0"
+depends="
+	kirigami-addons5
+	kirigami2
+	kquickimageeditor5
+	qt5-qtbase-sqlite
+	qt5-qtquickcontrols
+	"
+makedepends="
+	extra-cmake-modules
+	kio5-dev
+	kirigami-addons5-dev
+	kirigami2-dev
+	knotifications5-dev
+	kquickimageeditor5-dev
+	qt5-qtbase-dev
+	qt5-qtdeclarative-dev
+	qt5-qtlocation-dev
+	qt5-qtmultimedia-dev
+	qt5-qtquickcontrols2-dev
+	qt5-qtsvg-dev
+	qt5-qttools-dev
+	qxmpp-dev
+	samurai
+	zxing-cpp-dev
+	"
+subpackages="$pkgname-lang"
+_repo_url="https://invent.kde.org/network/kaidan.git"
+#source="https://download.kde.org/unstable/kaidan/kaidan-$pkgver.tar.xz"
+source="https://invent.kde.org/network/kaidan/-/archive/v$pkgver/kaidan-v$pkgver.tar.gz"
+options="!check" # No tests
+
+builddir="$srcdir/$pkgname-v$pkgver"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DQUICK_COMPILER=TRUE \
+		-DI18N=TRUE
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+76d744253f517e7f03c54739acc56d494a3b4ff6812190f23c76ff96b353cbddb7e563398bb0c64537ef862d0e3ea53377e1df63ce0a6dc536580343baeb5fd1  kaidan-v0.9.2.tar.gz
+"

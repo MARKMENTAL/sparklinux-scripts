@@ -1,0 +1,51 @@
+# Contributor: Luca Weiss <luca@lucaweiss.eu>
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+pkgname=libayatana-appindicator
+pkgver=0.5.93
+pkgrel=1
+pkgdesc="Ayatana Application Indicators Shared Library"
+url="https://github.com/AyatanaIndicators/libayatana-appindicator"
+arch="all"
+license="LGPL-3.0-only"
+makedepends="
+	cmake
+	dbus-glib-dev
+	glib-dev
+	gobject-introspection-dev
+	gtk+3.0-dev
+	libayatana-indicator-dev
+	libdbusmenu-gtk3-dev
+	samurai
+	vala
+	"
+checkdepends="dbus-test-runner xvfb-run"
+subpackages="$pkgname-dev"
+source="https://github.com/AyatanaIndicators/libayatana-appindicator/archive/$pkgver/libayatana-appindicator-$pkgver.tar.gz"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DENABLE_TESTS=ON \
+		-DENABLE_BINDINGS_MONO=OFF \
+		$CMAKE_CROSSOPTS .
+	cmake --build build
+}
+
+check() {
+	cd build
+	CTEST_OUTPUT_ON_FAILURE=TRUE xvfb-run ctest -j1
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+0477555de74d98a52d6415f5a5a2550aede1db0b54e9df3e761a0ad697b753b5b81827324df860c5ef0fd38c903b07dd8f4bf3129a2bb764d77f9028b03570b4  libayatana-appindicator-0.5.93.tar.gz
+"

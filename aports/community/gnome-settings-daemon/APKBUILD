@@ -1,0 +1,71 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: team/gnome <ablocorrea@hotmail.com>
+pkgname=gnome-settings-daemon
+pkgver=47.1
+pkgrel=0
+pkgdesc="GNOME settings daemon"
+url="https://gitlab.gnome.org/GNOME/gnome-settings-daemon"
+arch="all"
+options="!check" # tests fail on builders
+license="GPL-2.0-only AND LGPL-2.1-only"
+depends="pulseaudio"
+depends_dev="
+	alsa-lib-dev
+	colord-dev
+	cups-dev
+	elogind-dev
+	geoclue-dev
+	geocode-glib-dev>=3.26.4-r1
+	libcanberra-dev
+	libgweather4-dev
+	libnotify-dev
+	libwacom-dev
+	modemmanager-dev
+	networkmanager-dev
+	pango-dev
+	polkit-dev
+	pulseaudio-dev
+	upower-dev
+	"
+makedepends="
+	$depends_dev
+	gcr4-dev
+	glib-dev
+	gnome-desktop-dev
+	gsettings-desktop-schemas-dev
+	gtk+3.0-dev
+	libxml2-utils
+	meson
+	"
+checkdepends="
+	gnome-session
+	gnome-shell
+	py3-dbusmock
+	py3-gobject3
+	umockdev-dev
+	"
+subpackages="$pkgname-dev $pkgname-lang"
+source="https://download.gnome.org/sources/gnome-settings-daemon/${pkgver%.*}/gnome-settings-daemon-$pkgver.tar.xz
+	dont-use-logind-for-brightness-changing.patch
+	"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dsystemd=false \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+39de5d67d51f751717b9c7dae4742981a7215a780e13e75ba5321351bcf129e265be12f60b01522d29301ef14049e88d217bdf1e800f16b4493566b927da35e4  gnome-settings-daemon-47.1.tar.xz
+fd80b939a14bbc5dd502afda0bc6511f2d9c045018680e5ae7fbec32efadb564c5060ec91d374330f246d70571aad5979ce8c175175a29b5ccec3443c8286dc6  dont-use-logind-for-brightness-changing.patch
+"

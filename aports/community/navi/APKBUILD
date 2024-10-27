@@ -1,0 +1,82 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=navi
+pkgver=2.23.0
+pkgrel=0
+pkgdesc="An interactive cheatsheet tool for the command-line"
+url="https://github.com/denisidoro/navi"
+# s390x: fails to build nix crate
+arch="all !s390x"
+license="Apache-2.0"
+depends="git"
+makedepends="cargo cargo-auditable"
+install="$pkgname.post-install"
+subpackages="
+	$pkgname-bash-plugin:_bash:noarch
+	$pkgname-fish-plugin:_fish:noarch
+	$pkgname-zsh-plugin:_zsh:noarch
+	"
+source="https://github.com/denisidoro/navi/archive/v$pkgver/navi-$pkgver.tar.gz
+	fix-compiled_default_path.patch
+	cargo-update-libc-lfs64.patch
+	config.yaml
+	cargo-update.patch
+	"
+
+export NAVI_CONFIG="/etc/xdg/navi/config.yaml"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -D -m755 target/release/$pkgname -t "$pkgdir"/usr/bin/
+
+	install -Dm644 shell/navi.plugin.bash "$pkgdir"/usr/share/bash/plugins/$pkgname/navi.plugin.sh
+	install -Dm644 shell/navi.plugin.fish -t "$pkgdir"/usr/share/fish/vendor_functions.d/
+	install -Dm644 shell/navi.plugin.zsh -t "$pkgdir"/usr/share/zsh/plugins/$pkgname/
+
+	install -D -m644 "$srcdir"/config.yaml "$pkgdir/$NAVI_CONFIG"
+}
+
+_bash() {
+	pkgdesc="Bash plugin for $pkgname (key bindings)"
+	depends=""
+	install_if="$pkgname=$pkgver-r$pkgrel bash"
+
+	amove usr/share/bash/plugins
+}
+
+_fish() {
+	pkgdesc="Fish plugin for $pkgname (key bindings)"
+	depends=""
+	install_if="$pkgname=$pkgver-r$pkgrel fish"
+
+	amove usr/share/fish
+}
+
+_zsh() {
+	pkgdesc="Zsh plugin for $pkgname (key bindings)"
+	depends=""
+	install_if="$pkgname=$pkgver-r$pkgrel zsh"
+
+	amove usr/share/zsh/plugins
+}
+
+sha512sums="
+ebd6fc6ce901f3b8a1ba8a5e05007aa734ee201ead0a85c9be2ccdc9c19513a62a2a1a2affec3046a27c674c82a7b28da1853a8e92f5ccad2203ab85835a3e24  navi-2.23.0.tar.gz
+a4041e1b3f2ed10a5b6ba74817c549d309aa972f40b10f3f817dab7a7ef6fbadbd6fe0a071f9fc014f3c2d627a6fd70394ea5d698c64b4867f0a4d77c4522768  fix-compiled_default_path.patch
+663d8e277d7bc0565b425edcea8db5b8283b1db1f61454c16e3483b6b2638fb226220052a54aa8f638cb9b41ab0266f394790ef991e9b59945df30908e6706ab  cargo-update-libc-lfs64.patch
+26b48a07e7df9c7a30106dff956e4446121c998fbac481eec85a55c75721c900f006c8d7c666d231e19c1f2769a550f1fdbecca35496d82f3b409e5fe1ab24e0  config.yaml
+34562234853ceba8eb3b12e807980bde968ae9cc2960eedccf9bb3ebbf88751ba18df2481fe7ef763b141e6133a8672af5ce10aca90604d52665704ba897d97e  cargo-update.patch
+"

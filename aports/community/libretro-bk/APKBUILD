@@ -1,0 +1,25 @@
+# Contributor: David Demelier <markand@malikania.fr>
+# Maintainer: David Demelier <markand@malikania.fr>
+pkgname=libretro-bk
+pkgver=0_git20240628
+pkgrel=0
+_commit="31af5ca5f307991eb596ed411d4d0e955c833421"
+pkgdesc="BK-0010/0011/Terak 8510a emulator"
+url="https://github.com/libretro/bk-emulator"
+arch="all"
+license="custom"
+source="$pkgname-$_commit.tar.gz::https://github.com/libretro/bk-emulator/archive/$_commit.tar.gz"
+builddir="$srcdir/bk-emulator-$_commit"
+options="!check" # No tests
+
+build() {
+	make -f Makefile.libretro
+}
+
+package() {
+	install -Dm644 bk_libretro.so "$pkgdir"/usr/lib/libretro/bk_libretro.so
+}
+
+sha512sums="
+f535293c765feebb623d78c3da99f907f0d98df0615fe76c46adc5d6c87c16713b8e26a86d166e0fe9097b00ec250b1e33032f35202ac66539fe2d97c8430969  libretro-bk-31af5ca5f307991eb596ed411d4d0e955c833421.tar.gz
+"

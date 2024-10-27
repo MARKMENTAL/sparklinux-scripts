@@ -1,0 +1,52 @@
+# Contributor: Luca Weiss <luca@lucaweiss.eu>
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+pkgname=ayatana-indicator-messages
+pkgver=24.5.0
+pkgrel=1
+pkgdesc="Ayatana Indicator Messages Applet"
+url="https://github.com/AyatanaIndicators/ayatana-indicator-messages"
+arch="all !s390x !riscv64" # blocked by accountsservice
+license="GPL-3.0-only"
+makedepends="
+	accountsservice-dev
+	cmake
+	cmake-extras
+	dbus-test-runner-dev
+	glib-dev
+	gtest-dev
+	gtk-doc
+	intltool
+	samurai
+	vala
+	"
+checkdepends="dbus dbus-test-runner py3-dbus py3-dbusmock"
+subpackages="$pkgname-dev $pkgname-doc $pkgname-lang"
+source="https://github.com/AyatanaIndicators/ayatana-indicator-messages/archive/$pkgver/ayatana-indicator-messages-$pkgver.tar.gz"
+options="!check" # indicator-test times out after 60s due to hanging and nothing reaching the end of it
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DENABLE_TESTS=ON \
+		$CMAKE_CROSSOPTS .
+	cmake --build build
+}
+
+check() {
+	cd build
+	CTEST_OUTPUT_ON_FAILURE=TRUE ctest
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+6a034e5ac7c4e8191a128bb3279bd69c718c5f9e9c8d4477fb1f843dcf134a6aca88959b9009bd21c1d4456e568b6618e7ff8cb5fcaa66cb0ab6d1ec1ddd1e8b  ayatana-indicator-messages-24.5.0.tar.gz
+"

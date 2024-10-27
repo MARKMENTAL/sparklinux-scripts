@@ -1,0 +1,49 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+pkgname=py3-chaospy
+_pkgorig=chaospy
+pkgver=4.3.17
+pkgrel=0
+pkgdesc="Numerical tool for performing uncertainty quantification"
+url="https://github.com/jonathf/chaospy"
+arch="noarch !x86 !armhf !armv7 !s390x !ppc64le" # assertion errors and py3-numpoly
+license="MIT"
+depends="
+	python3
+	py3-matplotlib
+	py3-numpoly
+	py3-numpy
+	py3-scipy
+	py3-scikit-learn
+	"
+checkdepends="py3-pytest"
+makedepends="
+	py3-gpep517
+	py3-setuptools_scm
+	py3-wheel
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/jonathf/chaospy/archive/refs/tags/v$pkgver.tar.gz
+	importlib.patch
+	"
+builddir="$srcdir/$_pkgorig-$pkgver"
+
+build() {
+	export SETUPTOOLS_SCM_PRETEND_VERSION=$pkgver
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m pytest -p no:warnings
+}
+
+package() {
+	python3 -m installer --destdir="$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+f37e69bbcb1f4801d6f1fbec13a5f8464fa02cf2561da5d972f248eb67aa65ff2048ada78570c9b501f8a86e049a179c65c497ee1640d8e4d5eab8b8fd35c198  py3-chaospy-4.3.17.tar.gz
+5b76498a070d2864613fe0e2a29506c6a02bdb2248c842b38cf08eebcdc64fffc07f890644ee3d962a584ad83237b99bafe27dc926082ed4a904254aa6d6bc04  importlib.patch
+"

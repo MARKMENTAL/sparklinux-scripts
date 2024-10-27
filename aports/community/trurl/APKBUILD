@@ -1,0 +1,34 @@
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=trurl
+pkgver=0.16
+pkgrel=0
+pkgdesc="command line tool for URL parsing and manipulation"
+url="https://curl.se/trurl/"
+arch="all"
+license="curl"
+makedepends="
+	curl-dev
+	"
+checkdepends="
+	py3-packaging
+	python3
+	"
+subpackages="$pkgname-doc"
+source="https://github.com/curl/trurl/archive/refs/tags/trurl-$pkgver.tar.gz"
+builddir="$srcdir/trurl-trurl-$pkgver"
+
+build() {
+	make
+}
+
+check() {
+	make test
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr install
+}
+
+sha512sums="
+4411769ba36109dc0e0c27ff605b7b6eb9dc9da3ab53290dc0049f44d853f7363699a9e22716dbf4c2d912f5c0c1556ea0d14f55475f44b48ea2e320b00a75e7  trurl-0.16.tar.gz
+"

@@ -1,0 +1,69 @@
+# Contributor: Luca Weiss <luca@lucaweiss.eu>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=libchewing
+pkgver=0.9.0
+pkgrel=0
+pkgdesc="Intelligent Chinese phonetic input method"
+url="https://chewing.im/"
+arch="all"
+license="LGPL-2.1-only"
+makedepends="
+	cargo
+	cmake
+	corrosion
+	ncurses-dev
+	samurai
+	sqlite-dev
+	zstd
+	"
+subpackages="
+	$pkgname-dev
+	$pkgname-tools
+	$pkgname-tools-doc:_tools_doc:noarch
+	"
+source="https://github.com/chewing/libchewing/releases/download/v$pkgver/libchewing-$pkgver.tar.zst"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	export CFLAGS="$CFLAGS -DHAVE_NCURSES_H"
+
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=ON \
+		-DBUILD_TESTING="$(want_check && echo ON || echo OFF)" \
+		-DCMAKE_BUILD_TYPE=None
+	cmake --build build
+}
+
+check() {
+	# parallel testing is broken (https://github.com/chewing/libchewing/issues/293)
+	ctest --test-dir build --output-on-failure -j1
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+tools() {
+	pkgdesc="$pkgdesc (command line tools)"
+
+	amove usr/bin
+}
+
+_tools_doc() {
+	pkgdesc="$pkgdesc (man pages for tools)"
+	install_if="docs $pkgname-tools=$pkgver-r$pkgrel"
+
+	# man pages are already gzipped by cmake
+	amove usr/share/man/man1
+}
+
+sha512sums="
+64be2188592f9cdd44dd80610d82f40dd2778bd991a56f144671eebb5bbee258bd7871e9a95911165a658cd7a23c83efa088d4d6364c0ae5d58592b31c165a87  libchewing-0.9.0.tar.zst
+"

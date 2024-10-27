@@ -1,0 +1,45 @@
+# Contributor: Michał Polański <michal@polanski.me>
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=prettier
+pkgver=3.3.3
+pkgrel=0
+pkgdesc="Opinionated code formatter"
+url="https://prettier.io/"
+license="MIT"
+# armhf, armv7, x86, riscv64: fails to build
+# s390x: hangs at yarn "fetch step"
+arch="noarch !armhf !armv7 !x86 !riscv64 !s390x"
+depends="nodejs"
+makedepends="yarn"
+checkdepends="npm"
+subpackages="$pkgname-doc"
+source="https://github.com/prettier/prettier/archive/$pkgver/prettier-$pkgver.tar.gz"
+
+build() {
+	yarn install --frozen-lockfile
+	yarn build
+}
+
+check() {
+	yarn test:dist
+}
+
+package() {
+	local destdir=/usr/lib/node_modules/prettier
+
+	install -d \
+		"$pkgdir"/usr/bin \
+		"$pkgdir"/$destdir \
+		"$pkgdir"/usr/share/licenses/prettier
+
+	cp -r dist/* "$pkgdir"/$destdir
+	ln -s $destdir/bin/prettier.cjs "$pkgdir"/usr/bin/prettier
+
+	cd "$pkgdir"/$destdir
+	rm README.md # more links to various badges than actual content
+	mv LICENSE "$pkgdir"/usr/share/licenses/prettier/LICENSE
+}
+
+sha512sums="
+19a177600979fe091c7765de8aa89794ebba77c1c70099ff8db67393cca1c94d7bae931a5f1c448ad0a8a66f8a50adbe940cceb823bc57a5d03a540d76a59865  prettier-3.3.3.tar.gz
+"

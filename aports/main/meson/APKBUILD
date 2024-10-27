@@ -1,0 +1,111 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=meson
+pkgver=1.5.2
+pkgrel=0
+pkgdesc="Fast and user friendly build system"
+url="https://mesonbuild.com"
+arch="noarch"
+license="Apache-2.0"
+depends="samurai"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+# glib-dev, gobject-introspection-dev, gtk+3.0-dev is a circular dep,
+# but only during bootstrap-
+# not installing checkdepends with !check should be fine
+options="$options !check" # circular deps above with check on bootstrap
+checkdepends="
+	boost-dev
+	boost-static
+	cmake
+	cups-dev
+	doxygen
+	gettext-static
+	gfortran
+	glib-dev
+	gobject-introspection-dev
+	gtest-dev
+	gtk+3.0-dev
+	libpcap-dev
+	libxml2-dev
+	linux-headers
+	llvm-dev
+	nasm
+	ncurses-dev
+	py3-pytest
+	python3-dev
+	vala
+	zlib-dev
+	zlib-static
+	"
+subpackages="
+	$pkgname-doc
+	$pkgname-pyc
+	$pkgname-vim::noarch
+	$pkgname-bash-completion
+	$pkgname-zsh-completion
+	$pkgname-polkit::noarch
+	"
+source="https://github.com/mesonbuild/meson/releases/download/$pkgver/meson-$pkgver.tar.gz
+	fix-ninja-output-test.patch
+	skip-broken-tests.patch
+	abuild-meson
+	"
+
+prepare() {
+	default_prepare
+
+	# https://github.com/mesonbuild/meson/issues/10104
+	rm -r "$builddir/test cases/linuxlike/13 cmake dependency"
+}
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	MESON_CI_JOBNAME=thirdparty \
+		NINJA=samu \
+		NINJA_1_9_OR_NEWER=1 \
+		python3 run_tests.py
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+
+	install -Dm644 data/shell-completions/zsh/* -t "$pkgdir"/usr/share/zsh/site-functions
+	install -Dm644 data/shell-completions/bash/* -t "$pkgdir"/usr/share/bash-completion/completions
+
+	install -Dm0755 "$srcdir"/abuild-meson -t "$pkgdir"/usr/bin
+}
+
+vim() {
+	pkgdesc="$pkgdesc (vim support)"
+	depends=
+	install_if="vim $pkgname=$pkgver-r$pkgrel"
+	cd "$builddir"
+	for kind in ftdetect ftplugin indent syntax
+	do
+		mkdir -p "$subpkgdir"/usr/share/vim/vimfiles/$kind
+		install -Dm644 \
+			"$builddir"/data/syntax-highlighting/vim/$kind/meson.vim \
+			"$subpkgdir"/usr/share/vim/vimfiles/$kind/meson.vim
+	done
+}
+
+polkit() {
+	pkgdesc="$pkgdesc (polkit config)"
+	depends=""
+	install_if="$pkgname=$pkgver-r$pkgrel polkit"
+
+	amove usr/share/polkit-*
+}
+
+sha512sums="
+9f601bdadaf2dae312ff02caa9dcd3fe13659a101e601417bdb908d8b91cdd4a12302433b00c188c1562287a06ada656044d79821d0beb0e0e41c63ab5d48112  meson-1.5.2.tar.gz
+a60dd85ecc1004523c213f4d06bfe10ba906a5115e93cfa4f1b70733e0c16f39c2c22b38ff71bb07c67166f3121c263a56842e8f8e2022f0a44094f956e28f02  fix-ninja-output-test.patch
+0bbbf65f56f4feab43b4ec3fbe7d4c64ef9abb563ea114d0b960048319b936dd577e538a762991661a1cb256f32c0da0fef2d3add07730e37a8bbd4ec27dc611  skip-broken-tests.patch
+3e609e58ec6a68633023a3fb3a8fa857f18925c7f0988bcb4171ef89583244aa3631d1ee4292671369a1e4e6c185d841ad3c1aafc577d0f190e3f0ddd37319e6  abuild-meson
+"

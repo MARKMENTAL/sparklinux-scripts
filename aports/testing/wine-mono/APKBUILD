@@ -1,0 +1,25 @@
+# Contributor: Natanael Copa <ncopa@alpinelinux.org>
+# Maintainer: Saijin-Naib <Saijin-Naib_package-maintenance@outlook.com>
+pkgname=wine-mono
+pkgver=8.1.0
+pkgrel=1
+pkgdesc="Wine's built-in replacement for Microsoft's .NET"
+url="https://wiki.winehq.org/Mono"
+arch="x86_64 x86"
+license="MIT"
+depends="wine"
+options="!check"
+source="https://github.com/madewokherd/wine-mono/releases/download/wine-mono-$pkgver/wine-mono-$pkgver-x86.msi"
+
+build() {
+	return 0
+}
+
+package() {
+	install -Dm644 "$srcdir"/$pkgname-$pkgver-x86.msi \
+		-t "$pkgdir"/usr/share/wine/mono/
+}
+
+sha512sums="
+5c788dfa0c9b664242f3ce0ab24f3f9256dabf1e9fadc516140f267c763da1865b4536c707660acaf66e4a37d93198f5499971b4261e63d91252f6a7fc3eae4e  wine-mono-8.1.0-x86.msi
+"

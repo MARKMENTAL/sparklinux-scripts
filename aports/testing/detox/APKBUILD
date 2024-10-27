@@ -1,0 +1,36 @@
+# Contributor: z3bra <willy at mailoo dot org>
+# Maintainer: Roberto Oliveira <robertoguimaraes8@gmail.com>
+pkgname=detox
+pkgver=2.0.0
+pkgrel=0
+pkgdesc="Utility for cleaning up filenames"
+url="https://github.com/dharple/detox"
+arch="all"
+license="BSD-3-Clause"
+makedepends="autoconf automake coreutils libtool"
+subpackages="$pkgname-doc"
+options="!check" # no upstream/available test-suite
+source="detox-$pkgver.tar.gz::https://github.com/dharple/detox/archive/v$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+	autoreconf -vif
+}
+
+build() {
+	./configure \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--infodir=/usr/share/info \
+		--mandir=/usr/share/man \
+		--datadir=/usr/share
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+a52e0f66caedce03d442dfe1f4b2f1db991c20dbc22b975c106266f1b5edcf653b22b166bbcae908c549371296c732898655002b3b95929fab5f4c03a526118f  detox-2.0.0.tar.gz
+"

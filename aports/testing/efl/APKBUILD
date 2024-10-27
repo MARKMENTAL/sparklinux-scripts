@@ -1,0 +1,94 @@
+# Contributor: Boris Faure <boris@fau.re>
+# Maintainer: Boris Faure <boris@fau.re>
+pkgname=efl
+pkgver=1.27.0
+pkgrel=1
+pkgdesc="Enlightenment Foundation Libraries"
+url="https://www.enlightenment.org"
+# ppc64le, riscv64, loongarch64: luajit
+arch="all !ppc64le !riscv64 !loongarch64"
+license="LGPL-2.1-only"
+makedepends="
+	dbus-dev
+	eudev-dev
+	fontconfig-dev
+	freetype-dev
+	fribidi-dev
+	giflib-dev
+	gst-plugins-base-dev
+	gstreamer-dev
+	harfbuzz-dev
+	libheif-dev
+	libinput-dev
+	libjpeg-turbo-dev
+	libpng-dev
+	librsvg-dev
+	libsndfile-dev
+	libwebp-dev
+	libx11-dev
+	libxcomposite-dev
+	libxcursor-dev
+	libxdamage-dev
+	libxinerama-dev
+	libxkbcommon-dev
+	libxrandr-dev
+	libxscrnsaver-dev
+	libxtst-dev
+	luajit-dev
+	mesa-dev
+	meson
+	openjpeg-dev
+	openssl-dev
+	pulseaudio-dev
+	wayland-dev
+	wayland-protocols
+	xorgproto
+	"
+options="!check" # Test suite issues
+subpackages="$pkgname-dev $pkgname-gdb"
+source="https://download.enlightenment.org/rel/libs/efl/efl-${pkgver/_/-}.tar.xz"
+
+build() {
+	CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE -D__USE_MISC" \
+	abuild-meson \
+		-Db_lto=true \
+		 -Ddebug=false \
+		 -Doptimization=s \
+		 -Dnls=false \
+		 -Dopengl=es-egl \
+		 -Dxinput22=true \
+		 -Dbuffer=false \
+		 -Dfb=false \
+		 -Ddrm=false \
+		 -Dtslib=false \
+		 -Dharfbuzz=true \
+		 -Dwl=true \
+		 -Dnetwork-backend=connman \
+		 -Devas-loaders-disabler=pdf,ps,raw,tiff,json,avif,jxl \
+		 -Dphysics=false \
+		 -Dsystemd=false \
+		 -Dpulseaudio=false \
+		 -Davahi=false \
+		 -Dbindings= \
+		 -Dbuild-examples=false \
+		 -Dbuild-tests=false \
+		 -Decore-imf-loaders-disabler=ibus,scim \
+		 . build
+
+	 meson compile -C build
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C build
+}
+
+gdb() {
+	pkgdesc="$pkgdesc (gdb integration)"
+	install_if="$pkgname=$pkgver-r$pkgrel gdb"
+
+	amove usr/share/gdb
+}
+
+sha512sums="
+5dda2f630463a2504d9246be17449579bbc470904e137b02b3b5c44db033dec2688f6c477885de1485944d875ee62619b6e7c5d4d3657225951f6feaf83b4fa4  efl-1.27.0.tar.xz
+"

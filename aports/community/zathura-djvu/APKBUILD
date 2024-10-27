@@ -1,0 +1,25 @@
+# Maintainer: Cormac Stephenson <c7s@kasku.net>
+pkgname=zathura-djvu
+pkgver=0.2.10
+pkgrel=0
+pkgdesc="djvu plugin for zathura"
+url="https://pwmt.org/projects/zathura-djvu/"
+arch="all"
+license="Zlib"
+options="!check" # no tests
+makedepends="meson zathura-dev djvulibre-dev"
+depends="zathura"
+source="https://pwmt.org/projects/zathura-djvu/download/zathura-djvu-$pkgver.tar.xz"
+
+build() {
+	abuild-meson build
+	meson compile -C build
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C build
+}
+
+sha512sums="
+c743e60588e07fe18f7da8db1ae9ae997ffb50ef696258f1901523159ff4d29e5649b13d6e52f53cf79f19429083308390c0b4923081451bf5c4bfb9ac6e8903  zathura-djvu-0.2.10.tar.xz
+"

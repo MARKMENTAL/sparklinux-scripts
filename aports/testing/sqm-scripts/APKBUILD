@@ -1,0 +1,25 @@
+# Contributor: Nicolas Lorin <androw95220@gmail.com>
+# Maintainer: Nicolas Lorin <androw95220@gmail.com>
+pkgname=sqm-scripts
+pkgver=1.6.0
+pkgrel=0
+pkgdesc="SQM scripts traffic shaper"
+url="https://github.com/tohojo/sqm-scripts"
+arch="noarch"
+license="GPL-2.0-only"
+options="!check"
+depends="iproute2 iptables"
+makedepends="coreutils"
+source="$pkgname-$pkgver.tar.gz::https://github.com/tohojo/sqm-scripts/archive/v$pkgver.tar.gz"
+
+package() {
+	install -m 0755 -d $pkgdir/etc/network/if-up.d
+	make DESTDIR="$pkgdir" install
+
+	rm -rf "$pkgdir"/usr/lib/tmpfiles.d
+	rm -rf "$pkgdir"/sqm@.service
+}
+
+sha512sums="
+6e384de887c330277389cbe05513f699c3f56ed5aaea3b765c109d01f34c9f73e05a7f7f6c7d34082a66d148e0500273451bd9808afbadc6c5db6a0292fc36ba  sqm-scripts-1.6.0.tar.gz
+"

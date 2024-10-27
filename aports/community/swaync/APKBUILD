@@ -1,0 +1,50 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=swaync
+_projname=SwayNotificationCenter
+pkgver=0.10.1
+pkgrel=1
+pkgdesc="Notification daemon with a GTK GUI for notifications and the control center"
+url="https://github.com/ErikReider/SwayNotificationCenter"
+arch="all"
+license="GPL-3.0-only"
+depends="dbus"
+makedepends="
+	gobject-introspection-dev
+	granite-dev
+	gtk+3.0-dev
+	gtk-layer-shell-dev
+	json-glib-dev
+	libgee-dev
+	libhandy1-dev
+	meson
+	pulseaudio-dev
+	sassc
+	scdoc
+	vala
+	"
+subpackages="
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="https://github.com/ErikReider/SwayNotificationCenter/archive/v$pkgver/$pkgname-$pkgver.tar.gz"
+builddir="$srcdir/$_projname-$pkgver"
+options="!check"  # no tests defined
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dsystemd-service=false \
+		. output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+fa753ee60ab180186d852f69c0ecf22d64b8c3aba280dce7c53f86c04a694abdb9570546fab46d4a32cade3a6eed5599ae2794afc56d5b141d4ea5fde976b49a  swaync-0.10.1.tar.gz
+"

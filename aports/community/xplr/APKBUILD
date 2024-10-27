@@ -1,0 +1,60 @@
+# Maintainer: omni <omni+alpine@hack.org>
+pkgname=xplr
+pkgver=0.21.9
+pkgrel=0
+pkgdesc="Hackable, minimal, fast TUI file explorer"
+url="https://xplr.dev"
+# s390x loongarch64: nix crate
+arch="all !s390x !loongarch64"
+license="MIT"
+makedepends="cargo cargo-auditable lua5.4-dev"
+options="net"
+subpackages="$pkgname-doc"
+source="
+	https://github.com/sayanarijit/xplr/archive/refs/tags/v$pkgver/xplr-$pkgver.tar.gz
+	modified-field-lua54.patch
+	mlua-lua54.patch
+	"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --release --frozen --no-default-features
+}
+
+check() {
+	# cargo test doesn't build target/debug/xplr binary
+	cargo auditable build --frozen --no-default-features
+	cargo test --frozen --no-default-features
+}
+
+package() {
+	install -Dm755 target/release/xplr -t "$pkgdir"/usr/bin/
+
+	install -Dm644 "$builddir"/assets/desktop/xplr.desktop \
+		-t "$pkgdir"/usr/share/applications
+	install -Dm644 "$builddir"/assets/icon/xplr.svg \
+		"$pkgdir"/usr/share/pixmaps/xplr.svg
+	install -Dm644 "$builddir"/assets/icon/xplr.svg \
+		"$pkgdir"/usr/share/icons/hicolor/scalable/apps/xplr.svg
+	for res in 16 32 64 128; do
+		install -Dm 644 assets/icon/"$pkgname""$res".png \
+			"$pkgdir"/usr/share/icons/hicolor/"$res"x"$res"/apps/"$pkgname".png
+	done
+
+	install -Dm644 src/init.lua \
+		-t "$pkgdir"/usr/share/doc/"$pkgname"/examples/
+	install -Dm644 docs/en/src/* \
+		-t "$pkgdir"/usr/share/doc/"$pkgname"/
+	install -Dm644 LICENSE "$pkgdir"/usr/share/licenses/"$pkgname"/LICENSE
+}
+
+sha512sums="
+683879d3bd1f118700d0ee53bc76aa9c4f887e58749dcb6805471309c5b2de1d3ce5206c77c1335aabdd13e6f2349aff7293c17a99957921ccdfc7e9cbf1771d  xplr-0.21.9.tar.gz
+ef2b2316c6de14c6d611a8a232a43c4d5e057a88d47a43c019b39c6a3923dbd0065b38e66da063963fed9f62d380e90383259ad94248e79a3a1be06cf8ad3cef  modified-field-lua54.patch
+02dff7d2802794115b4812fc728011128485faa13703f29c5d47d9cd7ef4e6965ce2015f5800a3baad17eeac238899c1923b32cae4fd732a81de43f1867601eb  mlua-lua54.patch
+"

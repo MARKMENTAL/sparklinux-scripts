@@ -1,0 +1,84 @@
+# Contributor: August Klein <amatcoder@gmail.com>
+# Maintainer: Duncan Bellamy <dunk@denkimushi.com>
+pkgname=py3-cryptography
+pkgver=43.0.1
+pkgrel=0
+pkgdesc="Cryptographic recipes and primitives for Python"
+url="https://cryptography.io/"
+arch="all"
+license="Apache-2.0 OR BSD-3-Clause"
+depends="python3 py3-cffi"
+makedepends="
+	cargo
+	libffi-dev
+	openssl-dev>3
+	py3-flit-core
+	py3-gpep517
+	py3-maturin
+	py3-setuptools
+	py3-wheel
+	python3-dev
+	"
+checkdepends="
+	py3-certifi
+	py3-hypothesis
+	py3-iso8601
+	py3-pretend
+	py3-pytest
+	py3-pytest-benchmark
+	py3-pytest-subtests
+	py3-pytest-xdist
+	py3-tz
+	"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/c/cryptography/cryptography-$pkgver.tar.gz
+	https://files.pythonhosted.org/packages/source/c/cryptography_vectors/cryptography_vectors-$pkgver.tar.gz
+	"
+builddir="$srcdir/cryptography-$pkgver"
+options="net"
+
+replaces="py-cryptography" # Backwards compatibility
+provides="py-cryptography=$pkgver-r$pkgrel" # Backwards compatibility
+
+case "$CARCH" in
+loongarch64)	options="$options !check" ;;
+esac
+
+# secfixes:
+#   41.0.2-r0:
+#     - CVE-2023-38325
+#   39.0.1-r0:
+#     - CVE-2023-23931
+#   3.2.2-r0:
+#     - CVE-2020-36242
+#   3.2.1-r0:
+#     - CVE-2020-25659
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+
+	# prepare cryptography vectors for testing
+	cd "$srcdir/cryptography_vectors-$pkgver"
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages test-env
+	test-env/bin/python3 -m installer .dist/cryptography*.whl
+	test-env/bin/python3 -m installer "$srcdir"/cryptography_vectors-$pkgver/.dist/cryptography*.whl
+	test-env/bin/python3 -m pytest -n $JOBS
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/cryptography-*.whl
+}
+
+sha512sums="
+db33cc8930492ccdf1aa6466026e4a3ab50382c863fa2c3c454a554cd53f74592e06fb021b2bd6bc16981c8230089c7a076a352a9d7d982a824ef4c7b1895414  cryptography-43.0.1.tar.gz
+934c4fadba915b10f3216c08cdb862968d138a40c0a3ea2aed6605685730d1d2b60767660356236b519ff98d52c2f21bf9ead4bc247eab80db27257d671037f2  cryptography_vectors-43.0.1.tar.gz
+"

@@ -1,0 +1,47 @@
+# Contributor: Thomas Kienlen <kommander@laposte.net>
+# Maintainer: Thomas Kienlen <kommander@laposte.net>
+pkgname=scummvm
+pkgver=2.8.1
+pkgrel=0
+pkgdesc="Engine for several graphical adventure games"
+url="https://www.scummvm.org/"
+arch="all !ppc64le" # build failure on ppc64le
+license="GPL-2.0-or-later"
+makedepends="
+	alsa-lib-dev
+	faad2-dev
+	flac-dev
+	fluidsynth-dev
+	freetype-dev
+	glu-dev
+	jpeg-dev
+	libmad-dev
+	libogg-dev
+	libpng-dev
+	libtheora-dev
+	libvorbis-dev
+	sdl2-dev
+	zlib-dev
+	"
+subpackages="$pkgname-doc"
+source="
+	https://downloads.scummvm.org/frs/scummvm/$pkgver/scummvm-$pkgver.tar.gz
+	disable-forbidden.patch
+	"
+
+build() {
+	./configure \
+		--prefix=/usr \
+		--enable-all-engines \
+		--enable-release
+	make
+}
+
+package() {
+	make install DESTDIR="$pkgdir"
+}
+
+sha512sums="
+11bdd0a3d2a3aa53462eaa3d96c4bd0d79053d853627c6958aab0687f4032812ba2f95c883f58cec4580637e541fb903a9d926c7e9e6a9e2e6a41028a77e4002  scummvm-2.8.1.tar.gz
+a44de9540f18893b49b02c083694f8eb974e8ddead6d0c6b0453760d7452367cfcc4613215fab2223da8859ce389a53dd2f110cf3389798761c95efafd886542  disable-forbidden.patch
+"

@@ -1,0 +1,60 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: team/kde <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=kde-applications
+pkgname=parley
+pkgver=24.08.1
+pkgrel=0
+# armhf blocked by extra-cmake-modules
+# armv7, ppc64le, s390x, riscv64 and loongarch64 blocked by qt6-qtwebengine
+arch="all !armhf !armv7 !ppc64le !s390x !riscv64 !loongarch64"
+url="https://kde.org/applications/education/org.kde.parley"
+pkgdesc="Vocabulary Trainer"
+license="GPL-2.0-or-later AND GFDL-1.2-only"
+makedepends="
+	extra-cmake-modules
+	kcmutils-dev
+	kconfig-dev
+	kcoreaddons-dev
+	kcrash-dev
+	kdoctools-dev
+	ki18n-dev
+	kio-dev
+	knewstuff-dev
+	knotifications-dev
+	kxmlgui-dev
+	libkeduvocdocument-dev
+	libxml2-dev
+	libxslt-dev
+	qt6-qtbase-dev
+	qt6-qtmultimedia-dev
+	qt6-qtsvg-dev
+	qt6-qtwebengine-dev
+	samurai
+	sonnet-dev
+	"
+checkdepends="xvfb-run"
+subpackages="$pkgname-doc $pkgname-lang"
+_repo_url="https://invent.kde.org/education/parley.git"
+source="https://download.kde.org/stable/release-service/$pkgver/src/parley-$pkgver.tar.xz"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build build
+}
+
+check() {
+	xvfb-run ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+9a1cc52effb14386a9361e0f5230be0e04434c7a505b0c34eda0d689eeaf00a7de09b9a3bc2602d5a34a32972b9ee8d6637ce4c526a86a2ce7918d6e0d6b3106  parley-24.08.1.tar.xz
+"

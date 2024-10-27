@@ -1,0 +1,196 @@
+# Contributor: macmpi <spam@ipik.org>
+# Maintainer: macmpi <spam@ipik.org>
+pkgname=raspberrypi-utils
+pkgver=0.20240903
+pkgrel=0
+_commit="d4f8fb543a892ba65bfc608511bf582c0425aa81"
+pkgdesc="Collection of Raspberry Pi utilities (scripts and simple applications)"
+url="https://github.com/raspberrypi/utils"
+arch="armhf armv7 aarch64"
+license="BSD-3-Clause"
+makedepends="cmake samurai dtc-dev"
+source="$pkgname-$_commit.tar.gz::https://github.com/raspberrypi/utils/archive/$_commit.tar.gz"
+builddir="$srcdir/utils-$_commit"
+# does not have any tests
+options="!check"
+subpackages="
+	$pkgname-dtmerge
+	$pkgname-dtmerge-doc:dtmerge_doc:noarch
+	$pkgname-eeptools
+	$pkgname-otpset::noarch
+	$pkgname-overlaycheck::noarch
+	$pkgname-ovmerge::noarch
+	$pkgname-pinctrl
+	$pkgname-pinctrl-bash-completion:pinctrl_bashcomp:noarch
+	$pkgname-raspinfo::noarch
+	$pkgname-vcgencmd
+	$pkgname-vcgencmd-bash-completion:vcgencmd_bashcomp:noarch
+	$pkgname-vcgencmd-doc:vcgencmd_doc:noarch
+	$pkgname-vclog
+	$pkgname-vcmailbox
+	$pkgname-vcmailbox-doc:vcmailbox_doc:noarch
+	"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_DATADIR=/usr/share \
+		-DCMAKE_BUILD_TYPE=MinSizeRel
+	cmake --build build
+}
+
+package() {
+	depends="
+		$pkgname-dtmerge=$pkgver-r$pkgrel
+		$pkgname-eeptools=$pkgver-r$pkgrel
+		$pkgname-otpset=$pkgver-r$pkgrel
+		$pkgname-overlaycheck=$pkgver-r$pkgrel
+		$pkgname-ovmerge=$pkgver-r$pkgrel
+		$pkgname-pinctrl=$pkgver-r$pkgrel
+		$pkgname-raspinfo=$pkgver-r$pkgrel
+		$pkgname-vcgencmd=$pkgver-r$pkgrel
+		$pkgname-vclog=$pkgver-r$pkgrel
+		$pkgname-vcmailbox=$pkgver-r$pkgrel
+		"
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+dtmerge() {
+	pkgdesc="A tool for applying compiled DT overlays (*.dtbo) to base Device Tree files (*.dtb)."
+	depends=""
+
+	amove usr/bin/dt*
+}
+
+dtmerge_doc() {
+	pkgdesc="Documentation for $pkgname-dtmerge"
+	depends="$pkgname-dtmerge=$pkgver-r$pkgrel"
+	install_if="$pkgname-dtmerge=$pkgver-r$pkgrel docs"
+
+	gzip -n -9 "$pkgdir"/usr/share/man/man1/dt*.1
+	amove usr/share/man/man1/dt*.1.gz
+}
+
+eeptools() {
+	pkgdesc="Tools for creating and managing EEPROMs for HAT+ and HAT board."
+	depends=""
+
+	amove usr/bin/eep*
+}
+
+otpset() {
+	pkgdesc="A short script to help with reading and setting the customer OTP bits."
+	depends="
+		python3
+		$pkgname-vcmailbox=$pkgver-r$pkgrel
+		"
+
+	amove usr/bin/otpset
+}
+
+overlaycheck() {
+	pkgdesc="A tool for validating the overlay files and README in a kernel source tree."
+	depends="
+		$pkgname-dtmerge=$pkgver-r$pkgrel
+		$pkgname-ovmerge=$pkgver-r$pkgrel
+		dtc
+		perl
+		"
+
+	amove usr/bin/overlaycheck
+	amove usr/bin/overlaycheck_exclusions.txt
+}
+
+ovmerge() {
+	pkgdesc="A tool for merging DT overlay source files (*-overlay.dts), flattening and sorting .dts files for easy comparison, displaying the include tree, etc."
+	depends="perl"
+
+	amove usr/bin/ovmerge
+}
+
+pinctrl() {
+	pkgdesc="A tool for displaying and modifying the GPIO and pin muxing state of a system, bypassing the kernel."
+	depends=""
+
+	amove usr/bin/pinctrl
+}
+
+pinctrl_bashcomp() {
+	depends="$pkgname-pinctrl=$pkgver-r$pkgrel"
+	pkgdesc="Bash completions for $pkgname-pinctrl"
+	install_if="$pkgname-pinctrl=$pkgver-r$pkgrel bash-completion"
+
+	amove usr/share/bash-completion/completions/pinctrl
+}
+
+raspinfo() {
+	pkgdesc="A short script to dump information about the Pi. Intended for the submission of bug reports."
+	depends="
+		$pkgname-vclog=$pkgver-r$pkgrel
+		$pkgname-pinctrl=$pkgver-r$pkgrel
+		$pkgname-vcgencmd=$pkgver-r$pkgrel
+		bash
+		sudo-virt
+		usbutils
+		"
+	# missing https://github.com/raspberrypi/rpi-eeprom
+
+	amove usr/bin/raspinfo
+}
+
+vcgencmd() {
+	pkgdesc="A tool used to output information from the VideoCore GPU on the Raspberry Pi"
+	depends=""
+
+	amove usr/bin/vcgencmd
+}
+
+vcgencmd_bashcomp() {
+	depends="$pkgname-vcgencmd=$pkgver-r$pkgrel"
+	pkgdesc="Bash completions for $pkgname-vcgencmd"
+	install_if="$pkgname-vcgencmd=$pkgver-r$pkgrel bash-completion"
+
+	amove usr/share/bash-completion/completions/vcgencmd
+}
+
+vcgencmd_doc() {
+	pkgdesc="Documentation for $pkgname-vcgencmd"
+	depends="$pkgname-vcgencmd=$pkgver-r$pkgrel"
+	install_if="$pkgname-vcgencmd=$pkgver-r$pkgrel docs"
+
+	gzip -n -9 "$pkgdir"/usr/share/man/man1/vcgencmd.1
+	amove usr/share/man/man1/vcgencmd.1.gz
+}
+
+vclog() {
+	pkgdesc="A tool to get VideoCore 'assert' or 'msg' logs with optional -f to wait for new logs to arrive."
+	depends=""
+
+	amove usr/bin/vclog
+}
+
+vcmailbox() {
+	pkgdesc="Utility for driving mailbox interface to VideoCore GPU on the Raspberry Pi"
+	depends=""
+
+	amove usr/bin/vcmailbox
+}
+
+vcmailbox_doc() {
+	pkgdesc="Documentation for $pkgname-vcmailbox"
+	depends="$pkgname-vcmailbox=$pkgver-r$pkgrel"
+	install_if="$pkgname-vcmailbox=$pkgver-r$pkgrel docs"
+
+	gzip -n -9 "$pkgdir"/usr/share/man/man1/vcmailbox.1
+	amove usr/share/man/man1/vcmailbox.1.gz
+
+	gzip -n -9 "$pkgdir"/usr/share/man/man7/vcmailbox.7
+	amove usr/share/man/man7/vcmailbox.7.gz
+
+	gzip -n -9 "$pkgdir"/usr/share/man/man7/raspi*.7
+	amove usr/share/man/man7/raspi*.7.gz
+}
+
+sha512sums="
+96504004a1b7b541fe126d973f60321769a4b54a1b603b1d9278ba902bed7c008c2f86906dfaf30632ce75e1073b2a97e9317a799a0bc8cea255d713cb26ae67  raspberrypi-utils-d4f8fb543a892ba65bfc608511bf582c0425aa81.tar.gz
+"

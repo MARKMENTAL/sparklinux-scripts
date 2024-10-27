@@ -1,0 +1,39 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=barman
+pkgver=3.11.1
+pkgrel=0
+pkgdesc="Backup and recovery manager for PostgreSQL"
+url="https://pgbarman.org"
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="python3 rsync postgresql-client py3-argcomplete py3-dateutil py3-psycopg2 py3-boto3"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+subpackages="$pkgname-doc $pkgname-bash-completion $pkgname-pyc"
+pkgusers="barman"
+pkggroups="barman"
+install="$pkgname.pre-install"
+options="!check" #pytest does not start and I don't know why
+checkdepends="py3-pytest-timeout py3-mock py3-pytest-runner py3-pip py3-mock"
+source="$pkgname-$pkgver.tar.gz::https://github.com/EnterpriseDB/barman/releases/download/release/$pkgver/barman-$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+
+	install -Dm0644 ./scripts/barman.bash_completion \
+		"$pkgdir"/usr/share/bash-completion/completions/$pkgname
+	install -d -o $pkgusers -g $pkggroups -m 755 "$pkgdir"/var/log/$pkgname
+
+	cd doc
+	install -Dm0644 barman.conf -t  "$pkgdir/etc"
+}
+
+sha512sums="
+768ef8841683d7b5205246fa2ed6013ba755134c922566f14e5f0e356b23af4bfb3256a3056c0a578907449799473dc65755d177cc28c8a4cd484a2ebd41ca9c  barman-3.11.1.tar.gz
+"

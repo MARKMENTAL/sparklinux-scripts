@@ -1,0 +1,33 @@
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=vivid
+pkgver=0.10.1
+pkgrel=0
+pkgdesc="Themeable LS_COLORS generator with a rich filetype database"
+url="https://github.com/sharkdp/vivid"
+arch="all"
+license="Apache-2.0 AND MIT"
+makedepends="cargo cargo-auditable"
+source="$pkgname-$pkgver.tar.gz::https://github.com/sharkdp/vivid/archive/refs/tags/v$pkgver.tar.gz"
+
+export CARGO_PROFILE_RELEASE_OPT_LEVEL="z"
+
+prepare() {
+	default_prepare
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm755 target/release/vivid -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+e7a1988f386f11496ad9319a36413229beb7130a8a10e6547d8f1828792c5b2e551b4ba46536696b9d378336d8643521b548a136252d3bddafd69eb95f721b9d  vivid-0.10.1.tar.gz
+"

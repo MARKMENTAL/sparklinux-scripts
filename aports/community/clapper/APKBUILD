@@ -1,0 +1,41 @@
+# Maintainer: Willow Barraco <contact@willowbarraco.fr>
+pkgname=clapper
+pkgver=0.6.0
+pkgrel=2
+pkgdesc="Modern media player designed for simplicity and ease of use"
+url="https://github.com/Rafostar/clapper"
+arch="all"
+license="GPL-3.0-or-later"
+makedepends="
+	desktop-file-utils
+	gobject-introspection-dev
+	gst-plugins-base-dev
+	gstreamer-dev
+	gtk4.0-dev
+	libadwaita-dev
+	libmicrodns-dev
+	libsoup3-dev
+	meson
+"
+subpackages="$pkgname-dev $pkgname-lang $pkgname-libs"
+source="$pkgname-$pkgver.tar.gz::https://github.com/Rafostar/clapper/archive/refs/tags/$pkgver.tar.gz"
+options="!check" # No tests
+ldpath="/usr/lib/gstreamer-1.0/"
+
+build() {
+	abuild-meson -Db_lto=true -Dintrospection=enabled . output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+libs() {
+	default_libs
+	amove usr/lib/girepository-1.0 usr/lib/gstreamer-1.0
+}
+
+sha512sums="
+a2119a632f4706b41e5b07384052a8c063b4279971e332197d258b419f602f922316ddd5649a2799ad59da921639201fdb81d0b4b94ee7b5695503dc8ab2eebe  clapper-0.6.0.tar.gz
+"

@@ -1,0 +1,34 @@
+# Maintainer: Antoni Aloy <aaloytorrens@gmail.com>
+pkgname=lxqt-menu-data
+pkgver=2.0.0
+pkgrel=0
+pkgdesc="Freedesktop.org desktop menus for LXQt"
+url="https://lxqt-project.org/"
+arch="noarch"
+license="GPL-2.0-or-later"
+makedepends="
+	cmake
+	samurai
+	lxqt-build-tools
+	qt6-qttools-dev
+	"
+options="!check" # No testsuite
+source="https://github.com/lxqt/lxqt-menu-data/releases/download/$pkgver/lxqt-menu-data-$pkgver.tar.xz"
+
+replaces="lxmenu-data"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+04ee9923118ded86c60677bf0922498625496d2811237211072a1b7f2a2fde18b8444901fa3812599e1c246bf2bda61d3ee0e5eb7b6a7c35827f4dddd6c21e61  lxqt-menu-data-2.0.0.tar.xz
+"

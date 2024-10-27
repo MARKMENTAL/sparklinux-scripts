@@ -1,0 +1,26 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=hare-vim
+_pkgname=hare.vim
+pkgver=0_git20230225
+_gitrev=75874719e1aee0171a0f06d1508ff9a116f6ac75
+pkgrel=0
+pkgdesc="vim plugin for Hare language"
+url="https://git.sr.ht/~sircmpwn/hare.vim"
+arch="noarch"
+license="Vim"
+install_if="vim hare"
+source="$pkgname-$_gitrev.tar.gz::https://git.sr.ht/~sircmpwn/hare.vim/archive/$_gitrev.tar.gz"
+builddir="$srcdir/$_pkgname-$_gitrev"
+options="!check"  # no tests provided
+
+package() {
+	local destdir="$pkgdir/usr/share/vim/vimfiles"
+
+	mkdir -p "$destdir"
+	cp -r compiler ftdetect ftplugin indent syntax "$destdir"/
+}
+
+sha512sums="
+e66399b30444e07fd0ac1163eca2de6581a8abedc4e0c9769ad1294a6183eea1f0479db7ddaa0e15db6ed768a284a7c8b57217ecc5116781eac69bbae9f2bf3f  hare-vim-75874719e1aee0171a0f06d1508ff9a116f6ac75.tar.gz
+"

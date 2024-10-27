@@ -1,0 +1,41 @@
+# Contributor: Damian Kurek <starfire24680@gmail.com>
+# Maintainer: Damian Kurek <starfire24680@gmail.com>
+pkgname=kodi-inputstream-adaptive
+pkgver=21.4.10
+_realname=Omega
+pkgrel=0
+pkgdesc="kodi inputstream addon for several manifest types"
+url="https://github.com/xbmc/inputstream.adaptive"
+arch="x86_64 aarch64 armv7" # kodi is available only on these architectures
+license="GPL-2.0-only"
+makedepends="cmake expat-dev kodi-dev samurai"
+source="$pkgname-$pkgver-$_realname.tar.gz::https://github.com/xbmc/inputstream.adaptive/archive/$pkgver-$_realname.tar.gz
+	"
+builddir="$srcdir/inputstream.adaptive-$pkgver-$_realname"
+options="net" # special bento4
+
+# fails some string comparison
+case "$CARCH" in
+armv7) options="$options !check" ;;
+esac
+
+build() {
+	cmake -B build -G Ninja -Wno-dev \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_MODULE_PATH=/usr/lib/cmake/kodi \
+		-DENABLE_INTERNAL_BENTO4=ON
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+587d71933f5cefeb63df95b56343ad438653c8ef581b500887d5dbc7446839c1f8598031098ae7a62d182339a5269253a743102d54df3003560890bcde1bd801  kodi-inputstream-adaptive-21.4.10-Omega.tar.gz
+"

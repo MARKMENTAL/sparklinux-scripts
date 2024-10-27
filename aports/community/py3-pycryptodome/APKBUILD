@@ -1,0 +1,54 @@
+# Contributor: Leonardo Arena <rnalrd@alpinelinux.org>
+# Maintainer: Kevin Daudt <kdaudt@alpinelinux.org>
+pkgname=py3-pycryptodome
+pkgver=3.20.0
+pkgrel=1
+pkgdesc="Self-contained cryptographic library"
+url="https://www.pycryptodome.org"
+arch="all"
+license="BSD-2-Clause Unlicense"
+depends="gmp"
+makedepends="python3-dev py3-setuptools"
+source="$pkgname-$pkgver.tar.gz::https://github.com/Legrandin/pycryptodome/archive/v$pkgver.tar.gz"
+subpackages="${pkgname}x:pycryptodomex"
+builddir="$srcdir"/pycryptodome-$pkgver
+_xbuilddir="$srcdir"/pycryptodomex-$pkgver
+
+replaces="py-pycryptodome py3-crypto" # Backwards compatibility
+provides="py-pycryptodome=$pkgver-r$pkgrel py3-crypto=$pkgver-r$pkgrel" # Backwards compatibility
+
+prepare() {
+	default_prepare
+
+	cp -r "$builddir" "$_xbuilddir"
+	touch "$_xbuilddir/.separate_namespace"
+}
+
+build() {
+	# pycryptodome - "Crypto" namespace (PyCrypto compatible)
+	python3 setup.py --quiet build
+
+	# pycryptodomex - "Cryptodome" namespace
+	cd "$_xbuilddir"
+	python3 setup.py --quiet build
+}
+
+check() {
+	python3 setup.py test
+
+	cd "$_xbuilddir"
+	python3 setup.py test
+}
+
+package() {
+	python3 setup.py --quiet install --skip-build --root="$pkgdir"
+}
+
+pycryptodomex() {
+	cd "$_xbuilddir"
+	python3 setup.py --quiet install --skip-build --root="$subpkgdir"
+}
+
+sha512sums="
+0d65ccd93f9f78548c04aa3af01cb65b6a39e81bb3dfa4bb08acc5a5a731b17f9c5b07a1d1780739b3f358402a3596b04e446fc7b39345a4c6f03fd5a2de7ff9  py3-pycryptodome-3.20.0.tar.gz
+"

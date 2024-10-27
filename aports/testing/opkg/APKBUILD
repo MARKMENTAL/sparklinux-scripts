@@ -1,0 +1,36 @@
+# Maintainer: Ryan Barnett <ryanbarnett3@gmail.com>
+pkgname=opkg
+pkgver=0.6.2
+pkgrel=0
+pkgdesc="Lightweight package management system"
+url="https://git.yoctoproject.org/opkg/"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="curl-dev gpgme-dev libarchive-dev zstd-dev autoconf automake libtool pkgconf"
+subpackages="$pkgname-dev $pkgname-libs $pkgname-doc"
+source="https://downloads.yoctoproject.org/releases/opkg/opkg-$pkgver.tar.gz"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--enable-zstd
+	make
+}
+
+check() {
+	# Tests cannot be run in parallel, must be sequential
+	make -j 1 check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+40175634d109bba45a67b01ac342a089b9caa132b143f29e76b23ef5688a103797843a555c067474a1796bdeb86e0fc5bfb584575da87cecf8809ccc77a87bde  opkg-0.6.2.tar.gz
+"

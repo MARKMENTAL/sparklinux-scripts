@@ -1,0 +1,29 @@
+# Contributor: Erwan Rouchet <lucidiot@brainshit.fr>
+# Maintainer: Erwan Rouchet <lucidiot@brainshit.fr>
+pkgname=gnome-sudoku
+pkgver=47.0
+pkgrel=0
+arch="all"
+url="https://wiki.gnome.org/Apps/Sudoku"
+pkgdesc="Test your logic skills in this number grid puzzle"
+license="GPL-3.0-or-later"
+makedepends="yelp-tools vala meson libgee-dev libadwaita-dev gtk4.0-dev json-glib-dev qqwing-dev itstool desktop-file-utils"
+source="https://download.gnome.org/sources/gnome-sudoku/${pkgver%.*}/gnome-sudoku-$pkgver.tar.xz"
+subpackages="$pkgname-doc $pkgname-lang"
+
+build() {
+	abuild-meson -Db_lto=true . build
+	meson compile -C build
+}
+
+check() {
+	meson test -C build --print-errorlogs
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install -C build
+}
+
+sha512sums="
+5f6ecef95c666a641885b720e3d142608049e6b6d4ba2b1b8bce361e112c66fc91bd3e388a2fdccae0b0a0a58bd4978f943ea70e6ff0035958789904d937aa2a  gnome-sudoku-47.0.tar.xz
+"

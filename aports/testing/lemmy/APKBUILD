@@ -1,0 +1,81 @@
+# Contributor: Celeste <cielesti@protonmail.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=lemmy
+pkgver=0.19.5
+# this needs to be synced with lemmy-ui
+_translations_commit=972942ea4ee4281d6941a5d3bb3b0edbb7017297
+pkgrel=1
+pkgdesc="Link aggregator and forum for the Fediverse - Backend server"
+url="https://join-lemmy.org/"
+# armhf, armv7: fatal runtime error while compiling lemmy_server crate
+# ppc64le, s390x: aws-lc-sys fails to build
+# riscv64: follow lemmy-ui aport
+# x86: resource intensive, use x86_64 instead
+arch="aarch64 loongarch64 x86_64"
+license="AGPL-3.0-only"
+_llvmver=18 # keep in sync with main/rust
+makedepends="
+	cargo
+	cargo-auditable
+	clang$_llvmver-libclang
+	cmake
+	libpq-dev
+	openssl-dev
+	rust-bindgen
+	samurai
+	"
+install="$pkgname.pre-install $pkgname-localdb.post-install"
+pkgusers="lemmy"
+pkggroups="lemmy"
+subpackages="$pkgname-openrc $pkgname-localdb::noarch"
+source="https://github.com/LemmyNet/lemmy/archive/$pkgver/lemmy-$pkgver.tar.gz
+	https://github.com/LemmyNet/lemmy-translations/archive/$_translations_commit/lemmy-translations-$pkgver.tar.gz
+	fix-db-init-script.patch
+	lemmy.initd
+	"
+options="!check" # fails to load settings file as it is not found
+
+# html2md required by lemmy_apub fails to build with panic=abort
+export CARGO_PROFILE_RELEASE_PANIC="unwind"
+
+prepare() {
+	default_prepare
+
+	rmdir -v crates/utils/translations
+	ln -sv "$srcdir/lemmy-translations-$_translations_commit" \
+		crates/utils/translations
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm755 target/release/lemmy_server -t "$pkgdir"/usr/bin
+	install -Dm640 -g lemmy config/defaults.hjson \
+		"$pkgdir"/etc/lemmy/lemmy.hjson
+
+	install -Dm755 scripts/db-init.sh -t "$pkgdir"/usr/lib/$pkgname
+	install -Dm755 "$srcdir"/lemmy.initd "$pkgdir"/etc/init.d/lemmy
+}
+
+localdb() {
+	pkgdesc="Use $pkgname with a local PostgreSQL server"
+	install_if="$pkgname=$pkgver-r$pkgrel postgresql"
+	depends="$pkgname=$pkgver-r$pkgrel postgresql-contrib"
+
+	amove usr/lib/$pkgname/db-init.sh
+}
+
+sha512sums="
+4771c849021186a1aa1add5e86a9125bd1011af07ca5c27e99a9b9926d8c8fbb8ec5015686810bc561dcc63080694f766563145155ca64da873ef6c839a662c4  lemmy-0.19.5.tar.gz
+838b7b51a2651eb416765f8c5e462ad9ad913672f60597c6e280f470f71143d859ddbe7174b907ff710925d3b0537a6a5d4cb447787e90d3c23a1485818209ce  lemmy-translations-0.19.5.tar.gz
+fcfb3881abf8ee671bb55e47c71fef8ef1328a04b3278fd9602478260b0de0bdb55b27c1f6127e9729a65e3fc05cbcd245bd1f98b93ea307755ff748a68d770d  fix-db-init-script.patch
+7b4cf4242950f48914fbbb49de932a10f793ae3bb14ac3d2b2430edef1cd76cfc6d0228c3041fb09313b00547068fddbd36ed9e74edc330924a6f55732698bf2  lemmy.initd
+"

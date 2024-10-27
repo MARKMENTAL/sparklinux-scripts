@@ -1,0 +1,183 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Contributor: Sergei Lukin <sergej.lukin@gmail.com>
+# Contributor: Jiri Horner <laeqten@gmail.com>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=webkit2gtk-6.0
+pkgver=2.44.4
+pkgrel=0
+pkgdesc="Portable web rendering engine WebKit for GTK+ - GTK4 version"
+url="https://webkitgtk.org/"
+arch="all"
+license="LGPL-2.0-or-later AND BSD-2-Clause"
+depends="bubblewrap xdg-dbus-proxy dbus:org.freedesktop.Secrets"
+makedepends="
+	bison
+	clang
+	cmake
+	enchant2-dev
+	flex
+	flite-dev
+	geoclue-dev
+	gnutls-dev
+	gobject-introspection-dev
+	gperf
+	gst-plugins-bad-dev
+	gst-plugins-base-dev
+	gstreamer-dev
+	gtk4.0-dev
+	hyphen-dev
+	icu-dev
+	lcms2-dev
+	libavif-dev
+	libgcrypt-dev
+	libjpeg-turbo-dev
+	libmanette-dev
+	libpng-dev
+	libseccomp-dev
+	libsecret-dev
+	libsoup3-dev
+	libwebp-dev
+	libwpe-dev
+	libwpebackend-fdo-dev
+	libxcomposite-dev
+	libxml2-dev
+	libxslt-dev
+	libxt-dev
+	llvm
+	mesa-dev
+	openjpeg-dev
+	pango-dev
+	python3
+	ruby
+	samurai
+	sqlite-dev
+	unifdef
+	woff2-dev
+	"
+options="!check" # upstream doesn't package them in release tarballs: Tools/Scripts/run-gtk-tests: Command not found
+subpackages="$pkgname-dev $pkgname-lang $pkgname-dbg"
+source="https://webkitgtk.org/releases/webkitgtk-$pkgver.tar.xz
+	armv6kz.patch
+	armv6-musttail.patch
+	cloopfix.patch
+	riscv64-no-wasm.patch
+	"
+builddir="$srcdir/webkitgtk-$pkgver"
+
+case "$CARCH" in
+s390x) ;;
+*)
+	makedepends="$makedepends lld libjxl-dev"
+	;;
+esac
+
+# secfixes:
+#   2.36.5-r0:
+#     - CVE-2022-2294
+#     - CVE-2022-32792
+#     - CVE-2022-32816
+#   2.36.4-r0:
+#     - CVE-2022-22677
+#     - CVE-2022-22710
+
+build() {
+	case "$CARCH" in
+	s390x|armhf|armv7|x86|ppc64le)
+		# llint/LowLevelInterpreter.cpp fails to build with fortify source here
+		export CXXFLAGS="$CXXFLAGS -U_FORTIFY_SOURCE"
+		;;
+	esac
+
+	case "$CARCH" in
+	armv7)
+		# clang fails to build armv7 due to some NEON related thing.
+		# https://github.com/WebKit/WebKit/pull/1233 should fix it
+		;;
+	s390x|riscv64)
+		# no lld on s390x, broken on riscv64
+		export CC=clang
+		export CXX=clang++
+		;;
+	*)
+		# the debug symbols become 1/2 the size, and actual webkit becomes
+		# smaller too.
+		export CC=clang
+		export CXX=clang++
+		export LDFLAGS="$LDFLAGS -fuse-ld=lld"
+		;;
+	esac
+
+	case "$CARCH" in
+	arm*|aarch64|s390x|riscv64)
+		# arm: seemingly broken?
+		# s390x/riscv64: no lld
+		;;
+	*)
+		local lto="-DLTO_MODE=thin"
+		;;
+	esac
+
+	case "$CARCH" in
+	s390x)
+		# no libjxl
+		local jxl="-DUSE_JPEGXL=OFF"
+		;;
+	*) ;;
+	esac
+
+	case "$CARCH" in
+	riscv64)
+		# not supported
+		local jit="
+			-DENABLE_JIT=OFF
+			-DENABLE_C_LOOP=ON
+			-DENABLE_WEBASSEMBLY=OFF
+		"
+		;;
+	*) ;;
+	esac
+
+	export AR=llvm-ar
+	export NM=llvm-nm
+	export RANLIB=llvm-ranlib
+
+	# significantly reduce debug symbol size
+	export CFLAGS="$CFLAGS -g1"
+	export CXXFLAGS="$CXXFLAGS -g1"
+
+	cmake -B build -G Ninja \
+		-DPORT=GTK \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_SKIP_RPATH=ON \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DENABLE_DOCUMENTATION=OFF \
+		-DENABLE_JOURNALD_LOG=OFF \
+		-DENABLE_SAMPLING_PROFILER=OFF \
+		-DENABLE_MINIBROWSER=ON \
+		-DENABLE_SPELLCHECK=ON \
+		-DENABLE_SPEECH_SYNTHESIS=ON \
+		-DUSE_GTK4=ON \
+		-DUSE_LIBBACKTRACE=OFF \
+		$lto \
+		$jxl \
+		$jit
+	cmake --build build
+}
+
+check() {
+	ninja -C build check
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+	mv "$pkgdir"/usr/bin/WebKitWebDriver "$pkgdir"/usr/bin/WebKitWebDriver-6.0
+}
+
+sha512sums="
+037ef6a9faca68b68dc62927a475134450493129043ea6cc03595cd4a684d590f80a1e9c3ed40a9176874ba43fc9efbc5065a264dfe131ebd72e272756612db9  webkitgtk-2.44.4.tar.xz
+8c89d4ac737a2bd6d970fec3ecb9d0b72d61ffb9a37d4b0b56bc0106914398a65319e940c593c0305fc40d6900aac2a8b4fc3bafc9a96062063d15abd1f5039d  armv6kz.patch
+d3e3a20cf6f1447e15eec8636301fb5c4c12560e4a5d47707708425b0da8ab84e3b1a10f98c9ba4ed2e1a32a9c131055da14f8f74e8bde20d4269bf8313dc04d  armv6-musttail.patch
+49acf07095abb3c6114790b676f1fe4c1f6c4c4d66d2aed525e61291bd9857386749cc31a521e3f739758ed6d6b0e176a45543e7c58ca16c9c1b266222d362ed  cloopfix.patch
+61461d19f80108357d0469a855212308a49fb43f5a629d119f95492c3897444664cbe12beddc53d801878124a67e38b4a404d37d1ac9c0e5ce65d7586328b1d9  riscv64-no-wasm.patch
+"

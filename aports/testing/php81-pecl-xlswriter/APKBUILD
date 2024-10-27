@@ -1,0 +1,38 @@
+# Contributor: viest <dev@service.viest.me>
+# Maintainer: viest <dev@service.viest.me>
+pkgname=php81-pecl-xlswriter
+_extname=xlswriter
+pkgver=1.5.7
+pkgrel=0
+pkgdesc="PHP 8.1 extension for creating and reader XLSX files - PECL"
+url="https://pecl.php.net/package/xlswriter"
+arch="all !loongarch64"
+license="BSD-2-Clause"
+depends="php81-common"
+makedepends="php81-dev zlib-dev"
+source="php-pecl-$_extname-$pkgver.tar.gz::https://pecl.php.net/get/$_extname-$pkgver.tgz"
+builddir="$srcdir"/$_extname-$pkgver
+
+build() {
+	phpize81
+	./configure \
+		--enable-reader \
+		--prefix=/usr \
+		--with-php-config=/usr/bin/php-config81
+	make
+}
+
+check() {
+	make NO_INTERACTION=1 REPORT_EXIT_STATUS=1 test TESTS=--show-diff
+}
+
+package() {
+	make INSTALL_ROOT="$pkgdir" install
+	local _confdir="$pkgdir"/etc/php81/conf.d
+	install -d $_confdir
+	echo "extension=$_extname" > $_confdir/$_extname.ini
+}
+
+sha512sums="
+cb6c0f69d53dcce7abaa273a45e752d5bf060dc12c03aac578bc5e4072bc4f46167fca523fc8abda38cfef0a7ebf9009a621005a046edd3d7cc56071df7b379d  php-pecl-xlswriter-1.5.7.tar.gz
+"

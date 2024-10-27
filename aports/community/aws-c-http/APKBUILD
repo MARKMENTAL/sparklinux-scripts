@@ -1,0 +1,60 @@
+# Contributor: Holger Jaekel <holger.jaekel@gmx.de>
+# Maintainer: fossdd <fossdd@pwned.life>
+pkgname=aws-c-http
+pkgver=0.8.8
+pkgrel=0
+pkgdesc="AWS C99 implementation of the HTTP/1.1 and HTTP/2 specifications"
+url="https://github.com/awslabs/aws-c-http"
+# s390x: aws-c-common
+# arm*, ppc64le: aws-c-io
+arch="all !armhf !armv7 !ppc64le !s390x"
+license="Apache-2.0"
+makedepends="
+	aws-c-cal-dev
+	aws-c-common-dev
+	aws-c-compression-dev
+	aws-c-io-dev
+	cmake
+	s2n-tls-dev
+	samurai
+	"
+subpackages="$pkgname-dev"
+source="$pkgname-$pkgver.tar.gz::https://github.com/awslabs/aws-c-http/archive/refs/tags/v$pkgver.tar.gz"
+options="net" # needed for tests to get connections
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		local crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	CFLAGS="$CFLAGS -flto=auto" \
+	CXXFLAGS="$CXXFLAGS -flto=auto" \
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=/usr/lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=None \
+		-DBUILD_TESTING="$(want_check && echo ON || echo OFF)" \
+		$crossopts
+	cmake --build build
+}
+
+check() {
+	timeout 600 \
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+	# just test binaries
+	# shellcheck disable=2115
+	rm -rf "$pkgdir"/usr/bin/
+}
+
+dev() {
+	default_dev
+	amove usr/lib/aws-c-http
+}
+
+sha512sums="
+7e74e2eac84f9babbd010032cd09b1b3ba5a823c82907fd082c46544b602835406279661ee83660d4d86ffd7a2172cef22fb1954d5de03e58047ac74a37726a9  aws-c-http-0.8.8.tar.gz
+"

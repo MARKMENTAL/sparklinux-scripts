@@ -1,0 +1,58 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=py3-fsspec
+pkgver=2023.12.2
+pkgrel=3
+pkgdesc="A specification for pythonic filesystems"
+url="https://github.com/intake/filesystem_spec"
+arch="noarch"
+license="BSD-3-Clause"
+depends="
+	py3-aiohttp
+	py3-requests
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="
+	$depends
+	py3-cloudpickle
+	py3-lz4
+	py3-numpy
+	py3-paramiko
+	py3-pyftpdlib
+	py3-pygit2
+	py3-pytest
+	py3-pytest-asyncio
+	py3-pytest-mock
+	py3-tqdm
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/intake/filesystem_spec/archive/$pkgver.tar.gz"
+builddir="$srcdir/filesystem_spec-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+
+	# test find and test_dbfs.py require network connections
+	.testenv/bin/python3 -m pytest -k 'not test_find' \
+		--deselect fsspec/implementations/tests/test_dbfs.py
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+960fbee750f4158f98caa57e30cace376f2a59ff20e06badb527d53673ce41a9260e08181a63f02aed4038a86250ea27883481a23d845906ceae8c55ee5477d3  py3-fsspec-2023.12.2.tar.gz
+"

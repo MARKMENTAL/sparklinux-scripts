@@ -1,0 +1,59 @@
+# Contributor: Fabricio Silva <hi@fabricio.dev>
+# Maintainer: Fabricio Silva <hi@fabricio.dev>
+pkgname=autobrr
+pkgver=1.46.1
+pkgrel=0
+pkgdesc="The modern download automation tool for torrents"
+url="https://autobrr.com/"
+arch="all !s390x !riscv64 !loongarch64" # build frontend failing
+license="GPL-2.0-or-later"
+options="net" # net for go and pnpm
+makedepends="go pnpm"
+subpackages="$pkgname-openrc"
+install="$pkgname.pre-install"
+source="
+	$pkgname-$pkgver.tar.gz::https://github.com/autobrr/autobrr/archive/v$pkgver.tar.gz
+	autobrr.initd
+	autobrr.confd
+	"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+export COREPACK_ENABLE_STRICT=0
+
+prepare() {
+	default_prepare
+
+	pnpm --dir web install --frozen-lockfile --ignore-scripts
+	go mod download
+}
+
+build() {
+	local ldflags="
+		-X main.version=v$pkgver
+		-X main.commit=alpine-r$pkgrel
+		-X main.date=$(date -u "+%Y-%m-%dT%H:%M:%SZ" ${SOURCE_DATE_EPOCH:+-d @$SOURCE_DATE_EPOCH})
+	"
+
+	pnpm --dir web run build
+	mkdir -p bin
+	go build -ldflags "$ldflags" -o bin/ ./cmd/...
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	install -Dm755 ./bin/* -t "$pkgdir"/usr/bin
+
+	install -Dm755 "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
+	install -Dm644 "$srcdir"/$pkgname.confd "$pkgdir"/etc/conf.d/$pkgname
+}
+
+sha512sums="
+e41a079036169bc79c3cbb9a59c20971a0657a3e13da27ba68871a8cd2a27c019a0734eb7fd2a4ddb52711dad3015e359b211c189f82c54d060230a0a0a6b3e8  autobrr-1.46.1.tar.gz
+42ce693eca67ca8b4c863440ebfb3efb41c197302274ccecd1b080c3e1f01e03078ab46b2fae8ca6cf5add4153296adb10e324b02dbe89c939465305be49f760  autobrr.initd
+4072cabb7131a23283b1fecdd1370eb935ae156284972a5e503de36054a358f74112a40e200662386e85af51507213e3f25afdf343a2673e6ef372b7b5e04a80  autobrr.confd
+"

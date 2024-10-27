@@ -1,0 +1,33 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=xtrans
+pkgver=1.5.0
+pkgrel=0
+pkgdesc="X transport library"
+url="https://xorg.freedesktop.org/"
+arch="noarch"
+license="MIT"
+makedepends="util-macros xmlto"
+source="https://www.x.org/releases/individual/lib/xtrans-$pkgver.tar.xz"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	mkdir -p "$pkgdir"/usr/lib
+	mv "$pkgdir"/usr/share/pkgconfig "$pkgdir"/usr/lib
+}
+
+sha512sums="
+e8091f11d4ad2b14e01de3eac56bdf2267ea26687ce66e3056374d0d02e049480c0b27c482f8828a0efd086f1e4c485108ca4dce3f83d66c1896effa3b38b228  xtrans-1.5.0.tar.xz
+"

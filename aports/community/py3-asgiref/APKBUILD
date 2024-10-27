@@ -1,0 +1,35 @@
+# Contributor: Kaarle Ritvanen <kunkku@alpinelinux.org>
+# Maintainer: Kaarle Ritvanen <kunkku@alpinelinux.org>
+pkgname=py3-asgiref
+pkgver=3.8.1
+pkgrel=1
+pkgdesc="ASGI specs, helper code, and adapters"
+url="https://github.com/django/asgiref/"
+arch="noarch"
+license="BSD-3-Clause"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest py3-pytest-asyncio"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/a/asgiref/asgiref-$pkgver.tar.gz"
+builddir="$srcdir/asgiref-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+3ef9ac2fcdce069cde96467abaa4a820c4eac19d40ce72e1afd0ca08279c00053a7e107966d766651def33a72a19c11559849b1032e89d62f544156590ef801d  asgiref-3.8.1.tar.gz
+"

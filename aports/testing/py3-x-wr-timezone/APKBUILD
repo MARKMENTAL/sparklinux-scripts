@@ -1,0 +1,39 @@
+# Contributor: Galen Abell <galen@galenabell.com>
+# Maintainer: Galen Abell <galen@galenabell.com>
+pkgname=py3-x-wr-timezone
+_pyname=x-wr-timezone
+pkgver=0.0.7
+pkgrel=1
+pkgdesc="Handling of non-standard X-WR-TIMEZONE icalendar property in Python and Command Line"
+url="https://github.com/niccokunzmann/x-wr-timezone"
+arch="noarch"
+license="LGPL-3.0-or-later"
+depends="python3 py3-icalendar py3-tz"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="$_pyname-$pkgver.tar.gz::https://github.com/niccokunzmann/x-wr-timezone/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/$_pyname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	# Disable command line test since we aren't installed yet.
+	# Disable unnecessary test that adds another dependency.
+	PYTHONPATH=. pytest \
+		--ignore test/test_command_line.py \
+		--ignore test/test_readme.py
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+6d37de592741a8786855a1f6c8b61165b3267869dcd86e0b9fe56de31f326ee2f7206ab35c45c21713d4cc808d1b14934d6b5b9daac90791d13b0363af5b5cbf  x-wr-timezone-0.0.7.tar.gz
+"

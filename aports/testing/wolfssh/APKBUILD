@@ -1,0 +1,54 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=wolfssh
+pkgver=1.4.17
+_pkgver=$pkgver-stable
+pkgrel=0
+pkgdesc="Small, fast, portable SSH implementation, including SCP and SFTP"
+url="https://www.wolfssl.com"
+arch="all"
+license="GPL-3.0-only"
+depends_dev="wolfssl-dev"
+makedepends="
+	$depends_dev
+	autoconf
+	automake
+	libtool
+	"
+checkdepends="bash"
+subpackages="$pkgname-dev"
+source="https://github.com/wolfSSL/wolfssh/archive/v$_pkgver/$pkgname-$_pkgver.tar.gz"
+builddir="$srcdir/$pkgname-$_pkgver"
+
+case "$CARCH" in
+	s390x) options="!check";;  # tests fail
+esac
+
+prepare() {
+	default_prepare
+
+	./autogen.sh
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--localstatedir=/var \
+		--enable-distro
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+8ade29fee96b36f1fbfd275ded26b4b1e16227e7c6a0a8ddb8a376977bd0f91ecb2f5e3a812b9bf0e1a5080e85ee1d776de5950fa76e4fe87418a82187dc03bc  wolfssh-1.4.17-stable.tar.gz
+"

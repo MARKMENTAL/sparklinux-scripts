@@ -1,0 +1,48 @@
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=mako
+pkgver=1.9.0
+pkgrel=0
+pkgdesc="A lightweight notification daemon for Wayland"
+url="https://wayland.emersion.fr/mako/"
+arch="all"
+license="MIT"
+options="!check" # contains no test suite
+makedepends="
+	basu-dev
+	cairo-dev
+	gdk-pixbuf-dev
+	glib-dev
+	meson
+	ninja
+	pango-dev
+	scdoc
+	wayland-dev
+	wayland-protocols
+	"
+subpackages="
+	$pkgname-dbg
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/emersion/mako/archive/v$pkgver.tar.gz"
+
+build() {
+	abuild-meson \
+		-Dsd-bus-provider=basu \
+		-Dicons=enabled \
+		-Dbash-completions=true \
+		-Dfish-completions=true \
+		-Dzsh-completions=true \
+		. output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+da9c89dc698e44100960c9911c9da59e6f3dd5e95c8c0fbc489c9597dd614bb46074170b9621eba6ff692eff140f7be11ecc9da1a285b8e5c0975b7b53daabee  mako-1.9.0.tar.gz
+"

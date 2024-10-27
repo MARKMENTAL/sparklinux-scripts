@@ -1,0 +1,74 @@
+# Contributor: Galen Abell <galen@galenabell.com>
+# Maintainer: Galen Abell <galen@galenabell.com>
+pkgname=pre-commit
+pkgver=3.8.0
+pkgrel=0
+pkgdesc="framework for managing and maintaining multi-language pre-commit hooks"
+url="https://pre-commit.com"
+arch="noarch"
+license="MIT"
+depends="
+	python3
+	py3-cfgv
+	py3-identify
+	py3-nodeenv
+	py3-yaml
+	py3-toml
+	py3-virtualenv
+	py3-platformdirs
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="
+	git
+	py3-distlib
+	py3-pytest
+	py3-pytest-env
+	py3-re-assert
+	"
+options="net"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/pre-commit/pre-commit/archive/refs/tags/v$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+	# setup for some of the integration tests
+	git init
+	git config user.email "test@alpinelinux.org"
+	git config user.name "Alpine Linux"
+}
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	export PYTHONPATH="."
+
+	export GIT_AUTHOR_NAME="Alpine Linux"
+	export GIT_COMMITTER_NAME="Alpine Linux"
+	export GIT_AUTHOR_EMAIL="test@alpinelinux.org"
+	export GIT_COMMITTER_EMAIL="test@alpinelinux.org"
+	export PRE_COMMIT_NO_CONCURRENCY=1
+
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+
+	PATH="$PATH:$PWD/testenv/bin" \
+		.testenv/bin/python3 -m pytest -v \
+		--ignore tests/languages
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+b6970ac00c5033938462675c20ea5e13c0439dc4f70cd627f11b22b0f87fb0a3590e9b3e9c677bfb66e4b3420f40de66ca7ccbc969847ee5fa8994532a558cd1  pre-commit-3.8.0.tar.gz
+"

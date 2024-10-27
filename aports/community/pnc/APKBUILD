@@ -1,0 +1,48 @@
+# Contributor: Maarten van Gompel <proycon@anaproy.nl>
+# Maintainer: Anjandev Momi <anjan@momi.ca>
+pkgname=pnc
+pkgver=0.9.4
+pkgrel=4
+arch="all"
+url="https://git.sr.ht/~anjan/pnc/"
+pkgdesc="libphonenumber command-line wrapper - Sxmo extended"
+source="$pkgname-$pkgver.tar.gz::https://git.sr.ht/~anjan/pnc/archive/$pkgver.tar.gz"
+license="GPL-3.0-only"
+makedepends="
+	cmake
+	gawk
+	icu-dev
+	libphonenumber-dev
+	samurai
+	"
+subpackages="$pkgname-doc $pkgname-gawk"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		local crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=None \
+		$crossopts
+	cmake --build build
+}
+
+check() {
+	cd build
+	CTEST_OUTPUT_ON_FAILURE=TRUE ctest
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+gawk() {
+	amove usr/lib/gawk
+}
+
+sha512sums="
+f39e9f08c75135d15d1c7ea98aa529047451573e3244d5eb0f2c855fa1f41fa6d3195e419a11e778b9580b2ba24f92688ffdcbcb9e1f4dcfc365fa8a6a580eae  pnc-0.9.4.tar.gz
+"

@@ -1,0 +1,73 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=helix
+pkgver=24.07
+pkgrel=0
+pkgdesc="A post-modern modal text editor"
+url="https://helix-editor.com/"
+arch="all"
+license="MPL-2.0"
+makedepends="cargo cargo-auditable"
+checkdepends="tree-sitter-rust tree-sitter-ruby"
+options="net"
+install="$pkgname.post-install"
+# This is needed just for tests.
+_tsrust_ver="0.21.2"
+source="https://github.com/helix-editor/helix/archive/$pkgver/helix-$pkgver.tar.gz
+	https://github.com/tree-sitter/tree-sitter-rust/archive/v$_tsrust_ver/tree-sitter-rust-$_tsrust_ver.tar.gz
+	"
+
+# Don't build tree-sitter languages, we provide them in standalone aports.
+export HELIX_DISABLE_AUTO_GRAMMAR_BUILD=1
+
+export HELIX_DEFAULT_RUNTIME=/usr/share/helix/runtime
+
+prepare() {
+	default_prepare
+
+	# This is needed for running tests.
+	mkdir -p runtime/grammars/sources
+	ln -s /usr/lib/tree-sitter/rust.so runtime/grammars/rust.so
+	ln -s /usr/lib/tree-sitter/ruby.so runtime/grammars/ruby.so
+	ln -s "$srcdir"/tree-sitter-rust-$_tsrust_ver runtime/grammars/sources/rust
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	# This is needed for following tests:
+	#	helix-vcs::src::git::test::modified_file
+	#	helix-vcs::src::git::test::symlink
+	#	helix-vcs::src::git::test::unmodified_file
+	unset GIT_CEILING_DIRECTORIES
+
+	# XXX: test_treesitter_indent_cpp is somehow broken
+	cargo test --frozen --workspace -- \
+		--skip test_treesitter_indent_cpp
+}
+
+package() {
+	install -D -m755 target/release/hx -t "$pkgdir"/usr/bin/
+
+	install -D -m644 contrib/Helix.desktop -t "$pkgdir"/usr/share/applications/
+	install -D -m644 logo.svg "$pkgdir"/usr/share/icons/hicolor/scalable/apps/Helix.svg
+
+	# Remove helix grammars and queries, use system ones instead.
+	rm -rf runtime/queries
+	rm -rf runtime/grammars
+
+	install -d -m755 "$pkgdir"/usr/share/"$pkgname"
+	cp -r runtime "$pkgdir"/usr/share/"$pkgname"
+
+	ln -Ts ../../../lib/tree-sitter "$pkgdir"/usr/share/$pkgname/runtime/grammars
+	ln -Ts ../../tree-sitter/queries "$pkgdir"/usr/share/$pkgname/runtime/queries
+}
+
+sha512sums="
+5db57c361c0ada00b7be0c5888aba28542bdb6fce8830b309c3eecdb87bdca00da54e46f6d487b19b5916b80aad4ac475365f319d92a0edc7a8a40ffb42b346c  helix-24.07.tar.gz
+304b232683ded9973a94ec872401151a5900e3423c7bff966b3f5ec4a71122405fb3790f71f5fb445b8af72a31176349cb3ea8bc7d1b1a042ee574420472e19e  tree-sitter-rust-0.21.2.tar.gz
+"

@@ -1,0 +1,46 @@
+# Contributor: Antoine Martin (ayakael) <dev@ayakael.net>
+# Maintainer: Antoine Martin (ayakael) <dev@ayakael.net>
+pkgname=py3-django-webpack-loader
+#_pkgreal is used by apkbuild-pypi to find modules at PyPI
+_pkgreal=django-webpack-loader
+pkgver=3.1.1
+pkgrel=0
+pkgdesc="Transparently use webpack with django"
+url="https://pypi.python.org/project/django-webpack-loader"
+arch="noarch"
+license="MIT"
+depends="py3-django"
+checkdepends="
+	npm
+	py3-pytest
+	py3-coverage
+	py3-coveralls
+	py3-django-jinja
+"
+makedepends="py3-setuptools py3-gpep517 py3-wheel"
+source="$pkgname-$pkgver.tar.gz::https://github.com/django-webpack/django-webpack-loader/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/$_pkgreal-$pkgver"
+subpackages="$pkgname-pyc"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	cd tests
+	npm ci
+	"$builddir"/.testenv/bin/python3 -m coverage run --source=webpack_loader manage.py test
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+95fe7ca2f63c2cd08488b15a7e4757295c399d155f16fe871760cabf22edc5d7674a2dbb1a10eff23b09b063709cb76e253a98f718a323dd1e7636ee7ea96e42  py3-django-webpack-loader-3.1.1.tar.gz
+"

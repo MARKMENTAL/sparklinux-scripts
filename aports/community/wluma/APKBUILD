@@ -1,0 +1,66 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=wluma
+pkgver=4.4.0
+pkgrel=0
+pkgdesc="Automatic brightness adjustment based on screen contents and ALS"
+url="https://github.com/maximbaz/wluma"
+# s390x: no desktop on this arch
+# loongarch64: blocked by libc crate
+arch="all !s390x !loongarch64"
+license="ISC"
+makedepends="
+	cargo
+	cargo-auditable
+	clang-dev
+	dbus-dev
+	eudev-dev
+	v4l-utils-dev
+	vulkan-loader-dev
+	wayland-dev
+	"
+install="$pkgname.post-install"
+subpackages="$pkgname-wlroots::noarch"
+source="https://github.com/maximbaz/wluma/archive/$pkgver/wluma-$pkgver.tar.gz
+	link-vulkan-at-runtime.patch
+	default-config.patch
+	"
+
+prepare() {
+	default_prepare
+
+	mv config.toml config.toml.example
+
+	# Create a default empty config that will be embedded in the executable.
+	echo '[als.none]' > config.toml
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -D -m755 target/release/wluma -t "$pkgdir"/usr/bin/
+	install -D -m644 90-wluma-backlight.rules -t "$pkgdir"/lib/udev/rules.d/
+	install -D -m644 config.toml.example "$pkgdir"/etc/xdg/wluma/config.toml
+}
+
+wlroots() {
+	pkgdesc="$pkgdesc (wlroots capturer)"
+	depends="$pkgname=$pkgver-r$pkgrel vulkan-loader wlroots"
+	install_if="$pkgname=$pkgver-r$pkgrel wlroots"
+
+	mkdir -p "$subpkgdir"
+}
+
+sha512sums="
+6311e8f71d530bd57d21f24694bf85eef84f567e41583c2635ad35ac5385bdba60c5526460c674d654696e61e07fecffdfc95e42fd3a536671e29c105f19f174  wluma-4.4.0.tar.gz
+1de662974384f9556322acdfa2fd83bbd0651826aeabe481637b8e1864619fe358ed275888c29aebe7d7d0480938ddbf7a1c1013fdc7a48231eeed08fbaf7800  link-vulkan-at-runtime.patch
+d6d864b048b711699d612aa3d658ada8c1e7094271885dccddec0064bebe4380bb014a74ef0cd3f9700d6964b20b268b2c6966000a6cb98c63110729a133f041  default-config.patch
+"

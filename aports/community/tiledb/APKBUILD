@@ -1,0 +1,123 @@
+# Contributor: Holger Jaekel <holger.jaekel@gmx.de>
+# Maintainer: Holger Jaekel <holger.jaekel@gmx.de>
+pkgname=tiledb
+pkgver=2.25.0
+pkgrel=2
+pkgdesc="Engine for storing and accessing dense and sparse multi-dimensional arrays"
+url="https://tiledb.com/"
+# Tests fail on s390x
+# doesn't build on 32-bit
+arch="all !armhf !armv7 !x86 !s390x"
+license="MIT"
+makedepends="
+	abseil-cpp-dev
+	blosc-dev
+	bzip2-dev
+	capnproto-dev
+	catch2-3
+	clang
+	cmake
+	crc32c-dev
+	curl-dev
+	doxygen
+	file-dev
+	google-cloud-cpp-dev
+	libpng-dev
+	lz4-dev
+	nlohmann-json
+	openssl-dev
+	samurai
+	spdlog-dev
+	zlib-dev
+	zstd-dev
+	"
+subpackages="
+	$pkgname-dev
+	"
+source="tiledb-$pkgver.tar.gz::https://github.com/TileDB-Inc/TileDB/archive/refs/tags/$pkgver.tar.gz
+	https://raw.githubusercontent.com/muellan/clipp/v1.2.3/include/clipp.h
+	10-compression.patch
+	20-versions.patch
+	30-catch.patch
+	50-clipp.patch
+	60-stringstream.patch
+	70-avx2.patch
+	80-test.patch
+	"
+builddir="$srcdir/TileDB-$pkgver"
+
+# secfixes:
+#   2.17.4-r0:
+#     - CVE-2023-5129
+
+# Optional dependencies aws-* are not available on s390x and ppc64le
+_with_s3="OFF"
+case "$CARCH" in
+arm*|s390x|ppc64le) ;;
+*)
+# S3 support presently fails to build from source with current AWS SDK.
+#	makedepends="$makedepends aws-crt-cpp-dev aws-sdk-cpp-dev"
+#	_with_s3="ON"
+	;;
+esac
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		local crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	CXXFLAGS="$CXXFLAGS -Wno-deprecated-declarations" \
+	LDFLAGS="$LDFLAGS -Wl,--copy-dt-needed-entries" \
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_BUILD_TYPE=None \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_SKIP_RPATH=ON \
+		-DTILEDB_SUPERBUILD=OFF \
+		-DTILEDB_VERBOSE=OFF \
+		-DTILEDB_HDFS=OFF \
+		-DTILEDB_S3=$_with_s3 \
+		-DTILEDB_AZURE=OFF \
+		-DTILEDB_GCS=ON \
+		-DTILEDB_SERIALIZATION=ON \
+		-DTILEDB_TOOLS=OFF \
+		-DTILEDB_WERROR=OFF \
+		-DTILEDB_CPP_API=ON \
+		-DTILEDB_STATS=ON \
+		-DTILEDB_TESTS="$(want_check && echo ON || echo OFF)" \
+		-DTILEDB_CCACHE=OFF \
+		-DTILEDB_ARROW_TESTS=OFF \
+		-DTILEDB_WEBP=OFF \
+		-DTILEDB_FORCE_ALL_DEPS=OFF \
+		$crossopts
+
+	# compile Cap’n Proto schema with the current version
+	cd "$builddir/tiledb/sm/serialization"
+	capnp compile -oc++:. tiledb-rest.capnp
+	cd "$builddir"
+
+	cmake --build build
+	if want_check; then
+		cmake --build build --target tests
+	fi
+}
+
+check() {
+	ctest --output-on-failure --test-dir build \
+		-R '^unit_|test_assert' -E 'unit_capi_query_plan|unit_capi_query_aggregate|unit_fragment|unit_aggregators|unit_vfs|unit_capi_current_domain|unit_capi_ndrectangle|unit_array_schema|unit_run_filter_pipeline'
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+5657e88e4994efee675b4c8715ebc7d5c88c84a94974a96f9571c8d3affc06ee84417712f781c5f9872008b32083e221b3a4c1a765c5293527865ff83115c018  tiledb-2.25.0.tar.gz
+0a801eff46581a96e571b41ce734d5a8e7f30333d46e3fb81c4c40fc44c18035d4b4597732221e37945ad23b94e53e496562ae4b24d358761dbf5ed803f66ff4  clipp.h
+7918e866de823bb423ee4531abe4cd7375f4cf49ce0b159df8d7567c317ee3f9fde4b63be4d5fcda48617f21d8e9d3e285498f0c9d0f7a37522940946c2257a5  10-compression.patch
+c9a542c6ed38ced0e4c3364fdbaa962526a2ea6e6adc6756bf0425d5f195b602405a31715ef32f412e60f8390a6f25c0d016f533ab7da4cef63784c4ba0f47b1  20-versions.patch
+761af7bd08be2b7751dd68b4c6e7214afa484f4f1ae3956f00bc2014acc52f9cb6b184e1e13239fb38cb349698efd88ba511f79d182eaa4fc075ac450b1f8940  30-catch.patch
+9a6a4130b60b6e6e71b30e87ffdefc830a3dbce1ed484cee872d470556bb06db68817fd8d48211c7301f96a4cbc7564295557a8390b451d316362a459e4ab794  50-clipp.patch
+c24b1b6f5c2ba58cb6a631c94a49c999e1bc2d432b1c0ce15ab07f0b4e602d8fbec59de4c231873a7666fce788d55c1b4f926e6869eb5a0b8249ca56a7f238f7  60-stringstream.patch
+86e5f9722e4ef8524b96d059ba434508cf03e3c264ec3bfcaf3585dae5584f4863e4bbc6f34be68e653df18cd7d827f8fc36b058acdc4636609412526bc95d5b  70-avx2.patch
+3a22fdb4493cbe78b177dd1c749b1a364cd92a972f8d59a16a9417d9243da9e202d033a204b1d5512c47b4c601a8fdd7d9ec10b2a1c30993363a4d285103a67e  80-test.patch
+"

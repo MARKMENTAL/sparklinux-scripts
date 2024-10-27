@@ -1,0 +1,80 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=xdg-desktop-portal
+pkgver=1.18.4
+pkgrel=0
+pkgdesc="Desktop integration portal"
+url="https://github.com/flatpak/xdg-desktop-portal"
+arch="all"
+license="LGPL-2.1-or-later"
+depends="bubblewrap"
+depends_dev="$pkgname=$pkgver-r$pkgrel"
+_depends_document_portal="cmd:fusermount3"
+makedepends="
+	$_depends_document_portal
+	flatpak
+	flatpak-dev
+	fontconfig-dev
+	fuse3-dev
+	geoclue-dev
+	gettext-dev
+	glib-dev
+	json-glib-dev
+	libportal-dev
+	meson
+	pipewire-dev
+	py3-docutils
+	xmlto
+	"
+checkdepends="py3-dbusmock"
+subpackages="
+	$pkgname-dev
+	$pkgname-lang
+	$pkgname-doc
+	$pkgname-dbg
+	xdg-document-portal:_document_portal
+	"
+source="https://github.com/flatpak/xdg-desktop-portal/releases/download/$pkgver/xdg-desktop-portal-$pkgver.tar.xz"
+# check: requires geoclue to be running as a system service.
+options="!check"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dsystemd=disabled \
+		-Dman-pages=enabled \
+		-Ddocbook-docs=disabled \
+		-Ddebug=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	TEST_IN_CI=true meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+
+	cd "$pkgdir"
+
+	# We don't need this
+	rm -rf usr/lib/systemd
+
+	mkdir -p usr/lib
+	mv usr/share/pkgconfig usr/lib/
+}
+
+_document_portal() {
+	pkgdesc="$pkgdesc (document portal)"
+	depends=$_depends_document_portal
+	install_if="$pkgname=$pkgver-r$pkgrel"
+
+	amove usr/libexec/xdg-document-portal
+	amove 'usr/share/dbus-1/*/org.freedesktop.portal.Documents.*'
+	amove 'usr/share/dbus-1/*/org.freedesktop.portal.FileTransfer.*'
+}
+
+sha512sums="
+482676777e8180752e13ff485acab91de117f4ecf2aefd313a6f596df800f37d7004ee4ba1040009eb69a6efc780efc7dcd7e46b3f59c47bd9f21aef48d346de  xdg-desktop-portal-1.18.4.tar.xz
+"

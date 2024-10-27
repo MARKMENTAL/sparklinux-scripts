@@ -1,0 +1,30 @@
+# Contributor: Damian Kurek <starfire24680@gmail.com>
+# Maintainer: Damian Kurek <starfire24680@gmail.com>
+pkgname=kodi-vfs-libarchive
+pkgver=20.3.0
+_realname=Nexus
+pkgrel=1
+pkgdesc="Libarchive VFS add-on for Kodi"
+options="!check" # no test suite
+url="https://github.com/xbmc/vfs.libarchive"
+arch="x86_64 aarch64 armv7" # kodi is available only on these architectures
+license="GPL-2.0-only"
+makedepends="cmake libarchive-dev lz4-dev kodi-dev samurai"
+source="$pkgname-$pkgver-$_realname.tar.gz::https://github.com/xbmc/vfs.libarchive/archive/$pkgver-$_realname.tar.gz"
+builddir="$srcdir/vfs.libarchive-$pkgver-$_realname"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_MODULE_PATH=/usr/lib/cmake/kodi
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+cedb21992b23b821ae1070f18c41b3329fb8208fc753ba2cdf7354058cb14f8c2f88f63d5d6791c819b27221468441852c7cecb03b649a9ebdafd282a971d1ca  kodi-vfs-libarchive-20.3.0-Nexus.tar.gz
+"

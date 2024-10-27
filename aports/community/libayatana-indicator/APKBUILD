@@ -1,0 +1,49 @@
+# Contributor: Luca Weiss <luca@lucaweiss.eu>
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+pkgname=libayatana-indicator
+pkgver=0.9.4
+pkgrel=1
+pkgdesc="Ayatana Indicators Shared Library"
+url="https://github.com/AyatanaIndicators/libayatana-indicator"
+arch="all"
+license="GPL-3.0-only"
+makedepends="
+	ayatana-ido-dev
+	cmake
+	glib-dev
+	samurai
+	"
+checkdepends="bash dbus-test-runner xvfb-run"
+subpackages="$pkgname-dev $pkgname-debug"
+source="https://github.com/AyatanaIndicators/libayatana-indicator/archive/$pkgver/libayatana-indicator-$pkgver.tar.gz"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DENABLE_TESTS=ON \
+		$CMAKE_CROSSOPTS
+	cmake --build build
+}
+
+check() {
+	cd build
+	CTEST_OUTPUT_ON_FAILURE=TRUE xvfb-run ctest
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+debug() {
+	amove usr/share
+}
+
+sha512sums="
+56efbe0eb14abf38cb7e270ae093b5fb41dab652eab6fa0d3f7972b09b0f2404e3ec7fbb3059c0b26802fffc628f5ace16a33db306f97a65ae42cf65494a56dc  libayatana-indicator-0.9.4.tar.gz
+"

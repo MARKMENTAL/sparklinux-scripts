@@ -1,0 +1,50 @@
+# Contributor: Dermot Bradley <dermot_bradley@yahoo.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=fscrypt
+pkgver=0.3.5
+pkgrel=4
+pkgdesc="Manage Linux native filesystem encryption"
+url="https://github.com/google/fscrypt"
+# Tests fail on ppc64le with SIGSEGV and memory lock errors
+arch="all !ppc64le"
+license="Apache-2.0"
+makedepends="
+	findutils
+	go
+	linux-pam-dev
+	"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/google/fscrypt/archive/refs/tags/v$pkgver.tar.gz"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	make
+}
+
+check() {
+	# Test fails consistently on the builder, sometimes on the CI
+	case "$CARCH" in
+	riscv64)
+		go test -skip TestLoadSourceDevice ./...
+		;;
+	*)
+		go test ./...
+		;;
+	esac
+}
+
+package() {
+	install -Dvm755 bin/fscrypt -t "$pkgdir"/usr/bin/
+	install -Dvm644 README.md -t "$pkgdir"/usr/share/doc/$pkgname/
+
+	install -Dvm755 -o root \
+		bin/pam_fscrypt.so \
+		-t "$pkgdir"/usr/lib/security/
+}
+
+sha512sums="
+1d3dcd3bfa651a6a70709d58f2da07160646e779ebb65ce5213e257ba49b87123ad78428a1e3b5ed022386340ea1ba492bd43b148fb2f28b2b4bda971beed193  fscrypt-0.3.5.tar.gz
+"

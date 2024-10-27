@@ -1,0 +1,58 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: team/kde <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=kde-plasma
+pkgname=wacomtablet
+pkgver=6.1.5
+pkgrel=0
+pkgdesc="GUI for Wacom Linux drivers that supports different button/pen layout profiles"
+# armhf blocked by qt6-qtdeclarative
+arch="all !armhf"
+url="https://kde.org/plasma-desktop/"
+license="GPL-2.0-or-later"
+depends="xinput"
+makedepends="
+	extra-cmake-modules
+	kconfig-dev
+	kcoreaddons-dev
+	kdbusaddons-dev
+	kdoctools-dev
+	kglobalaccel-dev
+	ki18n-dev
+	knotifications-dev
+	kwidgetsaddons-dev
+	kwindowsystem-dev
+	kxmlgui-dev
+	libwacom-dev
+	libplasma-dev
+	plasma5support-dev
+	qt6-qtbase-dev
+	qt6-qtdeclarative-dev
+	samurai
+	xf86-input-wacom-dev
+	"
+checkdepends="xvfb-run"
+subpackages="$pkgname-lang $pkgname-doc"
+_repo_url="https://invent.kde.org/system/wacomtablet.git"
+source="https://download.kde.org/stable/plasma/$pkgver/wacomtablet-$pkgver.tar.xz"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build build
+}
+
+check() {
+	xvfb-run -a ctest --test-dir build --output-on-failure \
+		-E "Test.KDED.DBusTabletService"
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+sha512sums="
+592a0188cfa72026cc501afeed8c3e54edd99acddd0c4932e2e88889fb78d190576dbc4c662d73abe768b307e6490063bdab330efaa85959e982a55afd292f99  wacomtablet-6.1.5.tar.xz
+"

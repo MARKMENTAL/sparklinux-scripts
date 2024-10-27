@@ -1,0 +1,34 @@
+# Contributor: André Klitzing <aklitzing@gmail.com>
+# Maintainer: André Klitzing <aklitzing@gmail.com>
+pkgname=curlie
+pkgver=1.7.2
+pkgrel=5
+pkgdesc="Curlie is a frontend to curl that adds the ease of use of httpie"
+url="https://curlie.io/"
+arch="all"
+license="MIT"
+depends="curl"
+makedepends="go"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/rs/curlie/archive/v$pkgver.tar.gz"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -ldflags "-X main.version=$pkgver -X main.date=alpine-r$pkgrel"
+}
+
+check() {
+	go test
+}
+
+package() {
+	install -Dm755 curlie "$pkgdir"/usr/bin/curlie
+	install -Dm644 LICENSE "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+}
+
+sha512sums="
+d74c81458a4b378f3c98d7c7574b3c18767d159b6bb01bf71486da839c224110bd6b42717637cd9c2deb90811076314ba2d2cc2d9917f9f06c9dc2a11f87acce  curlie-1.7.2.tar.gz
+"

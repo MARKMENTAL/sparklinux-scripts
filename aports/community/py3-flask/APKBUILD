@@ -1,0 +1,52 @@
+# Contributor: Steven Guikal <void@fluix.one>
+# Maintainer: Steven Guikal <void@fluix.one>
+pkgname=py3-flask
+_pkgname=flask
+pkgver=3.0.3
+pkgrel=0
+pkgdesc="web development microframework"
+url="https://flask.palletsprojects.com/"
+arch="noarch"
+license="MIT"
+depends="
+	py3-blinker
+	py3-click
+	py3-itsdangerous
+	py3-jinja2
+	py3-werkzeug
+	python3
+	"
+makedepends="
+	py3-gpep517
+	py3-flit-core
+	"
+checkdepends="
+	py3-pytest-xdist
+	"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/${_pkgname:0:1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+replaces="py-flask" # Backwards compatibility
+provides="py-flask=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+977c0e5fd2d496fae8e34a035f211118642dc6518a14dc5f6c175b72c6a76407aeb9ff0ed1f5db636370a9aa7e0d36baa783713ea7bdabd7f28c8c2b94643cd1  flask-3.0.3.tar.gz
+"

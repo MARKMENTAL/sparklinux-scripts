@@ -1,0 +1,35 @@
+# Contributor: Alex Denes <caskd@redxen.eu>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=py3-geographiclib
+pkgver=2.0
+pkgrel=4
+pkgdesc="Geodesic routines from GeographicLib"
+url="https://geographiclib.sourceforge.io/Python/doc/"
+arch="noarch"
+license="MIT"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/g/geographiclib/geographiclib-$pkgver.tar.gz"
+builddir="$srcdir/geographiclib-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+08e67317b83ed96dc45b013bfc0eac771f015250da07b1574252f566f48ce944ad0a5a0623b1bfc96c14e65658f2f39a069af5ceb6ffe153677cc2a023eeef91  geographiclib-2.0.tar.gz
+"

@@ -1,0 +1,48 @@
+diff --git a/yazi-dds/Cargo.toml b/yazi-dds/Cargo.toml
+index d31f894..aa2a2a3 100644
+--- a/yazi-dds/Cargo.toml
++++ b/yazi-dds/Cargo.toml
+@@ -9,7 +9,6 @@ homepage    = "https://yazi-rs.github.io"
+ repository  = "https://github.com/sxyazi/yazi"
+ 
+ [features]
+-default      = [ "vendored-lua" ]
+ vendored-lua = [ "mlua/vendored" ]
+ 
+ [dependencies]
+diff --git a/yazi-fm/Cargo.toml b/yazi-fm/Cargo.toml
+index cd2da25..4d63a59 100644
+--- a/yazi-fm/Cargo.toml
++++ b/yazi-fm/Cargo.toml
+@@ -9,7 +9,6 @@ homepage    = "https://yazi-rs.github.io"
+ repository  = "https://github.com/sxyazi/yazi"
+ 
+ [features]
+-default      = [ "vendored-lua" ]
+ vendored-lua = [ "mlua/vendored" ]
+ 
+ [dependencies]
+diff --git a/yazi-plugin/Cargo.toml b/yazi-plugin/Cargo.toml
+index cf326d6..60dde88 100644
+--- a/yazi-plugin/Cargo.toml
++++ b/yazi-plugin/Cargo.toml
+@@ -9,7 +9,6 @@ homepage    = "https://yazi-rs.github.io"
+ repository  = "https://github.com/sxyazi/yazi"
+ 
+ [features]
+-default      = [ "vendored-lua" ]
+ vendored-lua = [ "mlua/vendored" ]
+ 
+ [dependencies]
+diff --git a/yazi-proxy/Cargo.toml b/yazi-proxy/Cargo.toml
+index 72c4833..8f6ae8d 100644
+--- a/yazi-proxy/Cargo.toml
++++ b/yazi-proxy/Cargo.toml
+@@ -9,7 +9,6 @@ homepage    = "https://yazi-rs.github.io"
+ repository  = "https://github.com/sxyazi/yazi"
+ 
+ [features]
+-default      = [ "vendored-lua" ]
+ vendored-lua = [ "mlua/vendored" ]
+ 
+ [dependencies]

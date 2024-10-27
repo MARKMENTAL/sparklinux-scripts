@@ -1,0 +1,74 @@
+# Contributor: Hoang Nguyen <folliekazetani@protonmail.com>
+# Contributor: Robert Sacks <robert@sacks.email>
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=streamlink
+pkgver=6.10.0
+pkgrel=0
+pkgdesc="CLI for extracting streams from various websites to a video player of your choosing"
+url="https://streamlink.github.io/"
+arch="noarch"
+license="BSD-2-Clause"
+depends="
+	python3
+	py3-certifi
+	py3-isodate
+	py3-lxml
+	py3-pycountry
+	py3-pycryptodome
+	py3-pysocks
+	py3-requests
+	py3-trio
+	py3-trio-websocket
+	py3-typing-extensions
+	py3-urllib3
+	py3-websocket-client
+	"
+makedepends="
+	py3-setuptools
+	py3-gpep517
+	py3-installer
+	py3-wheel
+	"
+checkdepends="
+	py3-freezegun
+	py3-mock
+	py3-pytest
+	py3-pytest-asyncio
+	py3-pytest-trio
+	py3-requests-mock
+	"
+subpackages="
+	$pkgname-pyc
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-zsh-completion
+	"
+source="https://github.com/streamlink/streamlink/releases/download/$pkgver/streamlink-$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	TZ=UTC .testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+	install -Dm644 docs/_build/man/$pkgname.1 \
+		"$pkgdir"/usr/share/man/man1/$pkgname.1
+
+	install -Dm644 completions/bash/$pkgname \
+		"$pkgdir"/usr/share/bash-completion/completions/$pkgname
+	install -Dm644 completions/zsh/_$pkgname \
+		"$pkgdir"/usr/share/zsh/site-functions/_$pkgname
+}
+
+sha512sums="
+39142c01d973a5be76f25fe711f1f36ad2581a0bab0265bc91d44644764b1c15f076809663bc821fd20ced282f5c185af2b6a5b91c12febda82dc03d000c6522  streamlink-6.10.0.tar.gz
+"

@@ -1,0 +1,22 @@
+# Contributor: Rosie K Languet <rkl@rosiesworkshop.net>
+# Contributor: Hygna <hygna@proton.me>
+# Maintainer: Rosie K Languet <rkl@rosiesworkshop.net>
+pkgname=doasedit
+pkgver=1.0.7
+pkgrel=0
+pkgdesc="Shellscript to edit files that are not in a user-writable location"
+url="https://codeberg.org/TotallyLeGIT/doasedit"
+arch="noarch"
+license="MIT"
+options="!check"
+depends="cmd:doas"
+source="$pkgname-$pkgver.tar.gz::https://codeberg.org/TotallyLeGIT/doasedit/archive/$pkgver.tar.gz"
+builddir="$srcdir/$pkgname"
+
+package() {
+	install -D -m755 "doasedit" "$pkgdir/usr/bin/doasedit"
+}
+
+sha512sums="
+72100a4294469bc06ab3f356f70950e621f5b80bf66fdba096a78158050fc50338d628c87f1aae9b15273fd6e67d0e9af8c227c611a94cf93d8d24f8ea905128  doasedit-1.0.7.tar.gz
+"

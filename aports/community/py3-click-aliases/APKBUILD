@@ -1,0 +1,40 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=py3-click-aliases
+pkgver=1.0.4
+pkgrel=1
+pkgdesc="Enable aliases for Click"
+url="https://github.com/click-contrib/click-aliases"
+arch="noarch"
+license="MIT"
+depends="py3-click"
+makedepends="
+	py3-gpep517
+	py3-poetry-core
+	py3-wheel
+	"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/click-contrib/click-aliases/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/click-aliases-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -k 'not test_invalid'
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+8b4c850a036709e9345d2c685167056032e290aa33cf8536010d20dabc513210ae25c874f9272d5568a2dba4bc2262673afa7ba068133d3cdab0f35014fb1936  py3-click-aliases-1.0.4.tar.gz
+"

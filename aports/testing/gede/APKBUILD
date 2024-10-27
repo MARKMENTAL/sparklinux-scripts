@@ -1,0 +1,27 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=gede
+pkgver=2.18.2
+pkgrel=1
+pkgdesc="Gede is a GUI to gdb using Qt5"
+url="http://gede.dexar.se/"
+arch="all"
+license="BSD-2-Clause"
+options="!check" # no tests
+depends="ctags"
+makedepends="openssl-dev>3 qt5-qtbase-dev"
+source="https://gede.dexar.se/uploads/source/gede-$pkgver.tar.xz"
+
+build() {
+	cd src
+	qmake-qt5
+	make
+}
+
+package() {
+	install -Dm755 src/gede -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+54f5c3209ddb12af3aa5815937de87f9e5169dff9e6067f3497b237f57a044b110e4a29ede6bc66bb256b94e054bba6352f476ce74da6a6bb50c93e65bb87185  gede-2.18.2.tar.xz
+"

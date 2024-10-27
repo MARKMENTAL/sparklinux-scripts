@@ -1,0 +1,46 @@
+# Contributor: knuxify <knuxify@gmail.com>
+# Maintainer: knuxify <knuxify@gmail.com>
+pkgname=gnome-connections
+pkgver=47.0
+pkgrel=0
+pkgdesc="Remote desktop client for the GNOME desktop environment"
+url="https://apps.gnome.org/app/org.gnome.Connections"
+arch="all"
+license="GPL-3.0-or-later"
+depends_doc="yelp"
+makedepends="
+	desktop-file-utils
+	glib-dev
+	gtk+3.0-dev
+	gtk-frdp-dev
+	gtk-vnc-dev
+	itstool
+	libhandy1-dev
+	libsecret-dev
+	libxml2-dev
+	meson
+	vala
+	"
+checkdepends="appstream-glib"
+subpackages="$pkgname-doc $pkgname-lang"
+source="https://gitlab.gnome.org/GNOME/connections/-/archive/$pkgver/connections-$pkgver.tar.gz"
+builddir="$srcdir/connections-$pkgver"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+5ae8aaa523d416fbc090694fc359989140dbb0f81d18f13535d4f44ba4a2e0eef6266daa30d31116bcabe675a1386d58c1b66126457935181f68d17f1f96d97c  connections-47.0.tar.gz
+"

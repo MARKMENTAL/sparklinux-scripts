@@ -1,0 +1,26 @@
+# Contributor: Maarten van Gompel <proycon@anaproy.nl>
+# Maintainer: Willow Barraco <contact@willowbarraco.fr>
+pkgname=wvkbd
+pkgver=0.15
+pkgrel=0
+pkgdesc="On-screen keyboard for wlroots that sucks less"
+url="https://git.sr.ht/~proycon/wvkbd"
+arch="all"
+license="GPL-3.0-or-later"
+subpackages="$pkgname-doc"
+options="!check" # has no tests
+makedepends="fontconfig wayland-dev libxkbcommon-dev pango-dev"
+source="$pkgname-v$pkgver.tar.gz::https://git.sr.ht/~proycon/wvkbd/archive/v$pkgver.tar.gz"
+builddir="$srcdir/$pkgname-v$pkgver"
+
+build() {
+	make -C "$builddir" all
+}
+
+package() {
+	make PREFIX=/usr DESTDIR="$pkgdir" -C "$builddir" install
+}
+
+sha512sums="
+a04e339b9b8afd784937126ef04875f5afe9278019ef122e36830667e1f1f6b7dfbf9e55209ab9740f4b9a70d562909d750be6d857e9c65c8bca00f072d4ad01  wvkbd-v0.15.tar.gz
+"

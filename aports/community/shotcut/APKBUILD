@@ -1,0 +1,56 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Maintainer: Kevin Daudt <kdaudt@alpinelinux.org>
+pkgname=shotcut
+pkgver=24.08.29
+pkgrel=0
+pkgdesc="Cross-platform video editor"
+url="https://www.shotcut.org"
+# armhf, armv7: no opengl1.1 support, only 2
+# aarch64: upstream does not support gcc
+# riscv64: no opencv
+# x86: link failure due to undefined reference
+arch="all !x86 !armhf !armv7 !aarch64 !riscv64"
+license="GPL-3.0-or-later"
+depends="ffmpeg"
+makedepends="
+	cmake
+	fftw-dev
+	mlt-dev
+	qt6-qtcharts-dev
+	qt6-qtbase-dev
+	qt6-qtmultimedia-dev
+	qt6-qttools-dev
+	qt6-qtwebsockets-dev
+	samurai
+	"
+subpackages="$pkgname-doc $pkgname-lang"
+source="$pkgname-$pkgver.tar.xz::https://github.com/mltframework/shotcut/releases/download/v$pkgver/shotcut-src-${pkgver//./}.txz
+	launcher
+	"
+builddir="$srcdir/src/shotcut"
+options="!check" # No test suite present
+
+build() {
+	export CXXFLAGS="$CXXFLAGS -O2 -DNDEBUG -DSHOTCUT_NOUPGRADE"
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr
+	cmake --build build
+}
+
+lang() {
+	pkgdesc="Languages for package shotcut"
+	install_if="$pkgname=$pkgver-r$pkgrel lang"
+	amove usr/share/shotcut/translations
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+	mv "$pkgdir"/usr/bin/shotcut "$pkgdir"/usr/bin/shotcut-real
+	install -Dm755 "$srcdir"/launcher "$pkgdir"/usr/bin/shotcut
+}
+
+sha512sums="
+11e06ff869462c720db2b45ed2197fdfb8868c565b11ddf65bac1c73074e4f0b7372bc08323324070dab830f7fad60e55797e412035971eaaf8c50ccdb5991a9  shotcut-24.08.29.tar.xz
+c9d4263cf5c4a1964ad73fb810353e338e6417e3241a177f444ef151c2da7970eaaa0ca94cfcf52da4d3fe9b1abc4d5fac78361c287aa7e10e3aab2026893cca  launcher
+"

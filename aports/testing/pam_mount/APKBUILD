@@ -1,0 +1,58 @@
+# Maintainer: John Vogel <jvogel@stygian.me>
+pkgname=pam_mount
+pkgver=2.20
+pkgrel=3
+pkgdesc="Pluggable Authentication Module that can mount volumes for a user session"
+url="https://codeberg.org/jengelh/pam_mount"
+arch="all"
+license="LGPL-2.1-or-later"
+makedepends="
+	cryptsetup-dev
+	libhx-dev
+	libxml2-dev
+	linux-pam-dev
+	openssl-dev
+	pcre2-dev
+	perl
+	util-linux-dev
+	"
+subpackages="
+	$pkgname-dev
+	$pkgname-doc
+	libcryptmount
+	"
+source="https://inai.de/files/pam_mount/pam_mount-$pkgver.tar.xz
+	rundir.patch
+	"
+
+build() {
+	./configure \
+		--prefix=/usr \
+		--host=$CHOST \
+		--build=$CBUILD \
+		--sysconfdir=/etc \
+		--localstatedir=/var \
+		--with-rundir=/run \
+		--with-slibdir=/usr/lib \
+		--disable-dependency-tracking
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+libcryptmount() {
+	pkgdesc="$pkgdesc (libcryptmount library)"
+
+	amove usr/lib/libcryptmount.so.*
+}
+
+sha512sums="
+8661dc5ec134c256825df28e53751d1e0e1e881008c3687a56009f4046b3d17c5b9ddd1b1971dff4e023e5d74e5059f486b08a6cab2861a4bee5ba57fbae3454  pam_mount-2.20.tar.xz
+41275676cec24f050a194c8d375c9f949b9b93125d25df778de711d59b4e458a251978fed9a9b65d9416f7863bb2b631dc1534258075f34cf5dc86be3838b25d  rundir.patch
+"

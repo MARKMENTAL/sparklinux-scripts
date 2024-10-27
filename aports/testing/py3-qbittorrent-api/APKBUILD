@@ -1,0 +1,47 @@
+# Contributor: Fabricio Silva <hi@fabricio.dev>
+# Maintainer: Fabricio Silva <hi@fabricio.dev>
+pkgname=py3-qbittorrent-api
+pkgver=2024.9.66
+pkgrel=0
+pkgdesc="Python client implementation for qBittorrent's Web API"
+url="https://github.com/rmartin16/qbittorrent-api"
+arch="noarch"
+license="MIT"
+depends="
+	py3-requests
+	py3-setuptools
+	"
+makedepends="
+	py3-gpep517
+	py3-wheel
+	py3-setuptools_scm
+	py3-sphinx-copybutton
+	py3-sphinx-autodoc-typehints
+	"
+subpackages="$pkgname-doc $pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/rmartin16/qbittorrent-api/archive/v$pkgver.tar.gz"
+builddir="$srcdir/qbittorrent-api-$pkgver"
+# tests requires an instance of qbittorrent running
+# net for sphinx
+options="net !check"
+
+build() {
+	export SETUPTOOLS_SCM_PRETEND_VERSION=$pkgver
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+	sphinx-build -b man docs/source docs/build
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+	install -Dm644 docs/build/qbittorrent-api.1 \
+		-t "$pkgdir"/usr/share/man/man1
+
+	rm -rf "$pkgdir"/usr/lib/python3*/site-packages/tests
+}
+
+sha512sums="
+60db38a19b9e42f99ff57bca0d77ff8a7eaf6f918314cbd9d12d3b96be79dfd2b66fad769298e73fb3c1c54b93971c4978428f72b66b94f3f803cebbe414a816  py3-qbittorrent-api-2024.9.66.tar.gz
+"

@@ -1,0 +1,61 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: team/gnome <ablocorrea@hotmail.com>
+pkgname=gnome-music
+pkgver=47.0
+pkgrel=0
+pkgdesc="Music is the new GNOME music playing application"
+url="https://wiki.gnome.org/Apps/Music"
+# s390x blocked by exempi -> localsearch
+arch="noarch !s390x"
+license="GPL-2.0-or-later"
+depends="
+	gnome-online-accounts
+	grilo
+	grilo-plugins
+	gst-plugins-good
+	libdazzle
+	libmediaart
+	libsoup3
+	py3-cairo
+	py3-gobject3
+	tinysparql
+	localsearch
+	"
+makedepends="
+	desktop-file-utils
+	gnome-online-accounts-dev
+	gobject-introspection-dev
+	grilo-dev
+	grilo-plugins-dev
+	gtk4.0-dev
+	itstool
+	libadwaita-dev
+	libmediaart-dev
+	libsoup3-dev
+	meson
+	py3-cairo-dev
+	py3-gobject3-dev
+	tinysparql-dev
+	"
+checkdepends="
+	appstream-glib
+	"
+subpackages="$pkgname-lang $pkgname-doc"
+source="https://download.gnome.org/sources/gnome-music/${pkgver%.*}/gnome-music-$pkgver.tar.xz"
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+e87bcbe61ab514abc80a73841c86da745351933f479f10291651f9671d2698422a1eea5950eb5565a249a10a975452e10cb5bdd2985a774f268705ec05ee7a7b  gnome-music-47.0.tar.xz
+"

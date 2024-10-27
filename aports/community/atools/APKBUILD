@@ -1,0 +1,35 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Contributor: Kevin Daudt <kdaudt@alpinelinux.org>
+# Maintainer: Kevin Daudt <kdaudt@alpinelinux.org>
+pkgname=atools
+pkgver=20.2.2
+pkgrel=9
+pkgdesc="Auxilary scripts for abuild"
+url="https://gitlab.alpinelinux.org/Leo/atools"
+arch="all"
+license="MIT"
+depends="lua5.3"
+makedepends="scdoc redo go"
+checkdepends="bats"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://gitlab.alpinelinux.org/Leo/atools/-/archive/$pkgver/atools-$pkgver.tar.gz"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	redo build
+}
+
+check() {
+	redo check
+}
+
+package() {
+	DESTDIR="$pkgdir" redo install
+}
+
+sha512sums="
+63c95e4b86d99bd913fafe56c89dddd52e11d7bd84e138d236043133b0a7103a9de7393265c5ad387a61218c1f79a458460dca213ff0e9e9a4a65be9313e6580  atools-20.2.2.tar.gz
+"

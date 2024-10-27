@@ -1,0 +1,44 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=qxmpp
+pkgver=1.8.0
+pkgrel=0
+pkgdesc="Cross-platform C++ XMPP client and server library"
+arch="all"
+url="https://github.com/qxmpp-project/qxmpp"
+license="LGPL-2.1"
+makedepends="
+	cmake
+	doxygen
+	graphviz
+	libomemo-c-dev
+	qca-dev
+	qt5-qtbase-dev
+	samurai
+	"
+source="https://github.com/qxmpp-project/qxmpp/archive/v$pkgver/qxmpp-v$pkgver.tar.gz"
+subpackages="$pkgname-dev $pkgname-doc"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_EXAMPLES=OFF \
+		-DBUILD_DOCUMENTATION=ON \
+		-DBUILD_OMEMO=ON
+	cmake --build build
+}
+
+check() {
+	# tst_qxmppiceconnection and tst_qxmpptransfermanager require a network connection
+	ctest --test-dir build --output-on-failure -E "(tst_qxmppiceconnection|tst_qxmpptransfermanager)"
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+fa16a9c1d6402f9ebd3757faee78d7394488c165204588e07b66036004586aa8deada05d87112cc412992cfd57f27807a2d318ccd83488eb4e53d859f798cf7f  qxmpp-v1.8.0.tar.gz
+"

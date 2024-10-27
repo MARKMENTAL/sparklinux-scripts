@@ -1,0 +1,40 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Contributor: Julian <juw@posteo.de>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=brightnessctl
+pkgver=0.5.1
+pkgrel=6
+pkgdesc="Program to read and control device brightness"
+options="!check" # No testsuite
+url="https://github.com/Hummer12007/brightnessctl"
+arch="all"
+license="MIT"
+subpackages="$pkgname-doc $pkgname-openrc $pkgname-udev"
+install="$pkgname.post-install"
+source="
+$pkgname-$pkgver.tar.gz::https://github.com/Hummer12007/brightnessctl/archive/$pkgver.tar.gz
+	brightnessctl.initd
+"
+
+build() {
+	make INSTALL_UDEV_RULES=1
+}
+
+package() {
+	make install DESTDIR="$pkgdir" INSTALL_UDEV_RULES=1
+	# service files
+	mkdir -p "$pkgdir"/var/lib/$pkgname
+	install -Dm755 "$srcdir"/brightnessctl.initd "$pkgdir"/etc/init.d/brightnessctl
+}
+
+udev() {
+	pkgdesc="$pkgdesc (udev rules)"
+	install_if="$pkgname=$pkgver-r$pkgrel eudev"
+
+	amove lib/udev/rules.d
+}
+
+sha512sums="
+41ac86357b3b5a3d54a043140a6bdb1fb68d5080a16e86692059ad58f4b9134a8532432a3f664c70c665a4ad73ea8a94cc9b88fa84abc28f0356b8b397aaebc7  brightnessctl-0.5.1.tar.gz
+ba285c4d67e6d1b347225b65d48908397e24bfb650346e388eb7783993b52e1e91a7dbfcdebc600ba991b752f36ec4ddc49e9bc5e7edaa9cc98f4723f8446f6d  brightnessctl.initd
+"

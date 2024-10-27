@@ -1,0 +1,33 @@
+# Contributor: Kevin Daudt <kdaudt@alpinelinux.org>
+# Maintainer: Kevin Daudt <kdaudt@alpinelinux.org>
+pkgname=opentofu
+pkgver=1.8.2
+pkgrel=0
+pkgdesc="OpenTofu lets you declaratively manage your cloud infrastructure"
+url="https://opentofu.org"
+arch="all"
+license="MPL-2.0"
+makedepends="go"
+source="$pkgname-$pkgver.tar.gz::https://github.com/opentofu/opentofu/archive/refs/tags/v${pkgver/_/-}.tar.gz"
+builddir="$srcdir/$pkgname-${pkgver/_/-}"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	local ldflags="-X 'github.com/opentofu/opentofu/version.dev=no'"
+	go build -ldflags "$ldflags" ./cmd/tofu
+}
+
+check() {
+	go test -v ./...
+}
+
+package() {
+	install -Dm0755 tofu -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+6b15e400b12c3defb050a7257adda8d30fb1624fe8c0a12865c84ca0e9e990dbf464ceadce4401c806c61f9c3ad472f2a13fe805511fc4e6384463596f6f4dac  opentofu-1.8.2.tar.gz
+"

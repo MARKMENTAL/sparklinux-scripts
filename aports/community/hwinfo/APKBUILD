@@ -1,0 +1,56 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=hwinfo
+pkgver=23.2
+pkgrel=0
+pkgdesc="Hardware information tool"
+url="https://github.com/openSUSE/hwinfo"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="$depends_dev flex perl linux-headers util-linux-dev"
+subpackages="$pkgname-dev $pkgname-doc $pkgname-libs"
+source="$pkgname-$pkgver.tar.gz::https://github.com/openSUSE/hwinfo/archive/$pkgver.tar.gz
+	respect-flags.patch
+	eudev-udevadm-path.patch"
+options="!check"  # no tests provided
+
+case "$CARCH" in
+x86|x86_64)	makedepends="$makedepends libx86emu-dev" ;;
+esac
+
+export HWINFO_VERSION=$pkgver
+
+build() {
+	# Build full and tiny static libraries.
+	#make tinystatic  # FIXME: fails
+	# this takes forever but it's not stuck
+	make -j1 static
+	cp src/libhd*.a .
+	make clean
+
+	# Build full shared library.
+	make -j1 shared LIBDIR=/usr/lib
+}
+
+package() {
+	make install \
+		LIBDIR=/usr/lib \
+		DESTDIR="$pkgdir"
+
+	rmdir "$pkgdir"/sbin "$pkgdir"/usr/lib || true
+
+	install -m 644 -t "$pkgdir"/usr/lib/ libhd.a
+	#install -m 644 -t "$pkgdir"/usr/lib/ libhd_tiny.a  # FIXME: disabled above
+
+	mkdir -p "$pkgdir"/usr/share/man/man1
+	cp doc/*.1 "$pkgdir"/usr/share/man/man1/
+
+	mkdir -p "$pkgdir"/usr/share/man/man8
+	cp doc/*.8 "$pkgdir"/usr/share/man/man8/
+}
+
+sha512sums="
+86096455cc58ecdd3be4306d61beaea02da39b8ee3b2a99966d4aaf022e276616329ca82550d7903e2aed9b1723a99b2305617fb85df21c1d2024ce46b447af3  hwinfo-23.2.tar.gz
+2016f76bdfd65fb9b8f331ed82d6e5a1a85ab003615fe6815c3b41127398ae25fedd83abada9930dcbc9409fda69cf701ebdc5f12874e518784e194fcf4a0ff8  respect-flags.patch
+3bf22dc8afecbdf080b882358e866dc01bc8837522cf0f47409c514892a0fe0900d060f87d28dd3cb5e0ee4224cbec415273024efd70fcdb947ca004915d2543  eudev-udevadm-path.patch
+"

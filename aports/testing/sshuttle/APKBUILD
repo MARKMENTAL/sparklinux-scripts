@@ -1,0 +1,36 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=sshuttle
+pkgver=1.1.2
+pkgrel=0
+pkgdesc="Transparent proxy server using ssh"
+url="https://github.com/sshuttle/sshuttle"
+arch="noarch"
+license="GPL-2.0-only"
+depends="python3 py3-psutil"
+makedepends="py3-gpep517 py3-poetry-core py3-setuptools py3-sphinx py3-wheel"
+checkdepends="py3-pytest py3-pytest-cov py3-mock py3-flake8"
+subpackages="$pkgname-doc $pkgname-pyc"
+source="https://github.com/sshuttle/sshuttle/archive/v$pkgver/sshuttle-$pkgver.tar.gz"
+
+build() {
+	echo "version = '$pkgver'" > sshuttle/version.py
+	gpep517 build-wheel --wheel-dir .dist --output-fd 3 3>&1 >&2
+
+	cd docs && make man
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+
+	install -Dm0644 -t "$pkgdir"/usr/share/man/man1/ docs/_build/man/*.1
+}
+
+sha512sums="
+c24a6490c1877b9ded8f5f4f44571953c4c204c33f0238c709ca32c7a581ddc919bfc48beb4fafd3a4d346cccd9b02dc7051b6233ff989a0ad329d55c1c5ec47  sshuttle-1.1.2.tar.gz
+"

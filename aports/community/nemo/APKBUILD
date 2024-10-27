@@ -1,0 +1,47 @@
+# Contributor: Clayton Craft <clayton@craftyguy.net>
+# Maintainer: Hugo Osvaldo Barrera <hugo@whynothugo.nl>
+pkgname=nemo
+pkgver=6.2.6
+pkgrel=0
+pkgdesc="File manager for the Cinnamon desktop environment"
+# s390x and ppc64le blocked by exempi
+# riscv64 disabled due to missing rust in recursive dependency
+arch="all !s390x !ppc64le !riscv64"  # exempi, libexif-dev not available for all archs
+url="https://github.com/linuxmint/nemo"
+license="GPL-2.0-only"
+depends="desktop-file-utils"
+makedepends="
+	cinnamon-desktop-dev
+	dconf-dev
+	exempi-dev
+	gobject-introspection-dev
+	intltool
+	json-glib-dev
+	libexif-dev
+	libgsf-dev
+	libnotify-dev
+	libxml2-dev
+	meson
+	python3
+	xapp-dev
+	"
+checkdepends="xvfb-run"
+source="https://github.com/linuxmint/nemo/archive/$pkgver/nemo-$pkgver.tar.gz"
+subpackages="$pkgname-doc $pkgname-dev"
+options="!check" # tests are broken: https://github.com/linuxmint/nemo/issues/2501
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+check() {
+	xvfb-run meson test -C output
+}
+sha512sums="
+62a0d6a233f57fa3e9a078c3c90f7c735bf58aee4a37cfebdda20569f0b692e33998719152060e963b27dabee5a5a3da1c0d71a2b51dc5bf200331fd16b93135  nemo-6.2.6.tar.gz
+"

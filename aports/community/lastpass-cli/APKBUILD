@@ -1,0 +1,60 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=lastpass-cli
+pkgver=1.6.0
+pkgrel=0
+pkgdesc="LastPass command line interface tool"
+url="https://lastpass.com"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="
+	asciidoc
+	cmake
+	curl-dev
+	libxml2-dev
+	openssl-dev>3
+	samurai
+	"
+checkdepends="bash"
+subpackages="
+	$pkgname-doc
+	$pkgname-zsh-completion
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/lastpass/lastpass-cli/archive/v$pkgver.tar.gz
+	gcc14.patch
+	"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_MANDIR=/usr/share/man
+	cmake --build build
+	if want_check; then
+		cmake --build build --target lpass-test
+	fi
+}
+
+check() {
+	ctest --test-dir build --output-on-failure -j1
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --build build --target install install-doc
+
+	install -D -m644 "$builddir"/contrib/lpass_zsh_completion \
+		"$pkgdir"/usr/share/zsh/site-functions/_$pkgname
+
+	install -D -m644 "$builddir"/contrib/lpass_bash_completion \
+		"$pkgdir"/usr/share/bash-completion/completions/$pkgname.bash
+
+	install -D -m644 "$builddir"/contrib/completions-lpass.fish \
+		"$pkgdir"/usr/share/fish/vendor_completions.d/$pkgname.fish
+}
+
+sha512sums="
+1edf93b9dcb928d37a163f2ac6422acae4a1437f95ff09d9135033e757c07b547d0a385b4ac4b3a6accee2552527b6def9c0289fc91ba81e6a76e65f68e10f93  lastpass-cli-1.6.0.tar.gz
+fc3dce04fac237e0f725191e3c693d6c5522d36f806d04e1e9877a6181d0678ad36b7be47854de0de2360d630a5ecaa279578213dd20da9359b18c096ad0ee6a  gcc14.patch
+"

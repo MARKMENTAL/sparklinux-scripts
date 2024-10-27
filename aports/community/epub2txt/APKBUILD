@@ -1,0 +1,29 @@
+# Contributor: Paper <paper@tilde.institute>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=epub2txt
+pkgver=2.06
+pkgrel=1
+pkgdesc="CLI utility for extracting text from EPUB documents"
+url="https://github.com/kevinboone/epub2txt2"
+arch="all"
+license="GPL-3.0-only"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/kevinboone/epub2txt2/archive/v$pkgver.tar.gz"
+builddir="$srcdir/${pkgname}2-$pkgver"
+options="!check" # no testsuite
+
+# secfixes:
+#   2.06-r0:
+#     - CVE-2022-23850
+
+build() {
+	make
+}
+
+package() {
+	make PREFIX=/usr DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+e2966312eb56f07640fc9c3daa6418740243599a532c479fc41916031408c4d2ac6651050277624681a99eb64136b7d2ddb2d48a6e67c135a2f8be46ff69dae3  epub2txt-2.06.tar.gz
+"

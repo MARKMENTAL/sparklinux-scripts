@@ -1,0 +1,41 @@
+# Contributor: Olliver Schinagl <oliver@schinagl.nl>
+# Maintainer: Olliver Schinagl <oliver@schinagl.nl>
+pkgname=gitlab-release-cli
+pkgver=0.16.0
+pkgrel=7
+pkgdesc="GitLab Release command-line tool"
+url="https://gitlab.com/gitlab-org/release-cli"
+license="MIT"
+arch="all"
+makedepends="go"
+options="!check"  # No selftest available
+subpackages="$pkgname-doc"
+source="https://gitlab.com/gitlab-org/release-cli/-/archive/v$pkgver/release-cli-v$pkgver.tar.bz2"
+builddir="$srcdir/${pkgname##gitlab-}-v$pkgver"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+prepare() {
+	default_prepare
+	go get -u golang.org/x/sys@v0.6.0
+	go get -u golang.org/x/net@v0.6.0
+	go mod tidy
+}
+
+build() {
+	make CGO_ENABLED=1 build
+}
+
+package() {
+	install -D -m 0755 "$builddir/bin/release-cli" \
+	        "$pkgdir/usr/bin/release-cli"
+
+	install -D -d "$pkgdir/usr/share/doc/$pkgname"
+	cp -T -a "$builddir/docs/" "$pkgdir/usr/share/doc/$pkgname"
+}
+
+sha512sums="
+9f2050f96b91feed88213394b9138b71d04170c7f8e6c3f8de38ad55760d8c12ac3819a8f5b6e265ff0e8d5543efe4a6f98166b586eb435a2924c24cb902931b  release-cli-v0.16.0.tar.bz2
+"

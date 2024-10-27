@@ -1,0 +1,33 @@
+# Contributor: Andy Hawkins <andy@gently.org.uk>
+# Maintainer: Andy Hawkins <andy@gently.org.uk>
+pkgname=webhook
+pkgver=2.8.1
+pkgrel=10
+pkgdesc="Lightweight configurable webhooks server"
+url="https://github.com/adnanh/webhook"
+license="MIT"
+# loongarch64: blocked by sys, wait for upstream to upgrade sys
+arch="all !loongarch64"
+makedepends="go"
+source="https://github.com/adnanh/webhook/archive/$pkgver/webhook-$pkgver.tar.gz"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	mkdir -p bin
+	go build -o bin github.com/adnanh/webhook/...
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	install -Dm755 bin/webhook -t "$pkgdir"/usr/bin
+}
+
+sha512sums="
+25edff21725ba9ac8823dbe5728234f7cd9218027e87df3e2482ef365a7dd0efe8659800233753c275f858ff87f848ff6141d09be3e0b66ff88b795680b9b635  webhook-2.8.1.tar.gz
+"

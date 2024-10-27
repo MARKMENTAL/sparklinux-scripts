@@ -1,0 +1,49 @@
+# Contributor: Fabian Affolter <fabian@affolter-engineering.ch>
+# Maintainer: Fabian Affolter <fabian@affolter-engineering.ch>
+pkgname=py3-praw
+_pkgname=praw
+pkgver=7.7.1
+pkgrel=1
+pkgdesc="Python module to access to reddit's API"
+url="https://github.com/praw-dev/praw"
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="py3-prawcore py3-update-checker py3-requests py3-websocket-client"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="
+	py3-betamax
+	py3-betamax_matchers
+	py3-betamax_serializers
+	py3-pytest-xdist
+	"
+subpackages="$pkgname-pyc"
+source="$_pkgname-$pkgver.tar.gz::https://github.com/praw-dev/praw/archive/v$pkgver.tar.gz"
+builddir="$srcdir"/$_pkgname-$pkgver
+
+replaces="py-praw" # Backwards compatibility
+provides="py-praw=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+543b342e2ea372f5b5f13c151c9222b69f56c94067a778bccc75c42a58aa88745888c33ca504521832fea76819a96c76a18b96ea17cf53b26152e9c3caf44c57  praw-7.7.1.tar.gz
+"

@@ -1,0 +1,57 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=just
+pkgver=1.26.0
+pkgrel=0
+pkgdesc="Just a command runner"
+url="https://github.com/casey/just"
+# riscv64: rust currently broken on this arch
+# s390x: blocked by nix crate
+arch="all !riscv64 !s390x"
+license="CC0-1.0"
+checkdepends="bash fzf"
+makedepends="cargo cargo-auditable"
+subpackages="
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="https://github.com/casey/just/archive/$pkgver/just-$pkgver.tar.gz"
+
+export CARGO_PROFILE_RELEASE_OPT_LEVEL="z"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --release --frozen
+}
+
+check() {
+	# Skipped tests are somehow broken.
+	cargo test --frozen -- \
+		--skip choose::default \
+		--skip edit::editor_precedence \
+		--skip functions::env_var_functions
+}
+
+package() {
+	install -D -m755 target/release/just -t "$pkgdir"/usr/bin/
+
+	install -D -m644 man/just.1 -t "$pkgdir"/usr/share/man/man1/
+
+	install -D -m644 completions/just.bash \
+		"$pkgdir"/usr/share/bash-completion/completions/$pkgname
+	install -D -m644 completions/just.fish \
+		"$pkgdir"/usr/share/fish/vendor_completions.d/$pkgname.fish
+	install -D -m644 completions/just.zsh \
+		"$pkgdir"/usr/share/zsh/site-functions/_$pkgname
+}
+
+sha512sums="
+3d0970ce2ee303af246bbcad57e7c403736fed0405cf83f5365fc7ce4442a83c28b6768112887f1602dd3c422d906af9b29970a71211e59f364038e7d91c3ad7  just-1.26.0.tar.gz
+"

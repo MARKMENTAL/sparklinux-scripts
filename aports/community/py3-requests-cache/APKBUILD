@@ -1,0 +1,62 @@
+# Contributor: Philipp Glaum <p@pglaum.de>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=py3-requests-cache
+pkgver=1.0.1
+pkgrel=1
+pkgdesc="Persistent cache for requests library"
+url="https://github.com/requests-cache/requests-cache"
+# loongarch64: test fails
+arch="noarch !loongarch64"
+license="BSD-3-Clause"
+depends="
+	py3-attrs
+	py3-cattrs
+	py3-platformdirs
+	py3-requests
+	py3-url-normalize
+	py3-urllib3
+	"
+makedepends="
+	py3-gpep517
+	py3-poetry-core
+	py3-wheel
+	"
+checkdepends="
+	py3-itsdangerous
+	py3-mock
+	py3-mongo
+	py3-msgpack
+	py3-orjson
+	py3-pytest
+	py3-pytest-xdist
+	py3-requests-mock
+	py3-responses
+	py3-rich
+	py3-timeout-decorator
+	py3-ujson
+	py3-yaml
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/requests-cache/requests-cache/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/requests-cache-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto --ignore tests/integration
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+ec5788e31f60fd95e575d01af1163f981757972db6557d7a62da2ca0719e84262cf66cdd9b40c73cca540b92d6b7f6beba1aa42bedba528734c61edf5013ec3d  py3-requests-cache-1.0.1.tar.gz
+"

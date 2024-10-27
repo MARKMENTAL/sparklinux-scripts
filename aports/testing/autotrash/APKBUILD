@@ -1,0 +1,29 @@
+# Contributor: Thiago Perrotta <tbperrotta@gmail.com>
+# Maintainer: Thiago Perrotta <tbperrotta@gmail.com>
+pkgname=autotrash
+pkgver=0.4.6
+pkgrel=1
+pkgdesc="Tool to automatically purge old trashed files"
+url="https://bneijt.nl/pr/autotrash/"
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="python3 py3-setuptools"
+makedepends="py3-gpep517 py3-poetry-core py3-installer"
+options="!check"  # no tests
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/a/autotrash/autotrash-$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/autotrash*.whl
+}
+
+sha512sums="
+cfa59d025bb37ee31f0726e7f218f328af7e51c34de606fac384a342bd3e73761b313a3b71c4b2f3130125997640d5f18bd97ac6885d092749fc9e46aac744d5  autotrash-0.4.6.tar.gz
+"

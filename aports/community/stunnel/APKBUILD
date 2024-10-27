@@ -1,0 +1,66 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Contributor: Dean Takemori <deant@hawaii.rr.com>
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=stunnel
+pkgver=5.72
+pkgrel=0
+pkgdesc="SSL encryption wrapper between network client and server"
+url="https://www.stunnel.org"
+arch="all"
+license="GPL-2.0-or-later WITH OpenSSL-Exception"
+# support for SO_ORIGINAL_DST will be silently disabled without linux-headers
+makedepends="openssl-dev>3 linux-headers"
+checkdepends="py3-cryptography"
+subpackages="$pkgname-doc $pkgname-openrc"
+install="$pkgname.pre-install"
+source="https://www.stunnel.org/archive/${pkgver%%.*}.x/stunnel-$pkgver.tar.gz
+	stunnel.initd
+	stunnel.conf"
+
+prepare() {
+	default_prepare
+
+	# remove FIPS-related tests
+	rm tests/plugins/p10_fips.py
+	rm tests/plugins/p11_fips_cipher.py
+
+	# Hangs forever on s390x.
+	if [ "$CARCH" = s390x ]; then
+		rm tests/plugins/p02_require_cert.py
+	fi
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--disable-fips
+	make
+}
+
+check() {
+	timeout 300 \
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	install -Dm755 "$srcdir"/stunnel.initd "$pkgdir"/etc/init.d/stunnel
+	install -m644 "$srcdir"/stunnel.conf "$pkgdir"/etc/stunnel/stunnel.conf
+
+	mkdir -p "$pkgdir"/usr/share/doc/$pkgname/examples/
+	mv "$pkgdir"/etc/stunnel/stunnel.conf-sample \
+		"$pkgdir"/usr/share/doc/$pkgname/examples/
+}
+
+sha512sums="
+2607bed1159412dc36ed0455ed158ab3141782f05ddaf3605076f1a0e371bc1ada1606cab65a6bc52d69a8c685345617578cb79d521330f2e1d12af3dcbd37ca  stunnel-5.72.tar.gz
+51d56a6c0d961f6de5cd2ef07a1cfdb19fb1b74300da9c340899daa919bd9b2c0bfff472f03746df0dd1aa6098c79035921ca36108ca0b93693377f1ac1c7fb4  stunnel.initd
+a72bfddeb74787d58c9fd24782d86c0498ce3530a43fbdd4ec4c4b57baa6257b6ef21005aca274b22c4a22cdbbbcee63dd3d841f458af248db9c69e8d59fa56f  stunnel.conf
+"

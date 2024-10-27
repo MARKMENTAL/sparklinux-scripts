@@ -1,0 +1,54 @@
+# Maintainer: Simon Zeni <simon@bl4ckb0ne.ca>
+pkgname=mold
+pkgver=2.33.0
+pkgrel=1
+pkgdesc="fast modern linker"
+url="https://github.com/rui314/mold"
+arch="all"
+license="MIT"
+makedepends="
+	cmake
+	linux-headers
+	mimalloc2-dev
+	onetbb-dev
+	samurai
+	zlib-dev
+	zstd-dev
+	"
+checkdepends="
+	bash
+	dwarf-tools
+	grep
+	"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/rui314/mold/archive/refs/tags/v$pkgver.tar.gz"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON \
+		-DMOLD_LTO=ON \
+		-DMOLD_USE_SYSTEM_MIMALLOC=ON \
+		-DMOLD_USE_SYSTEM_TBB=ON \
+		-DBUILD_TESTING="$(want_check && echo ON || echo OFF)"
+
+	cmake --build build
+}
+
+check() {
+	# s390x-shared-abs-sym and riscv64-shared-abs-sym are broken
+	case "$CARCH" in
+		s390x) ctest --output-on-failure --test-dir build -E s390x-shared-abs-sym;;
+		riscv64) ctest --output-on-failure --test-dir build -E riscv64-shared-abs-sym;;
+		*) ctest --output-on-failure --test-dir build;;
+	esac
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+67c41ae33f8a229f32aabf32ffb8bcb261eff047dedd189b8751e5de43ef12a2dbd05f45632c8baeac2ceff99c40256256d7d5c790cc12e4fecf1dc3cfebeb11  mold-2.33.0.tar.gz
+"

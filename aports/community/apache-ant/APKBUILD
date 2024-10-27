@@ -1,0 +1,74 @@
+# Contributor: Steeve Chailloux <steeve@chaahk.com>
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=apache-ant
+pkgver=1.10.15
+pkgrel=0
+pkgdesc="A java-based build tool"
+url="https://ant.apache.org/"
+# riscv64: blocked by openjdk8
+arch="noarch !riscv64"
+license="Apache-2.0"
+makedepends="openjdk8"
+depends="java-jdk"
+source="https://www.apache.org/dist/ant/source/apache-ant-$pkgver-src.tar.bz2"
+# !check: needs itself for testing
+# net: fetch dependencies
+options="!check net"
+
+_anthome="/usr/share/java/$pkgname"
+
+# secfixes:
+#   1.10.11-r0:
+#     - CVE-2021-36373
+#     - CVE-2021-36374
+#   1.10.9-r0:
+#     - CVE-2020-11979
+#   1.10.8-r0:
+#     - CVE-2020-1945
+
+build() {
+	export JAVA_HOME="/usr/lib/jvm/java-8-openjdk"
+	./bootstrap.sh
+	bootstrap/bin/ant -f fetch.xml -Ddest=optional
+	bootstrap/bin/ant dist
+
+	cat > $pkgname.sh <<-EOF
+	ANT_HOME="$_anthome"
+	export ANT_HOME
+	EOF
+}
+
+package() {
+	local destdir="$pkgdir/$_anthome"
+	cd apache-ant-$pkgver
+
+	install -dm755 "$destdir"/bin
+	rm bin/*.bat bin/*.cmd
+	install -m755 bin/* "$destdir"/bin
+
+	install -dm755 "$pkgdir"/usr/bin
+	ln -sf $_anthome/bin/ant "$pkgdir"/usr/bin/ant
+
+	cp -r etc "$destdir"/
+
+	install -dm755 "$destdir"/lib
+	install -m644 lib/*.jar "$destdir"/lib
+
+	# symlink to junit so it's on the javac build path for ant
+	# matches behavior on ubuntu 9 and makes sense for compatibility
+	# http://bugs.archlinux.org/task/15229
+	ln -sf ../../junit.jar "$destdir"/lib/junit.jar
+
+	# The license says the NOTICE file should be redistributed for
+	# derivative works, so lets supply it.
+	local file; for file in LICENSE NOTICE; do
+		install -m644 -D $file "$pkgdir"/usr/share/licenses/$pkgname/$file
+	done
+
+	install -m644 -D "$builddir"/$pkgname.sh "$pkgdir"/etc/profile.d/$pkgname.sh
+}
+
+sha512sums="
+fd9477ce9ee0f4dcf000ab1583d1b6b85bc65be45a1a0d7366420029be6983e47fe44c3293263c54cde957b13a6bb2a29ea1b059a30f745ccc6219480feefac2  apache-ant-1.10.15-src.tar.bz2
+"

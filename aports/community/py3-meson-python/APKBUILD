@@ -1,0 +1,52 @@
+# Maintainer: fossdd <fossdd@pwned.life>
+pkgname=py3-meson-python
+pkgver=0.16.0
+pkgrel=0
+pkgdesc="Meson PEP 517 Python build backend"
+url="https://github.com/mesonbuild/meson-python"
+arch="noarch"
+license="MIT"
+depends="
+	meson
+	py3-pyproject-metadata
+	python3
+	"
+checkdepends="
+	cython
+	git
+	patchelf
+	py3-pytest
+	py3-pytest-mock
+	py3-wheel
+	python3-dev
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/mesonbuild/meson-python/archive/refs/tags/$pkgver.tar.gz
+	pyproject-metadata-0.8.0.patch
+	"
+builddir="$srcdir/meson-python-$pkgver"
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+check() {
+	# these require pip
+	pytest \
+		--deselect tests/conftest.py \
+		--deselect tests/test_pep518.py \
+		--deselect tests/test_editable.py::test_editable_rebuild \
+		--deselect tests/test_editable.py::test_editable_verbose \
+		-k 'not test_user_args'
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+	python3 -m compileall "$pkgdir"/usr/lib
+}
+
+sha512sums="
+99ea4304f15e2e13adf031e7c8cacbbc48c0c80f42a81f9d84242b6279ac9c1a13e3f162be5f472a1e498dc7cf3cba6799bf765b3fd441ac10cd87dc0db38678  py3-meson-python-0.16.0.tar.gz
+15fe0b6fa4d4b019ff975be19b408a09526d5cd9bbcf333d7be4e27054b5789bafee378a7cccb8c6e10177bb460a8855040f26f984d6e7afaa6083f1818fd205  pyproject-metadata-0.8.0.patch
+"

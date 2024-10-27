@@ -1,0 +1,36 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Stuart Cardall <developer@it-offshore.co.uk>
+pkgname=py3-configargparse
+_pkgname=ConfigArgParse
+pkgver=1.7
+pkgrel=1
+pkgdesc="drop-in replacement for argparse"
+url="https://github.com/bw2/ConfigArgParse"
+arch="noarch"
+license="MIT"
+depends="python3"
+makedepends="py3-setuptools py3-wheel"
+checkdepends="py3-mock py3-pytest py3-yaml"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/bw2/$_pkgname/archive/$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+replaces="py-configargparse" # Backwards compatibility
+provides="py-configargparse=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	python3 setup.py build
+}
+
+check() {
+	python3 setup.py test
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+4c388768dfda861a58a8c7b5a4de2a7c4070d445d9ea9aaeb5ce2e5af954ed6422b5af33967d086fd4c477156ef89e3dfd1406c02f0c49bafe6a9c980bf5840f  py3-configargparse-1.7.tar.gz
+"

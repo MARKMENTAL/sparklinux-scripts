@@ -1,0 +1,61 @@
+# Contributor: Dmitry Zakharchenko <dmitz@disroot.org>
+# Maintainer: Dmitry Zakharchenko <dmitz@disroot.org>
+pkgname=ytmdl
+pkgver=2024.04.14
+pkgrel=1
+pkgdesc="Download songs with metadata from Youtube"
+url="https://github.com/deepjyoti30/ytmdl"
+arch="noarch !armhf !ppc64le" # limited by py3-youtube-search
+license="MIT"
+depends="python3
+		py3-beautifulsoup4
+		py3-colorama
+		py3-downloader-cli
+		py3-ffmpeg
+		py3-itunespy
+		py3-lxml
+		py3-musicbrainzngs
+		py3-mutagen
+		py3-pydes
+		py3-pysocks
+		py3-requests
+		py3-rich
+		py3-simber
+		py3-spotipy
+		py3-unidecode
+		py3-urllib3
+		py3-xdg
+		py3-youtube-search
+		py3-ytmusicapi
+		yt-dlp
+		"
+makedepends="py3-setuptools py3-gpep517"
+options="!check" # no test suite
+subpackages="$pkgname-bash-completion $pkgname-zsh-completion $pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/deepjyoti30/ytmdl/archive/refs/tags/$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+	sed -e '/install_requires/d/setup_requires/d' -i setup.py
+}
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+	python3 utils/completion.py
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+
+	install -Dm644 ytmdl.bash \
+		"$pkgdir"/usr/share/bash-completion/completions/"$pkgname"
+	install -Dm644 ytmdl.zsh \
+		"$pkgdir"/usr/share/zsh/site-functions/_"$pkgname"
+}
+
+sha512sums="
+2d8b2e2189c6f0483dd32466f98281d8f173ad5d8a717ff9d828a7b08fc7f6313f108fb11da4b18ae66336c754c1c00f14010fe823c0a182387578db01795760  ytmdl-2024.04.14.tar.gz
+"

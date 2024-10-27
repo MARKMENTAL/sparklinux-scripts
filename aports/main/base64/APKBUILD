@@ -1,0 +1,71 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=base64
+# NOTE: The primary use of this library is for main/nodejs.
+pkgver=0.5.2
+pkgrel=0
+pkgdesc="Fast Base64 stream encoder/decoder in C99, with SIMD acceleration"
+url="https://github.com/aklomp/base64"
+arch="all"
+license="BSD-2-Clause"
+makedepends="
+	clang
+	cmake
+	samurai
+	"
+subpackages="
+	$pkgname-dev
+	lib$pkgname
+	"
+source="
+	https://github.com/aklomp/base64/archive/v$pkgver/base64-$pkgver.tar.gz
+	0001-add-a-pkg-config-file.patch
+	"
+
+build() {
+	local crossopts=
+	[ "$CBUILD" != "$CHOST" ] \
+		&& crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+
+	export CFLAGS="$CFLAGS -Wno-unused-command-line-argument"
+	# Upstream recommends building with clang due to better support for NEON
+	# intrinsics.
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_C_COMPILER=clang \
+		-DCMAKE_CXX_COMPILER=clang++ \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_VERBOSE_MAKEFILE=ON \
+		-DBUILD_SHARED_LIBS=ON \
+		-DBASE64_BUILD_CLI=ON \
+		-DBASE64_BUILD_TESTS=$(want_check && echo ON || echo OFF) \
+		-DBASE64_WITH_OpenMP=OFF \
+		$crossopts
+	cmake --build build
+}
+
+check() {
+	# XXX: https://github.com/aklomp/base64/issues/124
+	#ctest --test-dir build --output-on-failure
+
+	./build/bin/base64 build/bin/libbase64.so > test.b64
+	./build/bin/base64 -d test.b64 > test.bin
+	cmp build/bin/libbase64.so test.bin
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	cd "$pkgdir"
+	rm -f usr/bin/test_base64
+	rm -f usr/bin/benchmark
+}
+
+libbase64() {
+	default_libs
+}
+
+sha512sums="
+9f8ca8a6e9feb8ad98158d675ec3331e83c77401d2633de0e43b62e794682a9d63c03e1c2599981ad3cdb249e263964f6a79084dbdf2ca19a1e1eed6195a98f4  base64-0.5.2.tar.gz
+0f2e6b6258821861822d1077cd607000a4aafe5bdc6b670dc2e1c6faf77cfcee8c13a39fd876a26da3e2600072205a66e9f90ade1d2f37715cebf7000fcc805c  0001-add-a-pkg-config-file.patch
+"

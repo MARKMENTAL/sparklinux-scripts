@@ -1,0 +1,44 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=pipexec
+pkgver=2.6.1
+pkgrel=0
+pkgdesc="Handling pipe of commands like a single command"
+url="https://github.com/flonatel/pipexec"
+arch="all"
+license="GPL-2.0-or-later"
+subpackages="$pkgname-doc"
+source="https://github.com/flonatel/pipexec/releases/download/$pkgver/$pkgname-$pkgver.tar.xz"
+
+build() {
+	cd "$builddir"
+
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--mandir=/usr/share/man
+	make
+}
+
+# Note: make check actually does not run any tests.
+check() {
+	local out
+
+	out=$("$builddir"/bin/pipexec -- \
+		[A /bin/echo 'Hello, world!' ] [B /bin/grep -o world ] '{A:1>B:0}')
+	[ "$out" = world ]
+}
+
+package() {
+	cd "$builddir"
+
+	make DESTDIR="$pkgdir" install
+	install -D -m644 doc/man/*.1 -t "$pkgdir"/usr/share/man/man1/
+
+	rm "$pkgdir"/usr/bin/ptest
+}
+
+sha512sums="
+ae3645fae1893592b69dd26998a3d6836c929b0d44a6eabbd1a57bd2fa25710cf86f874ea3fb393792939495db0e65139fbf9fb961c3ebe64536e4173e23f375  pipexec-2.6.1.tar.xz
+"

@@ -1,0 +1,36 @@
+# Contributor: Newbyte <newbie13xd@gmail.com>
+# Maintainer: Newbyte <newbie13xd@gmail.com>
+pkgname=cargo-gra
+pkgver=0.6.0
+pkgrel=0
+pkgdesc="gtk-rust-app CLI for building Flatpak apps with ease"
+url="https://gitlab.com/floers/cargo-gra"
+# loongarch64: fails to build nix crate on loongarch64
+arch="all !s390x !loongarch64" # not interested in debugging issues on s390x
+license="GPL-3.0-or-later"
+makedepends="cargo cargo-auditable"
+source="https://gitlab.com/floers/cargo-gra/-/archive/v$pkgver/cargo-gra-v$pkgver.tar.gz"
+builddir="$srcdir/$pkgname-v$pkgver"
+options="!check" # Tests fail
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --release --frozen
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm755 target/release/cargo-gra -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+7c19a61b493e40183407e0af277e2355b23bc6221f155486a6a3b61af23fa109879812d3618e974d9d0e7188f5dde03382e5bb3b2c2755ca3c6e67a7c635aa4e  cargo-gra-v0.6.0.tar.gz
+"

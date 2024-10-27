@@ -1,0 +1,136 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=openrct2
+pkgver=0.4.14
+_pkgver_objects=1.4.7
+_pkgver_title_sequences=0.4.14
+_pkgver_replays=0.0.79
+_pkgver_opensfx=1.0.5
+_pkgver_openmsx=1.6
+pkgrel=0
+pkgdesc="Open-source re-implementation of Roller Coaster Tycoon 2"
+# s390x and loongarch64 are not supported upstream
+arch="all !s390x !loongarch64"
+url="https://openrct2.io"
+license="GPL-3.0-only"
+depends="$pkgname-data"
+makedepends="
+	cmake
+	curl-dev
+	flac-dev
+	fontconfig-dev
+	gtest-dev
+	icu-dev
+	jansson-dev
+	libpng-dev
+	libvorbis-dev
+	libzip-dev
+	mesa-dev
+	musl-fts-dev
+	ninja
+	nlohmann-json
+	sdl2-dev
+	speexdsp-dev
+	unzip
+	"
+install="$pkgname.post-install"
+subpackages="$pkgname-doc $pkgname-cli $pkgname-data::noarch"
+source="$pkgname-$pkgver.tar.gz::https://github.com/openrct2/openrct2/archive/refs/tags/v$pkgver.tar.gz
+	$pkgname-$_pkgver_title_sequences-title_sequences.zip::https://github.com/OpenRCT2/title-sequences/releases/download/v$_pkgver_title_sequences/title-sequences.zip
+	$pkgname-$_pkgver_objects-objects.zip::https://github.com/OpenRCT2/objects/releases/download/v$_pkgver_objects/objects.zip
+	$pkgname-$_pkgver_replays-replays.zip::https://github.com/OpenRCT2/replays/releases/download/v$_pkgver_replays/replays.zip
+	$pkgname-$_pkgver_opensfx-opensfx.zip::https://github.com/OpenRCT2/OpenSoundEffects/releases/download/v$_pkgver_opensfx/opensound.zip
+	$pkgname-$_pkgver_openmsx-openmsx.zip::https://github.com/OpenRCT2/OpenMusic/releases/download/v$_pkgver_openmsx/openmusic.zip
+	Werror.patch
+	0001-int32_t.patch
+	0002-gtest.patch
+	0003-disable-version-check.patch
+	"
+case "$CARCH" in
+	arm*) options="!check" ;; # https://github.com/OpenRCT2/OpenRCT2/issues/12727
+esac
+builddir="$srcdir/OpenRCT2-$pkgver"
+
+prepare() {
+	default_prepare
+
+	mkdir -p \
+		data/title \
+		data/object \
+		testdata/replays \
+		data/assetpack/openrct2.sound.parkap \
+		data/assetpack/openrct2.music.alternative.parkap
+	unzip "$srcdir"/$pkgname-$_pkgver_title_sequences-title_sequences.zip -d data/title
+	unzip "$srcdir"/$pkgname-$_pkgver_objects-objects.zip -d data/object
+	unzip "$srcdir"/$pkgname-$_pkgver_replays-replays.zip -d testdata/replays
+	unzip "$srcdir"/$pkgname-$_pkgver_opensfx-opensfx.zip -d data/assetpack/openrct2.sound.parkap
+	unzip "$srcdir"/$pkgname-$_pkgver_openmsx-openmsx.zip -d data/assetpack/openrct2.music.alternative.parkap
+}
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=ON \
+		-DWITH_TESTS=ON \
+		-DDOWNLOAD_TITLE_SEQUENCES=OFF \
+		-DDOWNLOAD_OBJECTS=OFF \
+		-DDOWNLOAD_REPLAYS=OFF \
+		-DDOWNLOAD_OPENSFX=OFF \
+		-DDOWNLOAD_OPENMSX=OFF \
+		-DDISABLE_GOOGLE_BENCHMARK=ON # Not packaged in Alpine
+	cmake --build build
+}
+
+check() {
+	ln -s "$builddir"/data build/data
+
+	local skipped_tests=""
+	local tests="
+		replay_tests
+		string
+		localisation
+		enummaptests
+		Localisation.RCT2_to_UTF8_JP
+		Localisation.RCT2_to_UTF8_ZH_TW
+		Localisation.RCT2_to_UTF8_ZH_TW_PREMATURE_END
+		RideRatings.BigMap
+		StringTest.Convert_950_to_UTF8
+		"
+	for test in $tests; do
+		skipped_tests="$skipped_tests|$test"
+	done
+	ctest --test-dir build --output-on-failure -E "$skipped_tests"
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+data() {
+	amove usr/share/openrct2
+
+	# https://github.com/OpenRCT2/OpenRCT2/issues/12716
+	mv "$subpkgdir"/usr/share/openrct2/title \
+		"$subpkgdir"/usr/share/openrct2/sequence
+}
+
+cli() {
+	depends="openrct2-data"
+	install="$subpkgname.post-install"
+
+	amove usr/bin/openrct2-cli
+}
+sha512sums="
+11eaec800aee9667d1a9d5f255f556572221b5f2190740d16c847e23bb1feb75fcb3876c4078ca069517eda72a27fb22f5c6fb91458bdf66dfe1f8ab51bd4e07  openrct2-0.4.14.tar.gz
+27a1f5e87063ed9baf5faeca15a914e1a57584da6ab0d06d2b9e1f08e801c53f2ea9826381bf5e3dd8e220ff2da601a98841a08f9bcad1e0280b04746512bfb1  openrct2-0.4.14-title_sequences.zip
+54f6872502333dc4063d0eca6d9e2cb6f7e6c7593be014a3c17df3b9a6dfa354b50c995953fb56973db8cef3733eedb3b64e680fe136724328156c1c590d9ae7  openrct2-1.4.7-objects.zip
+04acde4d60c8fa949b298dd15e38fe0421659357fa214dffb0577574e0b0ac218a01ce998f4e12e3ab13a88fbbba8096392462fda29c68a6215bc0875aaae9b2  openrct2-0.0.79-replays.zip
+fc46ffb3f6243b3d783a280481ce373a8ddc8cf1fd28bfeceecf6223b72b38f1d49d0c95eea3376308a61a77c50c7a06252b6d72248cfecc493b63b65bd6512a  openrct2-1.0.5-opensfx.zip
+88e3242da45f372e06de04e58d03fc3d256b1485467a25a3f8878c03eb2570eea2c787a9e0416c1b040c15886723ced1379d762f941a23e4bd2fce81416123b0  openrct2-1.6-openmsx.zip
+cd39a38a59b8544d38895255e8719a8c1ca404d56073649c2434db5c4aa121d4f86460cb90e04d16d5da61dff95826de9a634d433087c08dcc4f2222208507b1  Werror.patch
+c56151de6ec2f4b9ca279ef038e3c3be87f1a61d6d6ebb1abbddc0aabbd5913aaa88fa724663cd2e2cd3729868b61e727c3dcfd03af5685ed6ca583e16ee0cb3  0001-int32_t.patch
+92231018fdfa42bd62bc0318dbd886f01837f655906d14565a1f9af3a7a6d5cde8d09bbb8eeedd904791dfd56d2cc64187ce27bc1333c52bdc028191d696a0c9  0002-gtest.patch
+290d1790d8efe7051b0211ebf6ba5d9c0802e950d68c9063791828bc356906c4b80d98922a5b6d58e6c57cb30081f1cfbc817c20cdeb96c9c2ea555d4620f4a7  0003-disable-version-check.patch
+"

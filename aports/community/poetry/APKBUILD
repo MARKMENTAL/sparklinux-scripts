@@ -1,0 +1,66 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Contributor: Michał Polański <michal@polanski.me>
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=poetry
+pkgver=1.8.3
+pkgrel=0
+pkgdesc="Python3 dependency management and packaging system"
+url="https://python-poetry.org/"
+license="MIT"
+arch="noarch"
+depends="
+	py3-poetry-core
+	py3-poetry-plugin-export
+	py3-build
+	py3-cachecontrol
+	py3-cleo
+	py3-crashtest
+	py3-dulwich
+	py3-fastjsonschema
+	py3-installer
+	py3-keyring
+	py3-packaging
+	py3-pexpect
+	py3-pkginfo
+	py3-platformdirs
+	py3-pyproject-hooks
+	py3-requests
+	py3-requests-toolbelt
+	py3-shellingham
+	py3-tomlkit
+	py3-trove-classifiers
+	py3-virtualenv
+	"
+makedepends="py3-gpep517 py3-installer"
+checkdepends="python3-dev py3-pytest py3-pytest-mock py3-pytest-xdist py3-deepdiff py3-httpretty"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/python-poetry/poetry/archive/$pkgver.tar.gz"
+options="!check" # TODO: enable tests
+
+prepare() {
+	default_prepare
+
+	# flatdict module is not packaged in aports
+	rm tests/config/test_config.py
+}
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+dd5986ff4c91887ef77d54107ba97016872a7d64e31eb7cbc5eb96dccf9292caee9781141f0ee1bd1ae09fb8a63f08d1240705b2eb120ff18696bb66c41065de  poetry-1.8.3.tar.gz
+"

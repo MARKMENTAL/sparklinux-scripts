@@ -1,0 +1,46 @@
+# Contributor: Leonardo Arena <rnalrd@alpinelinux.org>
+# Maintainer:
+pkgname=py3-ncclient
+pkgver=0.6.13
+pkgrel=5
+pkgdesc="Library for NETCONF clients"
+url="https://github.com/ncclient/ncclient"
+arch="noarch"
+license="Apache-2.0"
+depends="py3-lxml py3-paramiko py3-six py3-setuptools"
+makedepends="py3-python-versioneer py3-gpep517"
+checkdepends="py3-mock py3-nose"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/ncclient/ncclient/archive/v$pkgver.tar.gz"
+builddir="$srcdir"/ncclient-$pkgver
+
+replaces="py-ncclient" # Backwards compatibility
+provides="py-ncclient=$pkgver-r$pkgrel" # Backwards compatibility
+
+prepare() {
+	default_prepare
+
+	# unvendor
+	rm versioneer.py
+}
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	gpep517 install-wheel --destdir .testenv --prefix '' .dist/*.whl
+	.testenv/bin/python3 -m nose
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+650d07477d48cd209ef758ebd1716e48c4021c3d681f0ce2e9065ca5f34ace82079f5577884d26fc99e552c6f4cd7b59a9bf8866008e7b2985f1d8b23cc8d61f  py3-ncclient-0.6.13.tar.gz
+"

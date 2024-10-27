@@ -1,0 +1,47 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: team/gnome <ablocorrea@hotmail.com>
+pkgname=gnome-contacts
+pkgver=47.0
+pkgrel=0
+pkgdesc="A contacts manager for GNOME"
+url="https://wiki.gnome.org/Apps/Contacts"
+# s390x: doubt anyone would use this on a mainframe
+arch="all !s390x"
+license="GPL-2.0-or-later"
+makedepends="
+	desktop-file-utils
+	evolution-data-server-dev
+	folks-dev
+	glib-dev
+	gnome-desktop-dev
+	gnome-online-accounts-dev
+	gstreamer-dev
+	gtk4.0-dev
+	libadwaita-dev
+	libgee-dev
+	libportal-dev
+	libqrencode-dev
+	meson
+	telepathy-glib-dev
+	vala
+	"
+checkdepends="appstream-glib"
+subpackages="$pkgname-lang $pkgname-doc"
+source="https://download.gnome.org/sources/gnome-contacts/${pkgver%.*}/gnome-contacts-$pkgver.tar.xz"
+
+build() {
+	abuild-meson -Db_lto=true . output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+280b8e255921e84b47edec89a6bf535194da08444d8462b25b0eb686eb2e01795edb694af38239528c6ae50b03e743eb026890fdf7b91d2b12358a88fcb4f918  gnome-contacts-47.0.tar.xz
+"

@@ -1,0 +1,44 @@
+# Contributor: mio <miyopan@e.email>
+# Maintainer: mio <miyopan@e.email>
+pkgname=libgedit-gtksourceview
+pkgver=299.3.0
+pkgrel=0
+pkgdesc="Gedit Technology — source code editing widget"
+url="https://gitlab.gnome.org/World/gedit/libgedit-gtksourceview"
+arch="all"
+license="LGPL-2.1-or-later"
+makedepends="
+	gobject-introspection-dev
+	gtk-doc
+	gtk+3.0-dev
+	meson
+	"
+checkdepends="xvfb-run"
+subpackages="$pkgname-dev $pkgname-doc $pkgname-lang"
+source="https://gitlab.gnome.org/World/gedit/libgedit-gtksourceview/-/archive/$pkgver/libgedit-gtksourceview-$pkgver.tar.gz"
+
+# riscv64: failed test 17/25 "test-search-context" sigsegv
+case "$CARCH" in
+	riscv64) options="$options !check";;
+esac
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dgobject_introspection=true \
+		-Dgtk_doc=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	xvfb-run -a meson test --no-rebuild -v -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+4b79e4a0cb827d110a2f0e4c7ae90c202cf0112ccdc738d672ca6763512aad9df0a0e201753b513f546b6ec6333868cd7a8a8233aafae920ab66c0a7e53d26e2  libgedit-gtksourceview-299.3.0.tar.gz
+"

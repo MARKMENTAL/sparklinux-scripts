@@ -1,0 +1,39 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=libxcursor
+pkgver=1.2.2
+pkgrel=1
+pkgdesc="X cursor management library"
+url="https://xorg.freedesktop.org/"
+arch="all"
+license="MIT"
+options="!check"  # No test suite.
+subpackages="$pkgname-dev $pkgname-doc"
+makedepends="xorgproto util-macros libx11-dev libxrender-dev libxfixes-dev"
+source="https://www.x.org/releases/individual/lib/libXcursor-$pkgver.tar.xz"
+builddir="$srcdir"/libXcursor-$pkgver
+
+# secfixes:
+#   1.1.15-r0:
+#     - CVE-2017-16612
+
+prepare() {
+ 	default_prepare
+	update_config_sub
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+6550ce1e69b35ef3356f25e31aa2779503d9cea780eff307cb646364993dfaa971304085d32677e68996bd3b8e067436c8fc89aeb4db07a12ce5bc93b735b5b0  libXcursor-1.2.2.tar.xz
+"

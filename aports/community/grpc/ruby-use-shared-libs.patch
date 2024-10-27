@@ -1,0 +1,77 @@
+From b388f87cc4b115c62b64bd6be92c21a1d4e54841 Mon Sep 17 00:00:00 2001
+From: Jakub Jirutka <jakub@jirutka.cz>
+Date: Wed, 24 Aug 2022 21:20:22 +0200
+Subject: [PATCH] Link with shared libraries, don't embed anything
+
+- Don't statically link openssl, zlib and cares.
+- Don't build and statically link libgrpc, link shared libgrpc.
+- Don't statically link libgcc and libstdc++.
+---
+ src/ruby/ext/grpc/extconf.rb | 28 +++++-----------------------
+ 1 file changed, 5 insertions(+), 23 deletions(-)
+
+diff --git a/src/ruby/ext/grpc/extconf.rb b/src/ruby/ext/grpc/extconf.rb
+index 502793d919..2bc4e22c6a 100644
+--- a/src/ruby/ext/grpc/extconf.rb
++++ b/src/ruby/ext/grpc/extconf.rb
+@@ -96,11 +96,11 @@ if apple_toolchain && !cross_compiling
+ end
+ 
+ # Don't embed on TruffleRuby (constant-time crypto is unsafe with Sulong, slow build times)
+-ENV['EMBED_OPENSSL'] = (RUBY_ENGINE != 'truffleruby').to_s
++ENV['EMBED_OPENSSL'] = 'false'
+ # Don't embed on TruffleRuby (the system zlib is already linked for the zlib C extension, slow build times)
+-ENV['EMBED_ZLIB'] = (RUBY_ENGINE != 'truffleruby').to_s
++ENV['EMBED_ZLIB'] = 'false'
+ 
+-ENV['EMBED_CARES'] = 'true'
++ENV['EMBED_CARES'] = 'false'
+ 
+ ENV['ARCH_FLAGS'] = RbConfig::CONFIG['ARCH_FLAG']
+ if apple_toolchain && !cross_compiling
+@@ -124,21 +124,7 @@ ENV['BUILDDIR'] = output_dir
+ strip_tool = RbConfig::CONFIG['STRIP']
+ strip_tool += ' -x' if apple_toolchain
+ 
+-unless windows
+-  puts 'Building internal gRPC into ' + grpc_lib_dir
+-  nproc = 4
+-  nproc = Etc.nprocessors if Etc.respond_to? :nprocessors
+-  nproc_override = ENV['GRPC_RUBY_BUILD_PROCS']
+-  unless nproc_override.nil? or nproc_override.size == 0
+-    nproc = nproc_override
+-    puts "Overriding make parallelism to #{nproc}"
+-  end
+-  make = bsd ? 'gmake' : 'make'
+-  cmd = "#{make} -j#{nproc} -C #{grpc_root} #{grpc_lib_dir}/libgrpc.a CONFIG=#{grpc_config} Q="
+-  puts "Building grpc native library: #{cmd}"
+-  system(cmd)
+-  exit 1 unless $? == 0
+-end
++$LDFLAGS << ' -L' + ENV.fetch('TOPDIR', '.')
+ 
+ # C-core built, generate Makefile for ruby extension
+ $LDFLAGS = maybe_remove_strip_all_linker_flag($LDFLAGS)
+@@ -182,7 +168,7 @@ if apple_toolchain
+   $LDFLAGS << ' -Wl,-exported_symbols_list,"' + ext_export_file + '.clang"'
+ end
+ 
+-$LDFLAGS << ' ' + File.join(grpc_lib_dir, 'libgrpc.a') unless windows
++$LDFLAGS << ' -Wl,-wrap,memcpy -lgrpc' unless windows
+ if grpc_config == 'gcov'
+   $CFLAGS << ' -O0 -fprofile-arcs -ftest-coverage'
+   $LDFLAGS << ' -fprofile-arcs -ftest-coverage -rdynamic'
+@@ -193,10 +179,6 @@ if grpc_config == 'dbg'
+ end
+ 
+ $LDFLAGS << ' -Wl,-wrap,memcpy' if linux
+-# Do not statically link standard libraries on TruffleRuby as this does not work when compiling to bitcode
+-if linux && RUBY_ENGINE != 'truffleruby'
+-  $LDFLAGS << ' -static-libgcc -static-libstdc++'
+-end
+ $LDFLAGS << ' -static' if windows
+ 
+ $CFLAGS << ' -std=c11 '
+-- 
+2.44.0
+

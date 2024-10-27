@@ -1,0 +1,36 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+pkgname=py3-habanero
+_pkgorig=habanero
+pkgver=1.2.6
+pkgrel=1
+pkgdesc="A low level client for working with Crossref’s search API"
+url="https://github.com/sckott/habanero"
+arch="noarch"
+license="MIT"
+depends="python3 py3-requests py3-tqdm"
+makedepends="py3-gpep517 py3-setuptools_scm py3-wheel"
+checkdepends="py3-pytest py3-pytest-cov"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://files.pythonhosted.org/packages/source/h/habanero/habanero-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgorig-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+# do not test network tests; use smoke tests
+check() {
+	PYTHONPATH=build/lib python3 -c "from habanero import *"
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+1fa5afc9ead822e51e936b4d25f3d1c36fea336d6fb3fc58c08518e6c15ef1ca75b1344bf9dce81edee86da9e13fcf56f7e982c1447e5066e151acd49a8b3832  py3-habanero-1.2.6.tar.gz
+"

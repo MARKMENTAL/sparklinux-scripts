@@ -1,0 +1,79 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: team/alpine-desktop <bribbers@disroot.org>
+pkgname=wireplumber
+pkgver=0.5.6
+pkgrel=0
+pkgdesc="Session / policy manager implementation for PipeWire"
+url="https://pipewire.org/"
+arch="all"
+license="LGPL-2.1-or-later"
+depends_dev="
+	elogind-dev
+	glib-dev
+	lua5.4-dev
+	pipewire-dev>=0.3.39
+	"
+makedepends="$depends_dev
+	doxygen
+	graphviz
+	meson
+	"
+checkdepends="
+	dbus
+	pipewire
+	"
+subpackages="
+	$pkgname-dbg
+	$pkgname-libs
+	$pkgname-dev
+	$pkgname-logind
+	$pkgname-lang
+	$pkgname-zsh-completion
+	$pkgname-doc
+	"
+source="https://gitlab.freedesktop.org/PipeWire/wireplumber/-/archive/$pkgver/wireplumber-$pkgver.tar.gz"
+
+provides="pipewire-session-manager"
+provider_priority=50
+
+case "$CARCH" in
+s390x)
+	# probably broken here, but we want this just so pipewire is installable
+	options="$options !check"
+	;;
+esac
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dsystem-lua=true \
+		-Delogind=enabled \
+		-Dtests="$(want_check && echo true || echo false)" \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild -t 10 --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+logind() {
+	# This not only needs libelogind, but also elogind being installed and
+	# running. Otherwise wireplumber fails to launch.
+	depends="$depends elogind"
+	# The purpose of the (e)logind module currently is limited to preventing
+	# GDM from hijacking the Bluetooth HFP/HSP profile. But GDM users cannot
+	# use bluetooth audio without, so install it for them
+	install_if="$pkgname=$pkgver-r$pkgrel gdm"
+	pkgdesc="wireplumbers optional (e)logind integration needed by GDM users"
+
+	amove usr/lib/wireplumber-0.5/libwireplumber-module-logind.so
+}
+
+sha512sums="
+9606dbea40a6c9c9d219fa60b236704308bfe7955b93c97e47aeba3a40417d060b87171027a7fabf4bdeb9109d7e8c3da41b06ab5fad7252823e6e3fef4713db  wireplumber-0.5.6.tar.gz
+"

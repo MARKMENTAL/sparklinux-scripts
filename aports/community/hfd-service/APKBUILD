@@ -1,0 +1,50 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=hfd-service
+pkgver=0.2.2
+pkgrel=0
+pkgdesc="Service that manages human feedback devices on mobile devices"
+url="https://gitlab.com/ubports/development/core/hfd-service"
+# s390x blocked by libgbinder
+arch="all !s390x"
+license="LGPL-3.0-only"
+depends="accountsservice"
+makedepends="
+	accountsservice-dev
+	cmake-extras
+	eudev-dev
+	libgbinder-dev
+	libglibutil-dev
+	lomiri-deviceinfo-dev
+	qt5-qtbase-dev
+	qt5-qtfeedback-dev
+	samurai
+	"
+subpackages="$pkgname-openrc"
+source="https://gitlab.com/ubports/development/core/hfd-service/-/archive/$pkgver/hfd-service-$pkgver.tar.gz
+	hfd-service.initd
+	"
+options="!check" # No tests
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DENABLE_LIBHYBRIS=OFF
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	install -Dm755 "$srcdir"/hfd-service.initd "$pkgdir"/etc/init.d/hfd-service
+
+	mkdir -p "$pkgdir"/usr/share/dbus-1/system.d/
+	mv "$pkgdir"/etc/dbus-1/system.d/* "$pkgdir"/usr/share/dbus-1/system.d/
+}
+
+sha512sums="
+7c28d0dd3d711030594971e82b007489a6eb7c0aa426928816b65a6b6e97b3ee2619156336f5c5245d7ec849e2a4e8174a28850cdf1c7da0c847b4485c811539  hfd-service-0.2.2.tar.gz
+f82f84a3d0422845d96fa98a74d4614f3097b1e27ff9abaf2b673d9dc802fbca5f077862a055241cc9cb3d9cd161608853069730fb53eff70cb596ebfeeb9a9e  hfd-service.initd
+"

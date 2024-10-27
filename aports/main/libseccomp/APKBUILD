@@ -1,0 +1,66 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Contributor: Dan Williams <dan@ma.ssive.co>
+pkgname=libseccomp
+pkgver=2.5.5
+pkgrel=1
+pkgdesc="interface to the Linux Kernel's syscall filtering mechanism"
+url="https://github.com/seccomp/libseccomp"
+arch="all"
+license="LGPL-2.1-or-later"
+depends_dev="linux-headers"
+makedepends="$depends_dev gperf cython python3 python3-dev py3-setuptools"
+checkdepends="bash"
+subpackages="$pkgname-static $pkgname-dev $pkgname-doc py3-$pkgname:py3"
+source="https://github.com/seccomp/libseccomp/releases/download/v$pkgver/libseccomp-$pkgver.tar.gz
+	loongarch64.patch
+	remove-redefinition-prctl.patch
+	"
+
+# secfixes:
+#   2.4.0-r0:
+#     - CVE-2019-9893
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--enable-python \
+		--enable-static \
+		--localstatedir=/var
+	make
+}
+
+check() {
+	# commit be65b26b67099be2b2b4890d736dbd1ad15adf36 adapted to new kernel 5.x syscalls
+	# as long as we are at 4.19 kernel, we need this change
+	case "$CARCH" in
+		ppc64le|s390x) rm -f tests/36-sim-ipc_syscalls.tests \
+			             tests/37-sim-ipc_syscalls_be.tests;;
+	esac
+	# fix python shebang
+	sed -i -e 's@cmd /usr/bin/env python @cmd /usr/bin/env python3 @' tests/regression
+	sed -i -e 's@^#!/usr/bin/env python$@#!/usr/bin/env python3@' tests/*.py
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+py3() {
+	pkgdesc="Python 3 bindings for $pkgname"
+	depends="$depends $pkgname python3"
+
+	amove usr/lib/python3*
+}
+
+sha512sums="
+f630e7a7e53a21b7ccb4d3e7b37616b89aeceba916677c8e3032830411d77a14c2d74dcf594cd193b1acc11f52595072e28316dc44300e54083d5d7b314a38da  libseccomp-2.5.5.tar.gz
+97c2c6f894486616e958bb61d9e61057b0711cbe9ece862e6dc02a7c1e10a81061548c7e7271a5d621a4e58835751c4b2d370639020d8df1943718807f9c25f2  loongarch64.patch
+f2c31dcafdc9a1ad78e32e76b75e1c1603071eaa3f979e1f2483b879a34ad07e0a4ef3642196a695415cdf81e1ed2bf325175872fb4e203ef9d0e668c287493f  remove-redefinition-prctl.patch
+"

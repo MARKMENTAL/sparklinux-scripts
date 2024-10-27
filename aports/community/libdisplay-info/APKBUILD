@@ -1,0 +1,34 @@
+# Maintainer: Simon Zeni <simon@bl4ckb0ne.ca>
+pkgname=libdisplay-info
+pkgver=0.1.1
+pkgrel=0
+pkgdesc="EDID and DisplayID library"
+url="https://gitlab.freedesktop.org/emersion/libdisplay-info"
+arch="all"
+license="MIT"
+makedepends="meson hwdata-dev"
+subpackages="$pkgname-dev $pkgname-tools"
+source="https://gitlab.freedesktop.org/emersion/libdisplay-info/-/archive/$pkgver/libdisplay-info-$pkgver.tar.gz"
+options="!check" # edid-decode
+
+build() {
+	abuild-meson -Db_lto=true . output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+tools() {
+	pkgdesc="$pkgdesc (tools)"
+	amove usr/bin
+}
+
+sha512sums="
+8b11c35315f3f16f6853b2ba5daa39c622f2326cfa01d54574beb577efd38d25b8260f7d74c63924473a0487bffdbff727ddc05b12d36e2106b78aadc7d4ff42  libdisplay-info-0.1.1.tar.gz
+"

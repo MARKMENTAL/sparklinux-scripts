@@ -1,0 +1,36 @@
+# Maintainer: Dominika Liberda <ja@sdomi.pl>
+# Contributor: Dominika Liberda <ja@sdomi.pl>
+pkgname=texlab
+pkgver=5.19.0
+pkgrel=0
+pkgdesc="Implementation of the Language Server Protocol for LaTeX"
+url="https://github.com/latex-lsp/texlab"
+# limited by rust/cargo
+# armhf - fails to build
+arch="x86_64 armv7 aarch64 x86 ppc64le"
+license="GPL-3.0-or-later"
+makedepends="cargo cargo-auditable"
+source="https://github.com/latex-lsp/texlab/archive/refs/tags/v$pkgver/texlab-v$pkgver.tar.gz"
+
+export CARGO_PROFILE_RELEASE_PANIC="unwind"
+
+prepare() {
+	default_prepare
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --release --frozen
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm755 target/release/texlab -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+f08419f506ff499a282390824f69f807e040910d64f65e8bca8e3bcd184cabb52bb739e6445045133270e6434fcccc5ddeb54a09ef24b4b07520fac399990618  texlab-v5.19.0.tar.gz
+"

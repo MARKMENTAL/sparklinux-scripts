@@ -1,0 +1,40 @@
+# Maintainer: Gennady Feldman <gena01@gmail.com>
+# Contributor: Gennady Feldman <gena01@gmail.com>
+pkgname=py3-confluent-kafka
+_pkgname=confluent-kafka-python
+pkgver=1.8.2
+pkgrel=5
+pkgdesc="Confluent's Apache Kafka Python clien"
+url="https://github.com/confluentinc/confluent-kafka-python"
+# x86, armhf, armv7: blocked by py3-fastavro
+arch="all !x86 !armhf !armv7"
+license="Apache-2.0"
+depends="py3-avro py3-fastavro py3-jsonschema py3-protobuf py3-requests"
+makedepends="py3-setuptools python3-dev librdkafka-dev>=1.0.1 py3-gpep517"
+checkdepends="py3-pytest py3-trivup"
+options="!check" # missing deps
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/confluentinc/confluent-kafka-python/archive/v$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	gpep517 install-wheel --destdir .testenv --prefix '' .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+	rm "$pkgdir"/usr/LICENSE.txt
+}
+
+sha512sums="
+6db66371b7cac822aafeaa4acb491556d9a866f8502d76e2acfe52d18b282caab338cd3f51f84845eab2ec5b2c44ed80426a7ad8afd0314a8a5ddc1a9299d693  py3-confluent-kafka-1.8.2.tar.gz
+"

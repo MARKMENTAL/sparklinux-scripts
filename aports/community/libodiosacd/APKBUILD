@@ -1,0 +1,28 @@
+# Contributor: Sodface <sod@sodface.com>
+# Maintainer: Sodface <sod@sodface.com>
+pkgname=libodiosacd
+pkgver=24.5.1
+pkgrel=0
+pkgdesc="SACD decoder library"
+url="https://tari.in/www/software/libodiosacd/"
+arch="all"
+license="GPL-3.0-or-later"
+makedepends="cmake samurai"
+options="!check" # no test suite
+subpackages="$pkgname-dev"
+source="$pkgname-$pkgver.tar.gz::https://github.com/tari01/libodiosacd/archive/refs/tags/$pkgver.tar.gz"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+6ed8c81a0a0eb10f3af9d3fddc1243f377f442cc85ec667dc0c0909cbd28b7426a26da8a84280ea6480d040396c0943efc09cfda8e3c3d058e319a364dbf3086  libodiosacd-24.5.1.tar.gz
+"

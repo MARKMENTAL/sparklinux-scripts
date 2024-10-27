@@ -1,0 +1,42 @@
+# Contributor: Alex McGrath <amk@amk.ie>
+# Maintainer: Alex McGrath <amk@amk.ie>
+pkgname=newsflash
+pkgver=3.3.4
+pkgrel=0
+pkgdesc="An rss feed reader that supports various web based services"
+url="https://gitlab.com/news-flash/news_flash_gtk/"
+# s390x: blueprint-compiler errors out in _resolve_dir_entry
+arch="all !s390x"
+license="GPL-3.0-only"
+depends="desktop-file-utils"
+makedepends="
+	bash
+	blueprint-compiler
+	cargo
+	clapper-dev
+	gettext-dev
+	gstreamer-dev
+	libadwaita-dev
+	meson
+	openssl-dev>3
+	sqlite-dev
+	webkit2gtk-6.0-dev
+	"
+subpackages="$pkgname-lang"
+source="https://gitlab.com/news-flash/news_flash_gtk/-/archive/v.$pkgver/news_flash_gtk-v.$pkgver.tar.gz"
+options="net !check" # no tests
+builddir="$srcdir/news_flash_gtk-v.$pkgver"
+
+build() {
+	abuild-meson . output
+	meson compile -j 1 -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+	ln -s io.gitlab.news_flash.NewsFlash "$pkgdir"/usr/bin/newsflash
+}
+
+sha512sums="
+b4063d9fdecc90006c4f29c26ab3aaef8303a6b570d559d4f014f6b19df96cb60b9514ce2f74f3c34a1c8f95a98ad3edc922be2579d95a5b7ee5907bc830ad1c  news_flash_gtk-v.3.3.4.tar.gz
+"

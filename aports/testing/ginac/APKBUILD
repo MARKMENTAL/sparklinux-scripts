@@ -1,0 +1,39 @@
+# Contributor: Alex Yam <alex@alexyam.com>
+# Maintainer: Alex Yam <alex@alexyam.com>
+pkgname=ginac
+pkgver=1.8.7
+pkgrel=1
+pkgdesc="C++ library for symbolic computations"
+url="https://www.ginac.de/"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="cmake cln-dev flex bison readline-dev python3 texinfo samurai"
+subpackages="$pkgname-dev $pkgname-doc"
+source="https://www.ginac.de/ginac-$pkgver.tar.bz2"
+
+case "$CARCH" in
+	x86) options="!check";;  # 36 - check_cra (Subprocess aborted)
+esac
+
+build() {
+	CXXFLAGS="$CXXFLAGS -O2 -flto=auto" \
+	CFLAGS="$CFLAGS -O2 -flto=auto" \
+	cmake -B build -G Ninja -Wno-dev \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_PREFIX_PATH=/usr \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build build --target all test_suite
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --build build --target install
+}
+
+sha512sums="
+29a5dbe1fa8a40668a32eb0065d1f676b074222d76ed70a05c5841a4be92c4b1a019ae3fc820e1c7007e641ef8ef94d00adab901f89673df0d372a4c8af8e51a  ginac-1.8.7.tar.bz2
+"

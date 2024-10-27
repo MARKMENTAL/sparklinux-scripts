@@ -1,0 +1,60 @@
+# Contributor: Julian Weigt <juw@posteo.de>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=asymptote
+pkgver=2.91
+pkgrel=0
+pkgdesc="Vector graphics language for technical drawing"
+url="https://asymptote.sourceforge.io/"
+arch="all !ppc64le !s390x !riscv64 !loongarch64" #blocked by texlive
+license="LGPL-3.0-or-later"
+depends="
+	ghostscript
+	texlive
+	texlive-dvi
+	"
+### Optional dependencies
+# gsl and gsl-dev for the support of certain special functions.
+# fftw for fourier transform of data
+# numpy pyqt5 cson and librsvg for GUI program xasy. I could not find cson for alpine though.
+# freeglut for openGL support
+makedepends="
+	bison
+	flex
+	texinfo
+	texmf-dist-lang
+	texmf-dist-latexextra
+	texmf-dist-plaingeneric
+	zlib-dev
+	"
+subpackages="$pkgname-doc"
+source="https://downloads.sourceforge.net/sourceforge/asymptote/asymptote-$pkgver.src.tgz"
+
+build() {
+	# Without specifying, the content of texmf goes to /texmf-dist in root dir
+	# Build hangs without --disable-gc
+	./configure \
+		--prefix=/usr \
+		--with-latex=/usr/share/texmf/tex/latex \
+		--with-context=/usr/share/texmf/tex/context \
+		--disable-gc
+	make asy
+
+	#-j1 is needed for building documentation with pdflatex due to probably race conditions
+	make -j1 all
+}
+
+check() {
+	### Other option:
+	#make check-all. Fails without gsl and gsl-dev.
+	make check
+}
+
+package() {
+	### Other options
+	#make install doesn't install html documentation
+	make -j1 DESTDIR="$pkgdir" install-all
+}
+
+sha512sums="
+f76046c2f465a3b0be47c74423ec11896b64c11ef9ea05a5f435984563313cba0605bd93182530d7fc16bb6788298d7368851b7da6178c4e7b5404c67efd5517  asymptote-2.91.src.tgz
+"

@@ -1,0 +1,42 @@
+# Maintainer: TBK <alpine@jjtc.eu>
+# Contributor: Bartłomiej Piotrowski <bpiotrowski@alpinelinux.org>
+pkgname=libatomic_ops
+pkgver=7.8.2
+pkgrel=0
+pkgdesc="Semi-portable access to hardware provided atomic memory operations"
+arch="all"
+url="https://github.com/ivmai/libatomic_ops"
+license="GPL-2.0-or-later AND MIT AND Boehm-GC"
+makedepends="cmake samurai"
+subpackages="$pkgname-static $pkgname-dev $pkgname-doc"
+source="https://github.com/ivmai/libatomic_ops/releases/download/v$pkgver/libatomic_ops-$pkgver.tar.gz"
+
+build() {
+	CFLAGS="$CFLAGS -O2 -flto=auto" \
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBUILD_SHARED_LIBS=ON \
+		-Dbuild_tests="$(want_check && echo ON || echo OFF)"
+	cmake --build build
+
+	cmake -B build-static -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBUILD_SHARED_LIBS=OFF \
+		-Dbuild_tests=OFF
+	cmake --build build-static
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build-static
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+0559087c99b941990f189ea4ed5b3b371faf086bc1d517da6b878ba609c200eef24358768fd4361900101cdb474e28cea8408eb0b0222d23ef3154ce77f6acc0  libatomic_ops-7.8.2.tar.gz
+"

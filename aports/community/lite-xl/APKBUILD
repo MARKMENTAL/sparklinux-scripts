@@ -1,0 +1,38 @@
+# Contributor: Jakub Panek <me@panekj.dev>
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Sodface <sod@sodface.com>
+pkgname=lite-xl
+pkgver=2.1.5
+pkgrel=0
+pkgdesc="Lightweight text editor written in Lua"
+url="https://lite-xl.github.io"
+arch="all"
+license="MIT"
+makedepends="
+	cmake
+	freetype-dev
+	lua5.4-dev
+	meson
+	pcre2-dev
+	reproc-dev
+	sdl2-dev
+	"
+subpackages="$pkgname-doc"
+source="https://github.com/lite-xl/lite-xl/archive/v$pkgver/lite-xl-$pkgver.tar.gz"
+options="!check" # no tests available
+
+build() {
+	abuild-meson \
+		-Darch_tuple="$CARCH-linux" \
+		-Duse_system_lua=true \
+		. output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+4b61060084f8f2c3a0740bd6e9b6a7eed4a5b3b777d28ad94cd8a80ac461a1579059325151b269a46c2fe0a29dc8adc7e66b055d29b7258515a1a0a5b4dfdf80  lite-xl-2.1.5.tar.gz
+"

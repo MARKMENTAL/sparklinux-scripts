@@ -1,0 +1,56 @@
+# Contributor: Grigory Kirillov <txgk@bk.ru>
+# Maintainer:
+pkgname=fplll
+pkgver=5.4.5
+pkgrel=0
+pkgdesc="Lattice algorithms using floating-point arithmetic"
+url="https://github.com/fplll/fplll"
+arch="all"
+license="LGPL-2.1-or-later"
+makedepends="gmp-dev mpfr-dev"
+subpackages="
+	$pkgname-static
+	$pkgname-dev
+	$pkgname-libs
+	$pkgname-strategies:_strategies:noarch
+	"
+source="https://github.com/fplll/fplll/releases/download/$pkgver/fplll-$pkgver.tar.gz"
+
+case "$CARCH" in
+aarch64|ppc64le|s390x|loongarch64)
+	# libqd-dev package is unavailable
+	;;
+*)
+	makedepends="$makedepends libqd-dev"
+	;;
+esac
+
+build() {
+	export CXXFLAGS="${CXXFLAGS/-Os/-O3}" # gotta go fast
+
+	./configure \
+		--target="$CTARGET" \
+		--build="$CBUILD" \
+		--host="$CHOST" \
+		--prefix=/usr
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	mv "$pkgdir"/usr/bin/*fplll "$pkgdir"/usr/bin/fplll
+	mv "$pkgdir"/usr/bin/*latticegen "$pkgdir"/usr/bin/latticegen
+}
+
+_strategies() {
+	pkgdesc="Strategies for fplll"
+	amove usr/share/fplll/strategies
+}
+
+sha512sums="
+3e1281f1b993ebe4a767b7fc526f49a27d58f24b1b4c6074310cc971f6f569388d6ba27102087a2eb11671d2d5b87bd60306e2597567f4ae8dd2a9efd13beb77  fplll-5.4.5.tar.gz
+"

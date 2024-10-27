@@ -1,0 +1,42 @@
+# Contributor: Antoine Fontaine <antoine.fontaine@epfl.ch>
+# Contributor: fossdd <fossdd@pwned.life>
+# Maintainer: fossdd <fossdd@pwned.life>
+pkgname=reprotest
+_pyname=reprotest
+pkgver=0.7.28
+pkgrel=0
+pkgdesc="Build packages and check them for reproducibility"
+url="https://salsa.debian.org/reproducible-builds/reprotest"
+arch="noarch !armv7 !x86 !armhf" # diffoscope
+license="GPL-3.0-or-later"
+depends="diffoscope py3-rstr py3-distro py3-setuptools"
+makedepends="
+	py3-gpep517
+	py3-wheel
+	"
+checkdepends="dpkg py3-pytest"
+_pypiprefix="${_pyname%"${_pyname#?}"}"
+subpackages="$pkgname-pyc"
+source="https://salsa.debian.org/reproducible-builds/reprotest/-/archive/$pkgver/reprotest-$pkgver.tar.gz"
+options="!check" # missing disorderfs
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+99b3958f1f7802c177694c74bd21fbf5262214ab199477c2283f6f997c9110453efdc8407560a62576c5fe934a3dfec4c6ce39bace18821d762d231e6f926838  reprotest-0.7.28.tar.gz
+"

@@ -1,0 +1,40 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Maintainer:
+pkgname=py3-evohome-client
+pkgver=0.3.7
+pkgrel=4
+pkgdesc="Python client to access the Evohome web service"
+url="https://github.com/watchforstock/evohome-client"
+arch="noarch"
+license="Apache-2.0"
+depends="python3 py3-requests"
+makedepends="py3-setuptools py3-gpep517"
+checkdepends="py3-nose py3-requests-mock"
+subpackages="$pkgname-pyc"
+source="evohome-client-$pkgver.tar.gz::https://github.com/watchforstock/evohome-client/archive/$pkgver.tar.gz"
+builddir="$srcdir"/evohome-client-$pkgver
+
+replaces="py-evohome-client" # Backwards compatibility
+provides="py-evohome-client=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	gpep517 install-wheel --destdir .testenv --prefix '' .dist/*.whl
+	mkdir test-reports
+	.testenv/bin/python3 -m nose
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+0ba4ea1c952425f453b8189759be6037be91af73bd2b8da91bb532745fc73a43b93fb2237ac8b39b86da9c2d196c0d9567f857aecb9984327d67e1b9f62d923e  evohome-client-0.3.7.tar.gz
+"

@@ -1,0 +1,41 @@
+# Contributor: Ivan Tham <pickfire@riseup.net>
+# Maintainer:
+pkgname=py3-xlib
+_pkgname=python-xlib
+pkgver=0.33
+pkgrel=3
+pkgdesc="fully functional X client library for Python programs"
+url="https://github.com/python-xlib/python-xlib"
+arch="noarch"
+license="LGPL-2.1-or-later"
+depends="py3-six"
+makedepends="py3-gpep517 py3-setuptools_scm py3-wheel"
+checkdepends="py3-mock py3-pytest xvfb-run"
+subpackages="$pkgname-pyc"
+source="https://github.com/python-xlib/python-xlib/releases/download/$pkgver/python-xlib-$pkgver.tar.bz2"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+replaces="py-xlib" # Backwards compatibility
+provides="py-xlib=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	export SETUPTOOLS_SCM_PRETEND_VERSION=$pkgver
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	xvfb-run -a .testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+3b7b4fea5cd69544d2227806853bdfdd04447089e182ca0f199e18e8bd43375d9bf03c819fd6a055ad4ad274594651e05db82585ab40d0fcf225ce36b553c991  python-xlib-0.33.tar.bz2
+"

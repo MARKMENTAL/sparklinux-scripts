@@ -1,0 +1,40 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=libdnet
+pkgver=1.17.0
+pkgrel=0
+pkgdesc="simplified, portable interface to several low-level networking routines"
+url="https://github.com/ofalk/libdnet"
+arch="all"
+license="BSD-3-Clause"
+makedepends="check-dev linux-headers"
+options="!check" # fails to find test-driver
+subpackages="$pkgname-dev $pkgname-doc"
+source="https://github.com/ofalk/libdnet/archive/libdnet-$pkgver.tar.gz"
+builddir="$srcdir"/$pkgname-$pkgname-$pkgver
+
+prepare() {
+ 	default_prepare
+	update_config_sub
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--mandir=/usr/share/man \
+		--without-python
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+b207b2f61e3759a2b17827eabf37b0eb68cb9fa27418f99ee4efd754b01dfe8504dff465664b14054d54df334195d43963d142c7104dc603b2b8b1491590d2a7  libdnet-1.17.0.tar.gz
+"

@@ -1,0 +1,59 @@
+# Contributor: Antoine Martin (ayakael) <dev@ayakael.net>
+# Maintainer: Antoine Martin (ayakael) <dev@ayakael.net>
+pkgname=py3-twilio
+pkgver=9.3.0
+pkgrel=0
+arch="noarch"
+pkgdesc="Twilio API client and TwiML generator"
+url="https://pypi.python.org/project/twilio"
+license="MIT"
+depends="
+	py3-requests
+	py3-jwt
+	py3-aiohttp
+	py3-aiohttp-retry
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+# missing py3-pyngrok, py3-autoflake, py3-recommonmark
+checkdepends="
+	black
+	py3-sphinx
+	py3-mock
+	py3-pytest
+	py3-pytest-cov
+	py3-aiounittest
+	py3-flake8
+	py3-cryptography
+	py3-django
+	py3-multidict
+	"
+subpackages="$pkgname-pyc"
+_pyname=twilio-python
+source="$pkgname-$pkgver.tar.gz::https://github.com/twilio/twilio-python/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir"/$_pyname-$pkgver
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	# tests/cluster require Twilio API access
+	.testenv/bin/python3 -m pytest -v --ignore=tests/cluster
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+8c3b48e735cbe1bd953c3b6d68b90dd7936f9742966b4f5efc080a74cfa0a5ab3678dcce963b653c0f52d1796acf947ff4868a6617302a8371bc74a76120de66  py3-twilio-9.3.0.tar.gz
+"

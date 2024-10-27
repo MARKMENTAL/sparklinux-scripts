@@ -1,0 +1,44 @@
+# Contributor: Alex Yam <alex@alexyam.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=ircd-hybrid
+pkgver=8.2.45
+pkgrel=1
+pkgdesc="Lightweight and high-performance Internet Relay Chat daemon (IRCd)"
+url="https://github.com/ircd-hybrid/ircd-hybrid"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="openssl-dev"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/ircd-hybrid/ircd-hybrid/archive/$pkgver.tar.gz"
+options="!check" # no test suite
+
+build() {
+	./configure \
+		--build="$CBUILD" \
+		--host="$CHOST" \
+		--prefix=/usr \
+		--bindir=/usr/bin \
+		--sbindir=/usr/sbin \
+		--libexecdir=/usr/libexec \
+		--sysconfdir=/etc/ircd-hybrid \
+		--sharedstatedir=/var/lib/ircd-hybrid/com \
+		--localstatedir=/var/lib/ircd-hybrid \
+		--runstatedir=/var/lib/ircd-hybrid/run \
+		--libdir=/usr/lib \
+		--includedir=/usr/include \
+		--oldincludedir=/usr/include \
+		--datarootdir=/usr/lib \
+		--infodir=/usr/share/man \
+		--localedir=/usr/lib/ircd-hybrid/locale \
+		--mandir=/usr/share/man \
+		--docdir=/usr/share/ircd-hybrid/doc
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+645fe7ac321b8858d14cc2a1526e5e46a57fe5c333d5b55a127fe527c5cb70fcfaadb6791dcf26115d5e57490942f84e11e593e3c4550cc4956c91cbc868f7cd  ircd-hybrid-8.2.45.tar.gz
+"

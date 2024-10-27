@@ -1,0 +1,31 @@
+# Contributor: Matthew.T.Hoare <matthew.t.hoare@gmail.com>
+# Maintainer: Matthew.T.Hoare <matthew.t.hoare@gmail.com>
+pkgname=autotiling
+pkgver=1.9.1
+pkgrel=1
+pkgdesc="Script for sway and i3 to automatically switch the horizontal/vertical window split orientation"
+url="https://github.com/nwg-piotr/autotiling"
+arch="noarch"
+options="!check" # no checks
+license="GPL-3.0-or-later"
+depends="py3-i3ipc"
+makedepends="py3-setuptools"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/nwg-piotr/autotiling/archive/v$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+	sed -e '/wheel/d' -i setup.cfg
+}
+
+build() {
+	python3 setup.py build
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+4087ac1dc7319c6340e203c87c1a81fd9c97b7700daeecfdc99546d21c787f931dba0713349ef2b8639e4e0d94584c41e6edeb5c26262a9d9b415b9d0a8f01bf  autotiling-1.9.1.tar.gz
+"

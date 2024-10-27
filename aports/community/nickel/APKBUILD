@@ -1,0 +1,48 @@
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=nickel
+pkgver=1.7.0
+pkgrel=0
+pkgdesc="Generic configuration language for less"
+url="https://nickel-lang.org/"
+# s390x: nix crate fails to build
+# riscv64: check_manual_snippets_doc_manual_syntax_md test hangs indefinitely
+# loongarch64: libc crate fails to build
+arch="all !s390x !riscv64 !loongarch64"
+license="MIT"
+makedepends="cargo"
+checkdepends="python3"
+subpackages="$pkgname-doc $pkgname-language-server:_langserver"
+options="net"
+source="$pkgname-$pkgver.tar.gz::https://github.com/tweag/nickel/archive/refs/tags/$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo build --frozen --release --workspace \
+		--bin nickel --bin nls
+}
+
+check() {
+	cargo test --frozen --workspace
+}
+
+package() {
+	install -Dm755 -t "$pkgdir"/usr/bin/ \
+		target/release/nickel \
+		target/release/nls
+
+	install -Dm644 doc/manual/*.md -t "$pkgdir"/usr/share/doc/$pkgname/
+}
+
+_langserver() {
+	pkgdesc="LSP server for Nickel configuration language"
+	amove usr/bin/nls
+}
+
+sha512sums="
+f2afbbe2a5462bc4ba8917065a6de9815f380c2315740917fbc5049f52a6af7bdfd5335002edc98ac3de15beb81ee443ab922e2e416cd68209188438e6525f3b  nickel-1.7.0.tar.gz
+"

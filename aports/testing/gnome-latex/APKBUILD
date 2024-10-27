@@ -1,0 +1,48 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Saijin-Naib <Saijin-Naib_package-maintenance@outlook.com>
+pkgname=gnome-latex
+_pkgname=enter-tex
+pkgver=3.47.0
+pkgrel=0
+pkgdesc="LaTeX editor for the GNOME desktop"
+url="https://gitlab.gnome.org/swilmet/enter-tex"
+# s390x, ppc64le, riscv64 and loongarch64 blocked by texlive
+arch="all !s390x !ppc64le !riscv64 !loongarch64"
+license="GPL-3.0-or-later"
+depends="
+	gsettings-desktop-schemas
+	"
+makedepends="
+	desktop-file-utils
+	dconf-dev
+	gobject-introspection-dev
+	gspell-dev
+	gtk-doc
+	itstool
+	libgedit-tepl-dev
+	libgee-dev
+	meson
+	texlive
+	vala
+	"
+subpackages="$pkgname-doc $pkgname-lang"
+source="https://gitlab.gnome.org/swilmet/$_pkgname/-/archive/$pkgver/$_pkgname-$pkgver.tar.gz"
+builddir="$srcdir"/$_pkgname-$pkgver
+
+build() {
+	abuild-meson . output
+	ninja -C output src/gtex/Gtex-1.gir
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+1ba1b8d42df6c9976a44fb3c4f9333104db21e5cc577aa9f9e82a97603bba28722696f36e7d1a7ca33ff6a9af87ec80d056a4493209fff5fa76d39526a2e830d  enter-tex-3.47.0.tar.gz
+"

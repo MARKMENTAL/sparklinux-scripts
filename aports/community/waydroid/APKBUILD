@@ -1,0 +1,71 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=waydroid
+pkgver=1.4.3
+pkgrel=1
+pkgdesc="A container-based approach to boot a full Android system on a regular Linux system"
+url="https://github.com/waydroid/waydroid"
+# Only x86, armv7, x86_64 and aarch64 supported upstream
+arch="noarch !armhf !riscv64 !ppc64le !s390x"
+license="GPL-3.0-only"
+depends="
+	dnsmasq
+	gbinder-python
+	iptables
+	kmod
+	lxc
+	py3-dbus
+	py3-gobject3
+	py3-pyclip
+	python3
+	"
+triggers="$pkgname.trigger=/usr/share/waydroid-extra/images"
+install="$pkgname.post-upgrade"
+subpackages="
+	$pkgname-openrc
+	$pkgname-pyc
+	$pkgname-nftables
+	"
+source="https://github.com/waydroid/waydroid/archive/$pkgver/waydroid-$pkgver.tar.gz
+	waydroid-container.initd
+	waydroid-container.confd
+	51_waydroid.nft
+	waydroid-session.desktop
+	"
+options="!check" # No tests
+
+package() {
+	make DESTDIR="$pkgdir" USE_SYSTEMD=0 USE_NFTABLES=1 install
+
+	# Generate __pycache__ packaging time instead of runtime
+	python -m compileall "$pkgdir"/usr/lib/waydroid/tools
+
+	install -Dm644 -t "$pkgdir"/etc/xdg/autostart "$srcdir"/waydroid-session.desktop
+
+	install -Dm755 "$srcdir"/waydroid-container.initd "$pkgdir"/etc/init.d/waydroid-container
+	install -Dm644 "$srcdir"/waydroid-container.confd "$pkgdir"/etc/conf.d/waydroid-container
+}
+
+nftables() {
+	pkgdesc="$pkgdesc (nftables rules)"
+	install_if="$pkgname=$pkgver-r$pkgrel nftables"
+	depends=""
+
+	install -Dm644 -t "$subpkgdir"/etc/nftables.d "$srcdir"/51_waydroid.nft
+}
+
+pyc() {
+	default_pyc
+
+	cd "$pkgdir"
+	local IFS=$'\n'
+	amove $(find usr/lib/waydroid -type d -name __pycache__)
+}
+
+sha512sums="
+e94edeca7097cb1572296d0b6e308483b1bd21e1bd50d9e6d2bd54d4ba75ffeb8bd4e1d1f8143fbcf49dddd30155da2e3c5a58240a85b159dae4e71985e547aa  waydroid-1.4.3.tar.gz
+f319dde4f4bb365069dff2c1ddaa0a85d711c9e9d49011b15aec0d10da2ba0da39c464505d28cd7e8b4f803e932fdde04ca69602805d084529bac0ee6b22ba59  waydroid-container.initd
+b841282b96110ec59a7aa539db0737327b09549d55c78dc4b2c3b28b4a6ad1facf015b3175cb6d3a38f13e47aa6314ef3dc1514a4e60dd653a97409ec54ba706  waydroid-container.confd
+27cec579cfda197ff70d6328043755fc3d1719347bf4987edb86a07341bc4f02b99b65a6ef1fcde58b48a925176e6d770ed7cef304edff6a860bf4d408a62e06  51_waydroid.nft
+56dc332d66c3eb3af08887eb2f4b8235419ff87a4e4632108cdde39cf274bc88b9e95c650a7d407d05a72f1ce2edf5d465a06b7e526113d9c9ae3817a6ed1f78  waydroid-session.desktop
+"

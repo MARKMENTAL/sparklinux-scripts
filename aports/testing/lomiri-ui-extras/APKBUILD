@@ -1,0 +1,51 @@
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+# Contributor: Brandon Boese <brandonboese@protonmail.com>
+pkgname=lomiri-ui-extras
+pkgver=0.6.3
+pkgrel=1
+pkgdesc='Misc Lomiri UI QML components'
+arch="all"
+url="https://gitlab.com/ubports/development/core/lomiri-ui-extras"
+license="GPL-3.0-only"
+makedepends="
+	cmake-extras
+	cups-dev
+	exiv2-dev
+	linux-pam-dev
+	qt5-qtbase-dev
+	qt5-qtdeclarative-dev
+	samurai
+	"
+checkdepends="
+	bash
+	dbus-test-runner
+	diffutils
+	grep
+	xvfb-run
+	"
+source="https://gitlab.com/ubports/development/core/lomiri-ui-extras/-/archive/$pkgver/lomiri-ui-extras-$pkgver.tar.gz
+	0004-Disable-tst_printers-unittest.patch
+	"
+subpackages="$pkgname-lang"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_BUILD_TYPE=None
+	cmake --build build
+}
+
+check() {
+	xvfb-run ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+bbbd45ec59cd7720b64659b29c5c26d76454c311a8ee886cd02073ad6110733c915006d943500f7238038a5cbbf823e81311b408d1ba59d4766d795c652a6b38  lomiri-ui-extras-0.6.3.tar.gz
+888a089cc548e2904a7c787d33edc24a1b140cc0371591594f6851dac7bccc62a07a32eab30d271421f4d9593d0490aaf57cd824883470ede4b44980f6bda997  0004-Disable-tst_printers-unittest.patch
+"

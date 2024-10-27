@@ -1,0 +1,36 @@
+# Contributor: Peter Bui <pnutzh4x0r@gmail.com>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=py3-asn1
+pkgver=0.6.0
+pkgrel=1
+pkgdesc="Python3 ASN1 library"
+url="https://github.com/pyasn1/pyasn1"
+arch="noarch"
+license="BSD-2-Clause"
+depends="python3"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/p/pyasn1/pyasn1-$pkgver.tar.gz"
+builddir="$srcdir/pyasn1-$pkgver"
+
+replaces="py-asn1" # Backwards compatibility
+provides="py-asn1=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel --wheel-dir .dist --output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+577bbb750a00e82e7a00806da6c564ab863341e0aa57b74e3132e1be814e0349e33ff05d48c04e58cd514ce97a971a5eafbaae75c978a3eb9268008c2270d15e  pyasn1-0.6.0.tar.gz
+"

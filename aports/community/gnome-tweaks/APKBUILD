@@ -1,0 +1,48 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=gnome-tweaks
+pkgver=46.1
+pkgrel=0
+pkgdesc="GNOME3 tool to customize advanced options"
+url="https://wiki.gnome.org/Apps/Tweaks"
+# armhf, s390x blocked by mozjs91 -> gnome-shell-schemas
+arch="noarch !armhf !s390x"
+license="GPL-3.0-or-later AND CC0-1.0"
+depends="
+	dconf
+	gnome-settings-daemon
+	gnome-shell-schemas
+	mutter-schemas
+	py3-gobject3
+	"
+makedepends="
+	desktop-file-utils
+	libadwaita-dev
+	libgudev-dev
+	gettext-dev
+	gobject-introspection-dev
+	gsettings-desktop-schemas-dev>=46
+	meson
+	py3-gobject3-dev
+	"
+subpackages="$pkgname-lang $pkgname-pyc"
+source="https://download.gnome.org/sources/gnome-tweaks/${pkgver%.*}/gnome-tweaks-$pkgver.tar.xz"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+8e167a84cc2eb700fe098cf7221bb3f8a3cc039826e1267e5585b5362862e4626dea3c84dfb8ccc9d08b34d2894422ca8505623148415116423738d2c07956f3  gnome-tweaks-46.1.tar.xz
+"

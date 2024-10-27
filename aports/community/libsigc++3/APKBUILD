@@ -1,0 +1,30 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer:
+pkgname=libsigc++3
+pkgver=3.6.0
+pkgrel=0
+pkgdesc="Typesafe callback system for standard C++"
+url="https://github.com/libsigcplusplus/libsigcplusplus"
+arch="all"
+license="LGPL-3.0-or-later"
+makedepends="boost-dev meson"
+subpackages="$pkgname-dev"
+source="https://download.gnome.org/sources/libsigc++/${pkgver%.*}/libsigc++-$pkgver.tar.xz"
+builddir="$srcdir/libsigc++-$pkgver"
+
+build() {
+	abuild-meson build
+	meson compile -C build
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C build
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C build
+}
+
+sha512sums="
+fa79067b4fecf68501288b93eed3d3e7017899cb8a02d3106a41f6dd1818f7b8c724a5b38d4b9ac89699fd8084976f9ad8eca8e832a45a5b6dc7cae5db99cb56  libsigc++-3.6.0.tar.xz
+"

@@ -1,0 +1,44 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+pkgname=ruby-tcxread
+_gemname=${pkgname#ruby-}
+pkgver=0.1.5
+pkgrel=0
+pkgdesc="Parser for TCX files"
+url="https://github.com/firefly-cpp/tcxread"
+arch="noarch"
+license="MIT"
+depends="ruby ruby-nokogiri"
+checkdepends="ruby-minitest"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/firefly-cpp/$_gemname/archive/$pkgver/$_gemname-$pkgver.tar.gz"
+builddir="$srcdir/$_gemname-$pkgver"
+
+build() {
+	gem build $_gemname.gemspec
+}
+
+check() {
+	ruby test/test_tcxread.rb
+}
+
+package() {
+	local gemdir="$pkgdir/$(ruby -e 'puts Gem.default_dir')"
+
+	gem install --local \
+		--install-dir "$gemdir" \
+		--ignore-dependencies \
+		--no-document \
+		--verbose \
+		$_gemname
+
+	install -Dm644 README.md -t "$pkgdir"/usr/share/doc/$pkgname
+
+	# Remove unnecessary files.
+	cd "$gemdir"
+	rm -r cache/ build_info/ doc/
+}
+
+sha512sums="
+a3a04a8de5f93390b5f33cbd89a5f263b1a1aaf2684a58dde6eb126d9a91f51728f639c520bad4d6e8e5e59d268e9596cbedc52f5101594026c9a1c257534ab3  ruby-tcxread-0.1.5.tar.gz
+"

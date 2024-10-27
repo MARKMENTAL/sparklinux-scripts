@@ -1,0 +1,47 @@
+# Maintainer: Eirik Furuseth <alpine@heplaphon.com>
+pkgname=ripasso-cursive
+_pkgrelname=ripasso
+pkgver=0.6.5
+pkgrel=0
+pkgdesc="A password manager that uses the file format of the standard unix password manager 'pass', implemented in rust."
+url="https://github.com/cortex/ripasso/"
+# loongarch64: blocked by libc crate
+arch="all !s390x !riscv64 !armhf !loongarch64"
+license="GPL-3.0-or-later"
+makedepends="
+	cargo
+	cargo-auditable
+	clang-dev
+	gpgme-dev
+	libgpg-error-dev
+	libxcb-dev
+	nettle-dev
+	openssl-dev>3
+	"
+source="https://github.com/cortex/ripasso/archive/release-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgrelname-release-$pkgver"
+options="net"
+
+
+prepare() {
+	default_prepare
+	cargo update
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build -p ripasso-cursive --release --frozen
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm0755 target/release/ripasso-cursive \
+	-t "$pkgdir"/usr/bin
+}
+
+sha512sums="
+1b6990f96f2e6000530fc5cecdef513c5deb367146d886d41aacdd412c44de8754e6711df6f5535feefdacb6aad68520d6a55868d6f0ba5928412739dcf0bb3a  release-0.6.5.tar.gz
+"

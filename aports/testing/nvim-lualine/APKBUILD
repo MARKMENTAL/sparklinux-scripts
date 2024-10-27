@@ -1,0 +1,29 @@
+# Contributor: Maxim Karasev <mxkrsv@disroot.org>
+# Maintainer:
+pkgname=nvim-lualine
+pkgver=0.0.0_git20221006
+_commit=edca2b03c724f22bdc310eee1587b1523f31ec7c
+pkgrel=1
+pkgdesc="fast and easy to configure neovim statusline plugin"
+url="https://github.com/nvim-lualine/lualine.nvim"
+arch="noarch"
+license="MIT"
+subpackages="$pkgname-doc"
+source="https://github.com/nvim-lualine/lualine.nvim/archive/$_commit/nvim-lualine-$pkgver.tar.gz"
+builddir="$srcdir/lualine.nvim-$_commit"
+options="!check" # requires neovim binary
+
+package() {
+	install -d "$pkgdir"/usr/share/nvim/site
+	cp -ra lua doc "$pkgdir"/usr/share/nvim/site
+	install -Dm644 README.md "$pkgdir"/usr/share/doc/$pkgname/README.md
+}
+
+doc() {
+	default_doc
+	amove usr/share/nvim/site/doc
+}
+
+sha512sums="
+83e13a44ce877de1b7cce0d56f552d75c6b52b0100c3961687ff06315646a7f6e110293bfa2b6408addd07744d08e27654caf9e9371bba206430ca7aeedfacdd  nvim-lualine-0.0.0_git20221006.tar.gz
+"

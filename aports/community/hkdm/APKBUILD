@@ -1,0 +1,42 @@
+# Maintainer: Caleb Connolly <caleb@connolly.tech>
+
+pkgname=hkdm
+pkgver=0.2.1
+pkgrel=1
+pkgdesc="Lighter-weight hotkey daemon"
+url="https://gitlab.com/postmarketOS/hkdm"
+# loongarch64: fails to build nix crate
+arch="all !s390x !loongarch64" # s390x: fails to build
+license="GPL-3.0-only"
+source="https://gitlab.com/postmarketOS/hkdm/-/archive/$pkgver/hkdm-$pkgver.tar.gz
+	hkdm.openrc
+	hkdm.conf"
+makedepends="cargo libevdev-dev cargo-auditable"
+subpackages="$pkgname-openrc"
+_cargo_opts="--frozen --no-default-features"
+
+prepare() {
+	default_prepare
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build $_cargo_opts --release
+}
+
+check() {
+	cargo test $_cargo_opts
+}
+
+package() {
+	install -Dm644 "$builddir"/hkdm.example.toml "$pkgdir"/etc/hkdm/config.d/hkdm.toml.example
+	install -Dm644 "$srcdir"/hkdm.conf "$pkgdir"/etc/conf.d/hkdm
+	install -Dm755 target/release/hkdm -t "$pkgdir"/usr/sbin/
+	install -Dm755 "$srcdir"/hkdm.openrc "$pkgdir"/etc/init.d/hkdm
+}
+
+sha512sums="
+0fe114cbda7d0b031a2f300de95d753c0d248560257fdc01e76bd3d3498ff87347e8779885851cf3369868921d2576048f8d51de2edf2726154a3465cba090a9  hkdm-0.2.1.tar.gz
+be538eeebeccc2454817a1df11b8ce6063f51df888c852f2e361aa2ebd9ad94b9c82c7c71fa1215be426aa5fa59993e1bb6132c9b2ff352cadc1e2b4125cb392  hkdm.openrc
+8dac666f468bc27fc9b8083f61a6bc0cac493784cd74ac1103fd44daa00103676ea836c48c82bd8cb5772cae07cc42f283b7ff326172cd40e7f91191577788ad  hkdm.conf
+"

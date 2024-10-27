@@ -1,0 +1,28 @@
+# Contributor: David Huffman <storedbox@outlook.com>
+# Maintainer: David Huffman <storedbox@outlook.com>
+pkgname=gosu
+pkgver=1.17
+pkgrel=5
+pkgdesc="Simple Go-based setuid+setgid+setgroups+exec"
+url="https://github.com/tianon/gosu"
+arch="all"
+license="Apache-2.0"
+makedepends="coreutils go"
+source="$pkgname-$pkgver.tar.gz::https://github.com/tianon/gosu/archive/refs/tags/$pkgver.tar.gz"
+options="!check" # require docker to run tests
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -v
+}
+
+package() {
+	install -Dm755 gosu -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+5a8bd7fce5c9080118dcf2c86332671441e133e44d08baea7dbc9f622e8d1bec1a229d3d7a38846bdcdcb66538222d5871e565e71eea1677fcd5727b836cdbce  gosu-1.17.tar.gz
+"

@@ -1,0 +1,78 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: omni <omni+alpine@hack.org>
+pkgname=qutebrowser
+pkgver=3.2.1
+pkgrel=0
+pkgdesc="Keyboard-driven, vim-like browser based on Python and Qt"
+url="https://qutebrowser.org/"
+# s390x, ppc64le, riscv64 and loongarch64 blocked by qt5/qt6-qtwebengine
+# armhf blocked by qt5-qtdeclarative -> py3-qt5
+arch="noarch !armhf !s390x !ppc64le !riscv64 !loongarch64"
+license="GPL-3.0-only"
+depends="
+	py3-adblock
+	py3-jinja2
+	py3-pygments
+	py3-yaml
+	py3-tldextract
+	"
+makedepends="
+	asciidoc
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="
+	py3-hypothesis
+	py3-pytest
+	py3-pytest-benchmark
+	py3-pytest-mock
+	py3-pytest-rerunfailures
+	"
+subpackages="$pkgname-doc $pkgname-pyc"
+source="https://github.com/qutebrowser/qutebrowser/releases/download/v$pkgver/qutebrowser-$pkgver.tar.gz
+	gpep517-install.patch
+	"
+options="!check" # missing pytest dependencies
+
+# 32b arm not supported by qt6-qtwebengine
+case "$CARCH" in
+arm*)
+	depends="$depends
+		py3-qt5
+		py3-pyqt5-sip
+		py3-qtwebengine
+		qt5-qtbase-sqlite
+		qt5-qtwebengine
+		"
+		;;
+*)
+	depends="$depends
+		py3-qt6
+		py3-pyqt6-sip
+		py3-pyqt6-webengine
+		qt6-qtbase-sqlite
+		qt6-qtwebengine
+		"
+		;;
+esac
+
+build() {
+	a2x -f manpage doc/qutebrowser.1.asciidoc
+	gpep517 build-wheel --wheel-dir .dist --output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	make -f misc/Makefile DESTDIR="$pkgdir" PREFIX=/usr install
+}
+
+sha512sums="
+753f053a157271806e273b667b656d64277d10d012d6940c5e023125e1f8fab151a32cf4defafe167141fe31461e6bf178d01b2d842f7252fd7405729a0edc68  qutebrowser-3.2.1.tar.gz
+2b60990691d09eb1df6c8a0d4212f51303fd5167378258f5d3fc19d6f07867c4c7e02248e0979c3a1c38fb5fa948345abee6b7af384e7ff1569b1f8a5ac8b8a9  gpep517-install.patch
+"

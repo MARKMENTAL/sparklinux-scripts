@@ -1,0 +1,35 @@
+# Contributor: Duncan Bellamy <dunk@denkimushi.com>
+# Maintainer: Duncan Bellamy <dunk@denkimushi.com>
+pkgname=isa-l_crypto
+pkgver=2.25.0
+pkgrel=0
+pkgdesc="Intelligent Storage Acceleration Library with crypto"
+url="https://github.com/intel/isa-l_crypto"
+# other arches fail symbol errors, x86 fails with non i386 code
+arch="aarch64 x86_64"
+license="BSD-3-Clause"
+source="$pkgname-$pkgver.tar.gz::https://github.com/intel/isa-l_crypto/archive/refs/tags/v$pkgver.tar.gz"
+subpackages="$pkgname-dev"
+makedepends="autoconf automake libtool openssl-dev linux-headers nasm"
+
+prepare() {
+	default_prepare
+	autoreconf -vif
+}
+
+build() {
+	./configure --build=$CBUILD --host=$CHOST --disable-static
+	make
+}
+
+check() {
+	make -j1 test
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+d63f14468258b977cf85bcb2cb5a6de1a678d51631cdbb361aed0f45a5c0ae3770bb40721b6da1cfe889cb88c2c5620a12adf2a8b0c90031f1bfe1b276641f38  isa-l_crypto-2.25.0.tar.gz
+"

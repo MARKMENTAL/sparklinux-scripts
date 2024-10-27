@@ -1,0 +1,67 @@
+# Contributor: Jean-Louis Fuchs <jean-louis.fuchs@adfinis-sygroup.ch>
+# Maintainer: Jean-Louis Fuchs <jean-louis.fuchs@adfinis-sygroup.ch>
+pkgname=pandoc-cli
+pkgver=0.1.1.1
+pkgrel=4
+pkgdesc="universal markup converter"
+url="https://pandoc.org/"
+# limited by ghc
+arch="aarch64 x86_64"
+license="GPL-2.0-or-later"
+makedepends="ghc cabal zlib-dev libffi-dev"
+source="https://hackage.haskell.org/package/pandoc-cli-$pkgver/pandoc-cli-$pkgver.tar.gz
+	cabal.project.freeze
+	"
+options="net !check" # TODO
+
+# but everyone probably used this for cli, so provide the name,
+# even though renamed
+provides="pandoc=$pkgver-r$pkgrel"
+replaces="pandoc"
+
+# Cabal seems to be built without sandbox, moving the cabal-dir into src
+export CABAL_DIR="$srcdir/.cabal"
+
+cabal_update() {
+	cd $builddir
+	cabal update
+	(
+		cd "$builddir"
+		cabal v2-freeze \
+			--strong-flags \
+			--shadow-installed-packages \
+			--constraint "pandoc +embed_data_files" \
+			--flags "+server +lua"
+
+		mv cabal.project.freeze "$startdir/"
+	)
+}
+
+prepare() {
+	default_prepare
+	ln -sf "$srcdir/cabal.project.freeze" \
+		"$builddir/cabal.project.freeze"
+}
+
+build() {
+	export PATH="$PATH:/usr/lib/llvm15/bin"
+	cabal v2-update
+	cabal v2-build pandoc-cli:exes \
+		--jobs=${JOBS:-1} \
+		--prefix=/usr \
+		--docdir=/usr/share/doc/$pkgname \
+		--flags "+server +lua" \
+		--sysconfdir=/etc
+}
+
+package() {
+	# See https://github.com/haskell/cabal/issues/6919#issuecomment-761563498
+	cabal list-bin pandoc-cli:exes | xargs install -Dm755 -t "$pkgdir"/usr/bin
+
+	ln -sfv pandoc "$pkgdir"/usr/bin/pandoc-server
+}
+
+sha512sums="
+cdc3b30e6d340f8401698ee6c424410602ab37e50d1165c0a84620d323bfa9cf57bbca5c9740fe3d98025c9ce5f11a587cd97328682830a22c0c07a8d6efbb75  pandoc-cli-0.1.1.1.tar.gz
+6b0dc6b5b92b6519bec8f7937ed013fea7868dee323dadc88836bdc1967696f8f37a1e9b3e3099cab04d5ce1cedc6a3930939e5bfdc0f8e40d772cdcc3db426a  cabal.project.freeze
+"

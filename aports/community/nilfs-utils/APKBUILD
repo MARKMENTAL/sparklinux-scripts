@@ -1,0 +1,47 @@
+# Contributor: Natanael Copa <ncopa@alpinelinux.org>
+# Contributor: Sodface <sod@sodface.com>
+# Maintainer: Sodface <sod@sodface.com>
+pkgname=nilfs-utils
+pkgver=2.2.11
+pkgrel=0
+pkgdesc="Utilities for managing NILFS v2 filesystems"
+url="https://nilfs.sourceforge.net/"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="autoconf automake libtool linux-headers util-linux-dev"
+options="!check" # no test suite
+subpackages="$pkgname-libs $pkgname-dev $pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/nilfs-dev/nilfs-utils/archive/refs/tags/v$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+	autoreconf -fi
+}
+
+build() {
+	LDCONFIG=/bin/true \
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--localstatedir=/var \
+		--disable-static \
+		--without-selinux
+
+	sed -i \
+		-e 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' \
+		-e 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' \
+		libtool
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+ca8f508747e17936321a16da947f8e900e4242621bf9e67c8f4e7cfb6cfbc6ca85b28d85f450ede2be5d2d756538a626c0c7f5cf53525022b9c578575f5e460a  nilfs-utils-2.2.11.tar.gz
+"

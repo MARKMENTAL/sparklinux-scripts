@@ -1,0 +1,97 @@
+# Contributor: Natanael Copa <ncopa@alpinelinux.org>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=lightdm
+pkgver=1.32.0
+pkgrel=4
+pkgdesc="cross-desktop display manager"
+url="https://www.freedesktop.org/wiki/Software/LightDM"
+# s390x: mainframe
+arch="all !s390x"
+license="GPL-3.0-or-later"
+depends="
+	accountsservice
+	adwaita-icon-theme
+	dbus
+	xinit
+	"
+makedepends="
+	autoconf
+	automake
+	gobject-introspection-dev
+	gtk+3.0-dev
+	intltool
+	itstool
+	libgcrypt-dev
+	libtool
+	libxext-dev
+	libxklavier-dev
+	libxml2-utils
+	linux-pam-dev
+	qt5-qtbase-dev
+	vala
+	"
+install="$pkgname.pre-install"
+pkgusers="lightdm"
+pkggroups="lightdm"
+subpackages="
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-lang
+	$pkgname-openrc
+	$pkgname-qt5
+	$pkgname-qt5-dev:qt5_dev
+	$pkgname-bash-completion
+	"
+source="https://github.com/CanonicalLtd/lightdm/releases/download/$pkgver/lightdm-$pkgver.tar.xz
+	musl-language.patch
+	musl-is-linux.patch
+	musl-updwtmpx.patch
+	disallow-guest.patch
+	pam-rules.patch
+	lightdm.initd"
+
+build() {
+	export CFLAGS="$CFLAGS -D_GNU_SOURCE"
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sbindir=/usr/bin \
+		--sysconfdir=/etc \
+		--localstatedir=/var \
+		--disable-tests \
+		--enable-vala \
+		--with-greeter-session=lightdm-gtk-greeter
+
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	ln -s /etc/X11/xinit/Xsession "$pkgdir"/usr/bin/lightdm-session
+	install -Dm755 "$srcdir"/lightdm.initd "$pkgdir"/etc/init.d/lightdm
+	install -Dm750 -o lightdm -g lightdm -d "$pkgdir"/var/lib/lightdm
+	install -o lightdm -g lightdm -d "$pkgdir"/var/lib/lightdm-data
+	rm -rf "$pkgdir"/etc/apparmor.d
+}
+
+qt5() {
+	amove usr/lib/liblightdm-qt5*
+}
+
+qt5_dev() {
+	mkdir -p "$subpkgdir"/usr/lib/pkgconfig "$subpkgdir"/usr/include
+	mv "$pkgdir"/../$pkgname-dev/usr/include/lightdm-qt5-3 "$subpkgdir"/usr/include/
+	mv "$pkgdir"/../$pkgname-dev/usr/lib/liblightdm-qt5-3.* "$subpkgdir"/usr/lib/
+	mv "$pkgdir"/../$pkgname-dev/usr/lib/pkgconfig/liblightdm-qt5-3.pc "$subpkgdir"/usr/lib/pkgconfig/
+}
+
+sha512sums="
+81497fb25904bc2e8687dc99992628eb534f7418f72e1908c4766e917fc1221714210d998739417e1cae2ee15e3197a2eb8d4981cb944cfeb0334dc9e356e716  lightdm-1.32.0.tar.xz
+592d630bdabeed304f8b677ceb0ebd2a6ab0930baae473814aafb0d58b7e28a79c8c667f18a656a460132c48a9fee90be7eebd50f835ea641d6d99387b28310a  musl-language.patch
+aa33888f61b61f6c8082c77dc0b539fa14fb395c17e70b825ba88af7bb6adaad8f99583342a77442c60c105c1b83dd6eb0547fbddb43dcd767d9ad2c65ca2baf  musl-is-linux.patch
+876088f21e502630c7d13343b03785d3327727c25657690c8e1cff5428a36944eb75d538f24ab4f5b11f931d8fad51241f25046da370eb5868aa8d2860be4eb2  musl-updwtmpx.patch
+c5bf8cfc0b4c4f95d9c9a3fa517b6c8ec90e02d84fb4498176b4745ed6089576fab536e9a3595200443811f05f2d47ac5e7c0205c878d9c23eff4dda7093ad6c  disallow-guest.patch
+80940aaf857a2212f45e58d977728d6aa9e4c789f0f956fa0ff3566e107947166cc242fed3ede05b6c6626e202d2d8110f5f511a341d3d351f44b1363856ec7d  pam-rules.patch
+b9d0a172b2a6964e9896cfc95371e53525c21758f711b50b96a5e4bb5409bcddc0083b027819c9e751dbc7b88d6280dc62402e596c1a173036071889fb0f0685  lightdm.initd
+"

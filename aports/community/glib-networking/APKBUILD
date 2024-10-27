@@ -1,0 +1,50 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Contributor: Natanael Copa <ncopa@alpinelinux.org>
+# Maintainer: Krassy Boykinov <kboykinov@teamcentrixx.com>
+pkgname=glib-networking
+pkgver=2.80.0
+pkgrel=0
+pkgdesc="Networking support for GLib"
+url="https://gitlab.gnome.org/GNOME/glib-networking"
+arch="all"
+license="LGPL-2.0-or-later"
+depends="ca-certificates gsettings-desktop-schemas"
+makedepends="
+	bash
+	glib-dev
+	gnutls-dev
+	gsettings-desktop-schemas-dev
+	libgcrypt-dev
+	libproxy-dev
+	meson
+	p11-kit-dev
+	"
+subpackages="$pkgname-dbg $pkgname-lang"
+source="https://download.gnome.org/sources/glib-networking/${pkgver%.*}/glib-networking-$pkgver.tar.xz"
+options="!check" # new p11-kit makes a few of these fail, run them next release
+
+# secfixes:
+#   2.64.3-r0:
+#     - CVE-2020-13645
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dopenssl=disabled \
+		-Dgnutls=enabled \
+		. build
+	meson compile -C build
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C build
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C build
+	rm -rf "$pkgdir"/usr/lib/systemd
+}
+
+sha512sums="
+9707bd47a7f613bc24ac3212737b6b67c57fb6c5dc20e8659a6276750cb07d2af7d42277e4c7294644e8e833eb5aea28320f3d517073e1316860a1dee2e3dc2b  glib-networking-2.80.0.tar.xz
+"

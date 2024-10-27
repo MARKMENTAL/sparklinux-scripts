@@ -1,0 +1,139 @@
+# Contributor: André Klitzing <aklitzing@gmail.com>
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Andy Postnikov <apostnikov@gmail.com>
+pkgname=unit
+pkgver=1.33.0
+pkgrel=0
+pkgdesc="NGINX Unit is a dynamic web application server"
+url="https://unit.nginx.org/"
+arch="all"
+license="Apache-2.0"
+_phpver2=82
+_phpver3=83
+makedepends="
+	linux-headers
+	openssl-dev>3
+	perl-dev
+	php$_phpver2-dev
+	php$_phpver2-embed
+	php$_phpver3-dev
+	php$_phpver3-embed
+	python3-dev
+	ruby-dev
+	"
+checkdepends="procps-ng
+	py3-pytest py3-openssl
+	php$_phpver2-opcache php$_phpver3-opcache
+	"
+options="net" # ruby tests require rack
+pkgusers="$pkgname"
+pkggroups="$pkgname"
+install="$pkgname.pre-install"
+subpackages="$pkgname-dev $pkgname-openrc $pkgname-tools::noarch $pkgname-doc"
+#source="https://sources.nginx.org/unit/unit-$pkgver.tar.gz
+source="$pkgname-$pkgver.tar.gz::https://github.com/nginx/unit/archive/refs/tags/$pkgver.tar.gz
+	$pkgname.initd
+	$pkgname.confd
+	$pkgname.logrotate
+	phpver.patch
+	"
+
+for _mod in perl php$_phpver2 php$_phpver3 python3 ruby; do
+	subpackages="$subpackages $pkgname-$_mod:_module"
+done
+
+_modules_dir="/usr/lib/unit/modules"
+
+build() {
+	./configure \
+		--prefix="/usr" \
+		--localstatedir="/var" \
+		--runstatedir="/run" \
+		--statedir="/var/lib/unit" \
+		--control="unix:/run/control.unit.sock" \
+		--pid="/run/unit.pid" \
+		--log="/var/log/unit.log" \
+		--tmpdir=/tmp \
+		--modulesdir="$_modules_dir" \
+		--openssl \
+		--user=unit \
+		--group=unit \
+		--tests
+	./configure perl
+	./configure php --module=php$_phpver2 --config=php-config$_phpver2
+	./configure php --module=php$_phpver3 --config=php-config$_phpver3
+	./configure python --config=python3-config
+	./configure ruby
+
+	make
+	make tests
+}
+
+check() {
+	./build/tests
+
+	local _ruby="$srcdir/ruby-rack"
+	gem install rack -i $_ruby --no-document
+
+	# FIXME: some tests fail in CI or locally in checkroot too
+	local _fds=160 # fds leaking in tests
+	local _allow_fail=no
+	case "$CARCH" in
+		armhf | armv7) _allow_fail=yes ;; # segfault
+	esac
+	GEM_PATH=$_ruby pytest test --fds-threshold=$_fds -k "
+		not java and not go and not node \
+		and not njs \
+		and not test_static_mount \
+		and not test_php_isolation \
+		and not test_php_application_forbidden \
+		and not test_php_application_shared_opcache \
+		and not test_python_isolation \
+		and not test_python_user_group \
+		and not test_ruby_isolation \
+		and not test_settings_send_timeout \
+	" || [ "$_allow_fail" = yes ]
+}
+
+package() {
+	make unitd-install manpage-install libunit-install DESTDIR="$pkgdir"
+
+	install -D -m 755 "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
+	install -D -m 644 "$srcdir"/$pkgname.confd "$pkgdir"/etc/conf.d/$pkgname
+	install -D -m 644 "$srcdir"/$pkgname.logrotate "$pkgdir"/etc/logrotate.d/$pkgname
+
+	install -D -m 755 tools/setup-unit "$pkgdir"/usr/bin/setup-unit
+	install -D -m 755 tools/unitc "$pkgdir"/usr/bin/unitc
+	install -D -m 644 tools/README.md "$pkgdir"/usr/share/doc/$pkgname/README.md
+}
+
+tools() {
+	pkgdesc="Configuration scripts for Unit"
+	depends="bash curl"
+
+	amove usr/bin/setup-unit
+	amove usr/bin/unitc
+	amove usr/share/doc/$pkgname/README.md
+}
+
+openrc() {
+	default_openrc
+	depends="curl"
+}
+
+_module() {
+	local modname=${subpkgname#"$pkgname"-}
+	pkgdesc="$modname module for NGINX Unit"
+	depends="$pkgname=$pkgver-r$pkgrel"
+
+	cd "$builddir"
+	make $modname-install DESTDIR="$subpkgdir"
+}
+
+sha512sums="
+2135fc9f6b1ae6e764c7da770e1a924cd8223f6a042229ac41cf84086f748e11503ad2bf84684dc0f141bcc1846b8fec7d03df49129a63df930d14c8afec98aa  unit-1.33.0.tar.gz
+76ca55b0b697361c9799a57414d88c36bc59458af8154f7c4275302ad7694bef4ba4a295685956dd5472d8508bac8e1d1977ff7ff4f46cc443f63ea3e3c35d55  unit.initd
+f85112726dfcace2b6d94b10669615fef517f5aa10ac858890dd9f5c868a6e2569500f7411f758fcb24c98c9630760d36a74bd33ea510ab0f8ca8cd6cb1fb1e8  unit.confd
+723e465162dfdb31881680200221542add414e54ef4f4f1fc57e91b7b57777dfb21c2eee4727ecbba0c1943bb77a2597cc0225b16e334c38258c296d15b1df74  unit.logrotate
+2fe9966f54fd5d23316810b0260d966e2093c303d8a9ecea693971fe2243c579ed5db0e41e01fc01e56801387bd19cc72f5b26c45d21e5d48084e9ded384965b  phpver.patch
+"

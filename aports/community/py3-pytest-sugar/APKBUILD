@@ -1,0 +1,36 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=py3-pytest-sugar
+pkgver=0.9.7
+pkgrel=1
+pkgdesc="A plugin for pytest that changes the default look and feel of pytest (e.g. progressbar, show tests that fail instantly)"
+url="https://github.com/Teemu/pytest-sugar/"
+arch="noarch"
+license="BSD-3-Clause"
+depends="
+	py3-packaging
+	py3-pytest
+	py3-termcolor
+	python3
+	"
+makedepends="py3-setuptools"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="https://pypi.python.org/packages/source/p/pytest-sugar/pytest-sugar-$pkgver.tar.gz"
+builddir="$srcdir/pytest-sugar-$pkgver"
+
+build() {
+	python3 setup.py build
+}
+
+check() {
+	pytest
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+7ab1a4f91bd252452ffd5b4fa636a1dffd4ffa5a19c839f2d00d0c69b885216144bb25e1a666bebb17be8112a397adfe04d5caa215edc98f64c20fefd43334cf  pytest-sugar-0.9.7.tar.gz
+"

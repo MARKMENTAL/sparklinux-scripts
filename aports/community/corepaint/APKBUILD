@@ -1,0 +1,31 @@
+# Contributor: rahmanshaber <rahmanshaber@yahoo.com>
+# Maintainer: rahmanshaber <rahmanshaber@yahoo.com>
+pkgname=corepaint
+pkgver=4.5.0
+pkgrel=0
+pkgdesc="A paint app from C-Suite"
+arch="all"
+url="https://gitlab.com/cubocore"
+license="GPL-3.0-or-later"
+depends="qt5-qtsvg"
+makedepends="qt5-qtbase-dev libcprime-dev cmake ninja"
+source="$pkgname-$pkgver.tar.gz::https://gitlab.com/cubocore/corepaint/-/archive/v$pkgver/corepaint-v$pkgver.tar.gz"
+builddir="$srcdir/$pkgname-v$pkgver"
+options="!check" # No tests
+
+build() {
+	cmake -B build \
+		-GNinja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DCMAKE_BUILD_TYPE=None
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+49ac5604ef834f8bd24080cc6a1aa4e2d3df101d7d815d2f7eb417f7bddf0d7e37d32117c6bf5b9935c44dd16e93612fb99e0afba9063541e07b8405bb34113b  corepaint-4.5.0.tar.gz
+"

@@ -1,0 +1,21 @@
+# Contributor: Patrycja Rosa <alpine@ptrcnull.me>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=xpra-webclient
+pkgver=14.0
+pkgrel=0
+pkgdesc="HTML5 client for Xpra"
+url="https://github.com/Xpra-org/xpra-html5"
+arch="noarch"
+license="MPL-2.0"
+makedepends="python3 uglify-js"
+source="https://github.com/Xpra-org/xpra-html5/archive/refs/tags/v$pkgver/xpra-webclient-$pkgver.tar.gz"
+builddir="$srcdir/xpra-html5-$pkgver"
+options="!check" # no tests
+
+package() {
+	python3 setup.py install "$pkgdir"
+}
+
+sha512sums="
+dda50505e16282af86537a8985add3395770972190ee24b33a14d84415980c131a4cab51bcb8feb6ae28f428d64a3c0216434971e0819ee90814d34101c8b83f  xpra-webclient-14.0.tar.gz
+"

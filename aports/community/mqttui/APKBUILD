@@ -1,0 +1,42 @@
+# Contributor: guddaff <alpine@guddaff.de>
+# Maintainer: guddaff <alpine@guddaff.de>
+pkgname=mqttui
+pkgver=0.21.1
+pkgrel=0
+pkgdesc="Subscribe to a MQTT Topic or publish something quickly from the terminal"
+url="https://github.com/EdJoPaTo/mqttui"
+arch="all"
+license="GPL-3.0-or-later"
+makedepends="cargo cargo-auditable"
+subpackages="
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="https://github.com/EdJoPaTo/mqttui/archive/v$pkgver/mqttui-$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --release --frozen
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm755 target/release/mqttui -t "$pkgdir"/usr/bin/
+
+	install -Dm644 "target/completions/$pkgname.bash" "$pkgdir"/usr/share/bash-completion/completions/$pkgname
+	install -Dm644 "target/completions/$pkgname.fish" -t "$pkgdir"/usr/share/fish/vendor_completions.d/
+	install -Dm644 "target/completions/_$pkgname" -t "$pkgdir"/usr/share/zsh/site-functions/
+}
+
+sha512sums="
+af6ecdb00c6ff8996bb7668bd53c91587ba4eb9bff2cb2c66c561489d75f932bc4b7044bb49cf26a94cd9d74da2c2d2683269c3a987444c14a9df1045b3c3b1b  mqttui-0.21.1.tar.gz
+"

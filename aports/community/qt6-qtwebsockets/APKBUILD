@@ -1,0 +1,61 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=qt6
+pkgname=qt6-qtwebsockets
+pkgver=6.7.2
+pkgrel=0
+pkgdesc="Provides WebSocket communication compliant with RFC 6455"
+url="https://qt.io/"
+arch="all"
+license="LGPL-2.1-only AND LGPL-3.0-only AND GPL-3.0-only AND Qt-GPL-exception-1.0"
+depends_dev="
+	qt6-qtbase-dev
+	qt6-qtdeclarative-dev
+	"
+makedepends="$depends_dev
+	cmake
+	perl
+	samurai
+	"
+# needs a .so from the main package
+depends_dev="$depends_dev $pkgname=$pkgver-r$pkgrel"
+subpackages="$pkgname-dev $pkgname-libs"
+builddir="$srcdir/qtwebsockets-everywhere-src-${pkgver/_/-}"
+
+case $pkgver in
+	*_alpha*|*_beta*|*_rc*) _rel=development_releases;;
+	*) _rel=official_releases;;
+esac
+
+source="https://download.qt.io/$_rel/qt/${pkgver%.*}/${pkgver/_/-}/submodules/qtwebsockets-everywhere-src-${pkgver/_/-}.tar.xz"
+
+build() {
+	export CFLAGS="$CFLAGS -g1 -flto=auto"
+	export CXXFLAGS="$CXXFLAGS -g1 -flto=auto"
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DINSTALL_BINDIR=lib/qt6/bin \
+		-DINSTALL_DOCDIR=share/doc/qt6 \
+		-DINSTALL_ARCHDATADIR=lib/qt6 \
+		-DINSTALL_DATADIR=share/qt6 \
+		-DINSTALL_INCLUDEDIR=include/qt6 \
+		-DINSTALL_MKSPECSDIR=lib/qt6/mkspecs \
+		-DINSTALL_EXAMPLESDIR=share/doc/qt6/examples
+	cmake --build build --parallel
+}
+
+check() {
+	cd build
+	CTEST_OUTPUT_ON_FAILURE=TRUE ctest
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+ccd2bde6f68aa0993f099b4755f6e79f64d8ff85be8891b2682194984851e0ec0f71dfa69aec53df6c7f49df7f123eff30920c9b1f5c79da5285ab5605d22dee  qtwebsockets-everywhere-src-6.7.2.tar.xz
+"

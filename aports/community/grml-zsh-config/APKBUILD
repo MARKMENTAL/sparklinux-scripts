@@ -1,0 +1,33 @@
+# Contributor: Oliver Smith <ollieparanoid@postmarketos.org>
+# Maintainer: Oliver Smith <ollieparanoid@postmarketos.org>
+pkgname=grml-zsh-config
+_pkgname="grml-etc-core"
+pkgver=0.19.7
+pkgrel=0
+pkgdesc="grml's zsh setup"
+url="https://grml.org/zsh/"
+arch="noarch"
+license="GPL-2.0-only"
+depends="zsh>=5.8.1-r1 zsh-vcs"
+makedepends="txt2tags"
+subpackages="$pkgname-doc"
+source="$_pkgname-$pkgver.tar.gz::https://github.com/grml/grml-etc-core/archive/v$pkgver.tar.gz"
+options="!check" # no tests
+builddir="$srcdir/$_pkgname-$pkgver"
+
+build() {
+	make -C doc
+}
+
+package() {
+	install -Dm644 etc/skel/.zshrc "$pkgdir"/etc/skel/.zshrc
+	install -Dm644 etc/zsh/keephack "$pkgdir"/etc/zsh/keephack
+	install -Dm644 etc/zsh/zshrc "$pkgdir"/etc/zsh/zshrc.d/grml-zsh-config.zsh
+
+	install -Dm644 doc/grmlzshrc.5 "$pkgdir"/usr/share/man/man5/grmlzshrc.5
+	ln -sf grmlzshrc.5.gz "$pkgdir"/usr/share/man/man5/grml-zsh-config.5.gz
+}
+
+sha512sums="
+2caa13b2a4c2902e1b1442d6c2568069c498934069c3265ac42831d5657dbb127759665e0cf4f48178633fdcee02c57b00508fac7a7e22c9e213a9c30d529b90  grml-etc-core-0.19.7.tar.gz
+"

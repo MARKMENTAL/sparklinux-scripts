@@ -1,0 +1,31 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=yj
+pkgver=1.2.3
+pkgrel=1
+pkgdesc="Command line tool that converts YAML to JSON"
+url="https://github.com/bruceadams/yj"
+# loongarch64: libc crate fails to build
+arch="all !loongarch64"
+license="Apache-2.0"
+makedepends="cargo cargo-auditable"
+source="https://github.com/bruceadams/yj/archive/v$pkgver/yj-$pkgver.tar.gz"
+options="!check"  # no tests provided
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --release --frozen
+}
+
+package() {
+	install -D -m755 target/release/$pkgname -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+f5f2cb230c7353415ee4df9f9f8d176f05cd7a9d36fa080dab33e982ae308f9b729ab05833bcd123b6c11fb1f50399a46c5dee455af623c302536b8bfddd4a99  yj-1.2.3.tar.gz
+"

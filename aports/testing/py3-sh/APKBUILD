@@ -1,0 +1,37 @@
+# Contributor: Michał Polański <michal@polanski.me>
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=py3-sh
+_pyname=sh
+pkgver=2.0.6
+pkgrel=1
+pkgdesc="Python subprocess replacement"
+url="https://sh.readthedocs.io/"
+license="MIT"
+arch="noarch"
+depends="python3"
+makedepends="py3-gpep517 py3-poetry-core"
+checkdepends="py3-pytest lsof coreutils"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://pypi.io/packages/source/s/sh/sh-$pkgver.tar.gz"
+builddir="$srcdir/$_pyname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+717dae58ebd08b3a86e0d30ba2a6f3055592844d064265280b97a1d29bd7d0422c9e5500b6eb999cc1a97c1c2af04cf8ed214670bc08cb2bc45e418f69560c1d  py3-sh-2.0.6.tar.gz
+"

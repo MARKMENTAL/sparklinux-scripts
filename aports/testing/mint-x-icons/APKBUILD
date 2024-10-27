@@ -1,0 +1,25 @@
+# Maintainer: Saijin-Naib <Saijin-Naib_package-maintenance@outlook.com>
+pkgname=mint-x-icons
+pkgver=1.6.5
+pkgrel=1
+pkgdesc="Mint-X icon theme"
+options="!check" # It is an icon theme
+url="https://github.com/linuxmint/mint-x-icons"
+arch="noarch"
+license="GPL-3.0-or-later"
+source="$pkgname-$pkgver-2.tar.gz::https://github.com/linuxmint/mint-x-icons/archive/$pkgver.tar.gz"
+subpackages="$pkgname-doc"
+
+package() {
+	mkdir -p "$pkgdir"
+	mv -v "$builddir"/usr "$pkgdir"/
+
+	install -Dm644 "$builddir"/debian/changelog \
+		       "$pkgdir"/usr/share/doc/"$pkgname"/changelog
+	install -Dm644 "$builddir"/debian/copyright \
+		       "$pkgdir"/usr/share/doc/"$pkgname"/copyright
+}
+
+sha512sums="
+63dc27dccbcf3c548a7aed6cb18abcd3abd17e254f4e94b8e5589ff57f843e315bea618e25e9b974d93abf2929bcd7271c1596bba3e71ddab56f8e7d2def854d  mint-x-icons-1.6.5-2.tar.gz
+"

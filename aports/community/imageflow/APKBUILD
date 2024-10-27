@@ -1,0 +1,50 @@
+# Contributor: Adam Jensen <adam@acj.sh>
+# Maintainer: Adam Jensen <adam@acj.sh>
+pkgname=imageflow
+pkgver=2.0.0
+_rcver=-preview8 # needed until first official release
+_commit=7b1a4f4a035de21f29a39b05d446d16dc3d7cf78
+pkgrel=0
+pkgdesc="High-performance image manipulation for web servers"
+url="https://github.com/imazen/imageflow"
+arch="x86_64" # limited by cargo and SIMD dependency
+license="AGPL-3.0-only"
+makedepends="bash cargo zip nasm git openssl-dev>3 wget curl libpng-dev dssim cargo-auditable"
+source="$pkgname-$pkgver$_rcver.tar.gz::https://github.com/imazen/imageflow/archive/v$pkgver$_rcver.tar.gz"
+builddir="$srcdir/$pkgname-$pkgver$_rcver"
+
+prepare() {
+	# Workaround for environment consistency checks in build
+	touch .git
+
+	default_prepare
+}
+
+build() {
+	# Needed to populate fields displayed at runtime
+	version_prefix="v$pkgver$_rcver"
+	export GIT_COMMIT="$_commit"
+	export GIT_COMMIT_SHORT="${GIT_COMMIT:0:7}"
+	export GIT_OPTIONAL_TAG=$version_prefix
+	export GIT_DESCRIBE_ALWAYS="$version_prefix"
+	export GIT_DESCRIBE_ALWAYS_LONG="$version_prefix-0-alpine"
+	export GIT_DESCRIBE_AAL="tags/$version_prefix-0-alpine"
+	export GIT_OPTIONAL_BRANCH="n/a"
+
+	cargo auditable build --workspace --release --locked
+}
+
+check() {
+	cargo test --workspace --release --locked
+}
+
+package() {
+	install -Dm644 "$builddir/target/release/libimageflow.so" \
+		"$pkgdir/usr/lib/libimageflow.so.$pkgver"
+	ln -s "libimageflow.so.$pkgver" "$pkgdir/usr/lib/libimageflow.so.${pkgver:0:1}"
+	ln -s "libimageflow.so.$pkgver" "$pkgdir/usr/lib/libimageflow.so"
+	install -Dm755 "$builddir/target/release/imageflow_tool" \
+		"$pkgdir/usr/bin/imageflow_tool"
+}
+
+sha512sums="bd675a6855ddac4bf42e28af8dc8e83aa75c290a6d48db1acaf134fc25c12605761a0e1d9a3449b1ab3ffd21cf80ec0287c491e47dd5404313be38b053509836  imageflow-2.0.0-preview8.tar.gz"

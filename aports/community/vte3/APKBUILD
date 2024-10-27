@@ -1,0 +1,62 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=vte3
+pkgver=0.78.0
+pkgrel=0
+pkgdesc="Virtual Terminal Emulator library"
+url="https://gitlab.gnome.org/GNOME/vte"
+arch="all"
+license="LGPL-2.0-or-later"
+subpackages="$pkgname-dbg $pkgname-dev $pkgname-gtk4 $pkgname-lang"
+makedepends="
+	bash
+	gnutls-dev
+	gobject-introspection-dev
+	gperf
+	gtk+3.0-dev
+	gtk4.0-dev
+	gtk-doc
+	icu-dev
+	libxml2-utils
+	linux-headers
+	lz4-dev
+	meson
+	ncurses-dev
+	pango-dev
+	pcre2-dev
+	vala
+	"
+source="https://gitlab.gnome.org/GNOME/vte/-/archive/$pkgver/vte-$pkgver.tar.gz
+	fix-W_EXITCODE.patch
+	"
+
+builddir="$srcdir/vte-$pkgver"
+
+build() {
+	abuild-meson \
+		-Dgtk4=true \
+		-Ddocs=false \
+		-D_systemd=false \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+gtk4() {
+	pkgdesc="$pkgdesc (gtk4 component)"
+
+	amove usr/bin/vte-*-gtk4
+	amove usr/lib/libvte-*-gtk4.so.*
+}
+
+sha512sums="
+acc68fb4ae593df3fdf4cf376286b9afc34905107f837b22b353299a4e05cb7a733b5db5ada15b55dc1781317889090dc062fee575503e7311c877689ec9ec4d  vte-0.78.0.tar.gz
+b6c1856bf075c2e3e91a0d4aff700c59e738bd6abe4122a11d680f104a2dab9d99f7d836a3ef3020b25ceff0a37231a6561eb917f0e4b9f90837eb634d8f7f20  fix-W_EXITCODE.patch
+"

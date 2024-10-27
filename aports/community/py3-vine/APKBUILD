@@ -1,0 +1,36 @@
+# Maintainer: Antoine Martin (ayakael) <dev@ayakael.net>
+pkgname=py3-vine
+pkgver=5.0.0
+pkgrel=3
+pkgdesc="futures and promises implementation for python"
+url="https://github.com/celery/vine"
+arch="noarch"
+license="BSD-3-Clause"
+depends="python3"
+makedepends="py3-setuptools py3-gpep517 py3-wheel"
+checkdepends="py3-pytest py3-case py3-nose"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/v/vine/vine-$pkgver.tar.gz"
+builddir="$srcdir/vine-$pkgver"
+
+replaces="py-vine" # Backwards compatibility
+provides="py-vine=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+ff8f4b3f675220772ed0523e468eedbaec4aca793877b984e9a215603d1288cc3cc71dfeb152219d22f98de0ac7e9f9fa0cc35c2424ff36044cfc8f28192c159  vine-5.0.0.tar.gz
+"

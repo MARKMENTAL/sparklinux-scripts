@@ -1,0 +1,55 @@
+# Contributor: Antoine Martin (ayakael) <dev@ayakael.net>
+# Maintainer: Antoine Martin (ayakael) <dev@ayakael.net>
+pkgname=py3-rpy2
+_pyname="rpy2"
+pkgver=3.5.16
+pkgrel=2
+pkgdesc="A very simple, yet robust, Python interface to the R Programming Language"
+url="https://pypi.python.org/project/rpy2"
+# riscv64, loongarch64: R missing
+arch="all !riscv64 !loongarch64"
+license="GPL-2.0-only"
+depends="
+	py3-cffi
+	py3-numpy
+	py3-tz
+	py3-tzlocal
+	py3-jinja2
+	R
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	python3-dev
+	R-dev
+	libdeflate-dev
+	"
+checkdepends="
+	py3-pytest
+	"
+source="$pkgname-$pkgver.tar.gz::https://pypi.io/packages/source/r/rpy2/rpy2-$pkgver.tar.gz"
+builddir="$srcdir"/$_pyname-$pkgver
+subpackages="$pkgname-pyc"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	# test_rendertofile | test_rendertobytes_plit: Segfaults in build server
+	# test_find_onlyfromloadedlibrary:  Error in detach("package:survival") : invalid 'name' argument
+	.testenv/bin/python3 -m pytest -v -k 'not test_rendertofile and not test_rendertobytes_plot and not test_find_onlyfromloadedlibrary'
+}
+
+package() {
+	python3 -m installer --destdir="$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+83f7261bc11dc216860b0ddf5f34998e97ac385a54c66142e537ef8b839dddda7abc300ea81d45cdd6bec59583c59405655970ca2f526c4bf9a4dfbfae019d70  py3-rpy2-3.5.16.tar.gz
+"

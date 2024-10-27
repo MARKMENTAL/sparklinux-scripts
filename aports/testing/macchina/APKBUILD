@@ -1,0 +1,46 @@
+# Contributor: Jakub Panek <me@panekj.dev>
+# Maintainer: Dominika Liberda <ja@sdomi.pl>
+pkgname=macchina
+pkgver=6.1.8
+pkgrel=1
+pkgdesc="System information fetcher, with an (unhealthy) emphasis on performance"
+url="https://github.com/Macchina-CLI/macchina"
+# arm: needs https://github.com/Macchina-CLI/libmacchina/commit/1afd21de2d38b82cb2821259e260fcfc8d0cabc0
+# s390x and riscv64 blocked by cargo
+# loongarch64: linux-raw-sys crate fails to build
+arch="all !armhf !armv7 !x86 !s390x !riscv64 !loongarch64"
+license="MIT"
+makedepends="cargo sqlite-dev cargo-auditable"
+options="net"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/Macchina-CLI/macchina/archive/refs/tags/v$pkgver.tar.gz
+	update-getrandom.patch
+	"
+
+
+prepare() {
+	default_prepare
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm755 target/release/macchina -t "$pkgdir/usr/bin"
+
+	install -Dm644 doc/*.1 -t "$pkgdir/usr/share/man/man1"
+	install -Dm644 doc/*.7 -t "$pkgdir/usr/share/man/man7"
+
+	install -Dm644 contrib/themes/* -t "$pkgdir"/usr/share/macchina/themes
+}
+
+sha512sums="
+e91c21497745e3317c811b0edbf004087989fbd1053cb5d63c9e802e5508dec104bb0834d1719c557a45aac2870c4605d00922e0505846a414af0db93d037349  macchina-6.1.8.tar.gz
+451cf4c8b4ae1663f743bdf669fee32052b3a206f133fec2c3fc9222e0b7308fc7ae51ff0174411de4b8cd5859055dbc43d7be5d2a1e68f688412b673d9deb53  update-getrandom.patch
+"

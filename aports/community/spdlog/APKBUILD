@@ -1,0 +1,41 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=spdlog
+pkgver=1.14.1
+pkgrel=0
+pkgdesc="Fast C++ logging library"
+url="https://github.com/gabime/spdlog"
+arch="all"
+license="MIT"
+makedepends="cmake fmt-dev samurai"
+checkdepends="catch2-3"
+subpackages="$pkgname-dev"
+source="https://github.com/gabime/spdlog/archive/v$pkgver/spdlog-v$pkgver.tar.gz"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DSPDLOG_BUILD_BENCH=OFF \
+		-DSPDLOG_BUILD_TESTS="$(want_check && echo ON || echo OFF)" \
+		-DSPDLOG_SANITIZE_ADDRESS=OFF \
+		-DSPDLOG_FMT_EXTERNAL=ON \
+		-DSPDLOG_BUILD_SHARED=ON \
+		-DSPDLOG_BUILD_EXAMPLE=OFF
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+	sed -e 's|.*#define SPDLOG_FMT_EXTERNAL|#define SPDLOG_FMT_EXTERNAL|' \
+		-i "$pkgdir"/usr/include/spdlog/tweakme.h
+}
+
+sha512sums="
+d8f36a3d65a43d8c64900e46137827aadb05559948b2f5a389bea16ed1bfac07d113ee11cf47970913298d6c37400355fe6895cda8fa6dcf6abd9da0d8f199e9  spdlog-v1.14.1.tar.gz
+"

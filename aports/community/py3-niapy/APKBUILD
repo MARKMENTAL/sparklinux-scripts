@@ -1,0 +1,43 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+pkgname=py3-niapy
+_pkgorig=NiaPy
+pkgver=2.3.1
+pkgrel=1
+pkgdesc="Python micro framework for building nature-inspired algorithms"
+url="https://niapy.org"
+arch="noarch"
+license="MIT"
+depends="python3 py3-numpy py3-pandas py3-openpyxl py3-matplotlib"
+checkdepends="py3-pytest-xdist"
+makedepends="py3-gpep517 py3-poetry-core"
+subpackages="$pkgname-doc $pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/NiaOrg/NiaPy/archive/v$pkgver/niapy-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgorig-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+
+	install -Dm644 CITATION.cff -t "$pkgdir"/usr/share/doc/$pkgname
+	install -Dm644 CONTRIBUTE_NEW_ALGORITHM.md -t "$pkgdir"/usr/share/doc/$pkgname
+	install -Dm644 Algorithms.md -t "$pkgdir"/usr/share/doc/$pkgname
+	install -Dm644 Problems.md -t "$pkgdir"/usr/share/doc/$pkgname
+	install -Dm644 README.md -t "$pkgdir"/usr/share/doc/$pkgname
+}
+
+sha512sums="
+184fea05c8790cc77f04ec974a78ad8b1c7677d6fab59695efd90b4c793967f97f8c48b7d79d863bad9df7224e3120d0ee714940847f5414d01715aafe7e562b  py3-niapy-2.3.1.tar.gz
+"

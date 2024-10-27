@@ -1,0 +1,33 @@
+# Contributor: Rabindra Dhakal <contact@qaidvoid.dev>
+# Maintainer: Rabindra Dhakal <contact@qaidvoid.dev>
+pkgname=hyprlang
+pkgver=0.5.2
+pkgrel=0
+pkgdesc="The official implementation library for the hypr config language."
+url="https://hyprland.org/hyprlang/"
+arch="all"
+license="LGPL-3.0-only"
+makedepends="cmake"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/hyprwm/hyprlang/archive/v$pkgver.tar.gz"
+
+build() {
+	cmake -B build \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DCMAKE_INSTALL_PREFIX=/usr
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	install -Dm644 LICENSE "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+}
+
+sha512sums="
+df330da11da317ff6aac2eb4a65c81b6cf4fc85e79f117e3fc3ef6e06d4c857d03134be9fcdc4e33f4974a4b2181e45b6009dba70ed047cda38e32df289b60a7  hyprlang-0.5.2.tar.gz
+"

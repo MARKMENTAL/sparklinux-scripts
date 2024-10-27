@@ -1,0 +1,43 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Contributor: Michał Polański <michal@polanski.me>
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=esptool
+pkgver=4.8.0
+pkgrel=0
+pkgdesc="ESP8266 and ESP32 serial bootloader utility"
+url="https://docs.espressif.com/projects/esptool"
+license="GPL-2.0-or-later"
+arch="noarch"
+depends="
+	py3-bitstring
+	py3-cryptography
+	py3-ecdsa
+	py3-intelhex
+	py3-pyserial
+	py3-reedsolo
+	py3-yaml
+	"
+makedepends="py3-gpep517 py3-installer py3-setuptools py3-wheel"
+checkdepends="py3-elftools py3-pkcs11 py3-pytest py3-requests"
+subpackages="$pkgname-pyc"
+source="https://github.com/espressif/esptool/archive/v$pkgver/esptool-$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -m host_test
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+cc848f9ae0652b2697736ff094da9b820d89d805e630fd3f88a5ec51a2c68dce2f0b31e3223533a8df645037f612eaee6208e7195ff9c769f2ddd6c72a666e98  esptool-4.8.0.tar.gz
+"

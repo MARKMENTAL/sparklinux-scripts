@@ -1,0 +1,53 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=java-netty-transport-native
+_jarname=netty-transport-native-epoll
+pkgver=4.1.113
+_pkgver="$pkgver.Final"
+pkgrel=0
+pkgdesc="Native Netty transport for Linux"
+url="https://netty.io"
+# armhf,armv7,ppc64le,s390x,x86: fails to build due to missing JAR
+# riscv64, loongarch64: blocked by java-jdk
+arch="all !armhf !armv7 !ppc64le !riscv64 !s390x !x86 !loongarch64"
+license="Apache-2.0"
+depends="java-jre-headless"
+makedepends="
+	autoconf
+	automake
+	java-jdk
+	libtool
+	linux-headers
+	maven
+	"
+source="https://github.com/netty/netty/archive/netty-$_pkgver/netty-$pkgver.tar.gz"
+builddir="$srcdir/netty-netty-$_pkgver/transport-native-epoll"
+# net: fetches dependencies from Maven repos
+# !check: EpollDatagramUnicast tests fail (TODO)
+options="net !check"
+
+# NOTE: Maven 3 dropped support for the M2_HOME variable.
+export MAVEN_ARGS="--batch-mode -Dcheckstyle.skip=true -Duser.home=$srcdir/.home"
+
+build() {
+	export CFLAGS="${CFLAGS/-Os/-O2}"
+	export CPPFLAGS="${CPPFLAGS/-Os/-O2}"
+
+	mvn package -DskipTests
+}
+
+check() {
+	mvn test
+}
+
+# NOTE: netty-transport-native-epoll contains only the binary, classes
+#   are in a separate package (JAR) transport-classes-epoll. It first attempts
+#   to load the binary from the 'java.library.path' (/usr/lib).
+package() {
+	mkdir -p "$pkgdir"/usr/lib
+	cp -P target/native-build/target/lib/*.so "$pkgdir"/usr/lib/
+}
+
+sha512sums="
+a969a02128801496ac78c4fd3c51d9806291a3ac4986f97bdfbccf3f994c30aa659a26612ecd090f6f0a62b88420a9f232cc9b8cc445c28b0358712e8be3a362  netty-4.1.113.tar.gz
+"

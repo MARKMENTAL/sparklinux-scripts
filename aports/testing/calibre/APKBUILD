@@ -1,0 +1,115 @@
+# Maintainer: Cowington Post <cowingtonpost@gmail.com>
+pkgname=calibre
+pkgver=7.18.0
+pkgrel=0
+pkgdesc="Ebook management application"
+# qt6-webengine
+arch="x86_64 aarch64"
+url="https://calibre-ebook.com"
+license="GPL-3.0-or-later"
+depends="
+	font-liberation
+	libwmf
+	mtdev
+	optipng
+	poppler
+	py3-apsw
+	py3-beautifulsoup4
+	py3-css-parser
+	py3-cssselect
+	py3-dateutil
+	py3-dnspython
+	py3-feedparser
+	py3-fonttools
+	py3-html2text
+	py3-html5-parser
+	py3-html5lib
+	py3-jeepney
+	py3-lxml
+	py3-markdown
+	py3-mechanize
+	py3-msgpack
+	py3-netifaces
+	py3-pillow
+	py3-psutil
+	py3-pycryptodome
+	py3-pygments
+	py3-pyqt6-webengine
+	py3-regex
+	py3-xxhash
+	py3-zeroconf
+	qt6-qtimageformats
+	qt6-qtsvg
+	qt6-qtwebengine
+	udisks2
+	"
+makedepends="
+	cmake
+	curl
+	hunspell-dev
+	hyphen-dev
+	libmtp-dev
+	libstemmer-dev
+	libusb-dev
+	podofo-dev
+	py3-pyqt-builder
+	py3-pyqt6-sip
+	py3-sip
+	python3-dev
+	qt6-qtbase-dev
+	uchardet-dev
+	xdg-utils
+	"
+subpackages="
+	$pkgname-pyc
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-zsh-completion
+	"
+source="https://download.calibre-ebook.com/$pkgver/calibre-$pkgver.tar.xz
+	0001-$pkgname-no-update.patch
+	"
+# net: downloads iso-codes
+# !check: no tests ran
+options="net !check"
+
+export LANG="en_US.UTF-8"
+
+prepare() {
+	default_prepare
+
+	rm -f resources/calibre-portable.*
+}
+
+build() {
+	python3 setup.py build
+	python3 setup.py iso639
+	python3 setup.py iso3166
+	python3 setup.py liberation_fonts --system-liberation_fonts --path-to-liberation_fonts /usr/share/fonts/liberation
+	python3 setup.py mathjax
+	python3 setup.py gui
+}
+
+check() {
+	python3 -m unittest discover
+}
+
+package() {
+	# needed for zsh
+	mkdir -p "$pkgdir"/usr/share/zsh/site-functions
+
+	python3 setup.py install \
+		--staging-root="$pkgdir"/usr \
+		--system-plugins-location=/usr/share/calibre/system-plugins
+
+	cp -a man-pages/ "$pkgdir"/usr/share/man
+
+	rm -r "$pkgdir"/usr/share/calibre/rapydscript/
+
+	python3 -m compileall -fq "$pkgdir"/usr
+}
+
+sha512sums="
+07f18f2345e87f5717b2cd1c166ae24eed663b6ec975ce9ba495ed034bc31d836d42ff3f9e89b85ae47c51be722ae8abb27ee59f5537af80df51c4abcf4ae7a3  calibre-7.18.0.tar.xz
+eb8e7ce40ff8b8daf6e7e55a5dff8ec4dff06c45744266bb48b3194e92ab1196bc91468203e3c2ca1e5144166a7d6be90e6cf0253513e761b56a4c85be4c2c76  0001-calibre-no-update.patch
+"

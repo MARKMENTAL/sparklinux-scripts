@@ -1,0 +1,82 @@
+# Contributor: Brandon Boese <brandonboese@protonmail.com>
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+pkgname=lomiri-system-settings
+pkgver=1.2.0
+pkgrel=0
+pkgdesc="System Settings application for Lomiri"
+url="https://gitlab.com/ubports/development/core/lomiri-system-settings"
+# armhf: blocked by lomiri-ui-toolkit
+# s390x, riscv64, ppc64le: blocked by ayatana-indicator-datetime
+arch="all !armhf !s390x !riscv64 !ppc64le"
+license="GPL-3.0-only"
+depends="
+	accountsservice
+	ayatana-indicator-bluetooth
+	ayatana-indicator-datetime
+	ayatana-indicator-power
+	lomiri-content-hub
+	lomiri-indicator-network
+	lomiri-settings-components
+	lomiri-ui-toolkit
+	qt5-qtmultimedia
+	"
+makedepends="
+	accountsservice-dev
+	click-dev
+	cmake
+	cmake-extras
+	elogind-dev
+	geonames-dev
+	gnome-desktop-dev
+	gsettings-qt-dev
+	icu-dev
+	intltool
+	libqtdbusmock
+	lomiri-trust-store-dev
+	networkmanager-dev
+	qt5-qtbase-dev
+	qt5-qtdeclarative
+	qt5-qtdeclarative-dev
+	samurai
+	upower-dev
+	"
+checkdepends="
+	mesa-dri-gallium
+	py3-dbusmock
+	py3-xdg
+	xvfb-run
+	"
+subpackages="$pkgname-lang"
+source="https://gitlab.com/ubports/development/core/lomiri-system-settings/-/archive/$pkgver/lomiri-system-settings-$pkgver.tar.gz
+	0001-Migrate-to-upstream-maliit-keyboard.patch
+	0002-Use-qmltestrunner-qt5.patch
+	"
+options="!check" # fails tst-bluetooth-device
+# Somehow on armv7 the tests try to use zink from mesa which doesn't work
+case "$CARCH" in
+	armv7) options="!check" ;;
+esac
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_BUILD_TYPE=None
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+b321dcf4324cd27b028035e7a9b75f899cb48397f992f921b82b4e035d5c01271a67d8507fac1fda61f7125d87ade387ca8027e8e33d3a38a0b9b624a9da5e92  lomiri-system-settings-1.2.0.tar.gz
+ff645e7d129e09cf2545ac8298244dd03cd6764362350e4d564c9d806202123ff666428a54eda6bb37e6b88d5dcee944a771a726c8261299c4b9b93920fafdb9  0001-Migrate-to-upstream-maliit-keyboard.patch
+169dda7b2fab1e6e7b791579aa15eb79b08442463a71a786d7b3506c3ae8ad14a9000d3ca8b67b6d4facf81066fe210c62b6e130143f4f04de604ea233307412  0002-Use-qmltestrunner-qt5.patch
+"

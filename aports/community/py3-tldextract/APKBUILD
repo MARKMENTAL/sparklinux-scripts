@@ -1,0 +1,43 @@
+# Contributor: Galen Abell <galen@galenabell.com>
+# Maintainer: Galen Abell <galen@galenabell.com>
+pkgname=py3-tldextract
+_pyname=tldextract
+pkgver=5.1.2
+pkgrel=1
+pkgdesc="Accurately separate the TLD from the registered domain and subdomains of a URL"
+url="https://github.com/john-kurkowski/tldextract"
+arch="noarch"
+license="BSD-3-Clause"
+depends="
+	python3
+	py3-idna
+	py3-requests
+	py3-requests-file
+	py3-filelock
+	"
+makedepends="py3-gpep517 py3-setuptools py3-setuptools_scm py3-wheel"
+checkdepends="py3-pytest py3-pytest-mock py3-responses"
+subpackages="$pkgname-pyc"
+source="$_pyname-$pkgver.tar.gz::https://github.com/john-kurkowski/tldextract/archive/$pkgver.tar.gz"
+builddir="$srcdir/$_pyname-$pkgver"
+
+build() {
+	export SETUPTOOLS_SCM_PRETEND_VERSION=$pkgver
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	# Ignore release test as it depends on py3-syrupy in edge (and it's just a release script anyways).
+	.testenv/bin/python3 -m pytest --ignore tests/test_release.py
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+}
+sha512sums="
+0297087b7d825126131955316dc27e5f7e8f4124e107fd8ecadbd56d634e76ff6a9d70a23e117f7a5016badd6f599da84700681c9adfbfc927ae685cbeb3efb9  tldextract-5.1.2.tar.gz
+"

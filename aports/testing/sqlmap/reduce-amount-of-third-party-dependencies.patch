@@ -1,0 +1,926 @@
+From e76995bd6a15acee16481d39585ddc3018a6d7af Mon Sep 17 00:00:00 2001
+From: Maxim Karasev <begs@disroot.org>
+Date: Sat, 6 Aug 2022 20:44:51 +0300
+Subject: [PATCH] reduce amount of third party dependencies
+
+---
+ lib/controller/checks.py                |  4 ++--
+ lib/core/agent.py                       |  2 +-
+ lib/core/common.py                      | 26 ++++++++++++-------------
+ lib/core/convert.py                     |  6 +++---
+ lib/core/datatype.py                    |  4 ++--
+ lib/core/dump.py                        |  4 ++--
+ lib/core/gui.py                         | 10 +++++-----
+ lib/core/option.py                      | 12 ++++++------
+ lib/core/patch.py                       |  8 ++++----
+ lib/core/settings.py                    |  4 ++--
+ lib/core/target.py                      |  6 +++---
+ lib/core/update.py                      |  2 +-
+ lib/core/wordlist.py                    |  2 +-
+ lib/parse/cmdline.py                    |  2 +-
+ lib/parse/sitemap.py                    |  2 +-
+ lib/request/basic.py                    | 10 +++++-----
+ lib/request/basicauthhandler.py         |  2 +-
+ lib/request/chunkedhandler.py           |  2 +-
+ lib/request/comparison.py               |  2 +-
+ lib/request/connect.py                  | 10 +++++-----
+ lib/request/httpshandler.py             |  4 ++--
+ lib/request/inject.py                   |  2 +-
+ lib/request/methodrequest.py            |  2 +-
+ lib/request/pkihandler.py               |  4 ++--
+ lib/request/rangehandler.py             |  2 +-
+ lib/request/redirecthandler.py          |  4 ++--
+ lib/takeover/abstraction.py             |  2 +-
+ lib/takeover/metasploit.py              |  2 +-
+ lib/takeover/web.py                     |  2 +-
+ lib/techniques/error/use.py             |  2 +-
+ lib/techniques/union/use.py             |  4 ++--
+ lib/utils/api.py                        | 24 +++++++++++------------
+ lib/utils/crawler.py                    |  8 ++++----
+ lib/utils/har.py                        |  4 ++--
+ lib/utils/hash.py                       | 10 +++++-----
+ lib/utils/hashdb.py                     |  2 +-
+ lib/utils/httpd.py                      | 10 +++++-----
+ lib/utils/pivotdumptable.py             |  2 +-
+ lib/utils/purge.py                      |  2 +-
+ lib/utils/search.py                     |  4 ++--
+ lib/utils/sqlalchemy.py                 |  2 +-
+ plugins/dbms/maxdb/enumeration.py       |  4 ++--
+ plugins/dbms/mssqlserver/enumeration.py |  2 +-
+ plugins/dbms/sybase/enumeration.py      |  4 ++--
+ plugins/generic/custom.py               |  2 +-
+ plugins/generic/databases.py            |  2 +-
+ plugins/generic/entries.py              |  4 ++--
+ plugins/generic/search.py               |  2 +-
+ plugins/generic/users.py                |  2 +-
+ thirdparty/multipart/multipartpost.py   |  2 +-
+ 50 files changed, 121 insertions(+), 121 deletions(-)
+
+diff --git a/sqlmap/lib/controller/checks.py b/sqlmap/lib/controller/checks.py
+index 186a0fd..3a232d2 100644
+--- a/sqlmap/lib/controller/checks.py
++++ b/sqlmap/lib/controller/checks.py
+@@ -102,8 +102,8 @@ from lib.request.inject import checkBooleanExpression
+ from lib.request.templates import getPageTemplate
+ from lib.techniques.union.test import unionTest
+ from lib.techniques.union.use import configUnion
+-from thirdparty import six
+-from thirdparty.six.moves import http_client as _http_client
++import six
++from six.moves import http_client as _http_client
+ 
+ def checkSqlInjection(place, parameter, value):
+     # Store here the details about boundaries and payload used to
+diff --git a/sqlmap/lib/core/agent.py b/sqlmap/lib/core/agent.py
+index 81d24e8..c79381c 100644
+--- a/sqlmap/lib/core/agent.py
++++ b/sqlmap/lib/core/agent.py
+@@ -58,7 +58,7 @@ from lib.core.settings import SINGLE_QUOTE_MARKER
+ from lib.core.settings import SLEEP_TIME_MARKER
+ from lib.core.settings import UNICODE_ENCODING
+ from lib.core.unescaper import unescaper
+-from thirdparty import six
++import six
+ 
+ class Agent(object):
+     """
+diff --git a/sqlmap/lib/core/common.py b/sqlmap/lib/core/common.py
+index d741fad..0e5f0d8 100644
+--- a/sqlmap/lib/core/common.py
++++ b/sqlmap/lib/core/common.py
+@@ -188,21 +188,21 @@ from lib.core.settings import WEBSCARAB_SPLITTER
+ from lib.core.threads import getCurrentThreadData
+ from lib.utils.safe2bin import safecharencode
+ from lib.utils.sqlalchemy import _sqlalchemy
+-from thirdparty import six
++import six
+ from thirdparty.clientform.clientform import ParseResponse
+ from thirdparty.clientform.clientform import ParseError
+-from thirdparty.colorama.initialise import init as coloramainit
+-from thirdparty.magic import magic
+-from thirdparty.odict import OrderedDict
+-from thirdparty.six import unichr as _unichr
+-from thirdparty.six.moves import collections_abc as _collections
+-from thirdparty.six.moves import configparser as _configparser
+-from thirdparty.six.moves import http_client as _http_client
+-from thirdparty.six.moves import input as _input
+-from thirdparty.six.moves import reload_module as _reload_module
+-from thirdparty.six.moves import urllib as _urllib
+-from thirdparty.six.moves import zip as _zip
+-from thirdparty.termcolor.termcolor import colored
++from colorama.initialise import init as coloramainit
++import magic
++from collections import OrderedDict
++from six import unichr as _unichr
++from six.moves import collections_abc as _collections
++from six.moves import configparser as _configparser
++from six.moves import http_client as _http_client
++from six.moves import input as _input
++from six.moves import reload_module as _reload_module
++from six.moves import urllib as _urllib
++from six.moves import zip as _zip
++from termcolor import colored
+ 
+ class UnicodeRawConfigParser(_configparser.RawConfigParser):
+     """
+diff --git a/sqlmap/lib/core/convert.py b/sqlmap/lib/core/convert.py
+index 2a21112..fe6b69a 100644
+--- a/sqlmap/lib/core/convert.py
++++ b/sqlmap/lib/core/convert.py
+@@ -29,9 +29,9 @@ from lib.core.settings import NULL
+ from lib.core.settings import PICKLE_PROTOCOL
+ from lib.core.settings import SAFE_HEX_MARKER
+ from lib.core.settings import UNICODE_ENCODING
+-from thirdparty import six
+-from thirdparty.six import unichr as _unichr
+-from thirdparty.six.moves import collections_abc as _collections
++import six
++from six import unichr as _unichr
++from six.moves import collections_abc as _collections
+ 
+ try:
+     from html import escape as htmlEscape
+diff --git a/sqlmap/lib/core/datatype.py b/sqlmap/lib/core/datatype.py
+index 866b114..9a90ef6 100644
+--- a/sqlmap/lib/core/datatype.py
++++ b/sqlmap/lib/core/datatype.py
+@@ -9,8 +9,8 @@ import copy
+ import threading
+ import types
+ 
+-from thirdparty.odict import OrderedDict
+-from thirdparty.six.moves import collections_abc as _collections
++from collections import OrderedDict
++from six.moves import collections_abc as _collections
+ 
+ class AttribDict(dict):
+     """
+diff --git a/sqlmap/lib/core/dump.py b/sqlmap/lib/core/dump.py
+index 42f713e..ce7e7e6 100644
+--- a/sqlmap/lib/core/dump.py
++++ b/sqlmap/lib/core/dump.py
+@@ -56,8 +56,8 @@ from lib.core.settings import UNSAFE_DUMP_FILEPATH_REPLACEMENT
+ from lib.core.settings import VERSION_STRING
+ from lib.core.settings import WINDOWS_RESERVED_NAMES
+ from lib.utils.safe2bin import safechardecode
+-from thirdparty import six
+-from thirdparty.magic import magic
++import six
++import magic
+ 
+ class Dump(object):
+     """
+diff --git a/sqlmap/lib/core/gui.py b/sqlmap/lib/core/gui.py
+index 00f98ee..ac37c9d 100644
+--- a/sqlmap/lib/core/gui.py
++++ b/sqlmap/lib/core/gui.py
+@@ -28,7 +28,7 @@ from lib.core.settings import GIT_PAGE
+ from lib.core.settings import SITE
+ from lib.core.settings import VERSION_STRING
+ from lib.core.settings import WIKI_PAGE
+-from thirdparty.six.moves import queue as _queue
++from six.moves import queue as _queue
+ 
+ alive = None
+ line = ""
+@@ -37,10 +37,10 @@ queue = None
+ 
+ def runGui(parser):
+     try:
+-        from thirdparty.six.moves import tkinter as _tkinter
+-        from thirdparty.six.moves import tkinter_scrolledtext as _tkinter_scrolledtext
+-        from thirdparty.six.moves import tkinter_ttk as _tkinter_ttk
+-        from thirdparty.six.moves import tkinter_messagebox as _tkinter_messagebox
++        from six.moves import tkinter as _tkinter
++        from six.moves import tkinter_scrolledtext as _tkinter_scrolledtext
++        from six.moves import tkinter_ttk as _tkinter_ttk
++        from six.moves import tkinter_messagebox as _tkinter_messagebox
+     except ImportError as ex:
+         raise SqlmapMissingDependence("missing dependence ('%s')" % getSafeExString(ex))
+ 
+diff --git a/sqlmap/lib/core/log.py b/sqlmap/lib/core/log.py
+index 33e6a36..9f538d8 100644
+--- a/sqlmap/lib/core/log.py
++++ b/sqlmap/lib/core/log.py
+@@ -19,7 +19,7 @@ LOGGER = logging.getLogger("sqlmapLog")
+ 
+ LOGGER_HANDLER = None
+ try:
+-    from thirdparty.ansistrm.ansistrm import ColorizingStreamHandler
++    from ansistrm.ansistrm import ColorizingStreamHandler
+ 
+     class _ColorizingStreamHandler(ColorizingStreamHandler):
+         def colorize(self, message, levelno, force=False):
+diff --git a/sqlmap/lib/core/option.py b/sqlmap/lib/core/option.py
+index ec67262..950ccdf 100644
+--- a/sqlmap/lib/core/option.py
++++ b/sqlmap/lib/core/option.py
+@@ -150,13 +150,13 @@ from lib.utils.deps import checkDependencies
+ from lib.utils.har import HTTPCollectorFactory
+ from lib.utils.purge import purge
+ from lib.utils.search import search
+-from thirdparty import six
+-from thirdparty.keepalive import keepalive
++import six
++import keepalive
+ from thirdparty.multipart import multipartpost
+-from thirdparty.six.moves import collections_abc as _collections
+-from thirdparty.six.moves import http_client as _http_client
+-from thirdparty.six.moves import http_cookiejar as _http_cookiejar
+-from thirdparty.six.moves import urllib as _urllib
++from six.moves import collections_abc as _collections
++from six.moves import http_client as _http_client
++from six.moves import http_cookiejar as _http_cookiejar
++from six.moves import urllib as _urllib
+ from thirdparty.socks import socks
+ from xml.etree.ElementTree import ElementTree
+ 
+diff --git a/sqlmap/lib/core/patch.py b/sqlmap/lib/core/patch.py
+index 2add0e8..684cafd 100644
+--- a/sqlmap/lib/core/patch.py
++++ b/sqlmap/lib/core/patch.py
+@@ -23,7 +23,7 @@ import lib.request.connect
+ import lib.utils.search
+ import lib.utils.sqlalchemy
+ import thirdparty.ansistrm.ansistrm
+-import thirdparty.chardet.universaldetector
++import chardet.universaldetector
+ 
+ from lib.core.common import filterNone
+ from lib.core.common import getSafeExString
+@@ -42,9 +42,9 @@ from lib.core.settings import INVALID_UNICODE_PRIVATE_AREA
+ from lib.core.settings import INVALID_UNICODE_CHAR_FORMAT
+ from lib.core.settings import IS_WIN
+ from lib.request.templates import getPageTemplate
+-from thirdparty import six
+-from thirdparty.six import unichr as _unichr
+-from thirdparty.six.moves import http_client as _http_client
++import six
++from six import unichr as _unichr
++from six.moves import http_client as _http_client
+ 
+ _rand = 0
+ 
+@@ -70,7 +70,7 @@ def dirtyPatches():
+ 
+     # add support for inet_pton() on Windows OS
+     if IS_WIN:
+-        from thirdparty.wininetpton import win_inet_pton
++        from wininetpton import win_inet_pton
+ 
+     # Reference: https://github.com/nodejs/node/issues/12786#issuecomment-298652440
+     codecs.register(lambda name: codecs.lookup("utf-8") if name == "cp65001" else None)
+@@ -84,7 +84,7 @@ def dirtyPatches():
+         _http_client.LineAndFileWrapper.readline = _
+ 
+     # to prevent too much "guessing" in case of binary data retrieval
+-    thirdparty.chardet.universaldetector.MINIMUM_THRESHOLD = 0.90
++    chardet.universaldetector.MINIMUM_THRESHOLD = 0.90
+ 
+     match = re.search(r" --method[= ](\w+)", " ".join(sys.argv))
+     if match and match.group(1).upper() != PLACE.POST:
+diff --git a/sqlmap/lib/core/settings.py b/sqlmap/lib/core/settings.py
+index 8169f0b..063227e 100644
+--- a/sqlmap/lib/core/settings.py
++++ b/sqlmap/lib/core/settings.py
+@@ -16,7 +16,7 @@ import time
+ from lib.core.enums import DBMS
+ from lib.core.enums import DBMS_DIRECTORY_NAME
+ from lib.core.enums import OS
+-from thirdparty import six
++import six
+ 
+ # sqlmap version (<major>.<minor>.<month>.<monthly commit>)
+ VERSION = "1.8.7"
+diff --git a/sqlmap/lib/core/target.py b/sqlmap/lib/core/target.py
+index cc3ccd2..9e5ee15 100644
+--- a/sqlmap/lib/core/target.py
++++ b/sqlmap/lib/core/target.py
+@@ -78,9 +78,9 @@ from lib.core.settings import USER_AGENT_ALIASES
+ from lib.core.settings import XML_RECOGNITION_REGEX
+ from lib.core.threads import getCurrentThreadData
+ from lib.utils.hashdb import HashDB
+-from thirdparty import six
+-from thirdparty.odict import OrderedDict
+-from thirdparty.six.moves import urllib as _urllib
++import six
++from collections import OrderedDict
++from six.moves import urllib as _urllib
+ 
+ def _setRequestParams():
+     """
+diff --git a/sqlmap/lib/core/update.py b/sqlmap/lib/core/update.py
+index c50547b..f1e0b36 100644
+--- a/sqlmap/lib/core/update.py
++++ b/sqlmap/lib/core/update.py
+@@ -30,7 +30,7 @@ from lib.core.settings import IS_WIN
+ from lib.core.settings import VERSION
+ from lib.core.settings import TYPE
+ from lib.core.settings import ZIPBALL_PAGE
+-from thirdparty.six.moves import urllib as _urllib
++from six.moves import urllib as _urllib
+ 
+ def update():
+     if not conf.updateAll:
+diff --git a/sqlmap/lib/core/wordlist.py b/sqlmap/lib/core/wordlist.py
+index d390ae6..3dd4e47 100644
+--- a/sqlmap/lib/core/wordlist.py
++++ b/sqlmap/lib/core/wordlist.py
+@@ -11,7 +11,7 @@ from lib.core.common import getSafeExString
+ from lib.core.common import isZipFile
+ from lib.core.exception import SqlmapDataException
+ from lib.core.exception import SqlmapInstallationException
+-from thirdparty import six
++import six
+ 
+ class Wordlist(six.Iterator):
+     """
+diff --git a/sqlmap/lib/parse/cmdline.py b/sqlmap/lib/parse/cmdline.py
+index 104bc36..7f1b515 100644
+--- a/sqlmap/lib/parse/cmdline.py
++++ b/sqlmap/lib/parse/cmdline.py
+@@ -92,7 +92,7 @@ from lib.core.shell import autoCompletion
+ from lib.core.shell import clearHistory
+ from lib.core.shell import loadHistory
+ from lib.core.shell import saveHistory
+-from thirdparty.six.moves import input as _input
++from six.moves import input as _input
+ 
+ def cmdLineParser(argv=None):
+     """
+diff --git a/sqlmap/lib/parse/sitemap.py b/sqlmap/lib/parse/sitemap.py
+index 542a58d..dbc4809 100644
+--- a/sqlmap/lib/parse/sitemap.py
++++ b/sqlmap/lib/parse/sitemap.py
+@@ -13,7 +13,7 @@ from lib.core.data import logger
+ from lib.core.datatype import OrderedSet
+ from lib.core.exception import SqlmapSyntaxException
+ from lib.request.connect import Connect as Request
+-from thirdparty.six.moves import http_client as _http_client
++from six.moves import http_client as _http_client
+ 
+ abortedFlag = None
+ 
+diff --git a/sqlmap/lib/request/basic.py b/sqlmap/lib/request/basic.py
+index 921ed2f..6245d7d 100644
+--- a/sqlmap/lib/request/basic.py
++++ b/sqlmap/lib/request/basic.py
+@@ -54,12 +54,12 @@ from lib.core.settings import UNICODE_ENCODING
+ from lib.core.settings import VIEWSTATE_REGEX
+ from lib.parse.headers import headersParser
+ from lib.parse.html import htmlParser
+-from thirdparty import six
+-from thirdparty.chardet import detect
++import six
++from chardet import detect
+ from thirdparty.identywaf import identYwaf
+-from thirdparty.odict import OrderedDict
+-from thirdparty.six import unichr as _unichr
+-from thirdparty.six.moves import http_client as _http_client
++from collections import OrderedDict
++from six import unichr as _unichr
++from six.moves import http_client as _http_client
+ 
+ @lockedmethod
+ def forgeHeaders(items=None, base=None):
+diff --git a/sqlmap/lib/request/basicauthhandler.py b/sqlmap/lib/request/basicauthhandler.py
+index a273682..868091f 100644
+--- a/sqlmap/lib/request/basicauthhandler.py
++++ b/sqlmap/lib/request/basicauthhandler.py
+@@ -5,7 +5,7 @@ Copyright (c) 2006-2024 sqlmap developers (https://sqlmap.org/)
+ See the file 'LICENSE' for copying permission
+ """
+ 
+-from thirdparty.six.moves import urllib as _urllib
++from six.moves import urllib as _urllib
+ 
+ class SmartHTTPBasicAuthHandler(_urllib.request.HTTPBasicAuthHandler):
+     """
+diff --git a/sqlmap/lib/request/chunkedhandler.py b/sqlmap/lib/request/chunkedhandler.py
+index 8477802..e4dd760 100644
+--- a/sqlmap/lib/request/chunkedhandler.py
++++ b/sqlmap/lib/request/chunkedhandler.py
+@@ -7,7 +7,7 @@ See the file 'LICENSE' for copying permission
+ 
+ from lib.core.data import conf
+ from lib.core.enums import HTTP_HEADER
+-from thirdparty.six.moves import urllib as _urllib
++from six.moves import urllib as _urllib
+ 
+ class ChunkedHandler(_urllib.request.HTTPHandler):
+     """
+diff --git a/sqlmap/lib/request/comparison.py b/sqlmap/lib/request/comparison.py
+index b62b899..6d1d263 100644
+--- a/sqlmap/lib/request/comparison.py
++++ b/sqlmap/lib/request/comparison.py
+@@ -32,7 +32,7 @@ from lib.core.settings import REFLECTED_VALUE_MARKER
+ from lib.core.settings import UPPER_RATIO_BOUND
+ from lib.core.settings import URI_HTTP_HEADER
+ from lib.core.threads import getCurrentThreadData
+-from thirdparty import six
++import six
+ 
+ def comparison(page, headers, code=None, getRatioValue=False, pageLength=None):
+     _ = _adjust(_comparison(page, headers, code, getRatioValue, pageLength), getRatioValue)
+diff --git a/sqlmap/lib/request/connect.py b/sqlmap/lib/request/connect.py
+index bb9a95c..a04cd52 100644
+--- a/sqlmap/lib/request/connect.py
++++ b/sqlmap/lib/request/connect.py
+@@ -137,11 +137,11 @@ from lib.request.comparison import comparison
+ from lib.request.direct import direct
+ from lib.request.methodrequest import MethodRequest
+ from lib.utils.safe2bin import safecharencode
+-from thirdparty import six
+-from thirdparty.odict import OrderedDict
+-from thirdparty.six import unichr as _unichr
+-from thirdparty.six.moves import http_client as _http_client
+-from thirdparty.six.moves import urllib as _urllib
++import six
++from collections import OrderedDict
++from six import unichr as _unichr
++from six.moves import http_client as _http_client
++from six.moves import urllib as _urllib
+ from thirdparty.socks.socks import ProxyError
+ 
+ class Connect(object):
+diff --git a/sqlmap/lib/request/httpshandler.py b/sqlmap/lib/request/httpshandler.py
+index c3af58f..0dde61e 100644
+--- a/sqlmap/lib/request/httpshandler.py
++++ b/sqlmap/lib/request/httpshandler.py
+@@ -17,8 +17,8 @@ from lib.core.data import kb
+ from lib.core.data import logger
+ from lib.core.exception import SqlmapConnectionException
+ from lib.core.settings import PYVERSION
+-from thirdparty.six.moves import http_client as _http_client
+-from thirdparty.six.moves import urllib as _urllib
++from six.moves import http_client as _http_client
++from six.moves import urllib as _urllib
+ 
+ ssl = None
+ try:
+diff --git a/sqlmap/lib/request/inject.py b/sqlmap/lib/request/inject.py
+index afaad5a..5e9d20f 100644
+--- a/sqlmap/lib/request/inject.py
++++ b/sqlmap/lib/request/inject.py
+@@ -66,7 +66,7 @@ from lib.techniques.dns.test import dnsTest
+ from lib.techniques.dns.use import dnsUse
+ from lib.techniques.error.use import errorUse
+ from lib.techniques.union.use import unionUse
+-from thirdparty import six
++import six
+ 
+ def _goDns(payload, expression):
+     value = None
+diff --git a/sqlmap/lib/request/methodrequest.py b/sqlmap/lib/request/methodrequest.py
+index f1b97b4..cde61f3 100644
+--- a/sqlmap/lib/request/methodrequest.py
++++ b/sqlmap/lib/request/methodrequest.py
+@@ -6,7 +6,7 @@ See the file 'LICENSE' for copying permission
+ """
+ 
+ from lib.core.convert import getText
+-from thirdparty.six.moves import urllib as _urllib
++from six.moves import urllib as _urllib
+ 
+ class MethodRequest(_urllib.request.Request):
+     """
+diff --git a/sqlmap/lib/request/pkihandler.py b/sqlmap/lib/request/pkihandler.py
+index 712e8aa..dec64a4 100644
+--- a/sqlmap/lib/request/pkihandler.py
++++ b/sqlmap/lib/request/pkihandler.py
+@@ -8,8 +8,8 @@ See the file 'LICENSE' for copying permission
+ from lib.core.data import conf
+ from lib.core.common import getSafeExString
+ from lib.core.exception import SqlmapConnectionException
+-from thirdparty.six.moves import http_client as _http_client
+-from thirdparty.six.moves import urllib as _urllib
++from six.moves import http_client as _http_client
++from six.moves import urllib as _urllib
+ 
+ class HTTPSPKIAuthHandler(_urllib.request.HTTPSHandler):
+     def __init__(self, auth_file):
+diff --git a/sqlmap/lib/request/rangehandler.py b/sqlmap/lib/request/rangehandler.py
+index eebebc1..734148a 100644
+--- a/sqlmap/lib/request/rangehandler.py
++++ b/sqlmap/lib/request/rangehandler.py
+@@ -6,7 +6,7 @@ See the file 'LICENSE' for copying permission
+ """
+ 
+ from lib.core.exception import SqlmapConnectionException
+-from thirdparty.six.moves import urllib as _urllib
++from six.moves import urllib as _urllib
+ 
+ class HTTPRangeHandler(_urllib.request.BaseHandler):
+     """
+diff --git a/sqlmap/lib/request/redirecthandler.py b/sqlmap/lib/request/redirecthandler.py
+index 726106b..c03bca6 100644
+--- a/sqlmap/lib/request/redirecthandler.py
++++ b/sqlmap/lib/request/redirecthandler.py
+@@ -32,8 +32,8 @@ from lib.core.settings import MAX_TOTAL_REDIRECTIONS
+ from lib.core.threads import getCurrentThreadData
+ from lib.request.basic import decodePage
+ from lib.request.basic import parseResponse
+-from thirdparty import six
+-from thirdparty.six.moves import urllib as _urllib
++import six
++from six.moves import urllib as _urllib
+ 
+ class SmartRedirectHandler(_urllib.request.HTTPRedirectHandler):
+     def _get_header_redirect(self, headers):
+diff --git a/sqlmap/lib/takeover/abstraction.py b/sqlmap/lib/takeover/abstraction.py
+index 309b5fc..aaf5cb7 100644
+--- a/sqlmap/lib/takeover/abstraction.py
++++ b/sqlmap/lib/takeover/abstraction.py
+@@ -29,7 +29,7 @@ from lib.takeover.udf import UDF
+ from lib.takeover.web import Web
+ from lib.takeover.xp_cmdshell import XP_cmdshell
+ from lib.utils.safe2bin import safechardecode
+-from thirdparty.six.moves import input as _input
++from six.moves import input as _input
+ 
+ class Abstraction(Web, UDF, XP_cmdshell):
+     """
+diff --git a/sqlmap/lib/takeover/metasploit.py b/sqlmap/lib/takeover/metasploit.py
+index f302802..56bc412 100644
+--- a/sqlmap/lib/takeover/metasploit.py
++++ b/sqlmap/lib/takeover/metasploit.py
+@@ -49,7 +49,7 @@ from lib.core.subprocessng import blockingWriteToFD
+ from lib.core.subprocessng import Popen as execute
+ from lib.core.subprocessng import send_all
+ from lib.core.subprocessng import recv_some
+-from thirdparty import six
++import six
+ 
+ if IS_WIN:
+     import msvcrt
+diff --git a/sqlmap/lib/takeover/web.py b/sqlmap/lib/takeover/web.py
+index 3c7a819..6030073 100644
+--- a/sqlmap/lib/takeover/web.py
++++ b/sqlmap/lib/takeover/web.py
+@@ -57,7 +57,7 @@ from lib.core.settings import SHELL_RUNCMD_EXE_TAG
+ from lib.core.settings import SHELL_WRITABLE_DIR_TAG
+ from lib.core.settings import VIEWSTATE_REGEX
+ from lib.request.connect import Connect as Request
+-from thirdparty.six.moves import urllib as _urllib
++from six.moves import urllib as _urllib
+ 
+ class Web(object):
+     """
+diff --git a/sqlmap/lib/techniques/blind/inference.py b/sqlmap/lib/techniques/blind/inference.py
+index 748bbbf..8ef9b04 100644
+--- a/sqlmap/lib/techniques/blind/inference.py
++++ b/sqlmap/lib/techniques/blind/inference.py
+@@ -62,7 +62,7 @@ from lib.request.connect import Connect as Request
+ from lib.utils.progress import ProgressBar
+ from lib.utils.safe2bin import safecharencode
+ from lib.utils.xrange import xrange
+-from thirdparty import six
++import six
+ 
+ def bisection(payload, expression, length=None, charsetType=None, firstChar=None, lastChar=None, dump=False):
+     """
+diff --git a/sqlmap/lib/techniques/error/use.py b/sqlmap/lib/techniques/error/use.py
+index 7089292..57e6b45 100644
+--- a/sqlmap/lib/techniques/error/use.py
++++ b/sqlmap/lib/techniques/error/use.py
+@@ -60,7 +60,7 @@ from lib.core.unescaper import unescaper
+ from lib.request.connect import Connect as Request
+ from lib.utils.progress import ProgressBar
+ from lib.utils.safe2bin import safecharencode
+-from thirdparty import six
++import six
+ 
+ def _oneShotErrorUse(expression, field=None, chunkTest=False):
+     offset = 1
+diff --git a/sqlmap/lib/techniques/union/use.py b/sqlmap/lib/techniques/union/use.py
+index 0a75356..504e033 100644
+--- a/sqlmap/lib/techniques/union/use.py
++++ b/sqlmap/lib/techniques/union/use.py
+@@ -59,8 +59,8 @@ from lib.core.unescaper import unescaper
+ from lib.request.connect import Connect as Request
+ from lib.utils.progress import ProgressBar
+ from lib.utils.safe2bin import safecharencode
+-from thirdparty import six
+-from thirdparty.odict import OrderedDict
++import six
++from collections import OrderedDict
+ 
+ def _oneShotUnionUse(expression, unpack=True, limited=False):
+     retVal = hashDBRetrieve("%s%s" % (conf.hexConvert or False, expression), checkConf=True)  # as UNION data is stored raw unconverted
+diff --git a/sqlmap/lib/utils/api.py b/sqlmap/lib/utils/api.py
+index b3d4f38..ea8fe2a 100644
+--- a/sqlmap/lib/utils/api.py
++++ b/sqlmap/lib/utils/api.py
+@@ -56,18 +56,18 @@ from lib.core.settings import VERSION_STRING
+ from lib.core.shell import autoCompletion
+ from lib.core.subprocessng import Popen
+ from lib.parse.cmdline import cmdLineParser
+-from thirdparty.bottle.bottle import error as return_error
+-from thirdparty.bottle.bottle import get
+-from thirdparty.bottle.bottle import hook
+-from thirdparty.bottle.bottle import post
+-from thirdparty.bottle.bottle import request
+-from thirdparty.bottle.bottle import response
+-from thirdparty.bottle.bottle import run
+-from thirdparty.bottle.bottle import server_names
+-from thirdparty import six
+-from thirdparty.six.moves import http_client as _http_client
+-from thirdparty.six.moves import input as _input
+-from thirdparty.six.moves import urllib as _urllib
++from bottle import error as return_error
++from bottle import get
++from bottle import hook
++from bottle import post
++from bottle import request
++from bottle import response
++from bottle import run
++from bottle import server_names
++import six
++from six.moves import http_client as _http_client
++from six.moves import input as _input
++from six.moves import urllib as _urllib
+ 
+ # Global data storage
+ class DataStore(object):
+diff --git a/sqlmap/lib/utils/crawler.py b/sqlmap/lib/utils/crawler.py
+index 43b24a2..542a6f2 100644
+--- a/sqlmap/lib/utils/crawler.py
++++ b/sqlmap/lib/utils/crawler.py
+@@ -36,10 +36,10 @@ from lib.core.threads import getCurrentThreadData
+ from lib.core.threads import runThreads
+ from lib.parse.sitemap import parseSitemap
+ from lib.request.connect import Connect as Request
+-from thirdparty import six
+-from thirdparty.beautifulsoup.beautifulsoup import BeautifulSoup
+-from thirdparty.six.moves import http_client as _http_client
+-from thirdparty.six.moves import urllib as _urllib
++import six
++from bs4 import BeautifulSoup
++from six.moves import http_client as _http_client
++from six.moves import urllib as _urllib
+ 
+ def crawl(target, post=None, cookie=None):
+     if not target:
+diff --git a/sqlmap/lib/utils/har.py b/sqlmap/lib/utils/har.py
+index bc9e881..6b70289 100644
+--- a/sqlmap/lib/utils/har.py
++++ b/sqlmap/lib/utils/har.py
+@@ -15,8 +15,8 @@ from lib.core.bigarray import BigArray
+ from lib.core.convert import getBytes
+ from lib.core.convert import getText
+ from lib.core.settings import VERSION
+-from thirdparty.six.moves import BaseHTTPServer as _BaseHTTPServer
+-from thirdparty.six.moves import http_client as _http_client
++from six.moves import BaseHTTPServer as _BaseHTTPServer
++from six.moves import http_client as _http_client
+ 
+ # Reference: https://dvcs.w3.org/hg/webperf/raw-file/tip/specs/HAR/Overview.html
+ #            http://www.softwareishard.com/har/viewer/
+diff --git a/sqlmap/lib/utils/hash.py b/sqlmap/lib/utils/hash.py
+index 2a4514d..4b8eb55 100644
+--- a/sqlmap/lib/utils/hash.py
++++ b/sqlmap/lib/utils/hash.py
+@@ -10,14 +10,14 @@ from __future__ import print_function
+ try:
+     from crypt import crypt
+ except:  # removed ImportError because of https://github.com/sqlmapproject/sqlmap/issues/3171
+-    from thirdparty.fcrypt.fcrypt import crypt
++    from fcrypt.fcrypt import crypt
+ 
+ try:
+     from Crypto.Cipher.DES import MODE_CBC as CBC
+     from Crypto.Cipher.DES import new as des
+ except:
+-    from thirdparty.pydes.pyDes import CBC
+-    from thirdparty.pydes.pyDes import des
++    from pyDes import CBC
++    from pyDes import des
+ 
+ _multiprocessing = None
+ 
+@@ -85,9 +85,9 @@ from lib.core.settings import NULL
+ from lib.core.settings import ROTATING_CHARS
+ from lib.core.settings import UNICODE_ENCODING
+ from lib.core.wordlist import Wordlist
+-from thirdparty import six
+-from thirdparty.colorama.initialise import init as coloramainit
+-from thirdparty.six.moves import queue as _queue
++import six
++from colorama.initialise import init as coloramainit
++from six.moves import queue as _queue
+ 
+ def mysql_passwd(password, uppercase=True):
+     """
+diff --git a/sqlmap/lib/utils/hashdb.py b/sqlmap/lib/utils/hashdb.py
+index 4395236..015f23a 100644
+--- a/sqlmap/lib/utils/hashdb.py
++++ b/sqlmap/lib/utils/hashdb.py
+@@ -26,7 +26,7 @@ from lib.core.settings import HASHDB_FLUSH_THRESHOLD
+ from lib.core.settings import HASHDB_RETRIEVE_RETRIES
+ from lib.core.threads import getCurrentThreadData
+ from lib.core.threads import getCurrentThreadName
+-from thirdparty import six
++import six
+ 
+ class HashDB(object):
+     def __init__(self, filepath):
+diff --git a/sqlmap/lib/utils/httpd.py b/sqlmap/lib/utils/httpd.py
+index aba688d..b4efebc 100644
+--- a/sqlmap/lib/utils/httpd.py
++++ b/sqlmap/lib/utils/httpd.py
+@@ -21,11 +21,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
+ from lib.core.enums import HTTP_HEADER
+ from lib.core.settings import UNICODE_ENCODING
+ from lib.core.settings import VERSION_STRING
+-from thirdparty import six
+-from thirdparty.six.moves import BaseHTTPServer as _BaseHTTPServer
+-from thirdparty.six.moves import http_client as _http_client
+-from thirdparty.six.moves import socketserver as _socketserver
+-from thirdparty.six.moves import urllib as _urllib
++import six
++from six.moves import BaseHTTPServer as _BaseHTTPServer
++from six.moves import http_client as _http_client
++from six.moves import socketserver as _socketserver
++from six.moves import urllib as _urllib
+ 
+ HTTP_ADDRESS = "0.0.0.0"
+ HTTP_PORT = 8951
+diff --git a/sqlmap/lib/utils/pivotdumptable.py b/sqlmap/lib/utils/pivotdumptable.py
+index ca7e37e..897d532 100644
+--- a/sqlmap/lib/utils/pivotdumptable.py
++++ b/sqlmap/lib/utils/pivotdumptable.py
+@@ -34,7 +34,7 @@ from lib.core.settings import SINGLE_QUOTE_MARKER
+ from lib.core.unescaper import unescaper
+ from lib.request import inject
+ from lib.utils.safe2bin import safechardecode
+-from thirdparty.six import unichr as _unichr
++from six import unichr as _unichr
+ 
+ def pivotDumpTable(table, colList, count=None, blind=True, alias=None):
+     lengths = {}
+diff --git a/sqlmap/lib/utils/purge.py b/sqlmap/lib/utils/purge.py
+index 9886fb0..049ec5c 100644
+--- a/sqlmap/lib/utils/purge.py
++++ b/sqlmap/lib/utils/purge.py
+@@ -17,7 +17,7 @@ from lib.core.common import openFile
+ from lib.core.compat import xrange
+ from lib.core.convert import getUnicode
+ from lib.core.data import logger
+-from thirdparty.six import unichr as _unichr
++from six import unichr as _unichr
+ 
+ def purge(directory):
+     """
+diff --git a/sqlmap/lib/utils/search.py b/sqlmap/lib/utils/search.py
+index dd0b040..c512fff 100644
+--- a/sqlmap/lib/utils/search.py
++++ b/sqlmap/lib/utils/search.py
+@@ -33,8 +33,8 @@ from lib.core.settings import GOOGLE_REGEX
+ from lib.core.settings import HTTP_ACCEPT_ENCODING_HEADER_VALUE
+ from lib.core.settings import UNICODE_ENCODING
+ from lib.request.basic import decodePage
+-from thirdparty.six.moves import http_client as _http_client
+-from thirdparty.six.moves import urllib as _urllib
++from six.moves import http_client as _http_client
++from six.moves import urllib as _urllib
+ from thirdparty.socks import socks
+ 
+ def _search(dork):
+diff --git a/sqlmap/lib/utils/sqlalchemy.py b/sqlmap/lib/utils/sqlalchemy.py
+index 586eb7f..4a17f54 100644
+--- a/sqlmap/lib/utils/sqlalchemy.py
++++ b/sqlmap/lib/utils/sqlalchemy.py
+@@ -38,8 +38,8 @@ from lib.core.exception import SqlmapConnectionException
+ from lib.core.exception import SqlmapFilePathException
+ from lib.core.exception import SqlmapMissingDependence
+ from plugins.generic.connector import Connector as GenericConnector
+-from thirdparty import six
+-from thirdparty.six.moves import urllib as _urllib
++import six
++from six.moves import urllib as _urllib
+ 
+ def getSafeExString(ex, encoding=None):  # Cross-referenced function
+     raise NotImplementedError
+diff --git a/sqlmap/plugins/dbms/maxdb/enumeration.py b/sqlmap/plugins/dbms/maxdb/enumeration.py
+index b676f69..0941086 100644
+--- a/sqlmap/plugins/dbms/maxdb/enumeration.py
++++ b/sqlmap/plugins/dbms/maxdb/enumeration.py
+@@ -26,8 +26,8 @@ from lib.core.settings import CURRENT_DB
+ from lib.utils.brute import columnExists
+ from lib.utils.pivotdumptable import pivotDumpTable
+ from plugins.generic.enumeration import Enumeration as GenericEnumeration
+-from thirdparty import six
+-from thirdparty.six.moves import zip as _zip
++import six
++from six.moves import zip as _zip
+ 
+ class Enumeration(GenericEnumeration):
+     def __init__(self):
+diff --git a/sqlmap/plugins/dbms/mssqlserver/enumeration.py b/sqlmap/plugins/dbms/mssqlserver/enumeration.py
+index b27be56..4f9edec 100644
+--- a/sqlmap/plugins/dbms/mssqlserver/enumeration.py
++++ b/sqlmap/plugins/dbms/mssqlserver/enumeration.py
+@@ -32,7 +32,7 @@ from lib.core.exception import SqlmapNoneDataException
+ from lib.core.settings import CURRENT_DB
+ from lib.request import inject
+ from plugins.generic.enumeration import Enumeration as GenericEnumeration
+-from thirdparty import six
++import six
+ 
+ class Enumeration(GenericEnumeration):
+     def getPrivileges(self, *args, **kwargs):
+diff --git a/sqlmap/plugins/dbms/sybase/enumeration.py b/sqlmap/plugins/dbms/sybase/enumeration.py
+index 1d22930..c078e4c 100644
+--- a/sqlmap/plugins/dbms/sybase/enumeration.py
++++ b/sqlmap/plugins/dbms/sybase/enumeration.py
+@@ -29,8 +29,8 @@ from lib.core.settings import CURRENT_DB
+ from lib.utils.brute import columnExists
+ from lib.utils.pivotdumptable import pivotDumpTable
+ from plugins.generic.enumeration import Enumeration as GenericEnumeration
+-from thirdparty import six
+-from thirdparty.six.moves import zip as _zip
++import six
++from six.moves import zip as _zip
+ 
+ class Enumeration(GenericEnumeration):
+     def getUsers(self):
+diff --git a/sqlmap/plugins/generic/custom.py b/sqlmap/plugins/generic/custom.py
+index dbfd589..a0387c6 100644
+--- a/sqlmap/plugins/generic/custom.py
++++ b/sqlmap/plugins/generic/custom.py
+@@ -26,7 +26,7 @@ from lib.core.settings import NULL
+ from lib.core.settings import PARAMETER_SPLITTING_REGEX
+ from lib.core.shell import autoCompletion
+ from lib.request import inject
+-from thirdparty.six.moves import input as _input
++from six.moves import input as _input
+ 
+ class Custom(object):
+     """
+diff --git a/sqlmap/plugins/generic/databases.py b/sqlmap/plugins/generic/databases.py
+index 02e8ca0..726cfc8 100644
+--- a/sqlmap/plugins/generic/databases.py
++++ b/sqlmap/plugins/generic/databases.py
+@@ -55,7 +55,7 @@ from lib.core.settings import VERTICA_DEFAULT_SCHEMA
+ from lib.request import inject
+ from lib.utils.brute import columnExists
+ from lib.utils.brute import tableExists
+-from thirdparty import six
++import six
+ 
+ class Databases(object):
+     """
+diff --git a/sqlmap/plugins/generic/entries.py b/sqlmap/plugins/generic/entries.py
+index f6e8c01..40183fc 100644
+--- a/sqlmap/plugins/generic/entries.py
++++ b/sqlmap/plugins/generic/entries.py
+@@ -49,8 +49,8 @@ from lib.core.settings import UPPER_CASE_DBMSES
+ from lib.request import inject
+ from lib.utils.hash import attackDumpedTable
+ from lib.utils.pivotdumptable import pivotDumpTable
+-from thirdparty import six
+-from thirdparty.six.moves import zip as _zip
++import six
++from six.moves import zip as _zip
+ 
+ class Entries(object):
+     """
+diff --git a/sqlmap/plugins/generic/search.py b/sqlmap/plugins/generic/search.py
+index 384936a..4847d0f 100644
+--- a/sqlmap/plugins/generic/search.py
++++ b/sqlmap/plugins/generic/search.py
+@@ -38,7 +38,7 @@ from lib.core.settings import UPPER_CASE_DBMSES
+ from lib.request import inject
+ from lib.utils.brute import columnExists
+ from lib.utils.brute import tableExists
+-from thirdparty import six
++import six
+ 
+ class Search(object):
+     """
+diff --git a/sqlmap/plugins/generic/users.py b/sqlmap/plugins/generic/users.py
+index 27bed7e..92b34c1 100644
+--- a/sqlmap/plugins/generic/users.py
++++ b/sqlmap/plugins/generic/users.py
+@@ -47,7 +47,7 @@ from lib.request import inject
+ from lib.utils.hash import attackCachedUsersPasswords
+ from lib.utils.hash import storeHashesToFile
+ from lib.utils.pivotdumptable import pivotDumpTable
+-from thirdparty.six.moves import zip as _zip
++from six.moves import zip as _zip
+ 
+ class Users(object):
+     """
+diff --git a/sqlmap/thirdparty/multipart/multipartpost.py b/sqlmap/thirdparty/multipart/multipartpost.py
+index 5ea37cc..e47a857 100644
+--- a/sqlmap/thirdparty/multipart/multipartpost.py
++++ b/sqlmap/thirdparty/multipart/multipartpost.py
+@@ -30,7 +30,7 @@ import sys
+ from lib.core.compat import choose_boundary
+ from lib.core.convert import getBytes
+ from lib.core.exception import SqlmapDataException
+-from thirdparty.six.moves import urllib as _urllib
++from six.moves import urllib as _urllib
+ 
+ # Controls how sequences are uncoded. If true, elements may be given
+ # multiple values by assigning a sequence.

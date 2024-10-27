@@ -1,0 +1,61 @@
+# Contributor: ProgCat <progcat@protonmail.com>
+# Maintainer: Lindsay Zhou <i@lin.moe>
+pkgname=fcitx5-configtool
+pkgver=5.1.6
+pkgrel=0
+pkgdesc="A configure tool for Fcitx5"
+url="https://github.com/fcitx/fcitx5-configtool"
+arch="all !armhf"
+license="GPL-2.0-or-later"
+makedepends="
+	cmake
+	extra-cmake-modules
+	fcitx5-dev
+	fcitx5-qt-dev
+	gettext-dev
+	iso-codes
+	iso-codes-dev
+	kcoreaddons5-dev
+	kdeclarative5-dev
+	ki18n5-dev
+	kiconthemes5-dev
+	kirigami2-dev
+	kpackage5-dev
+	kwidgetsaddons5-dev
+	libxkbcommon-dev
+	libxkbfile-dev
+	qt6-qtsvg-dev
+	libplasma-dev
+	qt6-qtdeclarative-dev
+	samurai
+	xkeyboard-config-dev
+	"
+subpackages="$pkgname-lang"
+source="$pkgname-$pkgver.tar.gz::https://github.com/fcitx/fcitx5-configtool/archive/refs/tags/$pkgver.tar.gz"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja\
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DUSE_QT6=True \
+		-DCMAKE_BUILD_TYPE=None \
+		$CMAKE_CROSSOPTS
+	cmake --build build
+}
+
+check() {
+	cd build
+	CTEST_OUTPUT_ON_FAILURE=TRUE ctest
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+04be9b4234b1364ce5a843ad49d5cd07b20f171e1d575338e95dcd00480a103db6f7fca06fbc278191707c468e035a54060fe8b3139143c27c990612d437e06d  fcitx5-configtool-5.1.6.tar.gz
+"

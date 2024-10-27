@@ -1,0 +1,75 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=gnome-boxes
+pkgver=47.0
+pkgrel=0
+pkgdesc="Virtualization made simple"
+url="https://wiki.gnome.org/Apps/Boxes"
+arch="all"
+license="GPL-2.0-only"
+makedepends="
+	desktop-file-utils
+	freerdp-dev
+	glib-dev
+	gtk+3.0-dev
+	gtk-vnc-dev
+	gtksourceview4-dev
+	itstool
+	libarchive-dev
+	libgudev-dev
+	libhandy1-dev
+	libosinfo-dev
+	libportal-dev
+	libsecret-dev
+	libsoup3-dev
+	libusb-dev
+	libvirt-glib-dev
+	libxml2-dev
+	meson
+	spice-gtk-dev
+	tinysparql-dev
+	vala
+	vte3-dev
+	webkit2gtk-4.1-dev
+	"
+depends="
+	libvirt-qemu
+	qemu
+	qemu-audio-spice
+	qemu-chardev-spice
+	qemu-img
+	qemu-hw-display-qxl
+	qemu-hw-display-virtio-gpu
+	qemu-hw-display-virtio-vga
+	qemu-hw-usb-redirect
+	"
+case $CARCH in
+	x86_64) depends="$depends qemu-system-x86_64";;
+	x86) depends="$depends qemu-system-i386";;
+	aarch64) depends="$depends qemu-system-aarch64";;
+esac
+subpackages="$pkgname-lang $pkgname-doc"
+source="https://download.gnome.org/sources/gnome-boxes/${pkgver%%.*}/gnome-boxes-$pkgver.tar.xz
+	add-smartcard-disable-option.patch
+	"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dsmartcard=false \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+22c88a25fa37bcef6e1c1b5286419a71b1a01f020abf32de83d46e87cf2e5e6865b0c5f91284def1c38c50e282bac354cb8fb8c68dea6a8c92b75aa09ce03e65  gnome-boxes-47.0.tar.xz
+f66ee3b817856ad7a45723c656836f7097419ac0942544aaa04d646bd45480c07615e5a2e2a2987347dd6907fcd25ee9b0ac84bfdc6bbe8cdff919a99484827b  add-smartcard-disable-option.patch
+"

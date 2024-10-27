@@ -1,0 +1,35 @@
+# Contributor: Zach DeCook <zachdecook@librem.one>
+# Maintainer: Zach DeCook <zachdecook@librem.one>
+pkgname=hyprwayland-scanner
+pkgver=0.4.0
+pkgrel=0
+pkgdesc="Hyprland implementation of wayland-scanner for C++"
+url="https://github.com/hyprwm/hyprwayland-scanner"
+arch="all"
+license="BSD-3-Clause"
+source="https://github.com/hyprwm/hyprwayland-scanner/archive/v$pkgver/hyprwayland-scanner-v$pkgver.tar.gz"
+makedepends="cmake pugixml-dev"
+subpackages="$pkgname-doc"
+
+build() {
+	cmake -B build \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DCMAKE_BUILD_TYPE=None
+	cmake --build build
+}
+
+check() {
+	cd build
+	CTEST_OUTPUT_ON_FAILURE=TRUE ctest
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+	install -Dm644 LICENSE "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+}
+
+
+sha512sums="
+1b7b0ddea94bd2679150a7a6d80628d1156ae11d6963fe31fd6d7292cb1d9c273830bb4515032d0645649e56b57c2d64c5312b007ea11480bb798ea43582fe9c  hyprwayland-scanner-v0.4.0.tar.gz
+"

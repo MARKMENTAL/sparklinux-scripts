@@ -1,0 +1,31 @@
+# Maintainer: Oliver Smith <ollieparanoid@postmarketos.org>
+pkgname=vermin
+pkgver=1.6.0
+pkgrel=1
+pkgdesc="Detect the minimum Python versions needed to run code"
+url="https://github.com/netromdk/vermin"
+arch="noarch"
+license="MIT"
+makedepends="py3-setuptools py3-gpep517 py3-installer py3-wheel"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/netromdk/vermin/archive/refs/tags/v$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 runtests.py
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+94159631f284284ced726f6847a3cb1ea6590b269b8af3bdb9064325506d82d8b3011323cc70b507d6ee1695c40684c577f04382f5f116639f16f7ada2e8d6fd  vermin-1.6.0.tar.gz
+"

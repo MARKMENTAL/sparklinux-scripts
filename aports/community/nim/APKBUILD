@@ -1,0 +1,132 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Contributor: Nicolas Lorin <androw95220@gmail.com>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+#
+# WARNING: There may be breakages!
+pkgname=nim
+pkgver=2.0.8
+pkgrel=0
+pkgdesc="A systems and applications programming language"
+url="https://nim-lang.org/"
+# loongarch64: build.sh not support loongarch64
+arch="all !s390x !loongarch64"
+license="MIT"
+depends="libucontext-dev"  # used by nims compiler
+_gdb_depends="$pkgname gdb"
+makedepends="$_gdb_depends"
+checkdepends="
+	gc-dev
+	nodejs
+	pcre
+	sqlite-libs
+	valgrind
+	"
+provides="niminst=$pkgver-r$pkgrel"  # backward compatibility (Alpine <3.20)
+subpackages="
+	$pkgname-dbg
+	$pkgname-gdb::noarch
+	$pkgname-dev
+	nimsuggest
+	"
+source="https://nim-lang.org/download/nim-$pkgver.tar.xz
+	niminst-fix-paths.patch
+	nim-config-fix-paths.patch
+	nim-gdb-fix-posix-and-sysroot.patch
+	nim-config-enable-ucontext.patch
+	"
+
+# Don't run tests on armhf and ppc64le, it'd take eternity...
+# Can't run tests on riscv64, no nodejs...
+# riscv64, loongarch64: no valgrind
+case "$CARCH" in
+	armhf | ppc64le | riscv64 | loongarch64) options="!check";;
+esac
+
+export NIMFLAGS="${NIMFLAGS-} ${JOBS:+"--parallelBuild:$JOBS"}"
+
+build() {
+	msg2 "Building nim csources..."
+	./build.sh
+
+	msg2 "Building koch..."
+	./bin/nim compile -d:release koch
+
+	msg2 "Building nim..."
+	./koch boot -d:release
+
+	msg2 "Building tools..."
+	./koch toolsNoExternal -d:release
+
+	msg2 "Building niminst..."
+	./bin/nim compile -d:release tools/niminst/niminst.nim
+}
+
+check() {
+	# XXX: Some tests fail!
+	./koch tests --pedantic --targets="c js" all || true
+}
+
+package() {
+	DESTDIR="$pkgdir" ./koch install /usr/bin
+
+	install -D -m 755 -t "$pkgdir"/usr/bin/ \
+		bin/nim-gdb \
+		bin/nim_dbg \
+		bin/nimgrep \
+		bin/nimpretty \
+		bin/nimsuggest \
+		bin/testament \
+		tools/niminst/niminst
+
+	install -D -m644 tools/debug/* -t "$pkgdir"/usr/lib/nim/tools/debug/
+
+	# This is imported from /usr/share/nimble/pkgs/nim-*/compiler/nimblecmd.nim.
+	mkdir -p "$pkgdir"/usr/share/nimble/pkgs/nim-$pkgver/dist
+	cp -r dist/checksums "$pkgdir"/usr/share/nimble/pkgs/nim-$pkgver/dist/
+
+	cd "$pkgdir"
+	rmdir usr/share/doc/nim
+	mkdir -p usr/include
+	local file; for file in usr/lib/nim/*.h; do
+		mv $file usr/include/
+		ln -s ../../include/${file##*/} usr/lib/nim/${file##*/}
+	done
+
+	# Fix wrong path for system.nim.
+	# https://github.com/nim-lang/Nim/issues/22369
+	ln -s . usr/lib/nim/lib
+}
+
+dbg() {
+	pkgdesc="$pkgdesc (debug build)"
+
+	amove usr/bin/nim_dbg
+}
+
+gdb() {
+	pkgdesc="$pkgdesc (gdb printers)"
+	depends="$_gdb_depends"
+
+	amove usr/bin/nim-gdb
+	amove usr/lib/nim/tools/debug
+}
+
+dev() {
+	pkgdesc="$pkgdesc (development files)"
+
+	amove usr/bin/testament
+}
+
+nimsuggest() {
+	pkgdesc="idetools for the nim language"
+
+	amove usr/bin/nimsuggest
+}
+
+sha512sums="
+e64abc379c046a9432515d1c8074a7e10ff72a1076663a5b7bdd39ae92852c98ba2cab96aa5e968fc31ca393e778e70b2392d6ab56bca7ac956d0176b4b69a83  nim-2.0.8.tar.xz
+26eb35cdaae908c96c20889b3561d0fb7ef3f6bdfe0c582eaa6122c7982a032a3e50174175dfb67b919b9e38691849d87966a9c093677774491e32b49eed3c6b  niminst-fix-paths.patch
+7667963a1f3370a7625c1ee6575239f20ea501b0ba8342f8dcea6020692411fc177e7f101edd81a48bb3885e1d1cbece2d6ecd1a4d7640f0f78de109a97eeea9  nim-config-fix-paths.patch
+4f94829c0e0692b5563f871779b53d3639ffe0926aaacfc54a346fbc56fdad999ddbbeda894f54a243ff21c05dbc29668b3ae93c01b319f573d1b585116e2334  nim-gdb-fix-posix-and-sysroot.patch
+4bff5b687fc4154a4b3c8e888e4fcdd2340acfcc87b1a5eeaa9feb173cadd6047bd73d68983461c1edcec232aca6014dbeab8efaedcf4d8a52662780de4b51d3  nim-config-enable-ucontext.patch
+"

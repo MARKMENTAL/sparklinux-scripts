@@ -1,0 +1,51 @@
+# Maintainer: Mike Crute <mike@crute.us>
+pkgname=newsboat
+pkgver=2.36
+pkgrel=0
+pkgdesc="RSS/Atom feed reader for text terminals"
+url="https://newsboat.org/"
+arch="all"
+license="MIT"
+replaces="newsbeuter"
+provides="newsbeuter=$pkgver-r$pkgrel"
+makedepends="asciidoctor cargo curl-dev gettext-dev libxml2-dev
+	ncurses-dev sqlite-dev stfl-dev json-c-dev"
+subpackages="$pkgname-doc $pkgname-lang"
+source="
+	https://newsboat.org/releases/$pkgver/newsboat-$pkgver.tar.xz
+	fix-version-number.patch
+	newsboat.desktop
+	"
+options="net" # cargo fetch
+
+# secfixes:
+#   2.30.1-r0:
+#     - CVE-2020-26235
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	./config.sh
+	echo "LDFLAGS+= -lintl" >> config.mk
+	make
+}
+
+check() {
+	make test
+}
+
+package() {
+	make DESTDIR="$pkgdir" prefix=/usr install
+	install -Dm644 "$srcdir"/newsboat.desktop \
+		"$pkgdir"/usr/share/applications/newsboat.desktop
+}
+
+sha512sums="
+4eb294281578d1a4582e00a0ea74c2cdae7583b7dfaf83958eee07b16bddf5627b5cee37e7023703dae17d3f9fe6e8d996bdca6b5729a4df74a0ca8e8be3db85  newsboat-2.36.tar.xz
+6ed838525a41e21a179f23f4f9728daea248a523a51db93c0c44e66cdc4258f5e1ee2f55bb561ac967884ce93178a1b12969fb8e6de0b0f3356e0ef85d6d170c  fix-version-number.patch
+47383e96fadb26db8c505add42efa354ec099abb0b2fbe366e6f860ba12cec864c7ec0e2ce274bec478eb623c62e8f0796029aed4132a365ff1707f537c2d272  newsboat.desktop
+"

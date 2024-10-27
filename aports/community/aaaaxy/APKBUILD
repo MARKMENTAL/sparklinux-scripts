@@ -1,0 +1,66 @@
+# Contributor: Rudolf Polzer <divVerent@gmail.com>
+# Maintainer: Rudolf Polzer <divVerent@gmail.com>
+pkgname=aaaaxy
+pkgver=1.5.202
+pkgrel=0
+pkgdesc="A nonlinear puzzle platformer taking place in impossible spaces"
+url="https://divVerent.github.io/aaaaxy/"
+arch="all !s390x !armhf !armv7 !riscv64 !loongarch64"
+license="Apache-2.0"
+makedepends="
+	advancecomp
+	alsa-lib-dev
+	go
+	libx11-dev
+	libxcursor-dev
+	libxinerama-dev
+	libxi-dev
+	libxrandr-dev
+	mesa-dev
+	zip
+"
+checkdepends="xvfb-run mesa-dri-gallium"
+source="
+	https://github.com/divVerent/aaaaxy/archive/v$pkgver/aaaaxy-$pkgver.tar.gz
+	https://github.com/divVerent/aaaaxy/releases/download/v$pkgver/sdl-gamecontrollerdb-for-aaaaxy-v$pkgver.zip
+"
+options="net"  # Needed for go mod download.
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+prepare() {
+	default_prepare
+
+	mv "$srcdir"/third_party/SDL_GameControllerDB/assets/input/* \
+		third_party/SDL_GameControllerDB/assets/input/
+	go mod download
+}
+
+build() {
+	export AAAAXY_BUILD_USE_VERSION_FILE=true
+	make BUILDTYPE=release
+}
+
+check() {
+	xvfb-run sh scripts/regression-test-demo.sh aaaaxy \
+		"on track for Any%, All Paths, No Teleports and No Coil" \
+		./aaaaxy assets/demos/benchmark.dem
+}
+
+package() {
+	install -Dm644 io.github.divverent.aaaaxy.metainfo.xml \
+		"$pkgdir"/usr/share/metainfo/io.github.divverent.aaaaxy.metainfo.xml
+	install -Dm644 aaaaxy.png \
+		"$pkgdir"/usr/share/icons/hicolor/128x128/apps/aaaaxy.png
+	install -Dm644 aaaaxy.desktop \
+		"$pkgdir"/usr/share/applications/aaaaxy.desktop
+	install -Dm755 aaaaxy \
+		"$pkgdir"/usr/bin/aaaaxy
+}
+
+sha512sums="
+053015aff1b158b69f19df1a22b4ad3f5fdfed95e336fb36939f82669e1db2aabfc71f48b4974bf87543434369b4a453a8589e5f8b6d38d625c2fecaba50ff6b  aaaaxy-1.5.202.tar.gz
+f44279b805eefb38e8d457049dd57a5e1795065295b31d6d90a3e33353151055bf70c51b78f73d2f497d86a8c6fa690c2d3c0efe556a028b7b421ee102caa1c9  sdl-gamecontrollerdb-for-aaaaxy-v1.5.202.zip
+"

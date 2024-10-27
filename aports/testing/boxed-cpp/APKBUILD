@@ -1,0 +1,35 @@
+# Contributor: Matthias Ahouansou <matthias@ahouansou.cz>
+# Maintainer: Matthias Ahouansou <matthias@ahouansou.cz>
+pkgname=boxed-cpp
+pkgver=1.4.2
+pkgrel=0
+pkgdesc="Boxing primitive types in C++"
+url="https://contour-terminal.org"
+arch="noarch"
+license="Apache-2.0"
+makedepends="catch2-3 cmake samurai"
+subpackages="$pkgname-dev $pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/contour-terminal/boxed-cpp/archive/refs/tags/v$pkgver.tar.gz"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DBUILD_SHARED_LIBS=ON \
+		-DBOXED_CPP_TESTS=ON \
+		-DCMAKE_INSTALL_PREFIX=/usr
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build -C Release --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	install -Dm 644 LICENSE.txt "$pkgdir"/usr/share/licenses/"$pkgname"/LICENSE
+}
+
+sha512sums="
+4e83be8a88bb639b1b2bb3d902664904af6d247767c606bfd4236728e57c4c35bfa8756e643a8a80edb6992ca7de79fac8400663c5a195afd7dff9ec2210e97f  boxed-cpp-1.4.2.tar.gz
+"

@@ -1,0 +1,57 @@
+# Contributor: Antoine Martin (ayakael) <dev@ayakael.net>
+# Maintainer: Antoine Martin (ayakael) <dev@ayakael.net>
+pkgname=py3-django-redis
+_pyname=django-redis
+pkgver=5.4.0
+pkgrel=2
+arch="noarch"
+pkgdesc="Full featured redis cache backend for Django."
+url="https://pypi.python.org/project/django-redis"
+license="BSD-3-Clause"
+depends="
+	py3-django
+	"
+makedepends="
+	py3-setuptools
+	py3-wheel
+	py3-gpep517
+	py3-redis
+	"
+checkdepends="
+	py3-pytest
+	py3-pytest-django
+	py3-pytest-cov
+	py3-pytest-mock
+	py3-msgpack
+	valkey
+	"
+source="$pkgname-$pkgver.tar.gz::https://pypi.io/packages/source/d/django-redis/django-redis-$pkgver.tar.gz"
+builddir="$srcdir"/$_pyname-$pkgver
+subpackages="$pkgname-pyc"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	valkey-server &
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	PYTHONPATH=tests \
+	.testenv/bin/python3 -m pytest -v || local FAIL=true
+	pkill valkey-server
+	if [ "$FAIL" = "true" ]; then
+		return 1
+	fi
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+12eb85ee3ce2c8fcf013c804a630bd3eb943de0980d1f6d365b5b5ed762ab956db80329f3e170f330ccc5b9e6f178ffa7938b1880477b7fb609d2cc3680b984a  py3-django-redis-5.4.0.tar.gz
+"

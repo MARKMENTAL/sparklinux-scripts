@@ -1,0 +1,43 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Pablo Correa Gomez <ablocorrea@hotmail.com>
+pkgname=libxmlb
+pkgver=0.3.19
+pkgrel=0
+pkgdesc="Library to help create and query binary XML blobs"
+url="https://github.com/hughsie/libxmlb"
+arch="all"
+license="LGPL-2.1-or-later"
+makedepends="meson glib-dev gobject-introspection-dev xz-dev zstd-dev"
+checkdepends="shared-mime-info"
+subpackages="$pkgname-dev:_dev $pkgname-dbg $pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/hughsie/libxmlb/archive/refs/tags/$pkgver.tar.gz"
+
+build() {
+	abuild-meson \
+		-Dgtkdoc=false \
+		-Dtests=true \
+		-Dstemmer=false \
+		-Dintrospection=true \
+		output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+	rm -rf "$pkgdir"/usr/share/installed-tests
+	rm -rf "$pkgdir"/usr/libexec/installed-tests
+}
+
+_dev() {
+	default_dev
+
+	amove usr/bin/xb-tool
+}
+
+sha512sums="
+07db2e99b2f78f6e99cccbf5ca250978955d5a9bf18aaa675b2292d1df438fc3f98a5d0e8ddcfa41e686782f35947fe92b54b520b4e6e278d6e5c871e7491271  libxmlb-0.3.19.tar.gz
+"

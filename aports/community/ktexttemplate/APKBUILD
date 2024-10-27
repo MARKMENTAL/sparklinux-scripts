@@ -1,0 +1,53 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: team/kde <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=kde-frameworks
+pkgname=ktexttemplate
+pkgver=6.6.0
+pkgrel=0
+pkgdesc="Library to allow application developers to separate the structure of documents from the data they contain"
+arch="all !armhf" # armhf blocked by extra-cmake-modules
+url="https://community.kde.org/Frameworks"
+license="LGPL-2.0-or-later AND LGPL-2.1-or-later"
+makedepends="
+	doxygen
+	extra-cmake-modules
+	qt6-qtbase-dev
+	samurai
+	graphviz
+	qt6-qttools-dev
+	"
+checkdepends="xvfb-run"
+subpackages="$pkgname-dev $pkgname-doc"
+_repo_url="https://invent.kde.org/frameworks/ktexttemplate.git"
+source="https://download.kde.org/stable/frameworks/${pkgver%.*}/ktexttemplate-$pkgver.tar.xz"
+
+build() {
+	# Tests fail with -O2 on aarch64
+	# https://lists.debian.org/debian-arm/2024/08/msg00038.html
+	case "$CARCH" in
+		aarch64)
+			export CFLAGS="$CFLAGS -O1"
+			export CXXFLAGS="$CXXFLAGS -O1"
+			;;
+	esac
+
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_QCH=ON
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+sha512sums="
+accb2bb4ee481467cf223ba8eff49c8266d41f6430de5c3619bb5741a3e5d47a2edea991b9b9dd0c165427c0fcd44858b3733b73d5b7c4ba8ff816489f61d8a6  ktexttemplate-6.6.0.tar.xz
+"

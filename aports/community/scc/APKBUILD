@@ -1,0 +1,31 @@
+# Contributor: Andrej Kolchin <KAAtheWise@protonmail.com>
+# Maintainer: Andrej Kolchin <KAAtheWise@protonmail.com>
+pkgname=scc
+pkgver=3.3.5
+pkgrel=0
+pkgdesc="Very fast accurate code counter with complexity calculations and COCOMO estimates written in pure Go"
+url="https://github.com/boyter/scc"
+arch="all"
+license="MIT"
+makedepends="go"
+source="$pkgname-$pkgver.tar.gz::https://github.com/boyter/scc/archive/v$pkgver.tar.gz"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -v -o bin/scc
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	install -Dm755 bin/scc -t "$pkgdir"/usr/bin
+}
+
+sha512sums="
+f878c70e65564c5202a4e813a963e4f275a38858e90bdbf027cadc2b9dac15380efb40ec845a4a7f0966f4be5f0456118697251478fcf2f5f13e326aa847c173  scc-3.3.5.tar.gz
+"

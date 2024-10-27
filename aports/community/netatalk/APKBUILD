@@ -1,0 +1,85 @@
+# Contributor: Alexander Rigbo <alex@dnb.nu>
+# Maintainer: Alexander Rigbo <alex@dnb.nu>
+pkgname=netatalk
+pkgver=3.1.18
+pkgrel=0
+pkgdesc="Open Source AFP fileserver"
+url="https://github.com/Netatalk/Netatalk"
+arch="all"
+license="GPL-2.0-or-later"
+options="suid"  # needed for /usr/bin/afppasswd
+makedepends="acl-dev attr-dev file libevent-dev libgcrypt-dev mariadb-connector-c-dev tdb-dev db-dev"
+subpackages="$pkgname-doc $pkgname-dev $pkgname-openrc"
+source="https://github.com/Netatalk/Netatalk/releases/download/netatalk-${pkgver//./-}/netatalk-$pkgver.tar.xz
+	netatalk.initd
+	statedir.patch
+	"
+
+# secfixes:
+#   3.1.18-r0:
+#     - CVE-2022-22995
+#   3.1.17-r0:
+#     - CVE-2023-42464
+#   3.1.15-r0:
+#     - CVE-2022-43634
+#     - CVE-2022-45188
+#   3.1.13-r0:
+#     - CVE-2021-31439
+#     - CVE-2022-23121
+#     - CVE-2022-23123
+#     - CVE-2022-23122
+#     - CVE-2022-23125
+#     - CVE-2022-23124
+#     - CVE-2022-0194
+#   3.1.12-r0:
+#     - CVE-2018-1160
+
+build() {
+	# Notes:
+	#  --without-libevent - don't use *bundled* libevent
+	#  --without-tdb - don't use *bundled* tdb
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var/lib \
+		--disable-static \
+		--disable-silent-rules \
+		--disable-zeroconf \
+		--disable-tcp-wrappers \
+		--enable-overwrite \
+		--without-libiconv \
+		--without-pam \
+		--with-shadow \
+		--without-kerberos \
+		--without-ldap \
+		--with-acls \
+		--without-tdb \
+		--without-dtrace \
+		--without-afpstats \
+		--without-cnid-cdb-backend \
+		--with-lockfile=/var/lock/netatalk
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	# We don't build with dbug support.
+	rm "$pkgdir"/etc/dbus-session.conf
+	rm "$pkgdir"/usr/bin/afpstats
+
+	install -m 755 -D "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
+}
+
+sha512sums="
+06c56754afacbf9c71dc2ab7b80c231f5c25f522967e1d825b4e9e129233528bd1e7101144239b52636b9efe7f1f86a37749da8a8af611169155bca9711798d0  netatalk-3.1.18.tar.xz
+c4dc6b1967f4b86ee2f1cfc480edab5467fb1f67fd0cbbed23c8454568d0aaceeedaa23db90f8ca5b47f24d346f72d5e12307557edfeeefcbee003f85c56cced  netatalk.initd
+25dd36abb7e5e1371537ac7bd1ab5779f19adcb4021367f8311c9e87190ede4cb2d6dceadec173659ddfa875f9c6f25791dae32b23f36e7a91f88a84dc5dd1a7  statedir.patch
+"

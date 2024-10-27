@@ -1,0 +1,35 @@
+# Contributor: Celeste <cielesti@protonmail.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=nickle
+pkgver=2.97
+pkgrel=0
+pkgdesc="Desk calculator language with C-like syntax"
+url="https://nickle.org/"
+arch="all"
+license="MIT"
+makedepends="readline-dev"
+subpackages="$pkgname-dev $pkgname-doc"
+source="https://nickle.org/release/nickle-$pkgver.tar.gz"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+8add9b0b908a3273fecc00d76aaaabfb3b86872c3dab9a9fe7dae45c98c2c45dca16c2234887c195733360db6a3377041a8b4428b64686792aa08e9c8c561309  nickle-2.97.tar.gz
+"

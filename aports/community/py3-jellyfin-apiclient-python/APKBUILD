@@ -1,0 +1,32 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=py3-jellyfin-apiclient-python
+pkgver=1.9.2
+pkgrel=4
+pkgdesc="Python API client for Jellyfin"
+url="https://github.com/jellyfin/jellyfin-apiclient-python"
+arch="noarch"
+license="GPL-3.0-only"
+depends="
+	py3-requests
+	py3-urllib3
+	py3-websocket-client
+	python3
+	"
+makedepends="py3-setuptools"
+subpackages="$pkgname-pyc"
+source="https://pypi.python.org/packages/source/j/jellyfin-apiclient-python/jellyfin-apiclient-python-$pkgver.tar.gz"
+options="!check" # No tests
+builddir="$srcdir/jellyfin-apiclient-python-$pkgver"
+
+build() {
+	python3 setup.py build
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+e7e5805abc78885311ada504e45ee9e6dba4bdea2d09dc2a3d38016de890a9b0cc346d9948161e3ab1b96075ce19e66c2be9ea8a367650d551a53ca1d7ae209b  jellyfin-apiclient-python-1.9.2.tar.gz
+"

@@ -1,0 +1,59 @@
+# Maintainer: Daniel Sabogal <dsabogalcc@gmail.com>
+pkgname=numactl
+pkgver=2.0.18
+pkgrel=0
+pkgdesc="Simple NUMA policy support"
+url="https://github.com/numactl/numactl"
+arch="all"
+license="LGPL-2.1-only"
+makedepends="linux-headers"
+subpackages="$pkgname-dev $pkgname-doc $pkgname-tools"
+source="https://github.com/numactl/numactl/releases/download/v$pkgver/numactl-$pkgver.tar.gz"
+
+case "$CARCH" in
+ppc64le)
+	# no numa support in builder's kernel
+	options="$options !check"
+	;;
+esac
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--mandir=/usr/share/man
+	make
+}
+
+check() {
+	local tests="test/nodemap test/tbitmap"
+
+	# riscv64 builder: "FAIL test/distance (exit status: 139)"
+	case "$CARCH" in
+	riscv64) ;;
+	*)
+		tests="test/distance $tests"
+		;;
+	esac
+
+	make check VERBOSE=1 TESTS="$tests"
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	# provided by linux man-pages
+	rm -r "$pkgdir"/usr/share/man/man2
+}
+
+tools() {
+	pkgdesc="NUMA policy control tools"
+	license="GPL-2.0-only"
+
+	amove usr/bin
+}
+
+sha512sums="
+17abe7a3744065edb5ec1e27135873629031c509313809ca99e0d9254f7a5cb00cce5b32173e811e9b9d7cb407aabdcbe3c6be6e3b094ad3e7d696a154b7f1ec  numactl-2.0.18.tar.gz
+"

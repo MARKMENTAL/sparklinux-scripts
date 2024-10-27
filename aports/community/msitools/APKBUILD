@@ -1,0 +1,42 @@
+# Maintainer: André Klitzing <aklitzing@gmail.com>
+pkgname=msitools
+pkgver=0.103
+pkgrel=0
+pkgdesc="Set of programs to inspect and build Windows Installer (.MSI) files"
+url="https://wiki.gnome.org/msitools"
+# s390x: test failures imply broken on big endian
+arch="all !s390x"
+license="GPL-2.0-or-later LGPL-2.1-or-later"
+makedepends="
+	bison
+	gobject-introspection-dev
+	libgcab-dev
+	libgsf-dev
+	meson
+	perl
+	vala
+	"
+checkdepends="bash"
+subpackages="
+	$pkgname-dev
+	$pkgname-lang
+	$pkgname-bash-completion
+	"
+source="https://download.gnome.org/sources/msitools/$pkgver/msitools-$pkgver.tar.xz"
+
+build() {
+	abuild-meson -Db_lto=true . output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+ecff178cf25a7789a97901005c4d05ab0a0815377bf91385a65497b7f53c33d9e83b9348c3fc1d05b9c0fbdda89358ae4f05d8ee89017c585e41f7e399b2685c  msitools-0.103.tar.xz
+"

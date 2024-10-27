@@ -1,0 +1,60 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=diffoscope
+pkgver=274
+pkgrel=0
+pkgdesc="In-depth comparison of files, archives, and directories"
+url="https://diffoscope.org/"
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="
+	py3-libarchive-c
+	py3-magic
+	"
+makedepends="
+	py3-docutils
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	python3-dev
+	"
+checkdepends="
+	bzip2
+	cdrkit
+	gzip
+	libarchive-tools
+	openssh-client-default
+	py3-html2text
+	py3-pytest
+	py3-pytest-xdist
+	unzip
+	xz
+	"
+subpackages="$pkgname-pyc"
+source="https://salsa.debian.org/reproducible-builds/diffoscope/-/archive/$pkgver/diffoscope-$pkgver.tar.gz"
+
+# secfixes:
+#   256-r0:
+#     - CVE-2024-25711
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	# html test fails
+	PYTHONDONTWRITEBYTECODE=1 \
+	.testenv/bin/python3 -m pytest -n auto -k 'not test_diff'
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+c209c6d8c59788de33211c3ade7d291e80289fc78895ac12d4fe23cdc992eb35b4ba015cd7e71f24bde17bfb22afbf6fc093bd22ff3c8e76e87578aef468aead  diffoscope-274.tar.gz
+"

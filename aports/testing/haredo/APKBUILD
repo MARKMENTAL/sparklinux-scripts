@@ -1,0 +1,31 @@
+# Maintainer: Umar Getagazov <umar@handlerug.me>
+pkgname=haredo
+pkgver=1.0.4
+pkgrel=1
+pkgdesc="Simple, Unix-idiomatic build automator"
+url="https://sr.ht/~autumnull/haredo"
+arch="x86_64 aarch64 riscv64" # Hare
+license="WTFPL"
+makedepends="hare scdoc"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://git.sr.ht/~autumnull/haredo/archive/$pkgver.tar.gz"
+
+build() {
+	# https://todo.sr.ht/~sircmpwn/hare/784
+	unset LDFLAGS
+	./bootstrap.sh
+}
+
+check() {
+	PATH="$builddir/bin:$PATH" haredo test
+}
+
+package() {
+	# TODO remove path overwrite when patch is applied
+	# https://lists.sr.ht/~autumnull/haredo-devel/patches/46957
+	PREFIX="$pkgdir"/usr PATH="$builddir/bin:$PATH" ./bootstrap.sh install
+}
+
+sha512sums="
+a2063c706291b8fdec2cee34983ca415d070d51fa1c7cd9cc843be232fecc7c6027c2376f209d6f7e00c332f5eda7b1b28988c0d7135d54e882c9342966566b0  haredo-1.0.4.tar.gz
+"

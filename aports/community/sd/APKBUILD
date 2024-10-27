@@ -1,0 +1,49 @@
+# Contributor: Chloe Kudryavtsev <code@toast.bunkerlabs.net>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=sd
+pkgver=1.0.0
+pkgrel=0
+pkgdesc="An intuitive find & replace CLI"
+url="https://github.com/chmln/sd"
+arch="all"
+license="MIT"
+options="net"
+makedepends="cargo cargo-auditable"
+source="$pkgname-$pkgver.tar.gz::https://github.com/chmln/sd/archive/v$pkgver.tar.gz
+	cargo-update-libc.patch"
+subpackages="$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-zsh-completion
+	$pkgname-fish-completion
+	"
+
+export CARGO_HOME="$srcdir"/cargo
+
+build() {
+	cargo auditable build \
+		--release \
+		--verbose
+}
+
+check() {
+	cargo test --all \
+		--release \
+		--verbose
+}
+
+package() {
+	install -Dm755 target/release/"$pkgname" "$pkgdir"/usr/bin/"$pkgname"
+
+	# doc
+	install -Dm644 gen/sd.1 -t "$pkgdir"/usr/share/man/man1
+
+	# comp
+	install -Dm644 gen/completions/sd.bash "$pkgdir"/usr/share/bash-completion/completions/sd
+	install -Dm644 gen/completions/sd.fish "$pkgdir"/usr/share/fish/vendor_completions.d/sd.fish
+	install -Dm644 gen/completions/_sd "$pkgdir"/usr/share/zsh/site-functions/_sd
+}
+
+sha512sums="
+33ffbbaeb4d3829a231e3e0b9d8b3f07443a708aef46d976139329466b06038b3e83ecaf57c69df89ad5dc9528f7a54f678fc7081e015db9c00dd381323ed7a5  sd-1.0.0.tar.gz
+bcc8eeacd57909c7e596e2d20ca2528d4be31782a3c0e4af30c8a53b8cbecb72fc11516f8e8961632115f239b96a2ded8c50a4ee7a97b8012bae5d53938edf58  cargo-update-libc.patch
+"

@@ -1,0 +1,38 @@
+# Contributor: Orhun Parmaksız <orhunparmaksiz@gmail.com>
+# Maintainer: Orhun Parmaksız <orhunparmaksiz@gmail.com>
+pkgname=rustypaste-cli
+pkgver=0.9.1
+pkgrel=0
+pkgdesc="CLI tool for rustypaste"
+url="https://github.com/orhun/rustypaste-cli"
+# loongarch64: blocked by libc crate
+arch="all !loongarch64"
+license="MIT"
+makedepends="cargo cargo-auditable"
+subpackages="$pkgname-doc"
+options="net"
+source="$pkgname-$pkgver.tar.gz::https://github.com/orhun/rustypaste-cli/archive/v$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release --features use-native-certs
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm 755 "target/release/rpaste" -t "$pkgdir/usr/bin"
+	install -Dm 644 README.md -t "$pkgdir/usr/share/doc/$pkgname"
+	install -Dm 644 LICENSE -t "$pkgdir/usr/share/licenses/$pkgname"
+}
+
+sha512sums="
+39aeb764f345b0aaa8c67e0434b609a52294ec7afb141c535230509fcea403fdd8223a7703e5635036049457f781b3ba1401e620ddae54941c44a15b67d1a23c  rustypaste-cli-0.9.1.tar.gz
+"

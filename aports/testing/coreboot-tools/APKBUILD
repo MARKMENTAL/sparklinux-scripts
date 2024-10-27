@@ -1,0 +1,84 @@
+# Contributor: Nulo <alpine@nulo.in>
+# Maintainer: Adam Thiede <me@adamthiede.com>
+pkgname=coreboot-tools
+pkgver=24.08
+pkgrel=0
+pkgdesc="Tools from the coreboot project"
+url="https://review.coreboot.org/coreboot"
+# coreboot only runs on x86_64 and x86 systems
+arch="x86 x86_64"
+license="GPL-2.0-only"
+
+makedepends="
+	inkscape
+	meson
+	pciutils-dev
+	qt5-qtbase-dev
+	qt5-qttools-dev
+	qt5-qtsvg-dev
+	yaml-cpp-dev
+	zlib-dev
+	"
+subpackages="$pkgname-intelmetool $pkgname-ectool $pkgname-nvramtool $pkgname-nvramtool-doc:nvramtool_doc:noarch $pkgname-ifdtool $pkgname-configurator"
+source="
+https://coreboot.org/releases/coreboot-$pkgver.tar.xz
+"
+builddir="$srcdir/coreboot-$pkgver"
+options="!check" # no test suite
+
+build() {
+	make -C util/intelmetool CFLAGS+="-I $builddir/src/commonlib/bsd/include"
+	make -e -C util/ectool
+	make -e -C util/nvramtool CFLAGS="$CFLAGS -I. -DCMOS_HAL=1"
+	make -e -C util/ifdtool
+	abuild-meson -Db_lto=true util/coreboot-configurator util/coreboot-configurator/output
+	meson compile -C util/coreboot-configurator/output
+}
+
+package() {
+	make -e -C util/intelmetool PREFIX="$pkgdir/usr" install
+	make -e -C util/ectool PREFIX="$pkgdir/usr" install
+	make -e -C util/nvramtool PREFIX="$pkgdir/usr" install
+	make -e -C util/ifdtool PREFIX="$pkgdir/usr" install
+}
+
+intelmetool() {
+	pkgdesc="Dump interesting things about Management Engine"
+
+	amove usr/sbin/intelmetool
+}
+
+nvramtool() {
+	pkgdesc="Manipulates NVRAM from userspace"
+
+	amove usr/sbin/nvramtool
+}
+
+nvramtool_doc() {
+	pkgdesc="Manipulates NVRAM from userspace (documentation)"
+	install_if="$pkgname-nvramtool=$pkgver-r$pkgrel docs"
+
+	amove usr/share/man/man8/nvramtool*
+	gzip -9n "$subpkgdir"/usr/share/man/man8/*
+}
+
+ectool() {
+	pkgdesc="Dumps the RAM of a laptop’s Embedded/Environmental Controller (EC)"
+
+	amove usr/sbin/ectool
+}
+
+ifdtool() {
+	pkgdesc="Extract and dump Intel Firmware Descriptor information"
+
+	amove usr/bin/ifdtool
+}
+
+configurator() {
+	pkgdesc="Graphical NVRAMtool frontend"
+	DESTDIR="$subpkgdir" meson install --no-rebuild -C $builddir/util/coreboot-configurator/output
+}
+
+sha512sums="
+85da7b5cbc8285ceac2b9cddd3b8a9d4bf187f750cac63bcbcc946305f1175e9b59c1704e76c16992cc9ba6c9b19c04a2041fd3d3078c9075074e53ab4342f5a  coreboot-24.08.tar.xz
+"

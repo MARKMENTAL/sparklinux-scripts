@@ -1,0 +1,30 @@
+# Contributor: Lee Hinman <hinman@gmail.com>
+# Maintainer: Will Sinatra <wpsinatra@gmail.com>
+pkgname=mg
+pkgver=20240709
+pkgrel=0
+pkgdesc="microscopic EMACS style editor"
+url="https://github.com/hboetes/mg"
+arch="all"
+license="Public Domain"
+makedepends="ncurses-dev libbsd-dev bsd-compat-headers"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/hboetes/mg/archive/$pkgver.tar.gz"
+options="!check"
+
+build() {
+	make prefix=/usr mandir=/usr/share/man
+}
+
+package() {
+	make INSTALL=install DESTDIR="$pkgdir" prefix=/usr \
+		mandir=/usr/share/man install
+
+	mkdir -p "$pkgdir"/usr/share/doc/$pkgname
+	install -m644 README README.md tutorial \
+		"$pkgdir"/usr/share/doc/$pkgname
+}
+
+sha512sums="
+1715f3378059c995cffd9b7e6f8d237cdbae43e67516542c9ef3a5d30c7d0b78183bce1f21db6570877261c2804258f664199b4a46febbf2c10ec25e08833926  mg-20240709.tar.gz
+"

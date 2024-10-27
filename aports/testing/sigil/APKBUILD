@@ -1,0 +1,65 @@
+# Contributor: OIS <mistresssilvara@hotmail.com>
+# Maintainer: OIS <mistresssilvara@hotmail.com>
+pkgname=sigil
+pkgver=2.1.0
+pkgrel=0
+pkgdesc="EPUB editor"
+url="https://sigil-ebook.com/sigil"
+# qt6-qtwebengine (XXX: momentarily qt5 for aarch64)
+arch="aarch64 x86_64"
+license="GPL-3.0-or-later AND Apache-2.0 AND MIT"
+depends="
+	py3-css-parser
+	py3-dulwich
+	py3-lxml
+	"
+makedepends="
+	cmake
+	hunspell-dev
+	minizip-dev
+	pcre2-dev
+	python3-dev
+	qt6-qtsvg-dev
+	qt6-qt5compat-dev
+	qt6-qttools-dev
+	qt6-qtwebengine-dev
+	samurai
+	zlib-dev
+	"
+subpackages="$pkgname-lang"
+source="$pkgname-$pkgver.tar.gz::https://github.com/Sigil-Ebook/Sigil/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/Sigil-$pkgver/"
+# no tests
+options="!check"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DUSE_SYSTEM_LIBS=1 \
+		-DINSTALL_BUNDLED_DICTS=0 \
+		-DDISABLE_UPDATE_CHECK=1 \
+		-DUSE_QT6=1 \
+		$CMAKE_CROSSOPTS
+
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+lang() {
+	pkgdesc="Languages for package $pkgname"
+	install_if="$pkgname=$pkgver-r$pkgrel lang"
+
+	amove usr/share/sigil/translations
+}
+
+sha512sums="
+542d6fc71b0353e3b5440d40e4c9f205c5205fb3e409935015b8f3689f8dcc74d8a96035963a740791f3a8acd63b2e0d81afe9be7716098e0727be6daf6c8ceb  sigil-2.1.0.tar.gz
+"

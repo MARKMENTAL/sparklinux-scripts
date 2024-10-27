@@ -1,0 +1,33 @@
+# Contributor: Sam Whited <sam@samwhited.com>
+# Maintainer: Sam Whited <sam@samwhited.com>
+pkgname=py3-pycares
+_pkgname=pycares
+pkgver=4.4.0
+pkgrel=1
+pkgdesc="A library for performing DNS resolutions using c-ares."
+url="https://pypi.org/project/pycares/"
+arch="all"
+license="MIT"
+depends="python3 py3-idna py3-cffi"
+makedepends="py3-setuptools c-ares-dev python3-dev py3-gpep517 py3-wheel"
+subpackages="$pkgname-doc"
+source="https://files.pythonhosted.org/packages/source/${_pkgname:0:1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+options="!check" # tests not included in source package.
+
+build() {
+	export PYCARES_USE_SYSTEM_LIB=1
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+	install -Dm644 LICENSE README.rst -t "$pkgdir"/usr/share/licenses/$pkgname
+}
+
+sha512sums="
+db387f21975d015e0fcb01972ffb018476d51331a7a49bb4c0bf23ccfa13dff3f8b9c21d5f11da8ece3018debf36b1cddea032ef860353203cf38ab2b3d01e8a  pycares-4.4.0.tar.gz
+"

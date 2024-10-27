@@ -1,0 +1,32 @@
+# Contributor: omni <omni+alpine@hack.org>
+# Maintainer: omni <omni+alpine@hack.org>
+pkgname=py3-sqlglot
+pkgver=25.22.0
+pkgrel=0
+pkgdesc="Python SQL Parser and Transpiler"
+url="https://github.com/tobymao/sqlglot"
+arch="noarch"
+license="MIT"
+depends="python3"
+makedepends="py3-gpep517 py3-setuptools_scm py3-wheel"
+options="!check"
+# tests are included in the github release tarball but seem to require
+# additional aports to be added, see requirements.txt
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/s/sqlglot/sqlglot-$pkgver.tar.gz"
+builddir="$srcdir/sqlglot-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+27d87e1222092139b3c4c2c3d0a28c6ad1addec743ac4aba9ae8554ece3ed56c82e6a912b1fd804f730eb67d08eeff194e7b081b12b69c69ac23ddc9129ef9c4  sqlglot-25.22.0.tar.gz
+"

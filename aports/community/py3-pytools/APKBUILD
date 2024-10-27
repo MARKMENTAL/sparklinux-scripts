@@ -1,0 +1,45 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer:
+pkgname=py3-pytools
+pkgver=2023.1.1
+pkgrel=1
+pkgdesc="Collection of tools for Python3"
+url="https://github.com/inducer/pytools"
+arch="noarch"
+license="MIT"
+depends="
+	py3-platformdirs
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="
+	py3-numpy
+	py3-pytest-xdist
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/inducer/pytools/archive/v$pkgver.tar.gz"
+builddir="$srcdir/pytools-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+caff0725ef616501ff3c01e63d1c37530a10672df203302f94a57a03c28b32b2b0eaa6b226ee7827aad3a414713f927d6d971b3cc74b01b202ed8e38a02158a8  py3-pytools-2023.1.1.tar.gz
+"

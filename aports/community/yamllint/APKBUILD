@@ -1,0 +1,37 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=yamllint
+pkgver=1.35.1
+pkgrel=1
+pkgdesc="A linter for YAML files"
+url="https://github.com/adrienverge/yamllint"
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="python3 py3-pathspec py3-yaml"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+subpackages="$pkgname-pyc"
+source="https://github.com/adrienverge/yamllint/archive/v$pkgver/yamllint-$pkgver.tar.gz
+	skip-locale-tests.patch"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m unittest discover
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+1e19fdfa1041aaa821ad98299d08c61f7f0b698f929fba7eab93590f92a6011df80124a4d7cab462d2e135bfd0c3538b20ca1498d8ddb3929d0c58871f51a9ae  yamllint-1.35.1.tar.gz
+abf8e7089ffa29efd8cea682d7b1178a3a93a5f1158bdf6d058437308e2dce33b72278a303b5a1b9e7dc57040c414ba7945c19b0500788cd3426c9192bce5440  skip-locale-tests.patch
+"

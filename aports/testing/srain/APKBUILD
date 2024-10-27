@@ -1,0 +1,42 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=srain
+pkgver=1.7.0
+pkgrel=0
+pkgdesc="Modern IRC client written in GTK"
+url="https://srain.silverrainz.me/"
+arch="all"
+license="GPL-3.0-or-later WITH OpenSSL-Exception"
+makedepends="
+	cmake
+	gettext
+	glib-dev
+	gtk+3.0-dev
+	libayatana-appindicator-dev
+	libconfig-dev
+	libsecret-dev
+	libsoup3-dev
+	meson
+	ninja
+	openssl-dev>3
+	py3-sphinx
+	"
+subpackages="$pkgname-lang"
+source="$pkgname-$pkgver.tar.gz::https://github.com/SrainApp/srain/archive/$pkgver.tar.gz"
+
+build() {
+	abuild-meson . builddir
+	ninja -C builddir
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C builddir
+}
+
+package() {
+	DESTDIR="$pkgdir" ninja -C builddir install
+}
+
+sha512sums="
+0549a08379946cc4ea0c331f212f03b08a0c7248964984d01a64744058d116ec1af05b2aefd0d689438dafa9df4e70179bb8957d9992f02414a462577c5d99dc  srain-1.7.0.tar.gz
+"

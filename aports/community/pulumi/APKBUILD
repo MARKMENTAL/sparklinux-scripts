@@ -1,0 +1,121 @@
+# Contributor: Hoang Nguyen <folliekazetani@protonmail.com>
+# Contributor: Fraser Waters <frassle@gmail.com>
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=pulumi
+pkgver=3.132.0
+pkgrel=0
+pkgdesc="Infrastructure as Code SDK"
+url="https://pulumi.com/"
+# Tests show that pulumi's plugin system doesn't work on any other platforms
+arch="x86_64 aarch64"
+license="Apache-2.0"
+makedepends="go"
+checkdepends="tzdata"
+subpackages="
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	$pkgname-language-go:_go
+	$pkgname-language-nodejs:_nodejs
+	$pkgname-language-python:_python
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/pulumi/pulumi/archive/v$pkgver.tar.gz"
+options="net" # download Go modules
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	local _goldflags="-X github.com/pulumi/pulumi/sdk/v${pkgver%%.*}/go/common/version.Version=v$pkgver"
+	mkdir -p "$builddir"/bin
+
+	cd "$builddir"/sdk/go
+	go generate ./...
+	go build -C pulumi-language-go -v \
+		-o "$builddir"/bin/pulumi-language-go \
+		-ldflags "$_goldflags"
+
+	for lang in python nodejs; do
+		cd "$builddir"/sdk/$lang/cmd/pulumi-language-$lang
+		go build -v \
+			-o "$builddir"/bin/pulumi-language-$lang \
+			-ldflags "$_goldflags"
+	done
+
+	cd "$builddir"/pkg
+	go build -v \
+		-o "$builddir"/bin/pulumi \
+		-ldflags "-X github.com/pulumi/pulumi/pkg/v${pkgver%%.*}/version.Version=v$pkgver" \
+		./cmd/pulumi
+
+	cd "$builddir"
+	for shell in bash fish zsh; do
+		./bin/pulumi gen-completion $shell > pulumi.$shell
+	done
+}
+
+check() {
+	cd "$builddir"/pkg
+
+	# PULUMI_DISABLE_AUTOMATIC_PLUGIN_ACQUISITION is set to work around GitHub API's rate limit (ref: https://github.com/pulumi/pulumi/issues/15900)
+	# codegen tests require runtime dependencies (python, yarn, dotnet-runtime).
+	# integration tests require node, and hardcode pulumi/ as the root path to search for sdk/go.mod file.
+	# secrets/cloud tests try to call corresponding cloud KMS endpoints
+	# TestPulumiNewSetsTemplateTag test requires PULUMI_ACCESS_TOKEN to be set for running `pulumi new` without prompting
+	# shellcheck disable=2046
+	PULUMI_DISABLE_AUTOMATIC_PLUGIN_ACQUISITION=true go test \
+		-skip TestPulumiNewSetsTemplateTag \
+		$(go list ./... | grep -v \
+		-e 'github.com/pulumi/pulumi/pkg/v3/codegen/dotnet' \
+		-e 'github.com/pulumi/pulumi/pkg/v3/codegen/python' \
+		-e 'github.com/pulumi/pulumi/pkg/v3/codegen/nodejs' \
+		-e 'github.com/pulumi/pulumi/pkg/v3/testing/integration' \
+		-e 'github.com/pulumi/pulumi/pkg/v3/secrets/cloud' \
+	)
+}
+
+package() {
+	install -Dm755 bin/pulumi -t "$pkgdir"/usr/bin/
+
+	install -Dm644 pulumi.bash \
+		"$pkgdir"/usr/share/bash-completion/completions/pulumi
+	install -Dm644 pulumi.fish \
+		"$pkgdir"/usr/share/fish/vendor_completions.d/pulumi.fish
+	install -Dm644 pulumi.zsh \
+		"$pkgdir"/usr/share/zsh/site-functions/_pulumi
+}
+
+_go() {
+	pkgdesc="$pkgdesc (Go language provider)"
+	depends="$pkgname=$pkgver-r$pkgrel"
+
+	install -Dm755 "$builddir"/bin/pulumi-language-go -t "$subpkgdir"/usr/bin/
+}
+
+_nodejs() {
+	pkgdesc="$pkgdesc (NodeJS language provider)"
+	depends="$pkgname=$pkgver-r$pkgrel"
+
+	install -Dm755 "$builddir"/bin/pulumi-language-nodejs -t "$subpkgdir"/usr/bin/
+	install -Dm755 "$builddir"/sdk/nodejs/dist/pulumi-analyzer-policy \
+		-t "$subpkgdir"/usr/bin/
+	install -Dm755 "$builddir"/sdk/nodejs/dist/pulumi-resource-pulumi-nodejs \
+		-t "$subpkgdir"/usr/bin/
+}
+
+_python() {
+	pkgdesc="$pkgdesc (Python language provider)"
+	depends="$pkgname=$pkgver-r$pkgrel python3"
+
+	install -Dm755 "$builddir"/bin/pulumi-language-python -t "$subpkgdir"/usr/bin/
+	install -Dm755 "$builddir"/sdk/python/cmd/pulumi-language-python-exec -t "$subpkgdir"/usr/bin/
+	install -Dm755 "$builddir"/sdk/python/dist/pulumi-analyzer-policy-python \
+		-t "$subpkgdir"/usr/bin/
+	install -Dm755 "$builddir"/sdk/python/dist/pulumi-resource-pulumi-python \
+		-t "$subpkgdir"/usr/bin/
+}
+
+sha512sums="
+439d2b557876011977fb7ac397143bacf761038e5e6fab8cd0eccdadb24fee3c0e1fd8b8e39585772424bbe6b895014b7eed89d8d88e7e4c6aede605bea1476a  pulumi-3.132.0.tar.gz
+"

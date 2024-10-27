@@ -1,0 +1,65 @@
+# Contributor: Luca Weiss <luca@lucaweiss.eu>
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+pkgname=ayatana-indicator-datetime
+pkgver=24.5.0
+pkgrel=1
+pkgdesc="Ayatana Indicator Date & Time Applet"
+url="https://github.com/AyatanaIndicators/ayatana-indicator-datetime"
+# s390x, riscv64: blocked by ayatana-indicator-messages
+# ppc64le: blocked by evolution-data-server
+arch="all !s390x !riscv64 !ppc64le"
+license="GPL-3.0-only"
+makedepends="
+	ayatana-indicator-messages-dev
+	cmake
+	cmake-extras
+	dbus-test-runner-dev
+	evolution-data-server-dev
+	glib-dev
+	gstreamer-dev
+	gtest-dev
+	intltool
+	libaccounts-glib-dev
+	libayatana-common-dev
+	libical-dev
+	libnotify-dev
+	properties-cpp-dev
+	util-linux-dev
+	"
+checkdepends="
+	dbus-test-runner
+	"
+subpackages="$pkgname-lang"
+source="https://github.com/AyatanaIndicators/ayatana-indicator-datetime/archive/$pkgver/ayatana-indicator-datetime-$pkgver.tar.gz"
+
+case "$CARCH" in
+aarch64) options="!check" ;; # tests fail on random color value
+esac
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DENABLE_TESTS=ON \
+		$CMAKE_CROSSOPTS .
+	cmake --build build
+}
+
+check() {
+	cd build
+	# test-formatter: relies on glibc locale support
+	CTEST_OUTPUT_ON_FAILURE=TRUE ctest -E "test-formatter"
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+179d06ba89f08176a5ea28f38684bbe3baeefab3648606ef43d7c261034c4f413b79fb3bb7f6f263ca5e4a6099665b4dc686cc271f0d4128c4519ec111ff719f  ayatana-indicator-datetime-24.5.0.tar.gz
+"

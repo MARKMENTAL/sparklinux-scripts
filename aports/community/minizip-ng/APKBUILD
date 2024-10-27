@@ -1,0 +1,58 @@
+# Contributor: Lauren N. Liberda <lauren@selfisekai.rocks>
+# Maintainer: Duncan Bellamy <dunk@denkimushi.com>
+pkgname=minizip-ng
+pkgver=4.0.7
+pkgrel=0
+pkgdesc="zlib-ng fork of minizip"
+url="https://github.com/zlib-ng/minizip-ng"
+arch="all"
+license="Zlib"
+makedepends="
+	bzip2-dev
+	cmake
+	gtest-dev
+	ninja
+	openssl-dev
+	python3
+	xz-dev
+	zstd-dev
+	zlib-ng-dev
+	"
+subpackages="$pkgname-dev"
+source="
+	https://github.com/zlib-ng/minizip-ng/archive/refs/tags/$pkgver/minizip-ng-$pkgver.tar.gz
+	"
+# probably riscv64 kernel problem
+# https://gitlab.alpinelinux.org/alpine/aports/-/merge_requests/61939
+[ "$CARCH" = "riscv64" ] && options="!check"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DMZ_BUILD_TESTS=ON \
+		-DMZ_BUILD_UNIT_TESTS=ON \
+		-DMZ_COMPAT=ON \
+		-DMZ_FETCH_LIBS=OFF \
+		-DMZ_LIB_SUFFIX=-ng \
+		$CMAKE_CROSSOPTS
+	cmake --build build
+}
+
+check() {
+	cd build
+	CTEST_OUTPUT_ON_FAILURE=TRUE ctest -j1
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+af9c8743d34bbc8f371a018debfab5f857aadb9a1129b048dbce9085122bef209ade34837784f91424c9eba92406d2e222476d9f8038839908679f7b7dc9e3eb  minizip-ng-4.0.7.tar.gz
+"

@@ -1,0 +1,37 @@
+# Contributor: Nicolas Lorin <androw95220@gmail.com>
+# Maintainer: Michał Adamski <michal@ert.pl>
+pkgname=electrs
+pkgver=0.10.5
+pkgrel=2
+pkgdesc="Efficient re-implementation of Electrum Server in Rust"
+url="https://github.com/romanz/electrs"
+license="MIT"
+# s390x, riscv64: limited by rust/cargo
+# armhf, armv7, x86: limited by rocksdb
+# loongarch64: blocked by old linux-raw-sys version
+arch="all !s390x !riscv64 !armhf !armv7 !x86 !loongarch64"
+makedepends="
+	cargo
+	cargo-auditable
+	clang18-libclang
+	linux-headers
+	rocksdb7-dev
+	rustfmt
+	"
+source="https://github.com/romanz/electrs/archive/v$pkgver/electrs-$pkgver.tar.gz"
+
+build() {
+	ROCKSDB_INCLUDE_DIR=/usr/include ROCKSDB_LIB_DIR=/usr/lib cargo auditable build --all --features "metrics_process" --release --locked
+}
+
+check() {
+	cargo test --all --release --locked
+}
+
+package() {
+	install -Dm755 target/release/$pkgname -t "$pkgdir"/usr/bin
+}
+
+sha512sums="
+7355ab871f630ea69e03ca7d3c3d333c23a460c40e4e8e0342874de84bd463a9013c226c3e1065ce405f2ede8f27d63e13971ae5b597327488227d86dbc7474f  electrs-0.10.5.tar.gz
+"

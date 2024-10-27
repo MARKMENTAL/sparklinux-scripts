@@ -1,0 +1,35 @@
+# Contributor: Sodface <sod@sodface.com>
+# Maintainer: Sodface <sod@sodface.com>
+pkgname=cyanrip
+pkgver=0.9.3.1
+pkgrel=0
+pkgdesc="Bule-ish CD ripper"
+url="https://github.com/cyanreg/cyanrip"
+arch="all"
+license="LGPL-2.1-or-later"
+makedepends="
+	curl-dev
+	ffmpeg-dev
+	libcdio-dev
+	libcdio-paranoia-dev
+	libmusicbrainz-dev
+	meson
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/cyanreg/cyanrip/archive/refs/tags/v$pkgver.tar.gz"
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+f5c9ee1920aa930e6a096a550e19ed9602f1709384d3d76766ae7d60ff7625c88960e84459b4179a80b5b7a939698198a5b3d9e37a4aa472dccd71c5201a9727  cyanrip-0.9.3.1.tar.gz
+"

@@ -1,0 +1,47 @@
+# Contributor: Philipp Arras <c@philipp-arras.de>
+# Maintainer: Martin Reinecke <martin@mpa-garching.mpg.de>
+pkgname=py3-ducc0
+_pyname=ducc0
+pkgver=0.34.0
+_tagname="${pkgver//./_}"
+pkgrel=1
+pkgdesc="Efficient algorithms for Fast Fourier transforms and more"
+url="https://gitlab.mpcdf.mpg.de/mtr/ducc"
+arch="all"
+license="GPL-2.0-or-later"
+depends="python3"
+makedepends="
+	py3-gpep517
+	py3-pybind11-dev
+	py3-setuptools
+	py3-wheel
+	python3-dev
+	"
+checkdepends="py3-pytest-xdist py3-numpy"
+
+_pynametag="$_pyname"_"$_tagname"
+source="https://gitlab.mpcdf.mpg.de/mtr/ducc/-/archive/$_pynametag/ducc-$_pynametag.tar.gz"
+builddir="$srcdir/ducc-$_pynametag"
+
+build() {
+	DUCC0_OPTIMIZATION=portable \
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto python/test
+}
+
+package() {
+	DUCC0_OPTIMIZATION=portable \
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+023dfc60e5c3fdebc3142fd96aac288374d5560e1f484e3c10283d65fda172aa28d181860c7f2de1c7544b1948aa7243c4e3597a233f9b37065afd5b1cfba008  ducc-ducc0_0_34_0.tar.gz
+"

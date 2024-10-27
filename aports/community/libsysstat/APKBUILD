@@ -1,0 +1,33 @@
+# Maintainer: Antoni Aloy <aaloytorrens@gmail.com>
+pkgname=libsysstat
+pkgver=1.0.0
+pkgrel=0
+pkgdesc="Library used to query system info and statistics"
+url="https://github.com/lxqt/libsysstat"
+arch="all"
+license="LGPL-2.1-or-later"
+subpackages="$pkgname-dev"
+makedepends="cmake samurai lxqt-build-tools qt6-qtbase-dev"
+options="!check" # No testsuite
+source="https://github.com/lxqt/libsysstat/releases/download/$pkgver/libsysstat-$pkgver.tar.xz"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		$CMAKE_CROSSOPTS .
+	cmake --build build
+
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --build build --target install
+}
+
+sha512sums="
+f27481d20b2817fc55056aa5db10193586cc9709419870e0411ce896383bf23c2faddb3d73d4db635534245acc4ef980ac4e28143eb6b0a1d84337df74daf7e7  libsysstat-1.0.0.tar.xz
+"

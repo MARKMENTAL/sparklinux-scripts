@@ -1,0 +1,83 @@
+# Contributor: Alex Yam <alex@alexyam.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=librime
+pkgver=1.11.2
+pkgrel=2
+pkgdesc="Rime input method engine"
+url="https://github.com/rime/librime"
+arch="all"
+license="BSD-3-Clause"
+depends_dev="$pkgname-tools=$pkgver-r$pkgrel"
+makedepends="
+	boost-dev
+	capnproto-dev
+	chrpath
+	cmake
+	glog-dev
+	leveldb-dev
+	libmarisa-dev
+	opencc-dev
+	samurai
+	yaml-cpp-dev
+	"
+checkdepends="gtest-dev"
+subpackages="$pkgname-dev $pkgname-tools $pkgname-nolog"
+source="$pkgname-$pkgver.tar.gz::https://github.com/rime/librime/archive/$pkgver.tar.gz"
+
+build() {
+	export CXXFLAGS="$CXXFLAGS -U_FORTIFY_SOURCE -flto=auto"
+
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBOOST_USE_CXX11=ON \
+		-DBUILD_DATA=ON \
+		-DBUILD_MERGED_PLUGINS=OFF \
+		-DBUILD_TEST="$(want_check && echo ON || echo OFF)" \
+		-DENABLE_EXTERNAL_PLUGINS=ON
+	cmake --build build
+
+	cmake -B build-nolog -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBOOST_USE_CXX11=ON \
+		-DBUILD_DATA=ON \
+		-DBUILD_MERGED_PLUGINS=OFF \
+		-DBUILD_TEST=OFF \
+		-DENABLE_EXTERNAL_PLUGINS=ON \
+		-DENABLE_LOGGING=OFF
+	cmake --build build-nolog --target rime
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	cd "$pkgdir"
+	mv -v usr/share/cmake usr/lib/cmake
+	# create missing default paths for other ime packages to find rime data
+	# (e.g. ibus-rime uses -DRIME_DATA_DIR="/usr/share/rime-data")
+	mkdir -vp usr/share/rime-data usr/lib/rime-plugins
+}
+
+tools() {
+	pkgdesc="$pkgdesc (tools)"
+
+	amove usr/bin
+}
+
+nolog() {
+	pkgdesc="$pkgdesc (with logging disabled)"
+
+	install -Dvm755 "$builddir"/build-nolog/lib/librime.so.$pkgver \
+		"$subpkgdir"/usr/lib/librime-nolog.so.$pkgver
+
+	chrpath -d "$subpkgdir"/usr/lib/librime-nolog.so.$pkgver
+}
+
+sha512sums="
+7b8ba708489d4d6bd6f71618f3c3270d07e088aae5ecdfcba5128a456dc49d3799e335b3ba386a1894ee01f5c5a51993e0a1821ff46d8addb02d0c8c4aacf5f3  librime-1.11.2.tar.gz
+"

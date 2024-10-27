@@ -1,0 +1,38 @@
+# Contributor: Fabian Affolter <fabian@affolter-engineering.ch>
+# Maintainer: Fabian Affolter <fabian@affolter-engineering.ch>
+pkgname=py3-flake8-isort
+pkgver=6.1.1
+pkgrel=1
+pkgdesc="Extension for flake8 which integrates isort"
+url="https://github.com/gforcada/flake8-isort"
+arch="noarch"
+license="GPL-2.0-only"
+depends="py3-flake8 py3-isort"
+makedepends="py3-gpep517 py3-hatchling"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/f/flake8-isort/flake8_isort-$pkgver.tar.gz"
+builddir="$srcdir/flake8_isort-$pkgver"
+
+replaces="py-flake8-isort" # Backwards compatibility
+provides="py-flake8-isort=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m run_tests
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+72840b133396524a4a4b514cc72a4ce96007144d3f1950671d7cbfedb27be1bb0d03bebe1281addc3acd70bb08ea269cea1626f17f174fa937d37ebd8e07cfc3  flake8_isort-6.1.1.tar.gz
+"

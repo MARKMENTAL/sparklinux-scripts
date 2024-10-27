@@ -1,0 +1,28 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Maintainer: Sören Tempel <soeren+alpine@soeren-tempel.net>
+pkgname=pdpmake
+pkgver=2.0.1
+pkgrel=0
+pkgdesc="An implementation of POSIX make"
+url="https://frippery.org/make/"
+arch="all"
+license="Public Domain"
+makedepends="$depends_dev"
+subpackages="$pkgname-doc"
+source="https://frippery.org/make/pdpmake-$pkgver.tgz"
+
+build() {
+	make PREFIX=/usr
+}
+
+check() {
+	MAKEFLAGS="" make test
+}
+
+package() {
+	make PREFIX=/usr DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+b2ea989baed5e2328c6957b940744c82fa2d8bbf541418fcb6bd3fe49192242dc38ee9f2d20cc1b0e9de967c17a5f46d5c5e0a16701504d83f76a8b5586860df  pdpmake-2.0.1.tgz
+"

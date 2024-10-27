@@ -1,0 +1,71 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Contributor: Milan P. Stanić <mps@arvanta.net>
+# Maintainer: lauren n. liberda <lauren@selfisekai.rocks>
+pkgname=zig
+pkgver=0.13.0
+pkgrel=0
+pkgdesc="General-purpose programming language designed for robustness, optimality, and maintainability"
+url="https://ziglang.org/"
+# arm*, x86: fails to build (allocation failed)
+# ppc64le,riscv64: builds but the test command crashes
+# s390x: blocked by lld-dev
+arch="x86_64 aarch64"
+license="MIT"
+install="$pkgname.pre-upgrade"
+_llvmver=18
+# will need switch to lld$_llvmver-dev later
+makedepends="
+	clang$_llvmver-dev
+	cmake
+	libxml2-dev
+	lld-dev
+	llvm$_llvmver-dev
+	samurai
+	zlib-dev
+	"
+provides="zig-dev=$pkgver-r$pkgrel"
+subpackages="$pkgname-doc"
+source="https://ziglang.org/download/$pkgver/zig-$pkgver.tar.xz
+	"
+
+build() {
+	local crossopts=
+	if [ "$CBUILD" != "$CHOST" ]; then
+		crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_PREFIX_PATH=/usr \
+		-DCMAKE_VERBOSE_MAKEFILE=ON \
+		-DZIG_VERSION="$pkgver" \
+		-DZIG_SHARED_LLVM=ON \
+		-DZIG_TARGET_MCPU=baseline \
+		-DCLANG_INCLUDE_DIRS=/usr/lib/llvm$_llvmver/include \
+		$crossopts
+
+	cmake --build build
+
+	./build/stage3/bin/zig build docs
+}
+
+check() {
+	./build/stage3/bin/zig build test \
+		-Dcpu=baseline \
+		-Dskip-debug \
+		-Dskip-release-safe \
+		-Dskip-release-small \
+		-Dskip-non-native
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	mkdir -p "$pkgdir/usr/share/doc/"
+	cp -r zig-out/doc "$pkgdir/usr/share/doc/$pkgname"
+}
+
+sha512sums="
+6f5f31f4ba71a11d8b16c7a5a613e124095e503fa6b02d2b77e5b177674c739287e81d98d96dc261fed24bc836caf196f71c3fcc7a6518387df86ba9e03df4dd  zig-0.13.0.tar.xz
+"

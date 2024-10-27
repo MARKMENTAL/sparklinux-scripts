@@ -1,0 +1,96 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=below
+pkgver=0.7.1
+pkgrel=0
+pkgdesc="A time traveling resource monitor for modern Linux systems"
+url="https://github.com/facebookincubator/below"
+# armhf,armv7,x86: fails to build libbpf-rs crate
+# riscv64: blocked by cargo
+# s390x: fails to build nix crate
+# loongarch64: fails to build nix crate
+arch="all !armhf !armv7 !riscv64 !s390x !x86 !loongarch64"
+license="Apache-2.0"
+# NOTE: libbpf-cargo requires rustfmt
+makedepends="
+	cargo
+	cargo-auditable
+	clang
+	libbpf-dev
+	rustfmt
+	zlib-dev
+	zstd-dev
+	"
+subpackages="
+	$pkgname-openrc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="https://github.com/facebookincubator/below/archive/v$pkgver/$pkgname-$pkgver.tar.gz
+	getrandom-0.2.10.patch
+	fix-sudotest.patch
+	$pkgname.initd
+	$pkgname.confd
+	$pkgname.logrotate
+	"
+
+_cargo_opts="--frozen --features no-vendor"
+
+# below may not work correctly with panic=abort.
+export CARGO_PROFILE_RELEASE_PANIC="unwind"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build $_cargo_opts --release
+
+	mkdir -p target/completion
+	local sh; for sh in bash fish zsh; do
+		./target/release/below generate-completions -s $sh -o target/completion/below.$sh
+	done
+}
+
+check() {
+	# Skip tests that require host to have cgroup2 (copied from upstream's ci.yml)
+	cargo test $_cargo_opts -- \
+		--skip test_dump \
+		--skip advance_forward_and_reverse \
+		--skip disable_disk_stat \
+		--skip disable_io_stat \
+		--skip record_replay_integration \
+		--skip test_belowrc_to_event \
+		--skip test_event_controller_override \
+		--skip test_event_controller_override_failed \
+		--skip test_viewrc_collapse_cgroups \
+		--skip test_viewrc_default_view
+}
+
+package() {
+	cd target
+
+	install -D -m755 release/below -t "$pkgdir"/usr/bin/
+
+	install -D -m644 completion/$pkgname.bash "$pkgdir"/usr/share/bash-completion/completions/$pkgname
+	install -D -m644 completion/$pkgname.fish "$pkgdir"/usr/share/fish/vendor_completions.d/$pkgname.fish
+	install -D -m644 completion/$pkgname.zsh "$pkgdir"/usr/share/zsh/site-functions/_$pkgname
+
+	install -D -m755 "$srcdir"/below.initd "$pkgdir"/etc/init.d/$pkgname
+	install -D -m644 "$srcdir"/below.confd "$pkgdir"/etc/conf.d/$pkgname
+	install -D -m644 "$srcdir"/below.logrotate "$pkgdir"/etc/logrotate.d/$pkgname
+
+	install -d -m755 "$pkgdir"/var/log/$pkgname
+}
+
+sha512sums="
+4b7ec1a47b70ef411984a2b760a6de44195035b3ddde36c9392d6b64d7e6184dd6526e04666e6e1a049a0404c0468a6226dd08d2b35d2441d735f5be233debab  below-0.7.1.tar.gz
+cef50cd6d56b63d207fa35e11f6ea8784feb6883094d00a93a1f83671db64183292f0629c53b60a3ce9f24206bb6afae02430fcd666df19144ba58d83a626625  getrandom-0.2.10.patch
+1f9a380537bfab93d5b5184ffb82b0b737428c3672344b8d71ed12d18c1c798cfdaa8e5713be21551ad7e8dc1f4c6b653f1309852355daf86d45bfadd3ca37c3  fix-sudotest.patch
+e15900998f592e5d519a3698aa861d77269e2196414ed69dacfbdc23a3df355b0f95cc64abc18ddcbf7b4fadafd27ee6cf6a75631d6771cf69c23cb45988c8d9  below.initd
+05ca8ad81eaf6f5ccccef2e79dd9b9ec7fc296cf184128da8d99b94a6462db822cd76f42ffbecee7db009e7905c5e4bc31939fb905a80ab4faa9b10e93f9479e  below.confd
+f9aa8f1d598603898396bde7404e511ccac0887e6dafd2db0b749efe255855bccb724a4969a93a29e437d344523a24859daedd8d21ad02f8fd2c70f03c6b74e5  below.logrotate
+"

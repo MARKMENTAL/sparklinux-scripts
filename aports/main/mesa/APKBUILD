@@ -1,0 +1,379 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=mesa
+pkgver=24.2.3
+pkgrel=0
+pkgdesc="Mesa DRI OpenGL library"
+url="https://www.mesa3d.org"
+arch="all"
+license="MIT AND SGI-B-2.0 AND BSL-1.0"
+subpackages="
+	$pkgname-dbg
+	$pkgname-dev
+	$pkgname-dri-gallium:_gallium
+	$pkgname-va-gallium:_va
+	$pkgname-vdpau-gallium:_vdpau
+	$pkgname-glapi
+	$pkgname-egl
+	$pkgname-gl
+	$pkgname-gles
+	$pkgname-xatracker
+	$pkgname-osmesa
+	$pkgname-gbm
+	$pkgname-vulkan-ati:_vulkan
+	$pkgname-vulkan-swrast:_vulkan
+	$pkgname-vulkan-layers:_vulkan_layers
+	$pkgname-libd3dadapter9
+	"
+_llvmver=18
+depends_dev="
+	libdrm-dev
+	libxext-dev
+	libxdamage-dev
+	libxcb-dev
+	libxshmfence-dev
+	"
+makedepends="
+	$depends_dev
+	binutils
+	bison
+	eudev-dev
+	expat-dev
+	findutils
+	flex
+	gettext
+	elfutils-dev
+	glslang-dev
+	libtool
+	libxfixes-dev
+	libva-dev
+	libvdpau-dev
+	libx11-dev
+	libxml2-dev
+	libxrandr-dev
+	libxxf86vm-dev
+	llvm$_llvmver-dev
+	meson
+	py3-cparser
+	py3-mako
+	py3-packaging
+	py3-ply
+	py3-yaml
+	python3
+	vulkan-loader-dev
+	wayland-dev
+	wayland-protocols
+	xorgproto
+	zlib-dev
+	zstd-dev
+	"
+source="
+	https://mesa.freedesktop.org/archive/mesa-${pkgver/_/-}.tar.xz
+	29401.patch
+	23630.patch
+	riscv64-tls.patch
+	"
+options="!check" # we skip tests intentionally
+builddir="$srcdir/mesa-${pkgver/_/-}"
+
+_dri_driverdir=/usr/lib/xorg/modules/dri
+_gallium_drivers="r300,r600,radeonsi,nouveau,llvmpipe,virgl,zink"
+_vulkan_drivers="amd,swrast"
+_vulkan_layers="device-select,overlay"
+
+# extra gallium per arch
+case "$CARCH" in
+x86*)
+	_gallium_drivers="$_gallium_drivers,svga,i915,iris,crocus"
+	;;
+armhf|armv7|aarch64)
+	_gallium_drivers="$_gallium_drivers,vc4,v3d,freedreno,lima,panfrost,etnaviv,tegra"
+	;;
+esac
+
+# extra vulkan per arch
+case "$CARCH" in
+x86*)
+	_vulkan_drivers="$_vulkan_drivers,intel,intel_hasvk"
+	_vulkan_layers="$_vulkan_layers,intel-nullhw"
+	subpackages="
+		$subpackages
+		$pkgname-vulkan-intel:_vulkan
+		"
+	;;
+aarch64)
+	_vulkan_drivers="$_vulkan_drivers,broadcom,freedreno,panfrost"
+	subpackages="
+		$subpackages
+		$pkgname-vulkan-broadcom:_vulkan
+		$pkgname-vulkan-freedreno:_vulkan
+		$pkgname-vulkan-panfrost:_vulkan
+		"
+	;;
+esac
+
+case "$CARCH" in
+x86)
+	# lto fails on x86 only
+	# mostly:
+	# https://gitlab.freedesktop.org/mesa/mesa/-/merge_requests/21371
+	# https://gitlab.freedesktop.org/mesa/mesa/-/merge_requests/21180
+	_lto=false
+	;;
+*)
+	# ~5% smaller
+	# disable temporarily until resolved:
+	# https://gitlab.freedesktop.org/mesa/mesa/-/issues/11846
+	_lto=false
+	;;
+esac
+
+case "$CARCH" in
+armv7|aarch64|x86|x86_64)
+	_rusticl=true
+	makedepends="
+		$makedepends
+		clang$_llvmver-dev
+		libclc-dev~$_llvmver
+		rust
+		rust-bindgen
+		spirv-llvm-translator-dev
+		"
+	subpackages="
+		$subpackages
+		$pkgname-rusticl
+		"
+	;;
+*)
+	_rusticl=false
+	;;
+esac
+
+build() {
+	# use -g1 to generate less debug info:
+	# 485 MiB -> ~80 MiB
+	export CFLAGS="$CFLAGS -O2 -g1"
+	export CXXFLAGS="$CXXFLAGS -O2 -g1"
+	export CPPFLAGS="$CPPFLAGS -O2 -g1"
+
+	PATH="$PATH:/usr/lib/llvm$_llvmver/bin" \
+	abuild-meson \
+		-Db_ndebug=true \
+		-Db_lto=$_lto \
+		-Dbackend_max_links=2 \
+		-Ddri-drivers-path=$_dri_driverdir \
+		-Dgallium-drivers=$_gallium_drivers \
+		-Dvulkan-drivers=$_vulkan_drivers \
+		-Dvulkan-layers=$_vulkan_layers \
+		-Dplatforms=x11,wayland \
+		-Dllvm=enabled \
+		-Dshared-llvm=enabled \
+		-Dshared-glapi=enabled \
+		-Dgbm=enabled \
+		-Dglx=dri \
+		-Dopengl=true \
+		-Dosmesa=true \
+		-Dgles1=enabled \
+		-Dgles2=enabled \
+		-Degl=enabled \
+		-Dgallium-extra-hud=true \
+		-Dgallium-nine=true \
+		-Dgallium-rusticl=$_rusticl \
+		-Dgallium-va=enabled \
+		-Dgallium-vdpau=enabled \
+		-Dgallium-xa=enabled \
+		-Drust_std=2021 \
+		-Dvideo-codecs=all \
+		. output
+
+	# Print config
+	meson configure --no-pager output
+
+	meson compile -C output
+}
+
+#check() {
+#	LC_ALL=C.UTF=8 meson test --no-rebuild --print-errorlogs -C output
+#}
+
+package() {
+	provider_priority=100
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+egl() {
+	pkgdesc="Mesa libEGL runtime libraries"
+	depends="mesa=$pkgver-r$pkgrel"
+	provider_priority=100
+
+	amove usr/lib/libEGL.so*
+}
+
+gl() {
+	pkgdesc="Mesa libGL runtime libraries"
+	depends="mesa=$pkgver-r$pkgrel"
+	provider_priority=100
+
+	amove usr/lib/libGL.so*
+}
+
+glapi() {
+	pkgdesc="Mesa shared glapi"
+	replaces="$pkgname-gles=$pkgver-r$pkgrel"
+	provider_priority=100
+
+	amove usr/lib/libglapi.so.*
+}
+
+gles() {
+	pkgdesc="Mesa libGLESv2 runtime libraries"
+	depends="mesa=$pkgver-r$pkgrel"
+	provider_priority=100
+
+	amove usr/lib/libGLES*.so*
+}
+
+xatracker() {
+	pkgdesc="Mesa XA state tracker for vmware"
+	depends="mesa=$pkgver-r$pkgrel"
+	provider_priority=100
+
+	amove usr/lib/libxatracker*.so.*
+}
+
+osmesa() {
+	pkgdesc="Mesa offscreen rendering libraries"
+	depends="mesa=$pkgver-r$pkgrel"
+	provider_priority=100
+
+	amove usr/lib/libOSMesa.so.*
+}
+
+gbm() {
+	pkgdesc="Mesa gbm library"
+	depends="mesa=$pkgver-r$pkgrel"
+	provider_priority=100
+
+	amove usr/lib/libgbm.so.*
+}
+
+libd3dadapter9() {
+	pkgdesc="Mesa directx9 adapter"
+	depends="mesa=$pkgver-r$pkgrel"
+	provider_priority=100
+
+	amove usr/lib/d3d/d3dadapter9.so*
+}
+
+rusticl() {
+	pkgdesc="Mesa OpenCL driver"
+	depends="mesa=$pkgver-r$pkgrel clang$_llvmver-headers libclc~$_llvmver"
+	provider_priority=100
+
+	amove usr/lib/libRusticlOpenCL.so.*
+	amove etc/OpenCL/vendors/
+}
+
+# Move links referencing the same file to the subpackage.
+# Usage: _mv_links <base directory> <example>
+# where <example> is one of the libraries covered by the megadriver.
+# The example is used to find other links that point to the same file.
+_mv_links() {
+	install -d "$subpkgdir"/$1
+	find -L "$pkgdir"/$1 -samefile "$pkgdir"/$1/$2 -print0 \
+		| xargs -0 -I{} mv {} "$subpkgdir"/$1/
+}
+
+_mv_vulkan() {
+	local i
+	for i in "$@"; do
+		amove usr/lib/libvulkan_$i*.so
+		amove usr/share/vulkan/icd.d/${i}_*.*
+	done
+}
+
+# Mesa uses "megadrivers" where multiple drivers are linked into one shared
+# library. This library is then hard-linked to separate files (one for each driver).
+# Each subpackage contains one megadriver so that all the hard-links are preserved.
+
+_gallium() {
+	pkgdesc="Mesa gallium DRI drivers"
+	depends="mesa=$pkgver-r$pkgrel"
+	provider_priority=100
+
+	# libgallium_dri.so
+	_mv_links $_dri_driverdir swrast_dri.so
+}
+
+_va() {
+	local n=${subpkgname##*-va-}
+	pkgdesc="Mesa $n VAAPI drivers"
+	depends="mesa=$pkgver-r$pkgrel libva"
+	provider_priority=100
+
+	case $n in
+	gallium)
+		# libgallium_drv_video.so
+		_mv_links /usr/lib/dri radeonsi_drv_video.so ;;
+	esac
+}
+
+_vdpau() {
+	local n=${subpkgname##*-vdpau-}
+	pkgdesc="Mesa $n VDPAU drivers"
+	depends="mesa=$pkgver-r$pkgrel libvdpau"
+	provider_priority=100
+
+	case $n in
+	gallium)
+		# libvdpau_gallium.so.1.0.0
+		_mv_links /usr/lib/vdpau libvdpau_radeonsi.so.1.0.0 ;;
+	esac
+}
+
+_vulkan() {
+	local n=${subpkgname##*-vulkan-}
+	pkgdesc="Mesa Vulkan API driver for $n"
+	depends="mesa=$pkgver-r$pkgrel"
+	provider_priority=100
+
+	case $n in
+	ati)
+		_mv_vulkan radeon ;;
+	intel)
+		_mv_vulkan intel ;;
+	broadcom)
+		_mv_vulkan broadcom ;;
+	freedreno)
+		_mv_vulkan freedreno ;;
+	panfrost)
+		_mv_vulkan panfrost ;;
+	swrast)
+		_mv_vulkan lvp ;;
+	esac
+}
+
+_vulkan_layers() {
+	pkgdesc="collection of vulkan layers from mesa"
+	depends="python3"
+	provider_priority=100
+
+	# Remove this after the release of the next stable (3.14)
+	# it originally was claed layer as it only packaged the
+	# overlay one but now it also packages device-select and
+	# intel-nullhw (on x86*)
+	provides="$pkgname-vulkan-layer=$pkgver-r$pkgrel"
+	provider_priority=100
+	replaces="$pkgname-vulkan-layer=$pkgver-r$pkgrel"
+
+	amove usr/share/vulkan/explicit_layer.d
+	amove usr/share/vulkan/implicit_layer.d
+	amove usr/lib/libVkLayer_*.so
+	amove usr/bin/mesa-overlay-control.py
+}
+
+sha512sums="
+7a1ace23568d1907b778a2859f97c8988a414ba74e02e1fb5af6f95f768e1b1a2dfdaf412b0d655678ed915d28273953fd1236ebcd87553a1880f1a7f3ea4d44  mesa-24.2.3.tar.xz
+f32c2425e2c97f8c62fbd7b54723e56d75642cbfd03dc4a30be49ce27d41ddc2d1cac227186d9a2e7bbac0484ba501b538734f428d9c4e791ed201fc571c1575  29401.patch
+dfb0d46f6bcb7a9eb36206a286054666867ba27b702558297a103979c585aabebb6566cd6a6c3ab4c5d3cad54eb455b29bae4d1f11b282ea1903ba8a53a24a7a  23630.patch
+c151f9fb3d4d2e49fcdbbea492c7c1946148333c74a7356abce33594487b2ed512434673e8dcc279219d7ad068bd04c8cc329fa6f2e897e6311441fe65e061db  riscv64-tls.patch
+"

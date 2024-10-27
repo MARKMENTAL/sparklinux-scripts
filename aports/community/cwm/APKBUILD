@@ -1,0 +1,32 @@
+# Contributor: Cág <ca6c@bitmessage.ch>
+# Contributor: Justin Berthault <justin.berthault@zaclys.net>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=cwm
+pkgver=7.4
+pkgrel=1
+pkgdesc="A lightweight and efficient window manager for X11"
+url="https://github.com/leahneukirchen/cwm"
+arch="all"
+license="ISC"
+makedepends="
+	bsd-compat-headers
+	cmd:yacc
+	libx11-dev
+	libxft-dev
+	libxrandr-dev
+	"
+subpackages="$pkgname-doc"
+source="https://github.com/leahneukirchen/cwm/archive/v$pkgver/cwm-$pkgver.tar.gz"
+options="!check" # no tests provided upstream
+
+build() {
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr install
+}
+
+sha512sums="
+dcc21c5ca46740adf6bdc139d4569513d099402c6bc46d6ab85aab27ddd04bd60e797073b0912fc3ebc824924d5cbcccf3c2ed99614ea703217f3a3b825f7ebc  cwm-7.4.tar.gz
+"

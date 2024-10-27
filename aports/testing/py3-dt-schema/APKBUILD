@@ -1,0 +1,61 @@
+# Contributor: Iskren Chernev <me@iskren.info>
+# Maintainer: Iskren Chernev <me@iskren.info>
+pkgname=py3-dt-schema
+pkgver=2024.09
+pkgrel=0
+pkgdesc="Devicetree schema tools"
+url="https://github.com/devicetree-org/dt-schema"
+arch="noarch"
+license="BSD-2-Clause"
+depends="python3 py3-ruamel.yaml py3-jsonschema417 py3-rfc3987 py3-libfdt"
+makedepends="py3-setuptools py3-setuptools_scm py3-wheel py3-gpep517 py3-installer"
+checkdepends="dtc"
+subpackages="$pkgname-pyc"
+source="dt-schema-$pkgver.tar.gz::https://github.com/devicetree-org/dt-schema/archive/v$pkgver.tar.gz"
+builddir="$srcdir/dt-schema-$pkgver"
+options="net"
+
+prepare() {
+	default_prepare
+	{
+		find dtschema -name '*.py'
+		find test -name '*.py'
+		find tools -type f
+	} | while read -r file; do
+		sed -i \
+			-e 's/import jsonschema$/import jsonschema417 as jsonschema/' \
+			-e 's/from jsonschema/from jsonschema417/' \
+			"$file"
+	done
+	sed -i 's/jsonschema/jsonschema417/' pyproject.toml
+	# The project uses setuptools_scm, which handles adding the schema
+	# files to the package, but there is no SCM here..
+	{
+		echo '[tools.setuptools.package.find]'
+		echo 'where=["."]'
+	} >> pyproject.toml
+	echo "recursive-include dtschema/*schemas *.yaml" > MANIFEST.in
+}
+
+build() {
+	SETUPTOOLS_SCM_PRETEND_VERSION="$pkgver" \
+		gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 test/test-dt-validate.py
+}
+
+package() {
+	SETUPTOOLS_SCM_PRETEND_VERSION="$pkgver" \
+		python3 -m installer -d "$pkgdir" \
+		.dist/dtschema-*-py3-none-any.whl
+}
+
+sha512sums="
+8f71065d667ce1c33e0cd42f8e429a4d1ea6020b3540f35b7b7e12e17649c696468561010886b55e1b5e30cc377f638c3d3296dbf9dc3ffb5d51137dc70f614e  dt-schema-2024.09.tar.gz
+"

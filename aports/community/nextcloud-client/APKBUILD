@@ -1,0 +1,81 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Leonardo Arena <rnalrd@alpinelinux.org>
+pkgname=nextcloud-client
+pkgver=3.13.3
+pkgrel=0
+pkgdesc="Nextcloud Desktop Client"
+url="https://github.com/nextcloud/desktop"
+# s390x, ppc64le, riscv64 and loongarch64 blocked by qt5-qtwebengine
+# armhf blocked by extra-cmake-modules
+arch="all !s390x !ppc64le !armhf !riscv64 !loongarch64"
+license="GPL-2.0-only"
+depends="dbus:org.freedesktop.Secrets"
+makedepends="
+	$depends_dev
+	cmake
+	doxygen
+	extra-cmake-modules
+	graphviz
+	inkscape
+	kio5-dev
+	libcloudproviders-dev
+	openssl-dev>3
+	qtkeychain-dev
+	qt5-qtquickcontrols2-dev
+	qt5-qttools-dev
+	qt5-qtwebengine-dev
+	qt5-qtwebsockets-dev
+	samurai
+	"
+checkdepends="cmocka-dev xvfb-run"
+subpackages="$pkgname-dev $pkgname-dolphin"
+source="$pkgname-$pkgver.tgz::https://github.com/nextcloud/desktop/archive/refs/tags/v$pkgver.tar.gz
+	lfs64.patch
+	Nextcloud.conf"
+builddir="$srcdir/desktop-$pkgver"
+
+# secfixes:
+#   3.8.1-r0:
+#     - CVE-2023-28999
+#   3.6.6-r0:
+#     - CVE-2023-23942
+#     - CVE-2023-28997
+#     - CVE-2023-28998
+#   3.6.2-r0:
+#     - CVE-2022-41882
+#     - CVE-2023-22472
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_SYSCONFDIR=/etc/$pkgname \
+		-DMIRALL_VERSION_SUFFIX=""
+	cmake --build build
+}
+
+check() {
+	cd build
+	CTEST_OUTPUT_ON_FAILURE=TRUE xvfb-run ctest -E "(SyncXAttrTest|ChunkingNgTest)"
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	install -Dm644 "$srcdir"/Nextcloud.conf "$pkgdir"/etc/Nextcloud/Nextcloud.conf
+}
+
+dolphin() {
+	pkgdesc="$pkgdesc - KDE Dolphin integration"
+	install_if="$pkgname=$pkgver-r$pkgrel dolphin"
+
+	amove usr/lib/qt5
+	amove usr/lib/libnextclouddolphinpluginhelper.so
+}
+
+sha512sums="
+aafeebd7007291c7b8116f9145f08e832c5998adb59321a9f5d15f41daa6f09a91a246ca5d2b34e6f496f156f1600d4dc5f4cfbe6dd31f992b3e99d75df0b11e  nextcloud-client-3.13.3.tgz
+eb530ce62da1c4983ef7d0500d93fd02d55139607109689dc8fea80049a75a5f9b3a7e4e529af886f92312419c6c0f163621e4def82d3ef919431c84ce91930e  lfs64.patch
+28faf643e3ba22f3e1f45a96acfba1b3c53c49d4e923974e58e5ad2fdda612f52300608f0e0219e61d3478403fe3c59a9a2c70c3db1c93fbccda1e0638ecbc22  Nextcloud.conf
+"

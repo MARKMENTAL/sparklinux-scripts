@@ -1,0 +1,88 @@
+# Contributor: Oleg Titov <oleg.titov@gmail.com>
+# Maintainer: Oleg Titov <oleg.titov@gmail.com>
+pkgname=singularity
+pkgver=4.2.1
+pkgrel=0
+pkgdesc="Application containers focused on reproducibility for scientific computing and HPC world."
+url="https://www.sylabs.io/singularity/"
+# ppc64le: produces a non-PIE suid binary
+# loongarch64: cilium/ebpf@v0.9.0 does not support loongarch64
+arch="all !ppc64le !loongarch64"
+license="BSD-3-Clause AND BSD-3-Clause-LBNL"
+options="!check" # no test suite from upstream
+depends="squashfs-tools"
+makedepends="
+	autoconf
+	automake
+	bash
+	cni-plugins
+	cryptsetup
+	fuse3-dev
+	go
+	glib-dev
+	libseccomp-dev
+	libtool
+	squashfuse-dev
+	"
+subpackages="$pkgname-doc $pkgname-bash-completion"
+source="https://github.com/sylabs/singularity/releases/download/v$pkgver/singularity-ce-$pkgver.tar.gz"
+builddir="$srcdir/singularity-ce-$pkgver"
+
+# secfixes:
+#   4.1.1-r0:
+#     - CVE-2024-23650
+#     - CVE-2024-23651
+#     - CVE-2024-23652
+#     - CVE-2024-23653
+#   3.8.5-r0:
+#     - CVE-2021-41190
+#     - GHSA-77vh-xpmg-72qh
+#   3.7.4-r0:
+#     - CVE-2021-32635
+#   3.7.3-r0:
+#     - CVE-2021-29136
+#   3.6.4-r0:
+#     - CVE-2020-15229
+#   3.6.3-r0:
+#     - CVE-2020-25039
+#     - CVE-2020-25040
+#   3.6.0-r0:
+#     - CVE-2020-13845
+#     - CVE-2020-13846
+#     - CVE-2020-13847
+#   3.5.2-r0:
+#     - CVE-2019-19724
+
+export GOFLAGS="$GOFLAGS -modcacherw -trimpath"
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+prepare() {
+	default_prepare
+	echo "$pkgver" > "$builddir"/VERSION
+}
+
+build() {
+	# override git dir so it picks up our version above
+	GIT_DIR=. ./mconfig \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/infodir \
+		--localstatedir=/var \
+		--without-network \
+		--without-suid
+
+	make -C builddir GOFLAGS="$GOFLAGS"
+}
+
+package() {
+	make -C builddir DESTDIR="$pkgdir" GOFLAGS="$GOFLAGS" install
+
+	install -Dm644 -t "$pkgdir"/usr/share/doc/$pkgname README.md
+}
+
+sha512sums="
+abb59723e86c96cf963d7f898a8255bd1afcfd96fd2503ef92d8360ecd8a06560f50cfdcab531a955a5387eeb52aa813000faf493a72207909e8331db759de2d  singularity-ce-4.2.1.tar.gz
+"

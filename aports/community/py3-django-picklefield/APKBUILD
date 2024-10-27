@@ -1,0 +1,43 @@
+# Contributor: Antoine Martin (ayakael) <dev@ayakael.net>
+# Maintainer: Antoine Martin (ayakael) <dev@ayakael.net>
+pkgname=py3-django-picklefield
+_pyname="django-picklefield"
+pkgver=3.2.0
+pkgrel=2
+arch="noarch"
+pkgdesc="A pickled object field for Django"
+url="https://pypi.python.org/project/django-picklefield"
+license="MIT"
+depends="
+	py3-django
+	"
+makedepends="
+	py3-setuptools
+	py3-gpep517
+	py3-wheel
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/gintas/django-picklefield/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir"/$_pyname-$pkgver
+subpackages="$pkgname-pyc"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	DJANGO_SETTINGS_MODULE="tests.settings" \
+	.testenv/bin/python3 -s -m django test -v 2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+6cbfd75f6c55e4f910a0334e872a1b51742474fd3cac253563f2971aaa6199268c73cf908fc37f7f5e8f758a9bfdde0fb1169deed61831f20510f07086de6799  py3-django-picklefield-3.2.0.tar.gz
+"

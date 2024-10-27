@@ -1,0 +1,59 @@
+# Contributor: Natanael Copa <ncopa@alpinelinux.org>
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=libsoup3
+pkgver=3.6.0
+pkgrel=0
+pkgdesc="Gnome HTTP client/server Library"
+url="https://wiki.gnome.org/Projects/libsoup"
+arch="all"
+license="LGPL-2.0-or-later"
+subpackages="$pkgname-dev $pkgname-lang $pkgname-dbg"
+depends="glib-networking gsettings-desktop-schemas"
+makedepends="
+	brotli-dev
+	gobject-introspection-dev
+	libgcrypt-dev
+	libpsl-dev
+	meson
+	nghttp2-dev
+	sqlite-dev
+	vala
+	zlib-dev
+	"
+checkdepends="gnutls-dev"
+source="https://download.gnome.org/sources/libsoup/${pkgver%.*}/libsoup-$pkgver.tar.xz"
+builddir="$srcdir/libsoup-$pkgver"
+
+case "$CARCH" in
+x86*)
+	;;
+*)
+	# arm*: sigill for some reason
+	# rest: sigabrt, http1 != http2 on localhost req
+	options="$options !check"
+	;;
+esac
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dtls_check=false \
+		-Dintrospection=enabled \
+		-Dvapi=enabled \
+		-Dtests="$(want_check && echo true || echo false)" \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test -t 10 --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+8b4b5193547423d0066871ae35858e5b7c2cbb5187b772e09cf950dd312e46da07ec57784447f77856379382484b6794427e44ac22ca105a238c3b312eed39ae  libsoup-3.6.0.tar.xz
+"

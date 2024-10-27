@@ -1,0 +1,37 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=dconf-editor
+pkgver=45.0.1
+pkgrel=1
+pkgdesc="Dconf Editor is a viewer and editor of applications internal settings"
+url="https://wiki.gnome.org/Apps/DconfEditor"
+arch="all"
+license="GPL-3.0-or-later"
+makedepends="
+	dconf-dev
+	desktop-file-utils
+	glib-dev
+	gtk+3.0-dev
+	libhandy1-dev
+	meson
+	vala
+	"
+subpackages="$pkgname-lang $pkgname-doc $pkgname-bash-completion"
+source="https://download.gnome.org/sources/dconf-editor/${pkgver%%.*}/dconf-editor-$pkgver.tar.xz"
+
+build() {
+	abuild-meson -Db_lto=true . output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+7daa25cabcce9a51be549491b3809c023d25bf85384e45d0dd0c9624760de36bd26bd0a6ae4f4bad3d0e40834d453e826ab672f8981974487e893c53ae19c2ea  dconf-editor-45.0.1.tar.xz
+"

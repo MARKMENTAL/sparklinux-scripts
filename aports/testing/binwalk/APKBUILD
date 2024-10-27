@@ -1,0 +1,36 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=binwalk
+pkgver=2.4.2
+pkgrel=0
+pkgdesc="Fast, easy to use tool for analyzing and extracting firmware images"
+url="https://github.com/OSPG/binwalk/"
+arch="noarch"
+license="MIT"
+depends="py3-pycryptodome python3"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/OSPG/binwalk/archive/refs/tags/v$pkgver.tar.gz"
+
+# secfixes:
+#   2.3.4-r0:
+#     - CVE-2022-4510
+
+build() {
+	gpep517 build-wheel --wheel-dir .dist --output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+b9d3b13de9b81216759f5e1573bf6056a3210892ad920b43afe0c6ef2ff1d200be28ecfe12bec11fd7540545d1bb2f27d210ee5afb968910d4e9fb46a21673ce  binwalk-2.4.2.tar.gz
+"

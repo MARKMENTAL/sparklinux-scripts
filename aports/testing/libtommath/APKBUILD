@@ -1,0 +1,36 @@
+# Contributor: Alex Yam <alex@alexyam.com>
+# Maintainer: Alex Yam <alex@alexyam.com>
+pkgname=libtommath
+pkgver=1.2.1
+pkgrel=0
+pkgdesc="number theoretic multiple-precision integer library"
+url="https://www.libtom.net/LibTomMath/"
+arch="all"
+license="Unlicense"
+makedepends="libtool"
+subpackages="$pkgname-dev"
+source="$pkgname-$pkgver.tar.xz::https://github.com/libtom/libtommath/releases/download/v$pkgver/ltm-$pkgver.tar.xz"
+
+# secfixes:
+#   1.2.1-r0:
+#     - CVE-2023-36328
+
+build() {
+	make -f makefile.shared
+}
+
+check() {
+	# make test creates a stand-alone test binary that executes several test routines.
+	# clone $builddir to testdir for running tests
+	cp -rp $builddir $srcdir/testdir
+	cd $srcdir/testdir
+	make test
+}
+
+package() {
+	make DESTDIR="$pkgdir" LIBPATH=/usr/lib INCPATH=/usr/include -f makefile.shared install
+}
+
+sha512sums="
+50c9459357aa7f5076af93de6701c617da0dbbf2230a2f4468062704a6cd6e9d3c2fbb27016f68a7e1d6b35d6ddb2088630b24ea6acc20ed8c19594913d36e95  libtommath-1.2.1.tar.xz
+"

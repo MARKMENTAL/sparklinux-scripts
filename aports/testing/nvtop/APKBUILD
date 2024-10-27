@@ -1,0 +1,49 @@
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=nvtop
+pkgver=3.1.0
+pkgrel=0
+pkgdesc="GPUs process monitoring for AMD, Intel and NVIDIA"
+url="https://github.com/Syllo/nvtop"
+# no gpus that are usable on s390x
+arch="all !s390x"
+license="GPL-3.0-or-later"
+makedepends="
+	cmake
+	eudev-dev
+	libdrm-dev
+	ncurses-dev
+	samurai
+	"
+subpackages="$pkgname-doc"
+source="https://github.com/Syllo/nvtop/archive/$pkgver/nvtop-$pkgver.tar.gz"
+options="!check" # no tests provided by upstream
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		local crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+
+	case "$CARCH" in
+	arm*|aarch64) local msm=ON ;;
+	*) local msm=OFF ;;
+	esac
+
+	CFLAGS="$CFLAGS -flto=auto -DNDEBUG" \
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_BUILD_TYPE=None \
+		-DAMDGPU_SUPPORT=ON \
+		-DINTEL_SUPPORT=ON \
+		-DMSM_SUPPORT=$msm \
+		-DNVIDIA_SUPPORT=ON \
+		$crossopts
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+a22806920d85954930cf9a24450de2603418326b59bc7acedf8ff59ddb0f40e119de496a63f42706b4b6961c83ba664a8a33a3e4106a1c3ef6cd3da758aa5a55  nvtop-3.1.0.tar.gz
+"

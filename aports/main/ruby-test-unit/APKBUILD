@@ -1,0 +1,54 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=ruby-test-unit
+_gemname=test-unit
+# Keep version in sync with "Bundled gems" (https://stdgems.org) for the
+# packaged Ruby version.
+pkgver=3.6.2
+pkgrel=0
+pkgdesc="An xUnit family unit testing framework for Ruby"
+url="https://test-unit.github.io"
+arch="noarch"
+license="BSD-2-Clause AND Python-2.0 AND Ruby"
+depends="ruby ruby-power_assert"
+makedepends="ruby-rdoc"
+subpackages="$pkgname-doc"
+source="https://github.com/test-unit/test-unit/archive/$pkgver/$_gemname-$pkgver.tar.gz
+	gemspec.patch
+	"
+builddir="$srcdir/$_gemname-$pkgver"
+
+build() {
+	gem build $_gemname.gemspec
+}
+
+check() {
+	ruby test/run-test.rb
+}
+
+package() {
+	local gemdir="$pkgdir/$(ruby -e 'puts Gem.default_dir')"
+
+	gem install \
+		--local \
+		--install-dir "$gemdir" \
+		--ignore-dependencies \
+		--document ri \
+		--verbose \
+		$_gemname
+
+	# Remove unnessecary files
+	cd "$gemdir"
+	rm -rf build_info cache extensions plugins
+}
+
+doc() {
+	pkgdesc="$pkgdesc (ri docs)"
+
+	amove "$(ruby -e 'puts Gem.default_dir')"/doc
+}
+
+sha512sums="
+d523412e080ea0ce1ac968c64279fbdc90afaed3b2052f357993583ed89a77d9977022aac74f3170bfc3cb7e716f1665a9705e0ed95a8db5f205f1b984f52d94  test-unit-3.6.2.tar.gz
+22f54fcf272856a9455d5a7276896ec329377b106ab47e3d376158eee72cf570f4487dd87606d730d061e7b06e5d7a0ff561cd8d279a64d8af0ac04e0f2dba92  gemspec.patch
+"

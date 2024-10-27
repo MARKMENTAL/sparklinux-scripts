@@ -1,0 +1,53 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=gnome-authenticator
+pkgver=4.4.0
+pkgrel=1
+pkgdesc="Two-Factor Authentication application"
+url="https://gitlab.gnome.org/World/Authenticator"
+# 32-bit: pipewire-rs: https://gitlab.freedesktop.org/pipewire/pipewire-rs/-/issues/43
+# loongarch64: libc crate fails to build
+arch="all !x86 !armhf !armv7 !loongarch64"
+license="GPL-3.0-only"
+makedepends="
+	cargo
+	clang-dev
+	desktop-file-utils
+	gst-plugins-bad-dev
+	gst-plugins-base-dev
+	gstreamer-dev
+	gtk4.0-dev
+	libadwaita-dev
+	meson
+	openssl-dev
+	pipewire-dev
+	sqlite-dev
+	zbar-dev
+	"
+checkdepends="appstream-glib"
+subpackages="$pkgname-dbg $pkgname-lang"
+source="https://gitlab.gnome.org/World/Authenticator/-/archive/$pkgver/Authenticator-$pkgver.tar.bz2"
+builddir="$srcdir/Authenticator-$pkgver"
+
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+check() {
+	# Compile tests before running them with Meson to avoid timeout
+	CARGO_TARGET_DIR="$builddir"/output/target \
+	CARGO_HOME="$CARGO_TARGET_DIR"/cargo-home \
+		cargo test --no-run --bin authenticator
+
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+721e842f21a012117bfcd41e572a80e47d613b707cde4546c4c743499e1449ed4382552afa1b25665fb1e64ced70124a8fe1c3203644aee174575db616de19c9  Authenticator-4.4.0.tar.bz2
+"

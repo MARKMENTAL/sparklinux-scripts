@@ -1,0 +1,36 @@
+# Contributor: j.r <j.r@jugendhacker.de>
+# Contributor: Oleg Titov <oleg.titov@gmail.com>
+# Maintainer: Maria Lisina <sekoohaka.sarisan@gmail.com>
+pkgname=telegram-tdlib
+pkgver=1.8.36
+pkgrel=0
+# they don't tag releases
+_gitrev=87d881071fe514936bb17029e96761141287d2be
+pkgdesc="Cross-platform library for building Telegram clients"
+url="https://core.telegram.org/tdlib"
+arch="all !s390x" # fails to build on big-endian
+license="BSL-1.0"
+makedepends="cmake gperf linux-headers openssl-dev samurai zlib-dev"
+subpackages="$pkgname-static $pkgname-dev"
+source="td-$_gitrev.tar.gz::https://github.com/tdlib/td/archive/$_gitrev.tar.gz"
+builddir="$srcdir/td-$_gitrev"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DCMAKE_INSTALL_PREFIX=/usr
+
+	cmake --build build
+}
+
+check() {
+	ctest --output-on-failure --test-dir build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+598ad908a34c04e9ea34bde5df4ce0ad06894838d3b183bdd40b1935a3976bf5f4cec1ae87a7dd73c442b5b634e32f5a9e7d87450d6665efc028157949daded3  td-87d881071fe514936bb17029e96761141287d2be.tar.gz
+"

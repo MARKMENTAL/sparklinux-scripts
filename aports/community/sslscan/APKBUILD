@@ -1,0 +1,24 @@
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=sslscan
+pkgver=2.1.5
+pkgrel=0
+pkgdesc="fast SSL/TLS configuration scanner"
+url="https://github.com/rbsec/sslscan"
+arch="all"
+license="GPL-3.0-or-later OpenSSL"
+makedepends="zlib-dev openssl-dev>3 perl"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/rbsec/sslscan/archive/refs/tags/$pkgver.tar.gz"
+options="!check" # No test suite
+
+build() {
+	make GIT_VERSION=$pkgver
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+a287b5ef937873fdd96696c06f820ee140095bf00678f3f98bf6e99f07e7cc940141f3712490cafe81696749afd5c9836e6e71d1a83b1969e6d418c999af6af2  sslscan-2.1.5.tar.gz
+"

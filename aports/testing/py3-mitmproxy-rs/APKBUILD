@@ -1,0 +1,46 @@
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=py3-mitmproxy-rs
+pkgver=0.5.1
+pkgrel=0
+pkgdesc="mitmproxy modules written in Rust"
+url="https://github.com/mitmproxy/mitmproxy_rs"
+license="MIT"
+arch="all !ppc64le !riscv64 !s390x !loongarch64" # fails to build ring crate
+makedepends="
+	cargo
+	py3-gpep517
+	py3-installer
+	py3-maturin
+	py3-setuptools
+	py3-wheel
+	"
+subpackages="$pkgname-pyc"
+source="https://github.com/mitmproxy/mitmproxy_rs/archive/$pkgver/py3-mitmproxy-rs-$pkgver.tar.gz"
+builddir="$srcdir/mitmproxy_rs-$pkgver"
+options="net" # cargo
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cd mitmproxy-rs
+	gpep517 build-wheel \
+		--wheel-dir "$builddir"/.dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+e08f632f7acbff0c99cbac479ff2a6fee5f1343c3fe8f1ed0d749d13f159385eee1cdd28bb182e6ef9145957dbc66cd74ae8535c1551917062881aff22676969  py3-mitmproxy-rs-0.5.1.tar.gz
+"

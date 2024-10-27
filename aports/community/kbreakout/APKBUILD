@@ -1,0 +1,52 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: team/kde <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=kde-applications
+pkgname=kbreakout
+pkgver=24.08.1
+pkgrel=0
+pkgdesc="A Breakout-like game"
+url="https://kde.org/applications/games/kbreakout/"
+# armhf blocked by extra-cmake-modules
+arch="all !armhf"
+license="GPL-2.0-or-later AND GFDL-1.2-only"
+makedepends="
+	extra-cmake-modules
+	kconfig-dev
+	kconfigwidgets-dev
+	kcoreaddons-dev
+	kcrash-dev
+	kdbusaddons-dev
+	kdoctools-dev
+	ki18n-dev
+	kwidgetsaddons-dev
+	kxmlgui-dev
+	libkdegames-dev
+	qt6-qtbase-dev
+	qt6-qtdeclarative-dev
+	samurai
+	"
+subpackages="$pkgname-doc $pkgname-lang"
+_repo_url="https://invent.kde.org/games/kbreakout.git"
+source="https://download.kde.org/stable/release-service/$pkgver/src/kbreakout-$pkgver.tar.xz"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+5593e039a9a93223e37344157114f9f70ed85db11a18ed1b186c4d358162968e6f1ec5d651da7ac01a1b0895d2e8fd3f3f8bdc172068f4857c3514b2a88dd9e5  kbreakout-24.08.1.tar.xz
+"

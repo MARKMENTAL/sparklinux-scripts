@@ -1,0 +1,64 @@
+# Contributor: Antoine Martin (ayakael) <dev@ayakael.net>
+# Maintainer: Antoine Martin (ayakael) <dev@ayakael.net>
+pkgname=py3-django-allauth
+_pyname="django-allauth"
+pkgver=64.2.1
+pkgrel=0
+arch="noarch"
+pkgdesc="Integrated set of Django applications addressing SSO"
+url="https://pypi.python.org/project/django-allauth"
+license="MIT"
+# missing opt depends: python3-openid
+depends="
+	py3-python3-saml
+	py3-qrcode
+	py3-django
+	py3-openid
+	py3-requests
+	py3-requests-oauthlib
+	py3-jwt
+	py3-cryptography
+	py3-fido2
+	"
+makedepends="
+	py3-setuptools
+	py3-gpep517
+	py3-wheel
+	"
+checkdepends="
+	py3-pytest
+	py3-pytest-django
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/pennersr/$_pyname/archive/$pkgver.tar.gz"
+builddir="$srcdir"/$_pyname-$pkgver
+subpackages="$pkgname-pyc"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+
+	case "$CARCH" in
+	loongarch64)
+		.testenv/bin/python3 -m pytest -v \
+			--deselect allauth/socialaccount/providers/openid/tests.py::OpenIDTests::test_login \
+			--deselect allauth/socialaccount/providers/openid/tests.py::OpenIDTests::test_login_with_extra_attributes
+		;;
+	*)
+		.testenv/bin/python3 -m pytest -v
+		;;
+	esac
+}
+
+package() {
+	python3 -m installer --destdir="$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+9a467a851f138afd739d54bef31bc05765fdbe8d199c05ff4955ba0f10c9b38997782f523990e2f3bae01a3c046ddb9aaf59f59d77c801a022b23d39b26b9258  py3-django-allauth-64.2.1.tar.gz
+"

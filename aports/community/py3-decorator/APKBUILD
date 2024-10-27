@@ -1,0 +1,34 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=py3-decorator
+_pkgname=decorator
+pkgver=5.1.1
+pkgrel=4
+pkgdesc="Python3 Decorator module"
+url="https://github.com/micheles/decorator"
+arch="noarch"
+license="BSD-2-Clause"
+depends="python3"
+makedepends="py3-setuptools"
+subpackages="$pkgname-pyc"
+source="https://github.com/micheles/decorator/archive/refs/tags/$pkgver/py3-decorator-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+replaces="py-decorator" # Backwards compatibility
+provides="py-decorator=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	python3 setup.py build
+}
+
+check() {
+	python3 setup.py test
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+26bab2c378dc30ae1d688b25ed5c56632df9847e09baa6143a92e2c6376db4125aa044d235c137eebae487b23c756d417ecb2e35be88fa21e05d52a58408bd22  py3-decorator-5.1.1.tar.gz
+"

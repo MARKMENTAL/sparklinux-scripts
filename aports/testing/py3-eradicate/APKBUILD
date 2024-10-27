@@ -1,0 +1,32 @@
+# Contributor: Rejah Rehim <rejah@beaglesecurity.com>
+# Maintainer: Rejah Rehim <rejah@beaglesecurity.com>
+pkgname=py3-eradicate
+_pkgname=eradicate
+pkgver=2.3.0
+pkgrel=2
+pkgdesc="Removes commented-out code"
+url="https://github.com/myint/eradicate"
+arch="noarch"
+license="MIT"
+depends="python3"
+makedepends="py3-setuptools py3-gpep517"
+subpackages="$pkgname-doc $pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/e/$_pkgname/$_pkgname-$pkgver.tar.gz"
+builddir="$srcdir"/$_pkgname-$pkgver
+options="!check" # no test suite
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+	install -Dm644 README.rst -t "$pkgdir"/usr/share/doc/"$pkgname"
+}
+
+sha512sums="
+3b2498277e8aa6e36f1dbab0731b28d22034b95564c300e067151fe5a6c8f124661f169e43290a57950588fcd8c8f27b990755bdba7e28afcc0fee6b82c1c07f  eradicate-2.3.0.tar.gz
+"

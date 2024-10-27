@@ -1,0 +1,42 @@
+# Maintainer: Donoban <donoban@riseup.net>
+pkgname=pdfjs
+pkgver=4.0.379
+pkgrel=0
+pkgdesc="A general-purpose, web standards-based platform for parsing and rendering PDFs."
+url="https://mozilla.github.io/pdf.js/"
+arch="noarch"
+license="Apache-2.0"
+source="https://github.com/mozilla/pdf.js/releases/download/v$pkgver/pdfjs-$pkgver-dist.zip"
+options="!check" # No tests
+subpackages="$pkgname-dbg"
+
+prepare() {
+	default_prepare
+
+	#disable bundled fonts
+	sed -i "s|\"../web/standard_fonts/\",|null,|" web/viewer.mjs
+}
+
+package() {
+	# Remove bundled fonts and weird pdf included
+	rm "$srcdir/web/compressed.tracemonkey-pldi-09.pdf"
+	rm -fr "$srcdir/web/cmaps"
+	rm -fr "$srcdir/web/standard_fonts"
+
+	mkdir -p "$pkgdir/usr/share/pdf.js"
+	cp -R "$srcdir"/build "$pkgdir"/usr/share/pdf.js
+	cp -R "$srcdir"/web "$pkgdir"/usr/share/pdf.js
+
+	# Workaround for apps reyling in pdf.js
+	cd "$pkgdir"/usr/share/pdf.js/build
+	ln -s pdf.mjs pdf.js
+}
+
+dbg() {
+	amove /usr/share/pdf.js/*/*.mjs.map
+	amove /usr/share/pdf.js/*/debugger*
+}
+
+sha512sums="
+cdab3338b953c800056a26aa94a7b31ae0a67dd9f4725550318d133acbb7eec8dafed55e61cd838fc7f43ba11bfed186395330e7fe36bc0000082baea4ee6b73  pdfjs-4.0.379-dist.zip
+"

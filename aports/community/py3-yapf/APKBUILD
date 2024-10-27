@@ -1,0 +1,36 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=py3-yapf
+pkgver=0.40.2
+pkgrel=2
+pkgdesc="A formatter for Python files"
+url="https://github.com/google/yapf"
+arch="noarch"
+license="Apache-2.0"
+depends="py3-importlib-metadata py3-platformdirs"
+makedepends="py3-setuptools py3-wheel py3-gpep517"
+checkdepends="py3-pytest py3-tomli"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/google/yapf/archive/v$pkgver/py3-yapf-$pkgver.tar.gz"
+builddir="$srcdir/yapf-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	gpep517 install-wheel --destdir .testenv --prefix '' .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+be71b622efde162d64e5143c2a27de254a3791c229046309a083fa0df00afb4170cf0427c4402d3c621ca2120210ba15aa6d124ef7b8790c4b72705f5c5342e3  py3-yapf-0.40.2.tar.gz
+"

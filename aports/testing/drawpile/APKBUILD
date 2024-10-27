@@ -1,0 +1,118 @@
+# Contributor: mio <miyopan@e.email>
+# Maintainer: mio <miyopan@e.email>
+pkgname=drawpile
+pkgver=2.2.1
+pkgrel=1
+pkgdesc="Collaborative drawing program"
+url="https://drawpile.net/"
+license="GPL-3.0-or-later"
+# armhf: missing karchive5-dev kdnssd5-dev
+# ppc64le: unrecognized command-line option '-march=native' error
+# x86, armv7: cast from pointer to integer of different size error
+arch="aarch64 x86_64"
+pkgusers=drawpile
+pkggroups=drawpile
+makedepends="
+	cargo
+	cmake
+	extra-cmake-modules
+	giflib-dev
+	karchive5-dev
+	kdnssd5-dev
+	libmicrohttpd-dev
+	libsodium-dev
+	libvpx-dev
+	miniupnpc-dev
+	qt5-qtmultimedia-dev
+	qt5-qtsvg-dev
+	qt5-qttools-dev
+	qt5-qtx11extras-dev
+	samurai
+	"
+subpackages="
+	$pkgname-doc
+	$pkgname-base
+	$pkgname-client
+	$pkgname-server
+	$pkgname-server-openrc
+	$pkgname-tools
+	"
+source="drawpile-$pkgver.tar.gz::https://github.com/drawpile/Drawpile/archive/$pkgver.tar.gz
+	drawpile.initd
+	drawpile-server.pre-install
+	"
+builddir="$srcdir"/Drawpile-"$pkgver"
+options="net"
+
+# Temporarily disable lto due to conflict with multiple Rust libs exposing
+# rust_eh_personality symbol.
+export CARGO_PROFILE_RELEASE_LTO="false"
+
+build() {
+	cmake -B build -G Ninja \
+		--preset linux-release-qt5-all-ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_MANDIR=/usr/share/man/man1
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	# drawpile is a meta-package
+	depends="
+		$pkgname-base=$pkgver-r$pkgrel
+		$pkgname-client=$pkgver-r$pkgrel
+		$pkgname-server=$pkgver-r$pkgrel
+		$pkgname-tools=$pkgver-r$pkgrel
+		"
+	DESTDIR="$pkgdir" cmake --install build
+
+	install -Dm755 "$srcdir"/drawpile.initd "$pkgdir"/etc/init.d/drawpile
+	install -Dm644 LICENSE.txt \
+		"$pkgdir"/usr/share/licenses/drawpile-base/LICENSE.txt
+}
+
+base() {
+	pkgdesc="Common files for Drawpile"
+	arch="noarch"
+	amove usr/share
+}
+
+client() {
+	pkgdesc="$pkgdesc (Drawpile client)"
+	depends="$pkgname-base=$pkgver-r$pkgrel"
+	amove usr/bin/drawpile
+}
+
+server() {
+	pkgdesc="$pkgdesc (Drawpile server)"
+	depends="
+		$pkgname-base=$pkgver-r$pkgrel
+		qt5-qtbase-sqlite
+		"
+
+	amove usr/bin/drawpile-srv
+
+	install -d -o drawpile -g drawpile "$subpkgdir"/etc/drawpile/templates
+	install -d -o drawpile -g drawpile -m 750 "$subpkgdir"/var/lib/drawpile
+}
+
+tools() {
+	pkgdesc="$pkgdesc (Drawpile tools)"
+	depends="$pkgname-base=$pkgver-r$pkgrel"
+	# dprectool: convert between Drawpile session formats .dprec and .dptxt
+	# drawpile-cmd: render recordings
+	# drawpile-timelapse: turn drawpile recordings into timelapse videos
+	amove usr/bin/dprectool
+	amove usr/bin/drawpile-cmd
+	amove usr/bin/drawpile-timelapse
+}
+
+sha512sums="
+7480d10dd0ac6ea280b8abced66d7c1daca03e2a7dcb1e8c3378efb18a0a6ab5f72734619956c76827adbbf7969a3a930dd2dff951dcbbf7ff6d703e5a665e9e  drawpile-2.2.1.tar.gz
+5a2e6d1e677a74a43838cce26bd6b6f6bceb858f3622912476665ad3f6cef3171aa0c5b56ca9343c5b7ec81c850ce251a177d77490854e7ef39796c4c7d53535  drawpile.initd
+712df7a0bac0d4ad25f4254f0caf09b4d496b64d1d0a8bbbdd28e3b6c10ac6305dab58ac48adc8b88d0b7c8898ce28613ae2e8951ba76ad2ef5da35b3d943a94  drawpile-server.pre-install
+"

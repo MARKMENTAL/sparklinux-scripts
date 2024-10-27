@@ -1,0 +1,35 @@
+# Contributor: Aiden Grossman <agrossman154@yahoo.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=py3-fastjsonschema
+pkgver=2.20.0
+pkgrel=0
+pkgdesc="Fast JSON schema validator"
+url="https://horejsek.github.io/python-fastjsonschema/"
+arch="noarch"
+license="BSD-3-Clause"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest py3-pytest-benchmark"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/horejsek/python-fastjsonschema/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/python-fastjsonschema-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+2dd82d0dbe4e4e0a78e4d688c8f6a999a2fce6ba603084adb4e58e6ff8404805b8b525bcf7ab05e1e04b4261dd174ed27c415b0679e754542fbe1d3af8847415  py3-fastjsonschema-2.20.0.tar.gz
+"

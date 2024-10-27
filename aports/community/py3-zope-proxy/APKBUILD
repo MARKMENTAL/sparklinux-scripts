@@ -1,0 +1,36 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Maintainer: Carlo Landmeter <clandmeter@alpinelinux.org>
+pkgname=py3-zope-proxy
+_pkgname=zope.proxy
+pkgver=5.0.0
+pkgrel=2
+pkgdesc="Generic transparent proxies via a C extension module"
+options="!check" # Requires unpackaged zope.security and upper repo zope.testrunner
+url="https://github.com/zopefoundation/$_pkgname"
+arch="all"
+license="ZPL-2.1"
+depends="py3-setuptools py3-zope-interface"
+makedepends="python3-dev"
+checkdepends="py3-zope-testrunner"
+subpackages="$pkgname-pyc"
+source="$_pkgname-$pkgver.tar.gz::https://github.com/zopefoundation/$_pkgname/archive/$pkgver.tar.gz"
+builddir="$srcdir"/$_pkgname-$pkgver
+
+replaces="py-zope-proxy" # Backwards compatibility
+provides="py-zope-proxy=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	python3 setup.py build
+}
+
+check() {
+	python3 setup.py test
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+e7b46fab93df36b27218701c7eddd18b6e4087df4a7f69ee55742dc3fba7e8db77e8abb9dcf8e3a2eae3fd06c9c674adcf3de0d1641bed99894aa75350240976  zope.proxy-5.0.0.tar.gz
+"

@@ -1,0 +1,71 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=qcoro
+pkgver=0.10.0
+pkgrel=0
+pkgdesc="C++ Coroutines for Qt"
+url="https://qcoro.dvratil.cz"
+arch="all"
+license="MIT"
+depends_dev="
+	qt5-qtbase-dev
+	qt5-qtwebsockets-dev
+	qt5-qtdeclarative-dev
+	qt6-qtbase-dev
+	qt6-qtwebsockets-dev
+	"
+makedepends="$depends_dev
+	cmake
+	samurai
+	"
+checkdepends="
+	dbus-x11
+	xvfb-run
+	"
+subpackages="$pkgname-dev $pkgname-qt6"
+source="https://github.com/danvratil/qcoro/archive/v$pkgver/qcoro-v$pkgver.tar.gz"
+
+build() {
+	cmake -B build-qt5 -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=TRUE \
+		-DUSE_QT_VERSION=5 \
+		-DQCORO_BUILD_EXAMPLES=OFF
+	cmake --build build-qt5
+
+	cmake -B build-qt6 -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=TRUE \
+		-DUSE_QT_VERSION=6 \
+		-DQCORO_BUILD_EXAMPLES=OFF
+	cmake --build build-qt6
+}
+
+check() {
+	cd build-qt5
+	CTEST_OUTPUT_ON_FAILURE=TRUE xvfb-run ctest
+
+	cd "$builddir"/build-qt6
+
+	# test-qcorolocalsocket fails
+	CTEST_OUTPUT_ON_FAILURE=TRUE xvfb-run ctest -E "test-qcorolocalsocket"
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build-qt5
+	DESTDIR="$pkgdir" cmake --install build-qt6
+}
+
+qt6() {
+	cd "$builddir"
+
+	amove usr/lib/libQCoro6*
+}
+
+sha512sums="
+de2e55256d3c9d35fec3ef6dc78128801b70a5e5b8ff0f3a6f235dac17f349ea44207a7c9f35375215dbeea04cb67c3412d505d0a8a95f2b926775f804a02649  qcoro-v0.10.0.tar.gz
+"

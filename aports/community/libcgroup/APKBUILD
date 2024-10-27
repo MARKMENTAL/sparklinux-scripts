@@ -1,0 +1,58 @@
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=libcgroup
+pkgver=3.1.0
+pkgrel=1
+pkgdesc="cgroup library"
+url="https://github.com/libcgroup/libcgroup"
+arch="all"
+license="LGPL-2.1-only"
+makedepends="
+	bsd-compat-headers
+	byacc
+	flex
+	libtool
+	linux-headers
+	linux-pam-dev
+	musl-fts-dev
+	"
+subpackages="$pkgname-doc $pkgname-pam $pkgname-dev cgroup-tools:_tools"
+source="https://github.com/libcgroup/libcgroup/releases/download/v$pkgver/libcgroup-$pkgver.tar.gz"
+# tests seem to fail for no reason and prompt sudo
+options="!check"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--disable-static \
+		--disable-systemd
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	chmod u-s "$pkgdir"/usr/bin/cgexec
+}
+
+pam() {
+	pkgdesc="$pkgdesc (pam module)"
+	amove usr/lib/security
+}
+
+_tools() {
+	pkgdesc="$pkgdesc (tools)"
+	amove usr/bin usr/sbin
+}
+
+sha512sums="
+84272e811422f2105e275ccadbd333fe6da495da5504cd97acd3101718e27b52e0f56b62f847933b32d613e15c170d1b998d85a89c1591e8ce37c33043f3e00b  libcgroup-3.1.0.tar.gz
+"

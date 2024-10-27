@@ -1,0 +1,187 @@
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=qt6
+pkgname=qt6-qtbase
+pkgver=6.7.2
+pkgrel=2
+pkgdesc="A cross-platform application and UI framework"
+url="https://qt.io/"
+arch="all"
+license="LGPL-2.1-only AND LGPL-3.0-only AND GPL-3.0-only AND Qt-GPL-exception-1.0"
+_sub="
+	$pkgname-mysql
+	$pkgname-odbc
+	$pkgname-postgresql
+	$pkgname-sqlite
+	$pkgname-x11
+	"
+depends="tzdata"
+depends_dev="$_sub
+	cups-dev
+	dbus-dev
+	double-conversion-dev
+	eudev-dev
+	fontconfig-dev
+	freetype-dev
+	glib-dev
+	gtk+3.0-dev
+	harfbuzz-dev
+	icu-dev
+	libb2-dev
+	libinput-dev
+	libjpeg-turbo-dev
+	libpng-dev
+	libpq-dev
+	libproxy-dev
+	libxkbcommon-dev
+	mariadb-dev
+	mesa-dev
+	openssl-dev>3
+	pcre2-dev
+	sqlite-dev
+	tslib-dev
+	unixodbc-dev
+	vulkan-headers
+	vulkan-loader-dev
+	wayland-dev
+	xcb-util-cursor-dev
+	xcb-util-dev
+	xcb-util-image-dev
+	xcb-util-keysyms-dev
+	xcb-util-renderutil-dev
+	xcb-util-wm-dev
+	zlib-dev
+	"
+makedepends="$depends_dev
+	cmake
+	perl
+	samurai
+	xmlstarlet
+	"
+subpackages="$pkgname-dbg $pkgname-dev $pkgname-doc $_sub"
+builddir="$srcdir/qtbase-everywhere-src-${pkgver/_/-}"
+
+case $pkgver in
+	*_alpha*|*_beta*|*_rc*) _rel=development_releases;;
+	*) _rel=official_releases;;
+esac
+
+source="https://download.qt.io/$_rel/qt/${pkgver%.*}/${pkgver/_/-}/submodules/qtbase-everywhere-src-${pkgver/_/-}.tar.xz
+	0001-lfs64.patch
+	CVE-2024-39936-qtbase-6.7.patch
+	"
+
+# secfixes:
+#   6.5.0-r5:
+#     - CVE-2023-32762
+#     - CVE-2023-32763
+#   6.7.2-r1:
+#     - CVE-2024-39936
+
+build() {
+	case "$CTARGET_ARCH" in
+	arm*|aarch64)
+		local opengl="-DQT_FEATURE_opengles2=ON"
+		;;
+	esac
+
+	# -g1: significantly reduce debug symbol size
+	export CFLAGS="$CFLAGS -g1 -flto=auto"
+	export CXXFLAGS="$CXXFLAGS -g1 -flto=auto"
+	cmake -B build -G Ninja -Wno-dev \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON \
+		-DINSTALL_BINDIR=lib/qt6/bin \
+		-DINSTALL_PUBLICBINDIR=usr/bin \
+		-DINSTALL_DOCDIR=share/doc/qt6 \
+		-DINSTALL_ARCHDATADIR=lib/qt6 \
+		-DINSTALL_DATADIR=share/qt6 \
+		-DINSTALL_INCLUDEDIR=include/qt6 \
+		-DINSTALL_MKSPECSDIR=lib/qt6/mkspecs \
+		-DINSTALL_EXAMPLESDIR=share/doc/qt6/examples \
+		-DQT_FEATURE_journald=OFF \
+		-DFEATURE_libproxy=ON \
+		-DQT_FEATURE_openssl_linked=ON \
+		-DQT_FEATURE_reduce_relocations=OFF \
+		-DQT_FEATURE_system_sqlite=ON \
+		-DQT_FEATURE_system_xcb_xinput=ON \
+		-DQT_FEATURE_vulkan=ON \
+		-DQT_FEATURE_xcb=ON \
+		$opengl
+	cmake --build build
+}
+
+check() {
+	cd build
+	CTEST_OUTPUT_ON_FAILURE=TRUE ctest
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	# add symlinks for qt6 dev tools
+	cd "$pkgdir"
+	mkdir -p usr/bin
+	while read -r _line; do
+		ln -sv $_line
+	done < "$builddir"/build/user_facing_tool_links.txt
+}
+
+dev() {
+	default_dev
+
+	amove usr/bin
+	amove usr/lib/qt6/bin
+}
+
+sqlite() {
+	pkgdesc="SQLite driver for Qt6's SQL classes"
+	cd "$pkgdir"
+	amove usr/lib/qt6/plugins/sqldrivers/libqsqlite*
+}
+
+odbc() {
+	pkgdesc="ODBC driver for Qt6's SQL classes"
+	cd "$pkgdir"
+	amove usr/lib/qt6/plugins/sqldrivers/libqsqlodbc*
+}
+
+postgresql() {
+	pkgdesc="PostgreSQL driver for Qt6's SQL classes"
+	cd "$pkgdir"
+	amove usr/lib/qt6/plugins/sqldrivers/libqsqlpsql*
+}
+
+mysql() {
+	pkgdesc="MySQL driver for Qt6's SQL classes"
+	cd "$pkgdir"
+	amove usr/lib/qt6/plugins/sqldrivers/libqsqlmysql*
+}
+
+x11() {
+	pkgdesc="Qt6 GUI-related libraries"
+	depends="hicolor-icon-theme xdg-utils"
+	cd "$pkgdir"
+	amove \
+		usr/lib/libQt6EglFSDeviceIntegration.so.* \
+		usr/lib/libQt6EglFsKms*Support.so.* \
+		usr/lib/libQt6Gui.so.* \
+		usr/lib/libQt6OpenGL*.so.* \
+		usr/lib/libQt6XcbQpa.so.* \
+		usr/lib/libQt6PrintSupport.so.* \
+		usr/lib/libQt6Widgets.so.* \
+		usr/lib/qt6/plugins/egldeviceintegrations \
+		usr/lib/qt6/plugins/generic \
+		usr/lib/qt6/plugins/image* \
+		usr/lib/qt6/plugins/platform* \
+		usr/lib/qt6/plugins/printsupport* \
+		usr/lib/qt6/plugins/xcbglintegrations/libqxcb*
+}
+
+sha512sums="
+eb4b2f1fb02ab0ed5508d32449e140778278ff1a619cfcae14920b276b5c46e01a566d73fb8f84cf2cfc81e19cb11e53ab500df6b27d12ab875aa8c07bd15d6b  qtbase-everywhere-src-6.7.2.tar.xz
+390e2998483696e4af6f754be6611eb01f93b5185e81f8ad21c45cd267bab58a347902230b456b4c9fae339d6b8ecb6f7cf695e90fb086d92b9c5f7561993898  0001-lfs64.patch
+9561dae897ba45e4b7ca1d8be0dfbceadf22356d961b6407167d023aa03b6cdf49f64679af3a6195b274502648a2eade0f77d54205f58af08a63a2ddf942342d  CVE-2024-39936-qtbase-6.7.patch
+"

@@ -1,0 +1,30 @@
+# Contributor: Jake Buchholz Göktürk <tomalok@gmail.com>
+# Maintainer: Jake Buchholz Göktürk <tomalok@gmail.com>
+pkgname=log_proxy
+pkgver=0.7.2
+pkgrel=0
+pkgdesc="A tiny C utility for log rotation for apps that write their logs to stdout."
+url="https://github.com/metwork-framework/log_proxy"
+arch="all"
+license="BSD-3-Clause"
+makedepends="glib-dev"
+source="
+	log_proxy-$pkgver.tar.gz::https://github.com/metwork-framework/log_proxy/archive/v$pkgver.tar.gz
+"
+builddir="$srcdir/$pkgname-$pkgver/src"
+
+build() {
+	make
+}
+
+check() {
+	make test
+}
+
+package() {
+	make install DESTDIR="$pkgdir" PREFIX="/usr"
+}
+
+sha512sums="
+9c662e9c69473a26ea057cabae59499f4c74a74217116a64eab67a8e342e8e84d1d3a0c972fb63d0a11869fff6439b719faedb9d12703d0886afb52b1e9b9935  log_proxy-0.7.2.tar.gz
+"

@@ -1,0 +1,112 @@
+# Contributor: ungleich <foss@ungleich.ch>
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Contributor: TBK <alpine@jjtc.eu>
+# Maintainer: ungleich <foss@ungleich.ch>
+pkgname=cri-o
+pkgver=1.30.3
+pkgrel=0
+pkgdesc="OCI-based implementation of Kubernetes Container Runtime Interface"
+url="https://github.com/cri-o/cri-o/"
+arch="all"
+license="Apache-2.0"
+# Most tests will fail if not ran as root
+# since it tries to create network interfaces
+options="net chmod-clean !check"
+depends="
+	cni-plugins
+	conmon
+	conntrack-tools
+	containers-common
+	iproute2
+	iptables
+	oci-runtime
+	"
+makedepends="
+	bash
+	btrfs-progs-dev
+	eudev-dev
+	glib-dev
+	go
+	go-md2man
+	gpgme-dev
+	libseccomp-dev
+	libselinux-dev
+	lvm2-dev
+	ostree-dev
+	sqlite-dev
+	tzdata
+	"
+checkdepends="bats cri-tools jq parallel sudo conmon"
+subpackages="
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-zsh-completion
+	$pkgname-fish-completion
+	$pkgname-openrc
+	"
+source="
+	$pkgname-$pkgver.tar.gz::https://github.com/cri-o/cri-o/archive/v$pkgver/cri-o-$pkgver.tar.gz
+	crio.conf
+	crio.initd
+	crio.logrotated
+	cni-plugins-path.patch
+	makefile-fix-install.patch
+	fix-test.patch
+	remove-systemd-files.patch
+	loongarch-support.patch
+	"
+
+# secfixes:
+#   1.23.2-r0:
+#     - CVE-2022-0811
+#   1.24.1-r0:
+#     - CVE-2022-1708
+#   1.26.2-r0:
+#     - CVE-2022-4318
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+export GOBIN="$GOPATH/bin"
+
+build() {
+	# https://github.com/cri-o/cri-o/blob/master/install.md#build-tags
+	make BUILDTAGS="libsqlite3 seccomp selinux apparmor containers_image_openpgp containers_image_ostree_stub"
+}
+
+check() {
+	make localintegration
+}
+
+package() {
+	make \
+		DESTDIR="$pkgdir" \
+		PREFIX=/usr \
+		CRICTL_CONFIG_DIR="/etc/crio" \
+		OCIUMOUNTINSTALLDIR="/etc/crio" \
+		FISHINSTALLDIR=/usr/share/fish/vendor_completions.d \
+		install.bin-nobuild install.man-nobuild install.completions install.config-nobuild
+
+	# We want it in etc so apk does not overwrite it
+	mkdir -p  "$pkgdir"/usr/share/oci-umount/oci-umount.d/
+	ln -sf ../../../../etc/crio/crio-umount.conf "$pkgdir"/usr/share/oci-umount/oci-umount.d/crio-umount.conf
+
+	# The CNI plugins are recommended to be installed as examples
+	install -Dm644 contrib/cni/*.conflist -t "$pkgdir"/usr/share/doc/cri-o/examples/cni/
+
+	install -Dm755 "$srcdir"/crio.initd "$pkgdir"/etc/init.d/crio
+	install -Dm644 "$srcdir"/crio.conf "$pkgdir"/etc/crio/crio.conf
+	install -Dm644 "$srcdir"/crio.logrotated "$pkgdir"/etc/logrotate.d/crio
+}
+
+sha512sums="
+bc8188c6b2a14b3994bee7d5765ea4c53fff89991ce8bf82bbdae3f0f499e3b7d968b59d1d10d5178b7cdea9c6ba428a2a77f221150a423906542440956245b5  cri-o-1.30.3.tar.gz
+1f60719677295c9c5c615eb25d9159bde0af68a132eee67747f57fe76642d457c98c896c6189f85637d7b4ac24ba55fd9eaeb1699f43c3c5077b645f72a479fb  crio.conf
+26048a219bc426ef4a4f50e96d6e0ded1c55dc8415df9a2773764d2ebcb3d9e91077b2916da1ff32674ca4a53062e41e185503d671dacc3167a018b0066347e1  crio.initd
+1115228546a696eeebeb6d4b3e5c3152af0c99a2559097fc5829d8b416d979c457b4b1789e0120054babf57f585d3f63cbe49949d40417ae7aab613184bf4516  crio.logrotated
+0a567dfa431ab1e53f2a351689be8d588a60cc5fcdbda403ec4f8b6ab9b1c18ad425f6c47f9a5ab1491e3a61a269dc4efa6a59e91e7521fa2b6bb165074aa8e0  cni-plugins-path.patch
+09025bff1fed5004a15696cbc7c63260ae7c206ffe2c8506e6063e8889b7aa98bd5c7df2f0c109860d8432ddf5f3b6326dbfd46589d05cf87f26c38e4bdadb9c  makefile-fix-install.patch
+b0fdaf2280968a69e05ef72288bbf6fc03787616c6b6fca1e4398f9849167f4773e5e6e72bf1738d1fff2a84e97aa00f23aabcd50898ba8ed130969f50363006  fix-test.patch
+ae7e4a43f18076f19f3ae37d7302bfdf7a3befadf33e46bc9b1b14d50b605e8ba0d06d479568c24e8bf68f17c80ae48798068b2a46c3bcab565a5d225779f30e  remove-systemd-files.patch
+825422e6906207b9a92000fc5f04b19018353fccd64fa687bd22770b331bb9f5ec891e18da2e838a34a5a1834c711845757d4ccb5a82670cb29dd2d8592b8b77  loongarch-support.patch
+"

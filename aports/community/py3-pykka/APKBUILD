@@ -1,0 +1,47 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=py3-pykka
+pkgver=4.0.2
+pkgrel=1
+pkgdesc="Concurrency abstractions for Python3 using the actor model"
+url="https://pykka.readthedocs.org/"
+arch="noarch"
+license="Apache-2.0"
+depends="python3"
+makedepends="
+	py3-gpep517
+	py3-installer
+	py3-poetry-core
+	"
+checkdepends="
+	py3-mock
+	py3-pytest
+	py3-pytest-mock
+	"
+subpackages="$pkgname-pyc"
+source="https://github.com/jodal/pykka/archive/v$pkgver/pykka-$pkgver.tar.gz"
+builddir="$srcdir/pykka-$pkgver"
+
+replaces="py-pykka" # Backwards compatibility
+provides="py-pykka=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+43d31258f73a6d43c467d108066dd3e852db9e21a04fda030137dbd65052a874e346ed78b79a4929b25d2744a286c95d5d425ae150428ea1594a24f2a6c6a164  pykka-4.0.2.tar.gz
+"

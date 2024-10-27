@@ -1,0 +1,52 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=stellarium
+pkgver=24.3
+pkgrel=0
+pkgdesc="A stellarium with great graphics and a nice database of sky-objects"
+url="https://stellarium.org/"
+# gigantic package
+arch="aarch64 x86_64"
+license="GPL-2.0-or-later"
+makedepends="
+	boost-dev
+	cmake
+	freetype-dev
+	gpsd-dev
+	libpng-dev
+	mesa-dev
+	openssl-dev>3
+	qt5-qtcharts-dev
+	qt5-qtlocation-dev
+	qt5-qtmultimedia-dev
+	qt5-qtscript-dev
+	qt5-qtserialport-dev
+	qt5-qttools-dev
+	samurai
+	"
+subpackages="$pkgname-doc"
+source="https://github.com/Stellarium/stellarium/releases/download/v$pkgver/stellarium-$pkgver.tar.xz"
+
+build() {
+	# SHOWMYSKY support needs qt5-qtopengl
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DENABLE_TESTING=1 \
+		-DENABLE_SHOWMYSKY=OFF
+	cmake --build build
+}
+
+check() {
+	# Exclude a broken locale test
+	ctest --test-dir build --output-on-failure \
+		-E 'test(INDIConnection|TelescopeControl_INDI|TelescopeClientINDI)'
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+8bb8ebdfdf57accf6d200f6c17d39edcda15c7ecdbfcd280f2a21e682fa62d62fc6523965d16b2033cee8f84da3dbb24db837c594a75144f5822d3576067000e  stellarium-24.3.tar.xz
+"

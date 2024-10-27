@@ -1,0 +1,49 @@
+# Contributor: Aiden Grossman <agrossman154@yahoo.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=py3-pyinstrument
+pkgver=4.7.3
+pkgrel=0
+pkgdesc="Call stack profiler for Python"
+url="https://github.com/joerick/pyinstrument"
+arch="all"
+license="BSD-3-Clause"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	python3-dev
+	"
+checkdepends="
+	py3-flaky
+	py3-greenlet
+	py3-pytest
+	py3-pytest-asyncio
+	py3-trio
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/joerick/pyinstrument/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/pyinstrument-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	[ -d "pyinstrument" ] && mv -v pyinstrument pyinstrument.src
+
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+
+	# test_cmdline.py tries to run "pyinstrument" executable
+	PATH="$builddir/.testenv/bin:$PATH" .testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+24feac08a9726379b749f391bdb6ddbca6d3631cf3515d3ead85ace7a96f213bf60e2cd4d4f3c7cade68b5e481b4bfd562482817befe6322579101a8d91add66  py3-pyinstrument-4.7.3.tar.gz
+"

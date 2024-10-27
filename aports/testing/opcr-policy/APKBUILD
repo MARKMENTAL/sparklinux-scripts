@@ -1,0 +1,38 @@
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=opcr-policy
+pkgver=0.2.16
+pkgrel=0
+pkgdesc="CLI for building, versioning and publishing authorization policies"
+url="https://www.openpolicycontainers.com/"
+arch="all !loongarch64"
+license="Apache-2.0"
+makedepends="go"
+source="$pkgname-$pkgver.tar.gz::https://github.com/opcr-io/policy/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/policy-$pkgver"
+options="net" # download Go modules
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	local _goldflags="
+	-X github.com/opcr-io/policy/pkg/version.ver=$pkgver
+	-X github.com/opcr-io/policy/pkg/version.commit=AlpineLinux
+	-X github.com/opcr-io/policy/pkg/version.date=$(date -u "+%Y-%m-%dT%H:%M:%SZ" ${SOURCE_DATE_EPOCH:+-d @$SOURCE_DATE_EPOCH})
+	"
+
+	go build -v -ldflags "$_goldflags" ./cmd/policy/
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	install -Dm755 policy -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+d13bfcd506b4e0b6f9caea9c19329fc2745965fe1862618324b756e0a104e5bfffb4031a42b9a6e92345a234747600333f2bb8759f7cfe1d8f5dd785b6f6c457  opcr-policy-0.2.16.tar.gz
+"

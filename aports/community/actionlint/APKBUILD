@@ -1,0 +1,38 @@
+# Contributor: Galen Abell <galen@galenabell.com>
+# Maintainer: Galen Abell <galen@galenabell.com>
+pkgname=actionlint
+pkgver=1.7.1
+pkgrel=2
+pkgdesc="Static checker for GitHub Actions workflow files"
+url="https://github.com/rhysd/actionlint"
+arch="all"
+license="MIT"
+makedepends="go ronn"
+options="chmod-clean net"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/rhysd/actionlint/archive/refs/tags/v$pkgver.tar.gz"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build \
+		-ldflags="-buildid= -X github.com/rhysd/actionlint.version=$pkgver -s -w" \
+		./cmd/$pkgname
+	ronn ./man/$pkgname.1.ronn
+}
+
+check() {
+	go test .
+}
+
+package() {
+	install -Dm755 $pkgname "$pkgdir"/usr/bin/$pkgname
+	install -Dm644 man/$pkgname.1 "$pkgdir"/usr/share/man/man1/$pkgname.1
+	install -Dm644 LICENSE.txt "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+}
+
+sha512sums="
+66bbbc1559996df7469d9f62e0c400e07292d18593e5ff2d6a6b191655767ae060e0cd999fba426693430e35d3ce7635261160c0b8ad735e6b879a9d67aa063b  actionlint-1.7.1.tar.gz
+"

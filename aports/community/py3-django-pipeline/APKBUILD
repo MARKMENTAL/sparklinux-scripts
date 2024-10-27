@@ -1,0 +1,41 @@
+# Contributor: <xmingske@gmail.com>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=py3-django-pipeline
+pkgver=3.0.0
+pkgrel=1
+pkgdesc="an asset packaging library for Django"
+options="!check" # Can't run tests
+url="https://github.com/jazzband/django-pipeline"
+arch="noarch"
+license="JSON"
+depends="python3"
+makedepends="
+	py3-gpep517
+	py3-setuptools_scm
+	py3-wheel
+	"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/d/django-pipeline/django-pipeline-$pkgver.tar.gz"
+builddir="$srcdir/django-pipeline-$pkgver"
+
+build() {
+	SETUPTOOLS_SCM_PRETEND_VERSION=$pkgver \
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 runtests.py
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+e4d33810d085ab028218a1f042d7b50157d40cf61f31aca8861db59d5ce471da6c8b5f2f46e4096b6c406e860a64141d8abf4df627322bc53129b0de0d47d56c  django-pipeline-3.0.0.tar.gz
+"

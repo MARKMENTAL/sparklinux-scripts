@@ -1,0 +1,48 @@
+# Maintainer: Rabindra Dhakal <contact@qaidvoid.dev>
+pkgname=zls
+pkgver=0.13.0
+pkgrel=0
+_knownfolders=0ad514dcfb7525e32ae349b9acc0a53976f3a9fa
+_diffz=ef45c00d655e5e40faf35afbbde81a1fa5ed7ffb
+pkgdesc="Zig Language Server"
+url="https://github.com/zigtools/zls"
+arch="aarch64 x86_64" # Limited by zig
+license="MIT"
+depends="zig"
+source="$pkgname-$pkgver.tar.gz::https://github.com/zigtools/zls/archive/refs/tags/$pkgver.tar.gz
+	known-folders-$_knownfolders.tar.gz::https://github.com/ziglibs/known-folders/archive/$_knownfolders.tar.gz
+	diffz-$_diffz.tar.gz::https://github.com/ziglibs/diffz/archive/$_diffz.tar.gz"
+
+prepare() {
+	default_prepare
+
+	mkdir -p "$srcdir"/cache/p
+	mv "$srcdir"/known-folders-$_knownfolders "$srcdir"/cache/p/122048992ca58a78318b6eba4f65c692564be5af3b30fbef50cd4abeda981b2e7fa5
+	mv "$srcdir"/diffz-$_diffz "$srcdir"/cache/p/122089a8247a693cad53beb161bde6c30f71376cd4298798d45b32740c3581405864
+}
+
+build() {
+	export ZIG_GLOBAL_CACHE_DIR="$srcdir"/cache
+	zig build \
+		-Dcpu=baseline \
+		-Doptimize=ReleaseSafe \
+		-Dpie=true
+}
+
+check() {
+	export ZIG_GLOBAL_CACHE_DIR="$srcdir"/cache
+	zig build test \
+		-Dcpu=baseline \
+		-Doptimize=ReleaseSafe \
+		-Dpie=true
+}
+
+package() {
+	install -Dm755 zig-out/bin/zls -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+92b20418d1410f013ac3d4cbe432ab1b748454d013a2d1be5abd47b91ea7d2340d55b775a66eb116f4641e9f2fc3baf84a44ba8f58b1a774254e7428449bb088  zls-0.13.0.tar.gz
+ddbccef65a51d47365116a8f95d4e258307f6f2fa7b7cd59c5587c31739e440efbfde2c98e8cbae30118e1d13c8005c28ecf4fe243d38cbe7f0ffab05b47e47d  known-folders-0ad514dcfb7525e32ae349b9acc0a53976f3a9fa.tar.gz
+add5a10842f1bde009d6e21f9ea21fe0a2440a0dda6acf13cca0b21919b1357c38a017f71994958ec499d7eddf3d4b95ed0321b0d2f9273a436613ffc0b944c0  diffz-ef45c00d655e5e40faf35afbbde81a1fa5ed7ffb.tar.gz
+"

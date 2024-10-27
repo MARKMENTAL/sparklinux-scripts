@@ -1,0 +1,81 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=garage
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Lightweight S3-compatible distributed object store"
+url="https://garagehq.deuxfleurs.fr"
+# armhf,armv7,x86: fails to build (std::bad_alloc)
+# riscv64: would take eternity to build
+# s390x: fails to build nix crate
+arch="all !armhf !armv7 !x86 !riscv64 !s390x"
+license="AGPL-3.0"
+makedepends="
+	cargo
+	cargo-auditable
+	libsodium-dev
+	protoc
+	sqlite-dev
+	zstd-dev
+	"
+checkdepends="openssl-dev"
+pkgusers="garage"
+pkggroups="garage"
+install="
+	$pkgname.pre-install
+	$pkgname.pre-upgrade
+	$pkgname.post-upgrade
+	"
+subpackages="$pkgname-openrc"
+source="https://github.com/deuxfleurs-org/garage/archive/v$pkgver/garage-$pkgver.tar.gz
+	garage.toml
+	$pkgname.initd
+	$pkgname.confd
+	"
+
+case "$CARCH" in
+	# Fails to build ring crate.
+	ppc64le | s390x) options="!check";;
+esac
+
+# Disable bundled-libs, sqlite, k2v
+_cargo_opts="--frozen --no-default-features --features lmdb,metrics,system-libs,syslog"
+
+export CARGO_PROFILE_RELEASE_OPT_LEVEL=2
+
+export SODIUM_USE_PKG_CONFIG=1
+export GIT_VERSION="v$pkgver"  # version used in --version
+
+prepare() {
+	default_prepare
+
+	cargo add time@0.3.35 libc@0.2.155
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build $_cargo_opts --release
+}
+
+check() {
+	cargo test $_cargo_opts --workspace
+}
+
+package() {
+	install -D -m755 target/release/$pkgname -t "$pkgdir"/usr/bin/
+
+	install -D -m755 "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
+	install -D -m644 "$srcdir"/$pkgname.confd "$pkgdir"/etc/conf.d/$pkgname
+
+	install -d -m755 "$pkgdir"/etc/garage
+	install -D -m640 -o garage -g garage "$srcdir"/garage.toml -t "$pkgdir"/etc/garage/
+
+	install -d -m700 -o garage -g garage "$pkgdir"/var/lib/$pkgname
+}
+
+sha512sums="
+305ddc7379304b539baf480e0a2dd31c3b516643d27a91a2a820ec674ca2f9edfab1eb56e66c758b79c7e221ae0ffb14f128edcdd70f7b806a34fb445f3a18a2  garage-1.0.0.tar.gz
+bb8009a0fa7ff4a3203b7db97f09c1e08fb7b0f30288b9cd05dfb7ed97cc4c8dac427a5bd7887877cb2f38fc33b01392cc69014abd22d9a5cd1f90ba3c38a903  garage.toml
+0f20ce973c49de9bd526a35d094d4024cd51ca36210b4c14196448fb59f594555c561c5858152d1df603ba87a284ff63e9cf914f21687de2f1842efc50aea2ec  garage.initd
+668c1fc719bcd54ec966ef00fedda94048867f429a7f373a270e18fbd54435f17c19dd75a2a79467751dfcd3cce2391e9c7ea377910d8dd2c853551a04aebe5d  garage.confd
+"

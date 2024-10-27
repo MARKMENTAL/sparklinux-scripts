@@ -1,0 +1,37 @@
+# Contributor: Noel Kuntze <noel.kuntze@thermi.consulting>
+# Maintainer: Noel Kuntze <noel.kuntze@thermi.consulting>
+pkgname=py3-requests-kerberos
+_pkgname=requests-kerberos
+pkgver=0.14.0
+pkgrel=4
+pkgdesc="Kerberos authentication handler for using with Python Requests"
+url="https://github.com/requests/requests-kerberos"
+arch="noarch"
+license="Apache-2.0"
+depends="python3 py3-requests py3-spnego py3-cryptography"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest py3-pytest-mock"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/requests/requests-kerberos/archive/v$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+9dd6eed0d6afe4b852ba96f621be3af2965e9011bf372c5dce77e0bca18191255ea407ba313904271615d722d60029807db2d6815b24437b021b02b026eb60d6  py3-requests-kerberos-0.14.0.tar.gz
+"

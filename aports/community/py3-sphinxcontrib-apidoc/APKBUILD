@@ -1,0 +1,35 @@
+# Contributor: Duncan Bellamy <dunk@denkimushi.com>
+# Maintainer: Duncan Bellamy <dunk@denkimushi.com>
+pkgname=py3-sphinxcontrib-apidoc
+pkgver=0.5.0
+pkgrel=1
+pkgdesc="A Sphinx extension for running sphinx-apidoc on each build"
+url="https://github.com/sphinx-contrib/apidoc"
+arch="noarch"
+license="BSD-2-Clause"
+depends="py3-sphinx"
+makedepends="py3-gpep517 py3-pbr py3-setuptools py3-wheel"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/s/sphinxcontrib-apidoc/sphinxcontrib-apidoc-$pkgver.tar.gz"
+builddir="$srcdir/sphinxcontrib-apidoc-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+36858dab0915f4aac48b2bab1aeea830e35e1e865ff5f4726df0c9f9c2917d450ed1e27b1db9d143fade09369201b1b6b72f0264e674130f62a67df494c8f646  sphinxcontrib-apidoc-0.5.0.tar.gz
+"

@@ -1,0 +1,184 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Contributor: Łukasz Jendrysik <scadu@yandex.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=sqlite-tools
+pkgver=3.46.1
+pkgrel=0
+pkgdesc="Helper tools for SQLite"
+url="https://www.sqlite.org/"
+arch="all"
+license="blessing"
+makedepends="
+	autoconf
+	readline-dev
+	sqlite-dev
+	tcl-dev
+	"
+checkdepends="bash"
+subpackages="
+	sqlite-analyzer
+	sqlite-tcl
+	sqlite-tcl-doc:_tcl_doc:noarch
+	"
+
+# compute _ver
+_a=${pkgver%%.*}
+_b=${pkgver#"$_a".}
+_b=${_b%%.*}
+_c=${pkgver#"$_a"."$_b".}
+_c=${_c%%.*}
+case $pkgver in
+	*.*.*.*)_d=${pkgver##*.};;
+	*.*.*)	_d=0;;
+esac
+[ $_b -lt 10 ] && _b=0$_b
+[ $_c -lt 10 ] && _c=0$_c
+[ $_d -lt 10 ] && _d=0$_d
+_ver=${_a}${_b}${_c}$_d
+
+# these variables depend on _ver being set
+source="https://www.sqlite.org/2024/sqlite-src-$_ver.zip
+	date4-test-musl.patch
+	stdout-invalid-argument.patch
+	tclsqlite-include-stdint.patch
+	"
+builddir="$srcdir/sqlite-src-$_ver"
+
+_tools="showdb showjournal showstat4 showwal sqldiff sqlite3_analyzer"
+
+prepare() {
+	default_prepare
+	update_config_sub
+
+	if [ -f "$startdir"/../sqlite/APKBUILD ]; then
+	_amalgamation=$(
+		_toolsver=$pkgver
+		# shellcheck disable=SC1091
+		. "$startdir"/../sqlite/APKBUILD
+		if [ "$_toolsver" != "$pkgver" ]; then
+			die "sqlite version mismatch ($_toolsver != $pkgver)"
+		fi
+		echo "$_amalgamation"
+		)
+	fi
+
+	# based on what tool/mkautoconfamal.sh does to build the TEA tarball
+	if grep -Fq "AC_INIT([sqlite],[$pkgver])" autoconf/tea/configure.ac; then
+		msg "TEA version number ok"
+	else
+		die "TEA version number mismatch.  Should be $pkgver"
+	fi
+
+	mkdir -vp autoconf/tea/generic
+	cat > autoconf/tea/generic/tclsqlite3.c <<-'HEADER'
+		#ifdef USE_SYSTEM_SQLITE
+		# include <sqlite3.h>
+		#else
+		#include "sqlite3.c"
+		#endif
+	HEADER
+	cat src/tclsqlite.c >> autoconf/tea/generic/tclsqlite3.c
+
+	cd autoconf/tea
+	autoupdate
+	autoconf
+}
+
+build() {
+	export CFLAGS="$CFLAGS $_amalgamation"
+
+	# configure options copied from main/sqlite
+	./configure \
+		--build="$CBUILD" \
+		--host="$CHOST" \
+		--prefix=/usr \
+		--enable-threadsafe \
+		--enable-readline \
+		--enable-static \
+		--enable-dynamic-extensions \
+		--enable-fts3 \
+		--enable-fts4 \
+		--enable-fts5
+
+	msg "Building sqlite3_analyzer"
+	make sqlite3_analyzer \
+		CFLAGS="$CFLAGS -DUSE_EXTERNAL_SQLITE" \
+		LTLINK_EXTRAS="-lsqlite3"
+
+	local tool; for tool in ${_tools//sqlite3_analyzer}; do
+		msg "Building $tool"
+		${CC:-gcc} $CFLAGS $LDFLAGS \
+			-o $tool tool/$tool.c -lsqlite3
+	done
+
+	# test at the same optimization level as main/sqlite
+	if want_check; then
+		msg "Building testfixture"
+		make CFLAGS="$CFLAGS -O2" testfixture
+	fi
+
+	if subpackage_types_has tcl; then
+		msg "Building libtclsqlite3.so"
+		cd autoconf/tea
+		./configure \
+			--build="$CBUILD" \
+			--host="$CHOST" \
+			--prefix=/usr \
+			--with-system-sqlite \
+			--enable-threads
+		make
+	fi
+}
+
+check() {
+	# parallelize tests on slow archs with "testrunner"
+	# others run "tcltest" which has more detailed output
+
+	case "$CARCH" in
+	arm*|riscv64|loongarch64)
+		make testrunner
+		;;
+	*)
+		make tcltest
+		;;
+	esac
+}
+
+package() {
+	install -Dvm755 $_tools -t "$pkgdir"/usr/bin/
+
+	if subpackage_types_has tcl; then
+		cd autoconf/tea
+		make DESTDIR="$pkgdir" install
+
+		install -Dvm644 license.terms \
+			-t "$pkgdir"/usr/share/licenses/sqlite-tcl/
+	fi
+}
+
+analyzer() {
+	pkgdesc="Analyze space utilization of SQLite database files"
+
+	amove usr/bin/sqlite3_analyzer
+}
+
+tcl() {
+	pkgdesc="Sqlite Tcl Extension Architecture (TEA)"
+
+	amove usr/include usr/lib
+}
+
+_tcl_doc() {
+	pkgdesc="Sqlite Tcl Extension Architecture (TEA) (documentation)"
+	install_if="docs sqlite-tcl=$pkgver-r$pkgrel"
+
+	gzip -9v "$pkgdir"/usr/share/man/mann/sqlite3.n
+	amove usr/share/licenses/sqlite-tcl usr/share/man/mann/sqlite3.n.gz
+}
+
+sha512sums="
+6d32a0db9f95d3cec34f02f3fd45b453bf7c422d4d4d9570790f641e7d190b8b31be8e8715afacc1b6e4417f15a4d15a0b28e608ae0b4b5f3054b075783b916e  sqlite-src-3460100.zip
+6eb41417c4279702e420846f234f04176d2d2b9a81b3e14ed6e080e9698954cc36f1011fce2a87750b83beeb7633e259aa51a98bac475b2598772c686fd220ec  date4-test-musl.patch
+cd976a64a3721dec1fb465bf337f30bb14e35ee94f4fec3d2667630853f30f9f489ef60c96a8789de4ceb05463396c529ee03a0b8aa3745ea161aac008425059  stdout-invalid-argument.patch
+16cf491de20c2eb2188ce9f99363e597cb6580a32ab340963429368f5746c04f130874c6abdd021c5db95e2e8f780670371b2ce7158ec484226352b169933d59  tclsqlite-include-stdint.patch
+"

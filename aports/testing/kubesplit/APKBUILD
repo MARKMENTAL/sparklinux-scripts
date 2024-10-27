@@ -1,0 +1,40 @@
+# Contributor: Galen Abell <galen@galenabell.com>
+# Maintainer: Galen Abell <galen@galenabell.com>
+pkgname=kubesplit
+pkgver=0.3.3
+pkgrel=1
+pkgdesc="Split multidoc yaml formatted kubernetes descriptors to a set of single resource files"
+url="https://github.com/looztra/kubesplit"
+arch="noarch"
+license="Apache-2.0"
+depends="python3 py3-ruamel.yaml yamkix"
+makedepends="
+	py3-gpep517
+	py3-installer
+	py3-poetry-core
+	py3-poetry-dynamic-versioning
+	py3-wheel
+	"
+checkdepends="py3-pytest py3-pytest-runner"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/looztra/kubesplit/archive/v$pkgver.tar.gz"
+
+build() {
+	export POETRY_DYNAMIC_VERSIONING_BYPASS="$pkgver"
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+b2122caed952de1bc70bafd993f6d16d153f0511ab19481ab346c3399a2660eb493e46b36a7bb3703bfa7beae6c9822067316e2242f03faac7445eeb2649931c  kubesplit-0.3.3.tar.gz
+"

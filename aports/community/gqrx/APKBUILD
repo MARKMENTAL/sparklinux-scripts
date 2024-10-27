@@ -1,0 +1,38 @@
+# Contributor: Oleg Titov <oleg.titov@gmail.com>
+# Maintainer: Oleg Titov <oleg.titov@gmail.com>
+pkgname=gqrx
+pkgver=2.17.5
+pkgrel=1
+pkgdesc="Interactive SDR receiver waterfall for many devices"
+url="https://gqrx.dk/"
+arch="aarch64 armv7 x86_64" # limited by availability of gr-osmosdr
+license="GPL-3.0-or-later"
+options="!check" # No test suite from upstream
+makedepends="
+	cmake
+	gr-osmosdr-dev
+	pulseaudio-dev
+	qt6-qtbase-dev
+	qt6-qtsvg-dev
+	samurai
+	"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/gqrx-sdr/gqrx/archive/refs/tags/v$pkgver.tar.gz"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo
+
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	install -Dm 644 -t "$pkgdir"/usr/share/doc/$pkgname/ README.md
+}
+
+sha512sums="
+40cf87329b2b8da5bcd7ded62551601a7b45ee0f791d1fa6f872a1fdf03b61e24a26f85c2d304c6d4ccd9a1b4b7aad7da94b488b539026aa93757669eece9bad  gqrx-2.17.5.tar.gz
+"

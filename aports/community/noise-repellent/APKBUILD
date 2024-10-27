@@ -1,0 +1,39 @@
+# Contributor: Magnus Sandin <magnus.sandin@gmail.com>
+# Maintainer: Magnus Sandin <magnus.sandin@gmail.com>
+pkgname=noise-repellent
+pkgver=0.2.3
+pkgrel=1
+pkgdesc="lv2 plug-in for broadband noise reduction"
+url="https://github.com/lucianodato/noise-repellent"
+arch="all"
+license="LGPL-3.0-only"
+makedepends="
+	cmake
+	fftw-dev
+	libspecbleach-dev
+	libsndfile-dev
+	lv2-dev
+	meson
+	"
+source="noise-repellent-$pkgver.tar.gz::https://github.com/lucianodato/noise-repellent/archive/refs/tags/v$pkgver.tar.gz
+	no-useless-args.patch
+	"
+options="!check" # No tests available
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		--buildtype=release \
+		--prefix=/usr/lib \
+		. output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+102000459c1d2675c7366c4e2ce43fe8a5b055bcb4cbb5460e2e1241a4631bf3833f8d35fb1e07f03759ede0224541c7b3196452649366924c6fad6cccdccf17  noise-repellent-0.2.3.tar.gz
+eeb4efea46a9913a76ca79260edf1291f6e12b5776291f12e64ce9b2c7e0b695289bf325f039de331522effc6c7b294e4ab68f6eaf8738777a76407f390e179e  no-useless-args.patch
+"

@@ -1,0 +1,51 @@
+# Contributor: Michael Jeanson <mjeanson@efficios.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=lttng-ust
+pkgver=2.13.8
+pkgrel=0
+pkgdesc="LTTng 2.0 Userspace Tracer"
+url="https://lttng.org/"
+arch="all"
+license="LGPL-2.1-only AND GPL-2.0-only AND MIT"
+depends_dev="userspace-rcu-dev>0.10"
+makedepends="$depends_dev util-linux-dev linux-headers python3 py3-setuptools"
+checkdepends="bash gawk"
+subpackages="$pkgname-doc $pkgname-dev $pkgname-tools::noarch py3-lttng:pyagent"
+source="https://lttng.org/files/lttng-ust/lttng-ust-$pkgver.tar.bz2"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--disable-static \
+		--disable-numa \
+		--enable-python-agent
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+tools() {
+	pkgdesc="tools from lttng-ust"
+	depends="lttng-ust=$pkgver-r$pkgrel python3"
+
+	amove usr/bin
+}
+
+pyagent() {
+	pkgdesc="lttng-ust python agent"
+
+	amove usr/lib/python*
+	amove usr/lib/liblttng-ust-python-agent.*
+}
+
+sha512sums="
+f61f7e1633051a4d515ba28d4945b96a84eab8a8143ef698bbb6857cbaad1acbe238041e43f04d9818bac43f59023be3f3c2154ecf75f180d8233c9d7f65c555  lttng-ust-2.13.8.tar.bz2
+"

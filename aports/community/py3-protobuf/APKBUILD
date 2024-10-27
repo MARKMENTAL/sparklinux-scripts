@@ -1,0 +1,41 @@
+# Contributor: Corentin Henry <corentinhenry@gmail.com>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=py3-protobuf
+pkgver=4.24.4
+_protobuf=${pkgver#*.}
+pkgrel=1
+pkgdesc="Google's data interchange format"
+url="https://github.com/protocolbuffers/protobuf"
+arch="noarch"
+license="BSD-3-Clause"
+depends="tzdata"
+makedepends="protobuf-dev py3-setuptools py3-wheel"
+checkdepends="py3-pytest py3-numpy"
+# NOTE: Always use releases of protobuf, not pypi or auto-generated GitHub
+# tarballs as they do not contain the necessary components to run tests.
+subpackages="$pkgname-pyc"
+source="https://github.com/protocolbuffers/protobuf/releases/download/v$_protobuf/protobuf-$_protobuf.tar.gz"
+builddir="$srcdir"/protobuf-$_protobuf/python
+options="!check" # seem to not generate some test protos
+
+replaces="py-protobuf" # Backwards compatibility
+provides="py-protobuf=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	python3 setup.py build
+}
+
+check() {
+	pytest
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+
+	# correct permissions
+	chmod +r "$pkgdir"/usr/lib/*/site-packages/*/*
+}
+
+sha512sums="
+52b6ab5587d03cbd1f35cf3cdc388e1710fa50f3031559ac53cf754965407ded7602cdead56080444ab695588112cc3391a1d7fdd5e565d90d0af7ad08706315  protobuf-24.4.tar.gz
+"

@@ -1,0 +1,36 @@
+# Contributor: Aiden Grossman <agrossman154@yahoo.com>
+# Maintainer:
+pkgname=py3-pivy
+pkgver=0.6.9_alpha0
+pkgrel=1
+pkgdesc="Python3 bindings for coin"
+url="https://github.com/coin3d/pivy"
+# riscv64, loongarch64: blocked by py3-pyside6
+arch="all !riscv64 !loongarch64"
+license="ISC"
+depends="py3-pyside6"
+makedepends="swig soqt-dev qt6-qtbase-dev python3-dev glu-dev cmake samurai"
+checkdepends="py3-pytest"
+options="!check" # test suite is interactive and requires full installation
+source="$pkgname-$pkgver.tar.gz::https://github.com/coin3d/pivy/archive/refs/tags/${pkgver//_alpha/.a}.tar.gz"
+builddir="$srcdir/pivy-${pkgver//_alpha/.a}"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=None \
+		$CMAKE_CROSSOPTS
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+1bfefd58d2921c8be170a97efa30cad53b01f636ea0cf236acca242be4f691669a4c310cd61c64d3e0c55e55e8be96d36945cd244380ddc0b3a06170d0f8b691  py3-pivy-0.6.9_alpha0.tar.gz
+"

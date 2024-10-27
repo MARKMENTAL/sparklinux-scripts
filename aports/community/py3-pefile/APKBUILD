@@ -1,0 +1,44 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=py3-pefile
+pkgver=2023.2.7
+pkgrel=2
+pkgdesc="Python PE parsing module"
+url="https://github.com/erocarrera/pefile"
+arch="noarch"
+license="MIT"
+depends="py3-future python3"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/erocarrera/pefile/archive/v$pkgver.tar.gz"
+builddir="$srcdir/pefile-$pkgver"
+# tests need some intricate data unpacking..
+options="!check"
+
+replaces=py-pefile # Backwards compatibility
+provides=py-pefile=$pkgver-r$pkgrel # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 run_tests.py
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+829f5480a9a0d801d204a186556cf2941e303df6e7d5ea01522f5fe9a5075141431f549ebd18103818580922ff05b563c9f6e756eae683260fdd9d5af72c81e4  py3-pefile-2023.2.7.tar.gz
+"

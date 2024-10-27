@@ -1,0 +1,33 @@
+# Contributor: Aiden Grossman <agrossman154@yahoo.com>
+# Maintainer:
+pkgname=py3-hatch-nodejs-version
+pkgver=0.3.2
+pkgrel=2
+pkgdesc="Hatch plugin for versioning from a Node.js package.json"
+url="https://github.com/agoose77/hatch-nodejs-version"
+arch="noarch"
+license="MIT"
+depends="py3-hatchling"
+makedepends="py3-gpep517 py3-installer"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="https://github.com/agoose77/hatch-nodejs-version/archive/v$pkgver/python-hatch-nodejs-version-$pkgver.tar.gz"
+builddir="$srcdir/hatch-nodejs-version-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	pytest
+}
+
+package() {
+	python3 -m installer --destdir="$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+7244f269843811ba13b9518e769eccb6f593ed478ab903d89666079726c2da522b3fce797401ce95d0d5d1783b5e5ab4199f1514ac1e73193a87986ccc21d2e1  python-hatch-nodejs-version-0.3.2.tar.gz
+"

@@ -1,0 +1,31 @@
+# Contributor: rahmanshaber <rahmanshaber@yahoo.com>
+# Maintainer: rahmanshaber <rahmanshaber@yahoo.com>
+pkgname=coreuniverse
+pkgver=4.5.0
+pkgrel=0
+pkgdesc="Shows information about apps from C-Suite"
+arch="all"
+url="https://gitlab.com/cubocore"
+license="GPL-3.0-or-later"
+depends="qt5-qtsvg"
+makedepends="qt5-qtbase-dev libcprime-dev cmake ninja"
+source="$pkgname-$pkgver.tar.gz::https://gitlab.com/cubocore/coreuniverse/-/archive/v$pkgver/coreuniverse-v$pkgver.tar.gz"
+builddir="$srcdir/$pkgname-v$pkgver"
+options="!check" # No tests
+
+build() {
+	cmake -B build \
+		-GNinja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DCMAKE_BUILD_TYPE=None
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+b853abb133a4b73361a1e63f0972b9793bb11867efb8eceec0153dfeb2265b0fe9d92b4f22e899f9df021685ced8241b8a8807b6ba7962f2f4412d1aed8fe48b  coreuniverse-4.5.0.tar.gz
+"

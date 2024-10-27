@@ -1,0 +1,22 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index ceb0e5a..b0d6d46 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -1042,7 +1042,7 @@ checksum = "8ea5119cdb4c55b55d432abb513a0429384878c15dde60cc77b1c99de1a95a6a"
+ 
+ [[package]]
+ name = "svgbob"
+-version = "0.7.1"
++version = "0.7.2"
+ dependencies = [
+  "indexmap",
+  "itertools",
+@@ -1057,7 +1057,7 @@ dependencies = [
+ 
+ [[package]]
+ name = "svgbob_cli"
+-version = "0.7.0"
++version = "0.7.2"
+ dependencies = [
+  "clap",
+  "svgbob",

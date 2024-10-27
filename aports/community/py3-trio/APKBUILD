@@ -1,0 +1,63 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=py3-trio
+pkgver=0.25.0
+pkgrel=1
+pkgdesc="A friendly Python library for async concurrency and I/O"
+url="https://trio.readthedocs.io/"
+arch="noarch"
+license="MIT OR Apache-2.0"
+depends="
+	py3-attrs
+	py3-async_generator
+	py3-idna
+	py3-cffi
+	py3-openssl
+	py3-outcome
+	py3-sniffio
+	py3-sortedcontainers
+	python3
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="
+	py3-astor
+	py3-pytest
+	py3-trustme
+	"
+subpackages="$pkgname-pyc"
+source="https://pypi.python.org/packages/source/t/trio/trio-$pkgver.tar.gz
+	fix-musl-getaddrinfo.patch
+	"
+builddir="$srcdir/trio-$pkgver"
+
+case "$CARCH" in
+	ppc64le) options="$options !check" ;; # unix pipes test times out
+esac
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest \
+		--pyargs trio --skip-optional-imports \
+		-v -m "not redistributors_should_skip"
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+3025640724e628086d90136517dcb2083e1e47761305cd36c087c7f80d31013edd294e4fb7f1d27c28e6837c456be42d45e0f8529f88960fffe73c43ef37914d  trio-0.25.0.tar.gz
+10740378902c4dfa7492ce6e41ef3c5cc959b185725193aff3ef29a91bd25ba3f35cf19ea31bcb9ad7ab2ca2509d11ed27112654d223a0315e2f539742a23c47  fix-musl-getaddrinfo.patch
+"

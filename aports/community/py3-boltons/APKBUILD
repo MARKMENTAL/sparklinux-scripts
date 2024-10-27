@@ -1,0 +1,40 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer:
+pkgname=py3-boltons
+pkgver=24.0.0
+pkgrel=0
+pkgdesc="Bolted-on functionality for python3"
+url="https://github.com/mahmoud/boltons"
+arch="noarch"
+license="BSD-3-Clause"
+depends="python3"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="py3-pytest-xdist py3-pytest-cov"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver-2.tar.gz::https://github.com/mahmoud/boltons/archive/$pkgver.tar.gz"
+builddir="$srcdir/boltons-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+17a22e2e1d35e0aca97dc15502432cbe2ce4b2e483403b7387bd6ad4efc4ec701fc88d984a487c235ca3e3feb400df08419eae6460ad1e40c951a31beedd06eb  py3-boltons-24.0.0-2.tar.gz
+"

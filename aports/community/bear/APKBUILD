@@ -1,0 +1,67 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Maintainer:
+pkgname=bear
+pkgver=3.1.4
+pkgrel=2
+pkgdesc="Tool which generates a compilation database for clang tooling"
+url="https://github.com/rizsotto/Bear"
+# s390x: segfaults in check
+arch="all !s390x"
+license="GPL-3.0-or-later"
+makedepends="
+	abseil-cpp-dev
+	c-ares-dev
+	cmake
+	fmt-dev
+	grpc-dev
+	gtest-dev
+	nlohmann-json
+	protobuf-dev
+	re2-dev
+	samurai
+	spdlog-dev
+	sqlite-dev
+	"
+checkdepends="llvm-test-utils"
+subpackages="$pkgname-doc"
+source="https://github.com/rizsotto/Bear/archive/$pkgver/bear-$pkgver.tar.gz
+	fmt11.patch"
+builddir="$srcdir/Bear-$pkgver"
+
+# XXX: Tests fail when ccache is enabled.
+
+# armv7, armhf and aarch64 have some failing tests.
+case "$CARCH" in
+	armhf|armv7|aarch64|riscv64) options="!check" ;;
+esac
+
+prepare() {
+	default_prepare
+	case "$CARCH" in
+		x86) rm -f test/cases/intercept/preload/signal_outside_build.sh ;;
+	esac
+}
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_INSTALL_LIBEXECDIR=libexec/bear \
+		-DCMAKE_BUILD_TYPE=MinSizeRel
+	cmake --build build
+}
+
+check() {
+	cd build
+	ctest --verbose --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+c63da7586d25a64dd8b3ff82f37505b36071dd064deb973c012840bc52ff6aec861fca21422b86b11629e86dc43d156b233d21b01e689369f0726799083afa98  bear-3.1.4.tar.gz
+f8db93ac8963e21c16d8bc768fefb21cc4d2f7954e49c958f076df8354adc2d453d84e88f094c6b14a69f76db2a1401425bcf3171a0c4edc0fa745c34f52efe0  fmt11.patch
+"

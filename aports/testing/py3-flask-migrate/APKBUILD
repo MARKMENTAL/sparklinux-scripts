@@ -1,0 +1,46 @@
+# Contributor: Steven Guikal <void@fluix.one>
+# Maintainer: Philipp Glaum <p@pglaum.de>
+pkgname=py3-flask-migrate
+_pkgname=Flask-Migrate
+pkgver=4.0.5
+pkgrel=1
+pkgdesc="SQLAlchemy database migrations for Flask applications using Alembic"
+url="https://pypi.org/project/Flask-Migrate/"
+arch="noarch"
+license="MIT"
+depends="
+	py3-alembic
+	py3-flask
+	py3-flask-sqlalchemy
+	python3
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="$_pkgname-$pkgver.tar.gz::https://github.com/miguelgrinberg/Flask-Migrate/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	PYTHONPATH="$PWD/src" .testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+cdc02e3f567119604e56e9cafed3e7b40e7335d4c3f42cffb26515a4cec12ff34c16f8d5ae036d841cf846985973980d820cdc5d87a99ebf634b3b17becaeb69  Flask-Migrate-4.0.5.tar.gz
+"

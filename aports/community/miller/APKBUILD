@@ -1,0 +1,39 @@
+# Contributor: Richard Patel <me@terorie.dev>
+# Contributor: John Kerl <kerl.john.r@gmail.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=miller
+pkgver=6.12.0
+pkgrel=4
+pkgdesc="Name-indexed data processing tool"
+url="https://miller.readthedocs.io/"
+arch="all"
+license="BSD-2-Clause"
+subpackages="$pkgname-doc"
+makedepends="go bash"
+checkdepends="tzdata"
+options="net"
+source="https://github.com/johnkerl/miller/archive/v$pkgver/miller-$pkgver.tar.gz"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build github.com/johnkerl/miller/cmd/mlr
+}
+
+check() {
+	msg "unit tests"
+	go test github.com/johnkerl/miller/pkg/...
+	msg "regression tests"
+	go test regression_test.go
+}
+
+package() {
+	install -Dm755 mlr -t "$pkgdir"/usr/bin/
+	install -Dm644 man/mlr.1 -t "$pkgdir"/usr/share/man/man1/
+}
+
+sha512sums="
+c99dcd08b0f5d1d886a45d576dcec3b10ef6b865d2016d3b0c67770a4738453b411ff1494fb5e8b63daed8e011049f3544c4bccc565fd5953b27080f81fd0ea2  miller-6.12.0.tar.gz
+"

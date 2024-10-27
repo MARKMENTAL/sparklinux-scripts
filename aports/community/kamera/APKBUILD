@@ -1,0 +1,49 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: team/kde <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=kde-applications
+pkgname=kamera
+pkgver=24.08.1
+pkgrel=0
+# armhf blocked by extra-cmake-modules
+arch="all !armhf"
+url="https://kde.org/applications/graphics"
+pkgdesc="KDE integration for gphoto2 cameras"
+license="GPL-2.0-or-later AND GFDL-1.2-only"
+makedepends="
+	extra-cmake-modules
+	kcmutils-dev
+	kconfig-dev
+	kconfigwidgets-dev
+	kdoctools-dev
+	ki18n-dev
+	kio-dev
+	kxmlgui-dev
+	libgphoto2-dev
+	qt6-qtbase-dev
+	samurai
+	"
+_repo_url="https://invent.kde.org/graphics/kamera.git"
+source="https://download.kde.org/stable/release-service/$pkgver/src/kamera-$pkgver.tar.xz"
+subpackages="$pkgname-doc $pkgname-lang"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+01069daa0f87ecf1ee853e95afd4f32a1a25209512a7427c5c72d2ec68a67c8f06b4e211c9f8b554ea732774024c01e4b82c201a3e0cc36d4d83bc9982c1d7bd  kamera-24.08.1.tar.xz
+"

@@ -1,0 +1,66 @@
+# Contributor: Pellegrino Prevete <pellegrinoprevete@gmail.com>
+# Maintainer: Newbyte <newbytee@protonmail.com>
+pkgname=lollypop
+pkgver=1.4.40
+# See the git submodule in subprojects/po for the right version
+_pover=b3cebddfcc906d5bb72dcfe8f77c7e228d17b1fa
+pkgrel=0
+pkgdesc="Music player for GNOME"
+url="https://gitlab.gnome.org/World/Lollypop"
+# armhf, ppc64le: py3-pylast
+# s390x: doubt anyone would use this on a mainframe
+arch="noarch !armhf !ppc64le !s390x"
+license="GPL-3.0-only"
+depends="
+	gst-plugins-good
+	libhandy1
+	libsecret
+	libsoup3
+	py3-cairo
+	py3-gobject3
+	py3-gst
+	py3-pillow
+	py3-pylast
+	python3
+	totem-pl-parser
+	"
+makedepends="
+	gobject-introspection-dev
+	gtk+3.0-dev
+	libhandy1-dev
+	libsoup3-dev
+	meson
+	py3-gobject3-dev
+	"
+checkdepends="
+	appstream-glib
+	desktop-file-utils
+	"
+subpackages="$pkgname-lang $pkgname-doc"
+source="https://gitlab.gnome.org/World/lollypop/-/archive/$pkgver/lollypop-$pkgver.tar.gz
+	https://gitlab.gnome.org/gnumdk/lollypop-po/-/archive/$_pover/lollypop-po-$_pover.tar.gz
+	"
+
+prepare() {
+	default_prepare
+
+	mv $srcdir/lollypop-po*/* $srcdir/lollypop-$pkgver/subprojects/po/
+}
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+985e070b96c7e403fa98b5f4a3455fbd565470d1babe8d7c8261abb1b9bcebcc3be40e4d8a29486b058fd4c48e3b744bb89a80c5f55c4d1aeaf00f1a3cc20aa6  lollypop-1.4.40.tar.gz
+7887b2706e9acb06efa593c30b591f2deb728b9e7703799aa2708488896c7e5ac7ef93799e0708acb55ac360a5271d75d523f3c1ef9f7d824a87f3386fdc1b71  lollypop-po-b3cebddfcc906d5bb72dcfe8f77c7e228d17b1fa.tar.gz
+"

@@ -1,0 +1,61 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+pkgname=py3-plotnine
+pkgver=0.13.6
+pkgrel=0
+pkgdesc="A grammar of graphics for Python"
+url="https://github.com/has2k1/plotnine"
+arch="noarch"
+license="MIT"
+depends="
+	python3
+	py3-matplotlib
+	py3-mizani
+	py3-numpy
+	py3-pandas
+	py3-patsy
+	py3-scipy
+	py3-statsmodels
+	"
+checkdepends="python3-dev py3-pytest py3-pytest-cov"
+makedepends="py3-gpep517 py3-setuptools_scm py3-wheel"
+subpackages="$pkgname-pyc"
+source="https://github.com/has2k1/plotnine/archive/v$pkgver/plotnine-$pkgver.tar.gz"
+builddir="$srcdir/plotnine-$pkgver"
+options="!check" # disable for now | additional tests are failing in this major release
+
+build() {
+	export SETUPTOOLS_SCM_PRETEND_VERSION=$pkgver
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	# assertion errors or missing dependencies
+	local _skipped_tests="
+		test_annotation_logticks
+		and not test_coords
+		and not test_facet_labelling
+		and not test_facets
+		and not test_geom_ribbon_area
+		and not test_geom_segment
+		and not test_geom_smooth
+		and not test_geom_text_label
+		and not test_scale_internals
+		and not test_scale_labelling
+		and not test_position
+		and not test_theme"
+
+	# shellcheck disable=SC2116
+	python3 -m pytest -k "not $(echo $_skipped_tests)" --ignore=tests/test_geom_map.py
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/plotnine-$pkgver-py3-none-any.whl
+}
+
+sha512sums="
+b4aca7b3bdc929f13279e68d38b81c1fe35b7fec67cf789d92761fb475c3c68bf178d13ebd583610d592011647fca7b95a3c8f88f12ce55d44ca421f44acd82d  plotnine-0.13.6.tar.gz
+"

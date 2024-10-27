@@ -1,0 +1,43 @@
+# Contributor: Orhun Parmaksız <orhunparmaksiz@gmail.com>
+# Maintainer: Orhun Parmaksız <orhunparmaksiz@gmail.com>
+pkgname=runst
+pkgver=0.1.7
+pkgrel=0
+pkgdesc="Dead simple notification daemon"
+url="https://github.com/orhun/runst"
+# loongarch64: libc crate fails to build
+arch="all !s390x !loongarch64"
+license="MIT OR Apache-2.0"
+makedepends="
+	cargo
+	cargo-auditable
+	dbus-glib-dev
+	pango-dev
+	"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/orhun/runst/archive/v$pkgver.tar.gz"
+options="net"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --release --frozen
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm 755 "target/release/runst" -t "$pkgdir/usr/bin"
+	install -Dm 644 README.md -t "$pkgdir/usr/share/doc/$pkgname"
+	install -Dm 644 LICENSE-MIT -t "$pkgdir/usr/share/licenses/$pkgname"
+}
+
+sha512sums="
+68ea1e8f48d5b8e76d246c5e3ed20e1a9580adaabb1853280de6b54b3b12a548ab647ccb57371bab9b23d2976d3d8c41fe3164d530db4b5380bd394b62dc3a4f  runst-0.1.7.tar.gz
+"

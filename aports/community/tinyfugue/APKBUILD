@@ -1,0 +1,37 @@
+# Contributor: Síle Ekaterin Liszka <sheila@vulpine.house>
+# Maintainer: Síle Ekaterin Liszka <sheila@vulpine.house>
+pkgname=tinyfugue
+pkgver=5.1.4
+pkgrel=2
+pkgdesc="Powerful curses-based MUD client"
+url="https://github.com/ingwarsw/tinyfugue"
+arch="all"
+options="!check" # no testsuite
+license="GPL-2.0-or-later"
+makedepends="openssl-dev ncurses-dev pcre-dev icu-dev python3-dev"
+source="$pkgname-$pkgver.tar.gz::https://github.com/ingwarsw/tinyfugue/archive/refs/tags/$pkgver.tar.gz
+	gcc14.patch"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--enable-atcp \
+		--enable-gmcp \
+		--enable-option102 \
+		--enable-python
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+5732b3f96bc5e09e1eadd89994a25161d765ecaa0c72e5fd1d546b12028eb873faeb178fefbe3262aa790660a509fbf5de6dc74a50c23040005ab42d4a46ae14  tinyfugue-5.1.4.tar.gz
+fa5bbbcb236aeff6095a9bbac2975d78e72e73abd88260c41fccddd0e7b33e5cb50a77cf5661e9efab952e2076e76792a616c59552c25d8dce9e0bb21372ad46  gcc14.patch
+"

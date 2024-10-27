@@ -1,0 +1,61 @@
+# Contributor: Jakob Meier <comcloudway@ccw.icu>
+# Maintainer: Jakob Meier <comcloudway@ccw.icu>
+
+pkgname=vlang
+pkgver=0.4.3
+# this has to be updated with the version
+_vc_commit_sha="5e691a82c01957870b451e06216a9fb3a4e83a18"
+pkgrel=0
+pkgdesc="Simple, fast, safe, compiled language for developing maintainable software."
+url="https://vlang.io"
+arch="x86_64 aarch64"
+license="MIT"
+# to be able to symlink /usr/lib/vlang/thirdparty/tcc/lib/libgc.a to /usr/lib/libgc.a
+depends="gc-dev"
+makedepends="gcc gc-dev libx11-dev"
+source="
+v-$pkgver.tar.gz::https://github.com/vlang/v/archive/refs/tags/$pkgver.tar.gz
+vc-$pkgver.tar.gz::https://github.com/vlang/vc/archive/$_vc_commit_sha.tar.gz
+"
+builddir="$srcdir/v-$pkgver"
+options="net"
+
+build() {
+	mv "../vc-$_vc_commit_sha" ./vc
+
+	# cannot rely on prebuild tcc libgc.a
+	# needs gc-dev
+	mkdir -p thirdparty/tcc/lib
+	ln -s /usr/lib/libgc.a thirdparty/tcc/lib/libgc.a
+
+	gcc -std=gnu11 -w -o v1 vc/v.c -lm -lpthread
+	./v1 -no-parallel -o v2 -prod cmd/v
+	./v2 -o v -prod cmd/v
+	rm -rf v1 v2
+
+	./v run ./cmd/tools/detect_tcc.v
+
+	VEXE=$builddir/v ./v build-tools -v
+}
+
+check() {
+	./v self
+}
+
+package() {
+	install -d $pkgdir/usr/lib/vlang $pkgdir/usr/share/vlang $pkgdir/usr/bin
+	install -Dm644 LICENSE pkgdir/usr/share/licenses/$pkgname/LICENSE
+	install -Dm755 v $pkgdir/usr/lib/vlang
+	cp -a cmd $pkgdir/usr/lib/vlang/
+	cp -a examples $pkgdir/usr/share/vlang/
+	cp -a thirdparty $pkgdir/usr/lib/vlang/
+	cp -a vlib $pkgdir/usr/lib/vlang/
+	cp v.mod $pkgdir/usr/lib/vlang/
+	ln -s /usr/lib/vlang/v $pkgdir/usr/bin/v
+
+	touch $pkgdir/usr/lib/vlang/cmd/tools/.disable_autorecompilation
+}
+sha512sums="
+b6646a2973ab1e9a718227113bd47440f72b559fbbd53760cfe441ac90f52dee0d12b082812a31ab2d0e0e96bde1c23ba79619c7a759361329ef9f8f33d1970a  v-0.4.3.tar.gz
+b99a12bb006559dfe41f5205e83e18d0b238cd14f19a6452fc5f0f97110d09048cb25a0867dfb7bf96369f697a542ae66b26ddd47a5bb1e3fdd6098576abbb14  vc-0.4.3.tar.gz
+"

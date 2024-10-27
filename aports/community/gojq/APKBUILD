@@ -1,0 +1,35 @@
+# Contributor: Michał Polański <michal@polanski.me>
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=gojq
+pkgver=0.12.16
+pkgrel=0
+pkgdesc="Pure Go implementation of jq"
+url="https://github.com/itchyny/gojq"
+license="MIT"
+arch="all"
+makedepends="go"
+subpackages="$pkgname-zsh-completion"
+source="https://github.com/itchyny/gojq/archive/v$pkgver/gojq-$pkgver.tar.gz"
+options="net"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build ./cmd/gojq
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	install -Dm755 gojq -t "$pkgdir"/usr/bin/
+
+	install -Dm644 _gojq -t "$pkgdir"/usr/share/zsh/site-functions/
+}
+
+sha512sums="
+08129dac68e280b4a7c2d64ea3da4cf8a00ab0ba8431e76468cb9d4b52e052eb5f2b92d1dc8545c3a5e08e354b0d4ec60c39137a13b4df6ea9027f0278e148c5  gojq-0.12.16.tar.gz
+"

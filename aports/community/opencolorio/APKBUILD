@@ -1,0 +1,82 @@
+# Contributor: Mark Riedesel <mark@klowner.com>
+# Maintainer: Leon Marz <main@lmarz.org>
+pkgname=opencolorio
+pkgver=2.3.2
+pkgrel=0
+pkgdesc="Color management framework for visual effects and animation"
+url="https://opencolorio.org/"
+arch="all"
+license="BSD-3-Clause AND GPL-2.0-or-later"
+# Please do not include openimageio.
+# It creates a circular dependency.
+makedepends="cmake
+	expat-dev
+	freeglut-dev
+	glew-dev
+	lcms2-dev
+	openexr-dev
+	py3-pybind11-dev
+	pystring-dev
+	python3-dev
+	samurai
+	yaml-cpp-dev
+	"
+subpackages="py3-$pkgname:py3 $pkgname-dev $pkgname-tools"
+source="$pkgname-$pkgver.tar.gz::https://github.com/AcademySoftwareFoundation/OpenColorIO/archive/v$pkgver.tar.gz
+	0002-fix-strtol.patch
+	"
+builddir="$srcdir/OpenColorIO-$pkgver"
+
+# tests in arches other than x86_64 fail but mostly to FP precision
+case $CARCH in
+x86_64) ;;
+*) options="$options !check" ;;
+esac
+
+prepare() {
+	default_prepare
+	find . -name CMakeLists.txt -exec sed -i -e "s/OpenGL::OpenGL/OpenGL::GL/" {} +
+}
+
+build() {
+	local use_sse2
+
+	case "$CARCH" in
+	x86_64|x86) use_sse2=TRUE ;;
+	*) use_sse2=FALSE ;;
+	esac
+
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DOCIO_BUILD_TESTS=OFF \
+		-DOCIO_BUILD_GPU_TESTS=OFF \
+		-DOCIO_USE_SSE="$use_sse2"
+	cmake --build build
+}
+
+check() {
+	ninja -C build test
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+tools() {
+	pkgdesc="OpenColorIO color management framework tools"
+
+	amove usr/bin
+}
+
+py3() {
+	pkgdesc="Python3 bindings for OpenColorIO color management framework"
+
+	amove usr/lib/python*
+}
+
+sha512sums="
+4c7547960623b058398a86d9c8335d31f2354a1ee7ba58fbc2d1ace698132b99e8f823c9b443a77545721da076569228f502f1f3f4deba44659571c6d12db133  opencolorio-2.3.2.tar.gz
+eb4602890ba202c20ccbf8524a0b4d4afb834330056f019f5841db2c2c5374e3c3b667a2bed6c722a2aa66da5817e49cbbbe1a75d26e869d2c17f8f09b319b25  0002-fix-strtol.patch
+"

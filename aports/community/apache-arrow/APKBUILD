@@ -1,0 +1,220 @@
+# Contributor: Duncan Bellamy <dunk@denkimushi.com>
+# Maintainer: Duncan Bellamy <dunk@denkimushi.com>
+# based on arch linux PKGBUILD
+pkgname=apache-arrow
+pkgver=17.0.0
+pkgrel=1
+pkgdesc="multi-language toolbox for accelerated data interchange and in-memory processing"
+url="https://arrow.apache.org/"
+arch="all"
+license="Apache-2.0"
+_py3depends="
+	cython
+	py3-gpep517
+	py3-numpy-dev
+	py3-setuptools
+	py3-setuptools_scm
+	py3-typing-extensions
+	py3-wheel
+	python3-dev
+	"
+makedepends="
+	abseil-cpp-dev
+	apache-orc-dev
+	boost-dev
+	brotli-dev
+	bzip2-dev
+	c-ares-dev
+	cmake
+	glog-dev
+	grpc-dev
+	gtest-dev
+	lz4-dev
+	openssl-dev>3
+	protobuf-dev
+	rapidjson-dev
+	re2-dev
+	samurai
+	snappy-dev
+	thrift-dev
+	utf8proc-dev
+	zlib-dev
+	zstd-dev
+	$_py3depends
+	"
+_py3checkdepends="
+	py3-cffi
+	py3-hypothesis
+	py3-pandas
+	py3-pytest
+	py3-pytest-xdist
+	"
+checkdepends="bash grep gzip perl python3 tzdata $_py3checkdepends"
+somask="libarrow_python.so"
+subpackages="
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-gdb
+	py3-pyarrow-pyc
+	py3-pyarrow:python_arrow
+	libarrow:lib
+	libarrow_acero:lib
+	libarrow_dataset:lib
+	libarrow_flight:lib
+	libparquet:lib
+	"
+_arrowsha="e81d0c6de35948b3be7984af8e00413b314cde6e"
+_parquetsha="d79a0101d90dfa3bbb10337626f57a3e8c4b5363"
+source="https://archive.apache.org/dist/arrow/arrow-$pkgver/apache-arrow-$pkgver.tar.gz
+	$pkgname-arrow-testing-$_arrowsha.tar.gz::https://github.com/apache/arrow-testing/archive/$_arrowsha.tar.gz
+	$pkgname-parquet-testing-$_parquetsha.tar.gz::https://github.com/apache/parquet-testing/archive/$_parquetsha.tar.gz
+	python-options.patch
+	"
+options="!check" # fail with py3.11
+
+case "$CARCH" in
+aarch64|x86|x86_64)
+	_SIMD="MAX"
+	makedepends="$makedepends xsimd-dev"
+	;;
+*)
+	_SIMD="NONE"
+	;;
+esac
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+
+	case "$CARCH" in
+	arm*)
+		local arrowcpu="armv7"
+		;;
+	esac
+
+	export CFLAGS="$CFLAGS -O2 -flto=auto -DNDEBUG"
+	export CXXFLAGS="$CXXFLAGS -O2 -flto=auto -DNDEBUG"
+	cmake -B build-cpp -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DARROW_BUILD_STATIC=OFF \
+		-DARROW_DEPENDENCY_SOURCE=SYSTEM \
+		-DARROW_RUNTIME_SIMD_LEVEL="$_SIMD" \
+		-DARROW_BUILD_EXAMPLES=OFF \
+		-DARROW_BUILD_TESTS="$(want_check && echo ON || echo OFF)" \
+		-DARROW_COMPUTE=ON \
+		-DARROW_CSV=ON \
+		-DARROW_DATASET=ON \
+		-DARROW_FILESYSTEM=ON \
+		-DARROW_FLIGHT=ON \
+		-DARROW_HDFS=ON \
+		-DARROW_JEMALLOC=OFF \
+		-DARROW_JSON=ON \
+		-DARROW_PARQUET=ON \
+		-DARROW_SIMD_LEVEL="NONE" \
+		-DARROW_TENSORFLOW=ON \
+		-DARROW_USE_GLOG=ON \
+		-DARROW_ORC=ON \
+		-DARROW_WITH_BROTLI=ON \
+		-DARROW_WITH_BZ2=ON \
+		-DARROW_WITH_LZ4=ON \
+		-DARROW_WITH_MUSL=ON \
+		-DARROW_WITH_SNAPPY=ON \
+		-DARROW_WITH_ZLIB=ON \
+		-DARROW_WITH_ZSTD=ON \
+		-DARROW_CPU_FLAG=$arrowcpu \
+		-DPARQUET_REQUIRE_ENCRYPTION=ON \
+		-S cpp \
+		$CMAKE_CROSSOPTS
+	cmake --build build-cpp
+
+	# install in Arrow_DIR for python build to find
+	DESTDIR="$builddir/dist-cpp" cmake --install build-cpp
+
+	cd python
+	export SETUPTOOLS_SCM_PRETEND_VERSION=$pkgver
+	export Arrow_DIR="$builddir/dist-cpp/usr"
+	export ArrowAcero_DIR="$Arrow_DIR"
+	export ArrowDataset_DIR="$Arrow_DIR"
+	export ArrowFlight_DIR="$Arrow_DIR"
+	export Parquet_DIR="$Arrow_DIR"
+	export PYARROW_CMAKE_OPTIONS="-DARROW_RUNTIME_SIMD_LEVEL=$_SIMD -DARROW_CPU_FLAG=$arrowcpu"
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	cd build-cpp
+	export PARQUET_TEST_DATA="$srcdir/parquet-testing-$_parquetsha/data"
+	export ARROW_TEST_DATA="$srcdir/arrow-testing-$_arrowsha/data"
+	# exclude broken tests
+	ctest -j4 --output-on-failure -E "arrow-buffer-test|arrow-misc-test|\
+arrow-utility-test|arrow-csv-test|arrow-compute-aggregate-test|arrow-flight-test|arrow-compute-scalar-test|\
+arrow-dataset-file-ipc-test|arrow-dataset-scanner-test"
+
+	cd ../python
+	ARROW_HOME="$builddir/dist-cpp/usr" \
+	python3 setup.py install --root="$PWD/dist-python"
+	PYTHONPATH="$(echo $PWD/dist-python/usr/lib/python3*/site-packages)" \
+	LIBRARY_PATH="$builddir/dist-cpp/usr/lib:$LIBRARY_PATH" \
+	LD_LIBRARY_PATH="$builddir/dist-cpp/usr/lib:$LD_LIBRARY_PATH" \
+	pytest -n 4 pyarrow --deselect=pyarrow/tests/test_memory.py \
+		--deselect=pyarrow/tests/test_csv.py \
+		--deselect=pyarrow/tests/parquet/test_data_types.py \
+		--deselect=pyarrow/tests/test_array.py::test_dictionary_to_numpy \
+		--deselect=pyarrow/tests/test_io.py::test_python_file_large_seeks \
+		--deselect=pyarrow/tests/test_io.py::test_foreign_buffer \
+		--deselect=pyarrow/tests/test_io.py::test_memory_map_large_seeks \
+		--deselect=pyarrow/tests/test_pandas.py::TestConvertStructTypes::test_from_numpy_nested \
+		--deselect=pyarrow/tests/test_schema.py::test_schema_sizeof \
+		--deselect=pyarrow/tests/test_serialization.py::test_primitive_serialization \
+		--deselect=pyarrow/tests/test_serialization.py::test_integer_limits \
+		--deselect=pyarrow/tests/parquet/test_dataset.py::test_partitioned_dataset
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build-cpp
+
+	cd python
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+
+	rm -r "$pkgdir"/usr/lib/python3*/site-packages/pyarrow/tests
+}
+
+python_arrow() {
+	pkgdesc="$pkgdesc (python module)"
+	depends="python3 py3-cffi py3-numpy"
+
+	# renamed from this to avoid confusion as in python this is "pyarrow"
+	provides="py3-apache-arrow=$pkgver-r$pkgrel"
+	replaces="py3-apache-arrow"
+
+	amove usr/lib/python3*
+}
+
+gdb() {
+	pkgdesc="$pkgdesc (gdb integration)"
+	install_if="$pkgname=$pkgver-r$pkgrel gdb"
+
+	amove \
+		usr/share/arrow/gdb/ \
+		usr/share/gdb/
+}
+
+lib() {
+	pkgdesc="$pkgdesc ($subpkgname library)"
+	depends="$pkgname=$pkgver-r$pkgrel"
+
+	amove usr/lib/$subpkgname.so.*
+}
+
+sha512sums="
+4e2a617b8deeb9f94ee085653a721904a75696f0827bcba82b535cc7f4f723066a09914c7fa83c593e51a8a4031e8bf99e563cac1ebb1d89604cb406975d4864  apache-arrow-17.0.0.tar.gz
+2c31dd48fc070c3b1b25cdd1d58615accf73e3ee864d58b9a92a92c71a531174abeae42c2d0e6a70bcce47fe01c6cf43b1c17fab0636fb51524db8d035efce20  apache-arrow-arrow-testing-e81d0c6de35948b3be7984af8e00413b314cde6e.tar.gz
+5bf4f1341dfab0f71d61d00ef89e2f6a49831af3e5ade1209b9f35abf61d5edcbe311bebb2bb5d8611486e16fe97bfa8c85974dc2ea11325b58fb74c1cc09e3a  apache-arrow-parquet-testing-d79a0101d90dfa3bbb10337626f57a3e8c4b5363.tar.gz
+4cbb62bc7f4e18bd2ccb03a3bff66615825df2533c80e93c19ea3132816ccef0d5c00b765aa950154f0752b9c88a838bbcecd02f971d430a9c1dbec84f313b91  python-options.patch
+"

@@ -1,0 +1,55 @@
+# Contributor: Anon <danilagdn.2004@gmail.com>
+# Maintainer: Lindsay Zhou <i@lin.moe>
+pkgname=sing-box
+pkgver=1.9.6
+pkgrel=0
+pkgdesc="The universal proxy platform"
+url="https://sing-box.sagernet.org/"
+arch="all"
+license="GPL-3.0-or-later with name use or association addition"
+makedepends="go"
+subpackages="$pkgname-openrc $pkgname-bash-completion $pkgname-fish-completion $pkgname-zsh-completion"
+options="net" # go modules
+source="$pkgname-$pkgver.tar.gz::https://github.com/SagerNet/sing-box/archive/v$pkgver.tar.gz
+	$pkgname.initd
+	"
+_tags="with_gvisor,with_quic,with_wireguard,with_utls,with_reality_server,with_clash_api,with_ech,with_dhcp,with_acme"
+
+build() {
+	export CGO_CPPFLAGS="$CPPFLAGS"
+	export CGO_CFLAGS="$CFLAGS"
+	export CGO_CXXFLAGS="$CXXFLAGS"
+	export CGO_LDFLAGS="$LDFLAGS"
+
+	go build -v -tags "$_tags" \
+	-ldflags "-X \"github.com/sagernet/sing-box/constant.Version=$pkgver\" -s -w
+	-buildid= -linkmode=external" ./cmd/sing-box
+
+	install -d completions
+	go run ./cmd/sing-box completion bash   > completions/bash
+	go run ./cmd/sing-box completion fish   > completions/fish
+	go run ./cmd/sing-box completion zsh    > completions/zsh
+}
+
+check() {
+	go test -v ./...
+	# require docker to run test cases in the "test" submodule,
+	# some checks are ignored in the upstream Makefile.
+}
+
+package() {
+	install -Dm644 LICENSE                      -t "$pkgdir/usr/share/licenses/$pkgname"
+	install -Dm755 "$pkgname"                   -t "$pkgdir/usr/bin"
+	install -Dm644 "release/config/config.json" -t "$pkgdir/etc/$pkgname"
+	install -Dm755 "$srcdir/$pkgname.initd" 		"$pkgdir/etc/init.d/$pkgname"
+
+	install -Dm644 completions/bash "$pkgdir/usr/share/bash-completion/completions/$pkgname.bash"
+	install -Dm644 completions/fish "$pkgdir/usr/share/fish/vendor_completions.d/$pkgname.fish"
+	install -Dm644 completions/zsh  "$pkgdir/usr/share/zsh/site-functions/_$pkgname"
+
+}
+
+sha512sums="
+82e1a32097c37bdc8f349ab15ec1074d8d04b9310ca1a0b60348d58f77dcf7564b5ed3fa3bd5ab1f96bd8d8c376694f6e959a22e67f720fb8ae44da494e4d4f2  sing-box-1.9.6.tar.gz
+f776cea8562d0dcfb5a32a58aa3d3ffd631194c4bf72919852d8482baf2cf008012a0862df45e9a6e8c626b373238d8dfbbcfbe5412e2302b9ad2bfc81dc11f5  sing-box.initd
+"

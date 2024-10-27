@@ -1,0 +1,46 @@
+# Contributor: knuxify <knuxify@gmail.com>
+# Maintainer: knuxify <knuxify@gmail.com>
+pkgname=geopard
+pkgver=1.6.0
+pkgrel=0
+pkgdesc="Colorful, adaptive gemini browser"
+url="https://ranfdev.com/projects/geopard/"
+# loongarch64: libc crate fails to build
+arch="all !s390x !loongarch64" # blueprint-compiler
+license="GPL-3.0-or-later"
+makedepends="
+	blueprint-compiler
+	cargo
+	desktop-file-utils
+	glib-dev
+	gtk4.0-dev
+	libadwaita-dev
+	meson
+	openssl-dev>3
+	"
+subpackages="$pkgname-lang"
+source="https://github.com/ranfdev/Geopard/releases/download/v$pkgver/geopard-$pkgver.tar.xz"
+options="!check" # no test suite
+
+
+prepare() {
+	default_prepare
+	rm -rf "$builddir"/subprojects/blueprint-compiler
+}
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+b131a062ba69ba623830a2540d2d7118efdd9a2501dacadad4137ecb65671a3cd1c447fb5d9eb3a0d18bd6849e2af6c479edce80b3869acf05ed8a2466e2f9b9  geopard-1.6.0.tar.xz
+"

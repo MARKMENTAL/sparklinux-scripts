@@ -1,0 +1,49 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=alsa-lib
+pkgver=1.2.12
+pkgrel=0
+pkgdesc="Advanced Linux Sound Architecture (ALSA) library"
+url="https://alsa-project.org/"
+arch="all"
+license="LGPL-2.1-or-later"
+subpackages="$pkgname-dbg $pkgname-dev"
+makedepends="linux-headers"
+source="https://alsa-project.org/files/pub/lib/alsa-lib-$pkgver.tar.bz2
+	remove-test.patch
+	fix-PATH_MAX-on-ppc64le.patch
+	"
+prepare() {
+	default_prepare
+	update_config_sub
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--disable-python \
+		--disable-static \
+		--disable-resmgr \
+		--enable-rawmidi \
+		--enable-seq \
+		--enable-aload \
+		--disable-dependency-tracking \
+		--without-versioned
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make -j1 DESTDIR="$pkgdir" install
+	install -d -m755 "$pkgdir"/etc/alsa/conf.d
+}
+
+sha512sums="
+053e36e51c0ff28f07028b89c8845b50682a5c14035ab85c2fc8cae2f2f0d05e4cd45ed879602c15c1596fb7fe84bfd50ec0d119dfb55c66589a2d458a9b317d  alsa-lib-1.2.12.tar.bz2
+e15318431fe2d5bd1e42ef793f223e3e5995890d7befe6daa3d7456ccf5cb2f51eb79171539cecae13032a9b8a798ea35e04c89b27c7ef9567e2c03fb8db4512  remove-test.patch
+f980d153c2f179e2f8fd90180d19250e5a5e12388f31d86a233d89be72ae7e96b944a8f435f0a11c6140378ac38eaa937175e1c100395ec4f635a9a6a4b1ae25  fix-PATH_MAX-on-ppc64le.patch
+"

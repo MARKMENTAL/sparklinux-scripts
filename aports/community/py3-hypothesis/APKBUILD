@@ -1,0 +1,44 @@
+# Contributor:
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=py3-hypothesis
+pkgver=6.111.2
+pkgrel=0
+pkgdesc="Advanced property-based (QuickCheck-like) testing for Python"
+options="!check"
+url="https://hypothesis.works/"
+arch="noarch"
+license="MPL-2.0"
+depends="py3-attrs py3-sortedcontainers"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest py3-coverage py3-tz py3-numpy py3-dateutil py3-pexpect"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/HypothesisWorks/hypothesis-python/archive/hypothesis-python-$pkgver.tar.gz
+	"
+builddir="$srcdir/hypothesis-hypothesis-python-$pkgver/hypothesis-python"
+
+replaces="py-hypothesis" # Backwards compatibility
+provides="py-hypothesis=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	# In python3 mock is actually unittest.mock
+	sed -e 's/from mock/from unittest.mock/' -i tests/cover/test_regressions.py
+	sed -e 's/from mock/from unittest.mock/' -i tests/cover/test_reflection.py
+
+	rm -rf tests/lark tests/dpcontracts tests/pandas
+	PYTHONPATH="$PWD/build/lib" pytest-3 -v -k "not test_healthcheck_traceback_is_hidden"
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+405d0a7545d216082f5b75d8b90bf53169481a96a23f8a40685165610dffe2fa2d47397abda98a90db4d281d274a35a201fbbae191fe264cba6be5deb0709042  py3-hypothesis-6.111.2.tar.gz
+"

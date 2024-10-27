@@ -1,0 +1,57 @@
+# Contributor: David Demelier <markand@malikania.fr>
+# Maintainer: David Demelier <markand@malikania.fr>
+pkgname=rubberband
+pkgver=3.3.0
+pkgrel=1
+pkgdesc="library for audio time-stretching and pitch-shifting"
+url="https://www.breakfastquay.com/rubberband"
+arch="all"
+license="GPL-2.0-only"
+makedepends="
+	fftw-dev
+	ladspa-dev
+	libsamplerate-dev
+	libsndfile-dev
+	lv2-dev
+	meson
+	vamp-sdk-dev
+	"
+checkdepends="boost-dev"
+subpackages="$pkgname-libs $pkgname-static $pkgname-dev"
+source="https://breakfastquay.com/files/releases/rubberband-$pkgver.tar.bz2"
+
+# slight numerical rounding difference
+case "$CARCH" in
+x86|ppc64le) options="$options !check" ;;
+esac
+
+build() {
+	# release needed since sets extra defines
+	abuild-meson \
+		--buildtype=release \
+		-Db_lto=true \
+		-Dresampler=libsamplerate \
+		-Dfft=fftw \
+		. output
+	meson compile -C output
+}
+
+check() {
+	case "$CARCH" in
+	riscv64)
+		meson test --timeout-multiplier=30 --print-errorlogs --no-rebuild -C output
+		# 8/8 Stretcher         TIMEOUT        30.04s   killed by signal 15 SIGTERM
+		;;
+	*)
+		meson test --print-errorlogs --no-rebuild -C output
+		;;
+	esac
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+0216c33a250d52d539ad7a0ec28ea94e6d4684a308a9cb62509221b3861f74717021bd79196a1f58a7715799757491f32e0475ad2ddb7884683bb9130c676591  rubberband-3.3.0.tar.bz2
+"

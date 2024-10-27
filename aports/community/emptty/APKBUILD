@@ -1,0 +1,48 @@
+# Maintainer: Michal Tvrznik <emporeor@gmail.com>
+pkgname=emptty
+pkgver=0.13.0
+pkgrel=0
+pkgdesc="Dead simple CLI Display Manager on TTY"
+url="https://github.com/tvrzna/emptty"
+arch="all"
+license="MIT"
+makedepends="git go linux-pam-dev libx11-dev"
+source="$pkgname-$pkgver.tar.gz::https://github.com/tvrzna/emptty/archive/v$pkgver.tar.gz"
+subpackages="
+	$pkgname-doc
+	$pkgname-openrc
+"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	mkdir -p dist/
+	go build -o dist/emptty
+}
+
+check() {
+	LANG=en_US.UTF-8 go test ./...
+}
+
+package() {
+	# man page
+	install -D res/emptty.1 $pkgdir/usr/share/man/man1/emptty.1
+
+	# PAM file
+	install -Dm 644 res/pam-alpine $pkgdir/etc/pam.d/emptty
+
+	# config file
+	install -Dm 644 res/conf $pkgdir/etc/emptty/conf
+
+	# openrc service unit
+	install -Dm 755 res/openrc-service $pkgdir/etc/init.d/emptty
+
+	# binary
+	install -Dm 755 dist/emptty $pkgdir/usr/bin/emptty
+}
+
+sha512sums="
+0baab909b46468fefbb3b12b10cf3c1a9b574460b49d7d01880f9b088cd18e3b49816e01e6af4c1094197b2c78c5c7bb7e31e8494b1168bd25af42c6f9ebb05d  emptty-0.13.0.tar.gz
+"

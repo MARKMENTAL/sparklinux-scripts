@@ -1,0 +1,40 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+pkgname=py3-pyqt-feedback-flow
+_pkgorig=pyqt-feedback-flow
+pkgver=0.3.4
+pkgrel=0
+pkgdesc="Show feedback in toast-like notifications"
+url="https://github.com/firefly-cpp/pyqt-feedback-flow"
+arch="noarch"
+license="MIT"
+depends="python3 py3-emoji py3-qt6"
+makedepends="py3-gpep517 py3-poetry-core"
+checkdepends="py3-pytest-xdist"
+subpackages="$pkgname-doc $pkgname-pyc"
+source="https://github.com/firefly-cpp/pyqt-feedback-flow/archive/$pkgver/$_pkgorig-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgorig-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/pyqt_feedback_flow-$pkgver-py3-none-any.whl
+
+	install -Dm644 README.md -t "$pkgdir"/usr/share/doc/$pkgname
+	install -Dm644 CITATION.cff -t "$pkgdir"/usr/share/doc/$pkgname
+}
+
+sha512sums="
+fdd88b0526d1ea289855610de6d69bf2029bdb06452a7c936d39ab6e14a5e591936dd9bf2519d38e1ae21ccebcda23e7f210af6d248c6ecbf2a44227b20cfe0f  pyqt-feedback-flow-0.3.4.tar.gz
+"

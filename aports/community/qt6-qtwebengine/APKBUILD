@@ -1,0 +1,282 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=qt6
+pkgname=qt6-qtwebengine
+pkgver=6.7.2
+pkgrel=5
+# latest commit of 118-based branch of qtwebengine-chromium
+_chromium_commit="45bdfbd7721749beea9abd18467465e4c9026559"
+pkgdesc="Provides support for web applications using the Chromium browser project"
+url="https://qt.io/"
+# riscv64, s390x and loongarch64 unknown current CPU
+# ppc64le not supported by chromium
+arch="all !riscv64 !s390x !ppc64le"
+license="LGPL-2.1-only AND LGPL-3.0-only AND GPL-3.0-only AND Qt-GPL-exception-1.0"
+depends_dev="
+	alsa-lib-dev
+	ffmpeg-dev
+	icu-dev
+	krb5-dev
+	lcms2-dev
+	libevent-dev
+	libvpx-dev>=1.10.0-r1
+	libxkbfile-dev
+	libxml2-dev
+	libxslt-dev
+	minizip-dev
+	nss-dev
+	opus-dev
+	pciutils-dev
+	pipewire-dev
+	pulseaudio-dev
+	qt6-qtbase-dev
+	qt6-qtdeclarative-dev
+	qt6-qtpositioning-dev
+	qt6-qttools-dev
+	qt6-qtwebchannel-dev
+	snappy-dev
+	"
+makedepends="$depends_dev
+	bison
+	bsd-compat-headers
+	cmake
+	flex
+	gperf
+	gzip
+	nodejs
+	perl
+	py3-html5lib
+	python3
+	samurai
+	"
+subpackages="$pkgname-dev"
+builddir="$srcdir/qtwebengine-${pkgver/_/-}"
+
+# secfixes:
+#   6.7.2-r5:
+#     - CVE-2024-5157
+#     - CVE-2024-5158
+#     - CVE-2024-5159
+#     - CVE-2024-5160
+#     - CVE-2024-8905
+#   6.7.2-r4:
+#     - CVE-2024-7969
+#     - CVE-2024-7972
+#     - CVE-2024-8193
+#     - CVE-2024-8198
+#     - CVE-2024-8362
+#     - CVE-2024-8636
+#   6.7.2-r3:
+#     - CVE-2024-7965
+#     - CVE-2024-7966
+#     - CVE-2024-7967
+#     - CVE-2024-7971
+#     - CVE-2024-7973
+#     - CVE-2024-7974
+#     - CVE-2024-7975
+#   6.7.2-r2:
+#     - CVE-2024-5836
+#     - CVE-2024-6101
+#     - CVE-2024-6103
+#     - CVE-2024-6774
+#     - CVE-2024-6777
+#     - CVE-2024-6779
+#     - CVE-2024-6989
+#     - CVE-2024-6991
+#     - CVE-2024-6992
+#     - CVE-2024-6996
+#     - CVE-2024-6999
+#     - CVE-2024-7000
+#     - CVE-2024-7532
+#     - CVE-2024-7535
+#     - CVE-2024-7536
+#     - CVE-2024-7550
+#   6.6.3-r5:
+#     - CVE-2024-5274
+#   6.6.3-r4:
+#     - CVE-2024-3840
+#     - CVE-2024-4558
+#     - CVE-2024-4671
+#   6.6.3-r3:
+#     - CVE-2024-3837
+#     - CVE-2024-3839
+#     - CVE-2024-3914
+#     - CVE-2024-4058
+#     - CVE-2024-4331
+#   6.6.3-r2:
+#     - CVE-2024-2625
+#     - CVE-2024-2626
+#     - CVE-2024-2887
+#     - CVE-2024-3157
+#     - CVE-2024-3159
+#     - CVE-2024-3516
+#   6.6.3-r1:
+#     - CVE-2023-7104
+#     - CVE-2024-25062
+#   6.6.2-r1:
+#     - CVE-2024-1670
+#     - CVE-2024-1671
+#     - CVE-2024-1672
+#     - CVE-2024-1676
+#   6.6.1-r8:
+#     - CVE-2024-1059
+#     - CVE-2024-1060
+#     - CVE-2024-1077
+#     - CVE-2024-1283
+#     - CVE-2024-1284
+#   6.6.1-r7:
+#     - CVE-2024-0807
+#     - CVE-2024-0808
+#     - CVE-2024-0810
+#   6.6.1-r5:
+#     - CVE-2024-0518
+#     - CVE-2024-0519
+#   6.6.1-r4:
+#     - CVE-2023-7024
+#     - CVE-2024-0222
+#     - CVE-2024-0223
+#     - CVE-2024-0224
+#     - CVE-2024-0225
+#     - CVE-2024-0333
+#   6.6.1-r3:
+#     - CVE-2023-6702
+#     - CVE-2023-6703
+#     - CVE-2023-6705
+#     - CVE-2023-6706
+#   6.6.1-r2:
+#     - CVE-2023-6510
+#   6.6.1-r1:
+#     - CVE-2023-6345
+#     - CVE-2023-6346
+#     - CVE-2023-6347
+#   6.6.0-r6:
+#     - CVE-2023-5997
+#     - CVE-2023-6112
+#   6.6.0-r5:
+#     - CVE-2023-5996
+#   6.6.0-r2:
+#     - CVE-2023-5482
+#     - CVE-2023-5849
+#   6.6.0-r1:
+#     - CVE-2023-5218
+#     - CVE-2023-5474
+#     - CVE-2023-5475
+#     - CVE-2023-5476
+#     - CVE-2023-5484
+#     - CVE-2023-5486
+#     - CVE-2023-5487
+#     - CVE-2023-45853
+
+source="$pkgname-$pkgver.tar.gz::https://github.com/qt/qtwebengine/archive/refs/tags/v$pkgver.tar.gz
+	qtwebengine-chromium-$_chromium_commit.tar.gz::https://github.com/qt/qtwebengine-chromium/archive/$_chromium_commit.tar.gz
+	0001-Enable-building-on-musl.patch
+	0002-temp-failure-retry.patch
+	0003-qt-musl-mallinfo.patch
+	0004-qt-musl-resolve.patch
+	0006-no-execinfo.patch
+	0007-musl-sandbox.patch
+	0014-missing-includes.patch
+	0015-enable-x86.patch
+	chromium-use-alpine-target.patch
+	clang16-aescrypto.patch
+	gcc13.patch
+	lfs64.patch
+	no-sandbox-settls.patch
+	systypes.patch
+	fstatat-32bit.patch
+	qtwebengine-6.7.0-ninja1.12.patch
+	devtools-frontend-compress_files.patch
+	qt6-6.7.1.loongarch64.patch
+	qt6-6.7.1.loongarch64-libvpx-lsx-backport.patch
+	qt6-6.7.1.loongarch64-crashpad.patch
+	qt6-6.7.1.loongarch64-sandbox.patch
+	qt6-6.7.1.loongarch64-ffmpeg.patch
+	qt6-6.7.1.loongarch64-v8-backport.patch
+	"
+
+case "$CARCH" in
+loongarch64)
+	export CFLAGS="$CFLAGS -mcmodel=medium"
+	export CXXFLAGS="$CXXFLAGS -mcmodel=medium"
+	export RUSTFLAGS="$RUSTFLAGS -C code-model=extreme"
+	export LDFLAGS="$LDFLAGS -Wl,--no-relax"
+	;;
+esac
+
+prepare() {
+	rmdir "$builddir/src/3rdparty"
+	mv "$srcdir/qtwebengine-chromium-$_chromium_commit" "$builddir/src/3rdparty"
+	mkdir -p "$builddir"/.git "$builddir/src/3rdparty/chromium/.git"
+
+	default_prepare
+}
+
+build() {
+	export CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE -Wno-builtin-macro-redefined -Wno-deprecated-declarations"
+	export CXXFLAGS="$CXXFLAGS -D_LARGEFILE64_SOURCE -Wno-builtin-macro-redefined -Wno-deprecated-declarations"
+
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DINSTALL_BINDIR=lib/qt6/bin \
+		-DINSTALL_DOCDIR=share/doc/qt6 \
+		-DINSTALL_ARCHDATADIR=lib/qt6 \
+		-DINSTALL_DATADIR=share/qt6 \
+		-DINSTALL_INCLUDEDIR=include/qt6 \
+		-DINSTALL_MKSPECSDIR=lib/qt6/mkspecs \
+		-DINSTALL_EXAMPLESDIR=share/doc/qt6/examples \
+		-DQT_FEATURE_webengine_system_alsa=ON \
+		-DQT_FEATURE_webengine_system_ffmpeg=ON \
+		-DQT_FEATURE_webengine_system_icu=ON \
+		-DQT_FEATURE_webengine_system_libevent=ON \
+		-DQT_FEATURE_webengine_system_libpci=ON \
+		-DQT_FEATURE_webengine_system_libpng=ON \
+		-DQT_FEATURE_webengine_system_libwebp=ON \
+		-DQT_FEATURE_webengine_system_libxml=ON \
+		-DQT_FEATURE_webengine_system_minizip=ON \
+		-DQT_FEATURE_webengine_system_opus=ON \
+		-DQT_FEATURE_webengine_system_pulseaudio=ON \
+		-DQT_FEATURE_webengine_system_zlib=ON \
+		-DQT_FEATURE_webengine_proprietary_codecs=ON \
+		-DQT_FEATURE_webengine_kerberos=ON \
+		-DQT_FEATURE_webengine_webrtc_pipewire=ON
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+17cdf4330c4416b0282ca4b4a46cda1a40de9639c8856055af89d8ca720037f2cbdca78126ae971314815670d73d70205be7fb2924038139f75b5f158499817e  qt6-qtwebengine-6.7.2.tar.gz
+9507948d555e5590fdb1066edbcc794595c5264b91ed4424bbd7d17170ecf3a4b4a7e3a368af8fc7c2ac9de2051c9e7170c400c6cbdcb85bc8f9c50d1f9beb56  qtwebengine-chromium-45bdfbd7721749beea9abd18467465e4c9026559.tar.gz
+9a05c07c4616053d247b1200cdd1883e8067babc5ab5bc169ea1599643d120c445fb4db586f5e247e122711f37e148d13fc8a7443d879877d7c82fb1f778db58  0001-Enable-building-on-musl.patch
+7b6ed37975c55e5ebc20b9a6207044b6f86102d69caa6fdd457078a7ae242026d3de5537651d3d86497ba18ddd1e97523aa082da4dff703a8a4f618bccd4af57  0002-temp-failure-retry.patch
+a894539990d28b6e1c94b3555fda1b17f0e6d7a61c15fdac6793f0ac8fd86f421c1d73c408f93cd8c70cd9bf7b3d3f85e89d190e1af69c67d233e248a7aa15a7  0003-qt-musl-mallinfo.patch
+7751e3a2924f2892384d7a7daf3a9a6770cd873570181854de8fcfb8b1a8430808ad8bf2b6218fa89321ce5446f4e076fea66ca1d2790daf862d016a78b38e51  0004-qt-musl-resolve.patch
+426adb8634e8489bc5611a005fe647404cc4cbb573ec4a1a1fb1c1b387d8f1e0a78666d529966d439319abcc1aebe14dae1130ecb36b7e1ebc413849eb2d3546  0006-no-execinfo.patch
+5603a1f6cf17d201f32eedd3e67f6ea0796477cb047084af8b0bdb08e897bdcbc7cd90770689a8050c846be4cc0ff8b01af6349c70eac13e024aa85e3fc6cb1c  0007-musl-sandbox.patch
+2394280f55723d5c02bcdae332009e31c85fcef4ee625b61958818ca96f493d831d5aceb93188c9b07f0af68bdaa59c9d1e75bc2e3b2d410ce4e21a2870f379a  0014-missing-includes.patch
+865bc71800ae1e15c9ccb83da988c187ee134b32eace98df3177fd2e829210a7915b977144ca789d6aa680a6c8e90efee165d1e69169cda05448ed992615e2a9  0015-enable-x86.patch
+35fd16614f3012f4793221983920f85b209abd543331b14d13bf50d23e028fa34756099a3429028d948a825ec97e9dfeb371fd48852d3f3e5de9f3794e03a7f7  chromium-use-alpine-target.patch
+4af26d96c73fcf0395a2a2a0535dbc8f4679b958f047b10e73bd8bc6fa4e44d0b6f2528460d7475f419211449ca7538ba29031b060e575a91cd0c636887cff68  clang16-aescrypto.patch
+83057708d6deac9141c88637cccaaabef33d9276e9f02e123d7a782ab5cae46073bfcf6bf2aa4c57eca467b6bc3b6416354a5e7352ad38e71cfe5f46ae8d488a  gcc13.patch
+cef2bef9b6daac9c2d51e6a3430a6e7ffa21ecec7ce6a2160891db8fd24d32b47237a77a6b6bf1c9f52d7c9a4dadc9d5ea4bffa7da012367882aae8bdd3df926  lfs64.patch
+17141b0de8d629fc4a620318965ab7d6099da90de2a7172f7536a0a2dcded1bdc8b004c36c9000e7f03209e3eeee6e2570037174a0ffd8472ebc2e9af8409ff0  no-sandbox-settls.patch
+3f9268b47bcb03b485e39e49188f85e5943237713bdb1cf00e97b456064345314c02387c135f979a26cf48fc636a5d492ba7ce817741d4651ce404358a35751a  systypes.patch
+822f7f95db7c9964d40857acc58943fa4f2c55016e09ae7971c8d71fb12e14805c272215ca66ce72dace035146939cdd7948fd8b299440e41140ea2127864139  fstatat-32bit.patch
+4cac6ac4abd17aa958db8c61026a80f4e363f7d8b4ed8fcc9660618e2fc2c7ff0eba03d3ca043755b28d9da65d819538b5f5982dff64ca1dea0043f7266ede36  qtwebengine-6.7.0-ninja1.12.patch
+0b8298858c693b1a3ba607320d0ae00000953c473388f13f3ad1880befbd265eb8412de567819b45f97a9e62bdc79f0c6715a22382f0a42ab1510bbff40a3c9b  devtools-frontend-compress_files.patch
+9d2326877bc6510df2c5b6957466c1681a850b33a36c00bf387a8e4fe51afb951c6b7b58b86f66e053e5b0320bea28d134bdbf0f408b15c4b067b6f2287ffb01  qt6-6.7.1.loongarch64.patch
+cd2ed19c727e2c7eae033293fc21a18bc658cc2910ad31fc7b8f2b6b684414105c309cf1dea58bf51a547b46834756912a0ae3a86eeba907b185e636969b7745  qt6-6.7.1.loongarch64-libvpx-lsx-backport.patch
+303a90f2ac157c0ec6a8ce66aedd187c8ec886bad701268281be589d6398dba91ef1a29daf493a7fba7411bb631c71683ea6759368b94a9fc0e215e4ded33c18  qt6-6.7.1.loongarch64-crashpad.patch
+42e016313f87a502ceadd46196141ba4f3121a50b4a66da0372b85c2dc681a65a6fe2136509efd119703751c02854cfb74af6469a9a240be4682d220a4b25f7a  qt6-6.7.1.loongarch64-sandbox.patch
+09c188e6bbcb8359411d84a7725692d80279fb91125846d720fec1e94a3039815519db38e9540713f92526622c62d685ac8feaaf32f97dd425e5d68ff9e9de0b  qt6-6.7.1.loongarch64-ffmpeg.patch
+29429140d725a647aa3fdcd65b7a521a659788d71c6ed08a66ee20faf489fad237d5a6671d6ed2d46fa7f4e5a5d07bed62af0f9170ee1ed79b8d0e1086f98a29  qt6-6.7.1.loongarch64-v8-backport.patch
+"

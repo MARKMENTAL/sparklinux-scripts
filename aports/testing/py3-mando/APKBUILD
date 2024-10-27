@@ -1,0 +1,36 @@
+# Contributor: Rejah Rehim <rejah@beaglesecurity.com>
+# Maintainer: Rejah Rehim <rejah@beaglesecurity.com>
+pkgname=py3-mando
+_pkgname=mando
+pkgver=0.7.1
+pkgrel=3
+pkgdesc="Python CLI apps with little to no effort at all!"
+url="https://mando.readthedocs.org/"
+arch="noarch"
+license="MIT"
+depends="python3 py3-six"
+makedepends="py3-setuptools py3-gpep517"
+subpackages="$pkgname-doc $pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/m/$_pkgname/$_pkgname-$pkgver.tar.gz"
+builddir="$srcdir"/$_pkgname-$pkgver
+options="!check" # no test suite
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+
+	install -Dm644 README.rst -t "$pkgdir"/usr/share/doc/"$pkgname"
+	install -Dm644 LICENSE -t "$pkgdir"/usr/share/licenses/"$pkgname"
+
+	rm -rf "$pkgdir"/usr/lib/python3*/site-packages/mando/tests
+}
+
+sha512sums="
+469ff797d70a2426042ac0a289bbdb04d53ad8f18c6ea58bf361d4aa13611beb77f845fe73f67b459717e1c886fde627f5f039488826b1ca75ca71665fc55772  mando-0.7.1.tar.gz
+"

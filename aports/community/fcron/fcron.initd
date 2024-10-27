@@ -1,0 +1,15 @@
+#!/sbin/openrc-run
+
+# Initscript by Diaz Devera Victor <vitronic2@gmail.com>
+# Copyright 2014 Alpine Linux
+# Distributed under the terms of the GNU General Public License v2
+
+name="$SVCNAME"
+pidfile="/run/$SVCNAME.pid"
+command="/usr/sbin/$SVCNAME"
+command_args="$CRON_OPTS"
+
+depend() {
+	need localmount
+	need logger
+}

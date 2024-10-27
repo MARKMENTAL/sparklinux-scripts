@@ -1,0 +1,39 @@
+# Maintainer: Kevin Daudt <kdaudt@alpinelinux.org>
+pkgname=rtl8821ce-src
+_commit=a478095a45d8aa957b45be4f9173c414efcacc6f
+_modname=${pkgname%-src}
+pkgver=5_git20230504
+pkgrel=0
+pkgdesc="Wifi drivers for Realtek 8821ce (src, AKMS)"
+url="https://github.com/tomaspinho/rtl8821ce"
+arch="x86_64 x86" # Module supports these arches
+license="GPL-2.0-only"
+options="!check" # No test suite
+source="$pkgname-$_commit.tar.gz::https://github.com/tomaspinho/rtl8821ce/archive/$_commit.tar.gz"
+builddir="$srcdir/$_modname-$_commit"
+
+prepare() {
+	default_prepare
+
+	cat >AKMBUILD <<-EOF
+	modname=$_modname
+	modver=$pkgver
+	built_modules=8821ce.ko
+
+	# This module doesn't support building outside of its source dir.
+	build() {
+	    cp -r "\$srcdir"/* .
+	    make \$MAKEFLAGS KVER="\$kernel_ver" KSRC="\$kernel_srcdir"
+	}
+	EOF
+}
+
+package() {
+	local destdir="$pkgdir/usr/src/$_modname-$pkgver"
+	install -Dm0644 -t "$destdir" AKMBUILD Makefile halmac.mk rtl8821c.mk
+	cp -r core hal include os_dep platform "$destdir"
+}
+
+sha512sums="
+fcaaf26947f72cd57aa79092bd8c62ac60482cd1029c11ec16fcc0e56d2cc0578086449aab3cf12c5a128c13ffeb952d0f620d099d3d19f04d6a3ae7f0ff75ba  rtl8821ce-src-a478095a45d8aa957b45be4f9173c414efcacc6f.tar.gz
+"

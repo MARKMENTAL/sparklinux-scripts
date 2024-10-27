@@ -1,0 +1,37 @@
+# Contributor: Dhruvin Gandhi <contact@dhru.vin>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=py3-license-expression
+_pkgname=license_expression
+pkgver=30.3.1
+pkgrel=0
+pkgdesc="Library to parse, compare, simplify and normalize license expressions"
+url="https://github.com/nexB/license-expression"
+arch="noarch"
+license="Apache-2.0"
+depends="python3 py3-boolean.py"
+makedepends="py3-setuptools py3-setuptools_scm py3-gpep517 py3-wheel"
+checkdepends="py3-pytest py3-pytest-xdist"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/l/$_pkgname/$_pkgname-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+293fd862ba66f6fa449eac5326ae686225f08e6be6f27106523eaffcfae16efa2fbc19e8b37748bb6ed3e8044bde1a726e368eca7006bb59b916ad2df6a11cfc  license_expression-30.3.1.tar.gz
+"

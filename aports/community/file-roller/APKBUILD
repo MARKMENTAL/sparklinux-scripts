@@ -1,0 +1,52 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=file-roller
+pkgver=44.3
+pkgrel=0
+pkgdesc="File Roller is an archive manager for the GNOME desktop "
+url="https://wiki.gnome.org/Apps/FileRoller"
+# s390x blocked by mozjs91 -> nautilus-dev
+arch="all !s390x"
+license="GPL-2.0-or-later"
+depends="cpio"
+depends_doc="yelp"
+makedepends="
+	desktop-file-utils
+	glib-dev
+	itstool
+	json-glib-dev
+	libadwaita-dev
+	libarchive-dev
+	libportal-dev
+	meson
+	nautilus-dev
+	"
+subpackages="$pkgname-lang $pkgname-doc $pkgname-nautilus"
+source="https://download.gnome.org/sources/file-roller/${pkgver%.*}/file-roller-$pkgver.tar.xz"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dpackagekit=false \
+		-Dcpio=/usr/bin/cpio \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+nautilus() {
+	pkgdesc="File Roller nautilus extension"
+	install_if="$pkgname=$pkgver-r$pkgrel nautilus",
+	amove usr/lib/nautilus/extensions-4/libnautilus-fileroller.so
+}
+
+sha512sums="
+940e67cef0a3e71f7c60aea67419666d92c3861b6c7e20dfd50cd055ec590013702b941c938eea3375878a997c377102bc8480d06fd28e0eb8d8f6660ba1df38  file-roller-44.3.tar.xz
+"

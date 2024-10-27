@@ -1,0 +1,32 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=py3-readchar
+pkgver=4.0.5
+pkgrel=3
+pkgdesc=" Python library to read characters and key strokes"
+url="https://github.com/magmax/python-readchar"
+arch="noarch"
+license="MIT"
+depends="python3"
+makedepends="py3-setuptools py3-flake8"
+checkdepends="py3-pexpect py3-coverage py3-pytest py3-pytest-cov py3-wheel"
+subpackages="$pkgname-pyc"
+source="https://github.com/magmax/python-readchar/archive/v$pkgver/py3-readchar-v$pkgver.tar.gz"
+builddir="$srcdir/python-readchar-$pkgver"
+
+build() {
+	python3 setup.py build
+}
+
+check() {
+	PYTHONPATH=build/lib \
+	pytest
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+d8b01f182d629722681c6446fc746d18b5336acf1503be60b7cb42ca8c0a58c7d0994811b74a82cd855ddff9e214d3a85b8cb48e7f2c29191b58f91c79b1dcf6  py3-readchar-v4.0.5.tar.gz
+"

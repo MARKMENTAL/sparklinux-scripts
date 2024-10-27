@@ -1,0 +1,43 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=earlyoom
+pkgver=1.8.1
+pkgrel=0
+pkgdesc="Early OOM Daemon for Linux"
+url="https://github.com/rfjakob/earlyoom"
+arch="all"
+license="MIT"
+checkdepends="cppcheck go psutils"
+subpackages="$pkgname-openrc"
+source="https://github.com/rfjakob/earlyoom/archive/v$pkgver/earlyoom-$pkgver.tar.gz
+	$pkgname.initd
+	$pkgname.confd
+	"
+# FIXME: tests fail on builder, but pass locally
+options="!check"
+
+build() {
+	make VERSION="v$pkgver"
+}
+
+check() {
+	GO111MODULE=off make test
+}
+
+package() {
+	make install DESTDIR="$pkgdir" PREFIX=/usr
+
+	cd "$pkgdir"
+
+	# Remove systemd stuff.
+	rm -rf etc
+
+	install -D -m755 "$srcdir"/$pkgname.initd etc/init.d/$pkgname
+	install -D -m644 "$srcdir"/$pkgname.confd etc/conf.d/$pkgname
+}
+
+sha512sums="
+282669cc3ccf7a56a336e5d92e4ffd29e20a3363369ef125069a60a7a9dff3560737cd527218c85f2dcd46055113f08b4b6183395cc13c73c5e4a0e25f70fa5d  earlyoom-1.8.1.tar.gz
+7c1bb42c4e1bd7cdb03568bd10c79dad48d2f4cd7d58edc5669b4af49ace7cb98770ed6c5202b7b4d3b19c316f4cec3ac99a3bf8dbbdb53339f1ba23dd9302ec  earlyoom.initd
+b04824915fd9e506f3ff0f7cbebd252c83c9dda76762a0eeeee34375af130b0dacd6f419ed5b8f3a01301abd0c7ab85aa0117041a5ef0b1babf5dce1aeb6c86c  earlyoom.confd
+"

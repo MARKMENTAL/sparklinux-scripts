@@ -1,0 +1,20 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=alpine-make-vm-image
+pkgver=0.13.0
+pkgrel=0
+pkgdesc="Make customized Alpine Linux disk image for virtual machines"
+url="https://github.com/alpinelinux/alpine-make-vm-image"
+arch="noarch"
+license="MIT"
+depends="qemu-img"
+source="https://github.com/alpinelinux/$pkgname/archive/v$pkgver/$pkgname-$pkgver.tar.gz"
+options="!check"  # no suitable tests provided
+
+package() {
+	make install DESTDIR="$pkgdir" PREFIX=/usr
+}
+
+sha512sums="
+2647e6860d7bfb853ca898a62a5a10faec5edf1016e2e2eaed7522cb05f929cef6c2938f2601c92f772026f94c90119059d07798c886e80ce2412e988f40f5d6  alpine-make-vm-image-0.13.0.tar.gz
+"

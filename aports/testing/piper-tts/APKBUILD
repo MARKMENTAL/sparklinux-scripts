@@ -1,0 +1,81 @@
+# Maintainer: leso-kn <info@lesosoftware.com>
+pkgname=piper-tts
+_pkgver=2023.11.14-2
+pkgver=${_pkgver/-/.}
+pkgrel=7
+pkgdesc="Fast, local neural text to speech system"
+url="https://github.com/rhasspy/piper"
+provides="larynx2=$pkgver-r$pkgrel"
+replaces=larynx2
+# x86, riscv64, s390x, loongarch64: not supported by onnxruntime
+arch="all !x86 !riscv64 !s390x !loongarch64"
+license="MIT"
+depends_dev="
+	espeak-ng-dev
+	onnxruntime-dev
+	piper-phonemize-dev
+	"
+makedepends="
+	$depends_dev
+	cmake
+	cython
+	pcaudiolib-dev
+	piper-phonemize
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	samurai
+	spdlog-dev
+	"
+subpackages="$pkgname-dev"
+
+case "$CARCH" in
+	armhf) ;;
+	*) subpackages="$subpackages py3-$pkgname:py3" ;;
+esac
+source="$pkgname-$pkgver.tar.gz::https://github.com/rhasspy/piper/archive/refs/tags/$_pkgver.tar.gz
+	no-rpath.patch
+	use-system-libs.patch
+	"
+builddir="$srcdir"/piper-$_pkgver
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr
+	cmake --build build
+
+	cd src/python_run
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	mkdir -p "$pkgdir"/usr/include/piper
+	cp -a src/cpp/*.h src/cpp/*.hpp src/cpp/utf8/ "$pkgdir"/usr/include/piper/
+
+	cd src/python_run
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+py3() {
+	depends="
+		py3-onnxruntime
+		py3-piper-phonemize
+		"
+	amove usr/lib/python*
+}
+
+sha512sums="
+2156c8d384aafc977a41eea181855b5e3fddab1eca353528d919d421958e4c10dbcf6526d03433e4246ac847a2fe4a7c43a57d2cb5666993ad0f28ed9fb68fe6  piper-tts-2023.11.14.2.tar.gz
+60c3233dd281c7a73077bca2c191c095ac7447cda34018c085fb08f5866d785d13bf5099a25d3803fa78215c2e3e73b6671349a0446286a6ec808335dcaa8808  no-rpath.patch
+7d0a2df1139edea6c46d49b7440b5be76c52a1b46835c7647fcc0a400351829dc0a6e77cf9c3f77aaeea6e4ec616317e707b2ab2e94c7b9de9533d147a8155d9  use-system-libs.patch
+"

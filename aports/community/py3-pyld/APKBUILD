@@ -1,0 +1,38 @@
+# Contributor: Celeste <cielesti@protonmail.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=py3-pyld
+pkgver=2.0.4
+pkgrel=1
+pkgdesc="JSON-LD processor written in Python"
+url="https://pypi.org/project/PyLD/"
+arch="noarch"
+license="BSD-3-Clause"
+depends="
+	py3-cachetools
+	py3-frozendict
+	py3-lxml
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+subpackages="$pkgname-pyc"
+source="https://github.com/digitalbazaar/pyld/archive/refs/tags/v$pkgver/py3-pyld-$pkgver.tar.gz"
+builddir="$srcdir/pyld-$pkgver"
+options="!check" # need extra clones and networking
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+d57ef3dbbd25eac8d42521c7a2b7c43d56ee6f5330b43267e178c78c0f28adf4f38c0b6863a891e3de3e6810991fa4fd3f2c4d2f2a1d19c891fa708dffce8edf  py3-pyld-2.0.4.tar.gz
+"

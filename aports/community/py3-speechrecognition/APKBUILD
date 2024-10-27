@@ -1,0 +1,56 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=py3-speechrecognition
+pkgver=3.10.4
+pkgrel=0
+pkgdesc="Library for performing speech recognition, with support for several engines and APIs, online and offline"
+url="https://github.com/Uberi/speech_recognition/"
+# s390x blocked by failing tests
+arch="noarch !s390x"
+license="BSD-3-Clause AND GPL-2.0-only"
+depends="
+	flac
+	py3-pyaudio
+	py3-requests
+	py3-typing-extensions
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="
+	py3-numpy
+	py3-pytest
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/Uberi/speech_recognition/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/speech_recognition-$pkgver"
+
+prepare() {
+	default_prepare
+
+	# Remove pre-built flac binaries, we want to use system ones instead
+	rm speech_recognition/flac*
+}
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -k 'not test_whisper and not test_google and not test_sphinx_english and not test_sphinx_keywords'
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+cbdc055f4df03cfaa91855cc32bc8658e6ef2465f6e5855e78f18e16dd7dbf615e7a255ad43f7412bcc100012c1e4d94ab01ffed6b021f40907241f286e1ebee  py3-speechrecognition-3.10.4.tar.gz
+"

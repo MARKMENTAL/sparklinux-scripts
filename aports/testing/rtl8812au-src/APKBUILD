@@ -1,0 +1,42 @@
+# Maintainer: Bader Zaidan <bader@zaidan.tech>
+pkgname=rtl8812au-src
+_modname=88XXau
+_modver=5.6.4.2
+# no tags, just release branches
+_gitrev=4a983e47dafc048019412350d36270864f6b5f2d
+pkgver=${_modver}_git20231103
+pkgrel=0
+pkgdesc="RTL8812AU/21AU and RTL8814AU wireless drivers"
+url="https://github.com/aircrack-ng/rtl8812au"
+# Currently only x86 and x86_64 is tested, arm(64) is TODO
+arch="x86 x86_64 aarch64 armv7"
+license="GPL-2.0-or-later"
+depends="akms"
+source="$pkgname-$_gitrev.tar.gz::https://github.com/aircrack-ng/rtl8812au/archive/$_gitrev.tar.gz"
+builddir="$srcdir/rtl8812au-$_gitrev"
+options="!check"  # No test suite, only sources
+
+prepare() {
+	default_prepare
+
+	cat >AKMBUILD <<-EOF
+	modname=$_modname
+	modver=$_modver
+	built_modules=$_modname.ko
+
+	build() {
+		cp -r "\$srcdir"/* .
+		make \$MAKEFLAGS KVER="\$kernel_ver" KSRC="\$kernel_srcdir" modules
+	}
+	EOF
+}
+
+package() {
+	local destdir="$pkgdir/usr/src/$_modname-$pkgver"
+	install -Dm644 -t "$destdir" AKMBUILD Makefile
+	cp -r core hal include os_dep platform "$destdir"
+}
+
+sha512sums="
+95612734bc1ae349aec7375af910a3acfdb4f1214566c5fc802f766b1d46a8c1cb0663dfe1195c89801926c3b64f61634b3c3dd355dd6b7cf03af9b0efb733ac  rtl8812au-src-4a983e47dafc048019412350d36270864f6b5f2d.tar.gz
+"

@@ -1,0 +1,28 @@
+# Maintainer:
+pkgname=butane
+pkgver=0.22.0
+pkgrel=0
+pkgdesc="Butane to Ignition config generator"
+url="https://github.com/coreos/butane"
+arch="all"
+license="Apache-2.0"
+makedepends="go"
+source="$pkgname-$pkgver.tar.gz::https://github.com/coreos/butane/archive/refs/tags/v$pkgver.tar.gz"
+
+build() {
+	go build -o butane \
+		-ldflags "-X github.com/coreos/butane/internal/version.Raw=v$pkgver"\
+		internal/main.go
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	install -Dm755 butane -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+fb63d074f4d9b11a009c8d2e2b986778632d46bdfab5732d248d8b1ca86f11c78e98f3a6b7bc49489e12c4211dfc2277228e14f4e8a1a3694158c9b0f133c621  butane-0.22.0.tar.gz
+"

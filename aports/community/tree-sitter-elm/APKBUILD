@@ -1,0 +1,25 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=tree-sitter-elm
+pkgver=5.7.0
+pkgrel=0
+pkgdesc="Elm grammar for tree-sitter"
+url="https://github.com/elm-tooling/tree-sitter-elm"
+arch="all"
+license="MIT"
+makedepends="tree-sitter-dev"
+install_if="tree-sitter-grammars"
+source="https://github.com/elm-tooling/tree-sitter-elm/archive/v$pkgver/tree-sitter-elm-$pkgver.tar.gz"
+options="!check"  # no tests for shared lib
+
+build() {
+	abuild-tree-sitter build
+}
+
+package() {
+	DESTDIR="$pkgdir" abuild-tree-sitter install
+}
+
+sha512sums="
+995ed9e4e8f5efbe6ab231ee0e2fd5a626f9c3f11c4de73c198eed52d482e71f7f2009212e0583ad00425ac22040b18be22285cc9dc70c1b2f4ea335a804b3a6  tree-sitter-elm-5.7.0.tar.gz
+"

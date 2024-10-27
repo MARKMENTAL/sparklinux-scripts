@@ -1,0 +1,73 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=broot
+pkgver=1.44.0
+pkgrel=0
+pkgdesc="New way to see and navigate directory trees"
+url="https://github.com/Canop/broot"
+# riscv64: TODO
+# s390x: fails to build nix crate
+arch="all !riscv64 !s390x"
+license="MIT"
+makedepends="
+	cargo
+	cargo-auditable
+	libgit2-dev
+	libxcb-dev
+	"
+subpackages="
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="https://github.com/Canop/broot/archive/v$pkgver/broot-$pkgver.tar.gz
+	image-features.patch
+	syntect-without-onig.patch
+	"
+options="net" # fetch crates
+
+export CARGO_PROFILE_RELEASE_OPT_LEVEL=2
+
+prepare() {
+	cargo fetch --locked --target="$CTARGET"
+
+	default_prepare
+
+	# Rust target triple.
+	local target=$(rustc -vV | sed -n 's/host: //p')
+
+	# Build against system-provided libs
+	mkdir -p .cargo
+	cat >> .cargo/config.toml <<-EOF
+		[target.$target]
+		git2 = { rustc-link-lib = ["git2"] }
+	EOF
+
+	cargo fetch --target="$CTARGET"  # update after patching
+}
+
+build() {
+	cargo auditable build --release --frozen
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -D -m755 target/release/broot -t "$pkgdir"/usr/bin/
+	install -D -m644 man/page "$pkgdir"/usr/share/man/man1/broot.1
+
+	cd "$(find target/release -name broot.bash -exec dirname {} \; -quit)"
+
+	install -D -m644 broot.bash "$pkgdir"/usr/share/bash-completion/completions/broot
+	install -D -m644 _broot -t "$pkgdir"/usr/share/zsh/site-functions/
+	install -D -m644 broot.fish -t "$pkgdir"/usr/share/fish/vendor_completions.d/
+}
+
+sha512sums="
+a248f7c397d180c5ebdcba69220c5fc2244672f6263d34e4392436cb99431905fbc32074aba822146e80cf8779c7cfd585dffb1c4fee881ee74120e7b1c106fe  broot-1.44.0.tar.gz
+4279757e6e44d797ed9cae545bf8c1d56a7e4d7cf66c453b91e313f57e20c2a22064274c4e9039ef73f2f1f1500699dbdfe8907b52752f65ea056f22238faf66  image-features.patch
+c2dc430f92ed76ab1aa97034e4c54e3039cb7a093d9bd8f81daaea604e135bb20b6cebd58721c18c13c7107a774c2e1aceb0a25466b2926775065bae5e958ad1  syntect-without-onig.patch
+"

@@ -1,0 +1,40 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=ruby-rspec-expectations
+_gemname=${pkgname#ruby-}
+pkgver=3.13.0
+pkgrel=0
+pkgdesc="Provides a readable API to express expected outcomes of a code example in RSpec"
+url="https://relishapp.com/rspec/rspec-expectations/"
+arch="noarch"
+license="MIT"
+depends="ruby ruby-diff-lcs ruby-rspec-support~=${pkgver%.*}"
+options="!check"  # rspec's tests are written in rspec
+source="$pkgname-$pkgver.tar.gz::https://github.com/rspec/$_gemname/archive/v$pkgver.tar.gz
+	gemspec.patch"
+builddir="$srcdir/$_gemname-$pkgver"
+
+build() {
+	gem build $_gemname.gemspec
+}
+
+package() {
+	local gemdir="$pkgdir/$(ruby -e 'puts Gem.default_dir')"
+
+	gem install --local \
+		--install-dir "$gemdir" \
+		--ignore-dependencies \
+		--no-document \
+		--verbose \
+		$_gemname
+
+	# Clean-up...
+	rm -r "$gemdir"/cache \
+		"$gemdir"/build_info \
+		"$gemdir"/doc
+}
+
+sha512sums="
+9e1e502d12704fd7573a57b7f01cf4ffe97e2eefe83dc3144842f460165304dc234a1b1946147f2cbcae105d755c8b42b25aec815f9af0c67844baf858c0a6c7  ruby-rspec-expectations-3.13.0.tar.gz
+1d477004521852e23d01b197187dbb434a2c7fd179e506c82a12e17f5d52470fe2a113112e7052b9479077eafa6759beb07c03301de1f8ea7f5c4643c92d8346  gemspec.patch
+"

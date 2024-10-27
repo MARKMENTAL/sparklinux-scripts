@@ -1,0 +1,49 @@
+# Contributor: Marvin Preuss <marvin@xsteadfastx.org>
+# Maintainer: Marvin Preuss <marvin@xsteadfastx.org>
+pkgname=tlsrouter
+pkgver=0_git20220202
+pkgrel=22
+_short_commit=2e577fe
+pkgdesc="tls proxy that routes connections to backends based on tls sni"
+pkgusers="tlsrouter"
+pkggroups="tlsrouter"
+url="https://github.com/inetaf/tcpproxy/tree/master/cmd/tlsrouter"
+arch="all"
+license="Apache-2.0"
+makedepends="go"
+subpackages="$pkgname-openrc"
+install="$pkgname.pre-install"
+source="tlsrouter-$pkgver.tar.gz::https://github.com/inetaf/tcpproxy/tarball/$_short_commit
+	$pkgname.initd
+	$pkgname.confd
+	"
+builddir="$srcdir/inetaf-tcpproxy-$_short_commit/cmd/tlsrouter"
+
+export GOFLAGS="$GOFLAGS -modcacherw"
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build .
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	install -Dm755 "$builddir/$pkgname" "$pkgdir/usr/bin/$pkgname"
+
+	install -Dm755 "$srcdir/$pkgname.initd" \
+		"$pkgdir/etc/init.d/$pkgname"
+
+	install -Dm644 "$srcdir/$pkgname.confd" \
+		"$pkgdir/etc/conf.d/$pkgname"
+}
+
+sha512sums="
+5cecd7e8cf65d1aac29cf720ab6879df2a724b46b6ff8e042d79541b66d8ae415702a6c69670ea746883cf28a9ec51a8f67be15098a3d71654d9fdd3ba0a5150  tlsrouter-0_git20220202.tar.gz
+ec91980ab0db4654d2bbe335bf46e6a6b64f6cf94e44add8409b264f4ca9861f85c159c23ee70663e62f85e1a26632fc867f2376470a0723cb9ab752aa6e6d2f  tlsrouter.initd
+7dde09a46fa706fc7ef511c034bd8e1cb58a29d55320cc5fae9fdd6a5dc053948cb28ef76f1f8893edd656a3b99dd222a54f660b12a220011fcb949c1f64874c  tlsrouter.confd
+"

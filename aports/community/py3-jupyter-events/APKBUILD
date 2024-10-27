@@ -1,0 +1,29 @@
+# Contributor: Aiden Grossman <agrossman154@yahoo.com>
+# Maintainer:
+pkgname=py3-jupyter-events
+pkgver=0.10.0
+pkgrel=1
+pkgdesc="Configurable event system for Jupyter applications and extensions."
+url="https://github.com/jupyter/jupyter_events"
+arch="noarch"
+license="BSD-3-Clause"
+depends="py3-jsonschema py3-traitlets py3-json-logger py3-yaml"
+makedepends="py3-gpep517 py3-installer py3-hatchling"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/jupyter/jupyter_events/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/jupyter_events-$pkgver"
+options="!check" # seems to need a venv but also fails in a venv
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer --destdir="$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+2bf4098746fd70ae2715916917261beb2ff499d60f7124aa72f92a3f09deb58b1583398507717aa382909c354051cbe06b790a13e8ce15b171d6ce66f6368bbd  py3-jupyter-events-0.10.0.tar.gz
+"

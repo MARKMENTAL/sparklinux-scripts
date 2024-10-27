@@ -1,0 +1,89 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=fish
+pkgver=3.7.1
+pkgrel=0
+pkgdesc="Modern interactive commandline shell"
+url="https://fishshell.com/"
+arch="all"
+license="GPL-2.0-only"
+depends="bc"
+depends_doc="util-linux-misc" # Requires 'ul' program
+depends_dev="$pkgname-tools"
+makedepends="cmake doxygen gettext-dev ncurses-dev ncurses pcre2-dev py3-sphinx samurai"
+checkdepends="py3-pexpect bash"
+install="$pkgname.post-install $pkgname.post-upgrade $pkgname.pre-deinstall"
+subpackages="$pkgname-dev $pkgname-doc $pkgname-tools::noarch $pkgname-lang"
+source="https://github.com/fish-shell/fish-shell/releases/download/$pkgver/fish-$pkgver.tar.xz
+	README.alpine
+	"
+
+# these were moved to the correct place, but on upgrade, fish would upgrade first,
+# which would conflict right before the others move, so we need a replaces= for
+# one transaction.
+replaces="
+	black-fish-completion
+	curl-fish-completion
+	docker-fish-completion
+	flatpak-fish-completion
+	helm-fish-completion
+	hugo-fish-completion
+	kind-fish-completion
+	mdbook-fish-completion
+	minikube-fish-completion
+	ouch-fish-completion
+	rclone-fish-completion
+	rustup-fish-completion
+	starship-fish-completion
+	topgrade-fish-completion
+	"
+
+# secfixes:
+#   3.4.0-r0:
+#     - CVE-2022-20001
+
+build() {
+	CXXFLAGS="$CXXFLAGS -flto=auto" \
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_INSTALL_SYSCONFDIR=/etc \
+		-DBUILD_DOCS=TRUE
+	cmake --build build --target all fish_tests
+}
+
+check() {
+	cd build
+	./fish_tests
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+	rm -fr "$pkgdir"/usr/share/$pkgname/groff
+
+	# Install our README
+	install -Dm 644 "$srcdir"/README.alpine -t "$pkgdir"/usr/share/doc/fish
+
+	mkdir -p "$pkgdir"/usr/lib
+	mv "$pkgdir"/usr/share/pkgconfig "$pkgdir"/usr/lib
+}
+
+doc() {
+	default_doc
+
+	amove usr/share/$pkgname/man
+}
+
+tools() {
+	pkgdesc="$pkgdesc (tools)"
+	depends="$pkgname python3 cmd:man"
+
+	amove usr/share/$pkgname/tools
+}
+
+sha512sums="
+f1605c400c5d5494f37b92dd386963dba7a3f3c401c369aaf3ff616d9d94836a0138d26074be24c92d94d9d7b625513800899c9431f5e21be0757eb0a0bfd3fe  fish-3.7.1.tar.xz
+c28cef48e3d9cde4956d36192dc221e63eca89282a937e2683578ac0958d98a9c54420aea4f1d91d516f5ee2c74589a75865a973305421e1ad0a9e70854dff4f  README.alpine
+"

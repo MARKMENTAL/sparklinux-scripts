@@ -1,0 +1,47 @@
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=usql
+pkgver=0.15.6
+pkgrel=7
+pkgdesc="Universal command-line interface for SQL databases"
+url="https://github.com/xo/usql"
+# riscv64: not supported by go-ole (undefined: VARIANT)
+# loongarch64: not supported by go-ole (undefined: VARIANT)
+# x86, armhf, armv7: netezza and cockroachdb drivers fail to build on 32-bit
+# - https://github.com/xo/usql/issues/59
+# - https://github.com/IBM/nzgo/issues/38
+# - https://github.com/cockroachdb/pebble/issues/1575
+arch="all !loongarch64 !riscv64 !armhf !armv7 !x86"
+license="MIT"
+makedepends="go unixodbc-dev icu-dev"
+source="$pkgname-$pkgver.tar.gz::https://github.com/xo/usql/archive/refs/tags/v$pkgver.tar.gz"
+
+export CGO_ENABLED=1 # needed for godror and odbc drivers
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+export _GOTAGS="all sqlite_app_armor sqlite_fts5 sqlite_introspect sqlite_json1 sqlite_stat4 sqlite_userauth sqlite_vtable sqlite_icu"
+
+build() {
+	export CGO_CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE"
+	local _goldflags="
+	-X github.com/xo/usql/text.CommandName=$pkgname
+	-X github.com/xo/usql/text.CommandVersion=$pkgver
+	"
+
+	go build -v -ldflags "$_goldflags" -tags "$_GOTAGS" -o $pkgname
+}
+
+check() {
+	# Tests for specific drivers require docker
+	# shellcheck disable=2046
+	go test $(go list ./... | grep -v /drivers)
+}
+
+package() {
+	install -Dm755 $pkgname -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+e843f35c8b4c2ae9af4fdc3ac966b1412580268ce7ba3d837189251db9b89a5042458e5b21b2b2f952dcbad27250e6b91d19645a8831f6aa13dbee13624b8908  usql-0.15.6.tar.gz
+"

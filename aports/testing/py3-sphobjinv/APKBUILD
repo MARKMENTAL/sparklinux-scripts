@@ -1,0 +1,31 @@
+# Contributor: Galen Abell <galen@galenabell.com>
+# Maintainer: Galen Abell <galen@galenabell.com>
+pkgname=py3-sphobjinv
+_pyname=sphobjinv
+pkgver=2.3.1.1
+pkgrel=0
+pkgdesc="Sphinx objects.inv Inspection/Manipulation Tool"
+url="https://github.com/bskinn/sphobjinv"
+arch="noarch"
+license="MIT"
+options="!check" # tests have a lot of unpackaged dependencies
+depends="py3-attrs py3-certifi py3-jsonschema py3-fuzzywuzzy"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+subpackages="$pkgname-pyc"
+source="$_pyname-$pkgver.tar.gz::https://github.com/bskinn/sphobjinv/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/$_pyname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+c5260bbccff8531469ec67c44dfb33e46f55c4a07d25ed4a1332ebde3be09721877cf4af31feff8ff0aa81d6af68905607bf47a62cfda7893e449fd90b10bdbf  sphobjinv-2.3.1.1.tar.gz
+"

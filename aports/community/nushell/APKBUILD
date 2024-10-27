@@ -1,0 +1,93 @@
+# Contributor: nibon7 <nibon7@163.com>
+# Maintainer: nibon7 <nibon7@163.com>
+pkgname=nushell
+pkgver=0.98.0
+pkgrel=0
+pkgdesc="A new type of shell"
+url="https://www.nushell.sh"
+# s390x: nix crate
+# riscv64: segfault when compiling syn
+arch="all !s390x !riscv64"
+license="MIT"
+makedepends="
+	cargo
+	cargo-auditable
+	libgit2-dev
+	libssh2-dev
+	mimalloc2-dev
+	openssl-dev
+	sqlite-dev
+	"
+options="net"
+subpackages="$pkgname-doc $pkgname-plugins:_plugins"
+install="$pkgname.post-install $pkgname.post-upgrade $pkgname.pre-deinstall"
+source="$pkgname-$pkgver.tar.gz::https://github.com/nushell/nushell/archive/$pkgver.tar.gz
+	system-deps.patch
+	"
+
+export LIBSSH2_SYS_USE_PKG_CONFIG=1  # use system libssh2
+
+# the polars plugin takes too much memory to build on some platforms
+case "$CARCH" in
+	armhf|armv7|ppc64le|riscv64|x86) _exclude_opts="--exclude nu_plugin_polars" ;;
+esac
+
+prepare() {
+	default_prepare
+
+	# Rust target triple.
+	local target=$(rustc -vV | sed -n 's/host: //p')
+
+	# Build against system-provided libs
+	mkdir -p .cargo
+	cat >> .cargo/config.toml <<-EOF
+
+		[target.$target]
+		git2 = { rustc-link-lib = ["git2"] }
+		mimalloc = { rustc-link-lib = ["mimalloc"] }
+		rusqlite = { rustc-link-lib = ["sqlite3"] }
+	EOF
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --workspace --release --frozen $_exclude_opts
+}
+
+check() {
+	case "$CARCH" in
+	arm*)
+		cargo test --workspace --frozen $_exclude_opts -- \
+			--skip plugin_persistence::plugin_process_exits_when_nushell_exits \
+			--skip plugins::stream::echo_interactivity_on_slow_pipelines
+		;;
+	*)
+		cargo test --workspace --frozen $_exclude_opts
+		;;
+	esac
+}
+
+package() {
+	find target/release \
+		-maxdepth 1 \
+		-executable \
+		-type f \
+		-name "nu*" \
+		-exec install -Dm755 '{}' -t "$pkgdir"/usr/bin/ \;
+
+	install -Dm644 LICENSE \
+		-t "$pkgdir"/usr/share/licenses/$pkgname/
+}
+
+_plugins() {
+	pkgdesc="Nushell plugins"
+	depends="nushell=$pkgver-r$pkgrel"
+
+	amove usr/bin/nu_plugin_*
+}
+
+sha512sums="
+26986ae1e6b69d92b2f23a26ff9dfc63d40c86ddd0b0d2624e1b9a90b14560d0655e668359729ef4813e0af3337e4914770105e512598233595f3d7b6690197b  nushell-0.98.0.tar.gz
+082cbb777f9ea3d49bd768fdf0eba947dd9af53aa60765b76b757b9a652495fa6a0006826e824da17b8e183ffcc32b2b495efc294559fdc56b5d24e628395a29  system-deps.patch
+"

@@ -1,0 +1,35 @@
+# Maintainer: Milan P. Stanić <mps@arvanta.net>
+pkgname=liburing
+pkgver=2.7
+pkgrel=0
+pkgdesc="Linux kernel io_uring access library"
+url="https://git.kernel.dk/cgit/liburing/"
+arch="all"
+license="LGPL-2.1-or-later OR MIT"
+makedepends="linux-headers coreutils"
+subpackages="liburing-ffi $pkgname-dev $pkgname-doc"
+source="https://git.kernel.dk/cgit/liburing/snapshot/liburing-$pkgver.tar.gz
+	"
+
+build() {
+	./configure \
+		--prefix=/usr \
+		--use-libc \
+		--mandir=/usr/share/man
+}
+
+check() {
+	make test
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+ffi() {
+	amove usr/lib/liburing-ffi.so.*
+}
+
+sha512sums="
+7e87ff456498ac697a05aaf2d8372721c047c9324bd710fcfa791c877e0e2cdcdee87f98a4a3ba83c16baeb07fc8a5fcfd8ec7d85bcb52cf8f1ea68191cb6e68  liburing-2.7.tar.gz
+"

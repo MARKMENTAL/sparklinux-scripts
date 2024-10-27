@@ -1,0 +1,45 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=py3-mopidy-spotify
+pkgver=5.0.0_alpha2
+pkgrel=0
+pkgdesc="Mopidy extension for playing music from Spotify"
+url="https://mopidy.com/ext/spotify/"
+# blocked by gst-plugins-rs
+arch="noarch !armhf !armv7 !ppc64le !riscv64 !s390x !x86 !loongarch64"
+license="Apache-2.0"
+depends="
+	gst-plugins-rs
+	mopidy
+	py3-responses
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/mopidy/mopidy-spotify/archive/refs/tags/v${pkgver//_alpha/a}.tar.gz"
+builddir="$srcdir/mopidy-spotify-${pkgver//_alpha/a}"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+6321a908bb5b5b8d4c7938cdcaa9110fef7b2f42e295f93788640fdca238448adc8aacdd4a8a926e5387f91b8b2b9f1de4d7b0ca4482e7fd87811fbb5a72e5b5  py3-mopidy-spotify-5.0.0_alpha2.tar.gz
+"

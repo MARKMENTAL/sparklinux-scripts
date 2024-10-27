@@ -1,0 +1,46 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Contributor: Marten Ringwelski <git+alpine@maringuu.de>
+# Maintainer:
+pkgname=platformio-core
+pkgver=6.1.7
+pkgrel=3
+pkgdesc="An open source ecosystem for IoT development"
+url="https://platformio.org"
+# armhf, ppc64le: limited by py3-starlette
+arch="noarch !armhf !ppc64le"
+license="Apache-2.0"
+depends="
+	py3-aiofiles
+	py3-ajsonrpc
+	py3-bottle
+	py3-click
+	py3-colorama
+	py3-marshmallow
+	py3-elftools
+	py3-pyserial
+	py3-requests
+	py3-semantic-version
+	py3-starlette
+	py3-tabulate
+	py3-wsproto
+	py3-zeroconf
+	uvicorn
+	"
+makedepends="py3-setuptools py3-gpep517"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/platformio/platformio-core/archive/v$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+de38560e3bafc0ce97836a722122800e9cd31a4c8b6e97cfc9d490ee4d6c5112f87a45d81ec9b191eb4f678c330de4a797be5e176564f6e36fcb9432b47f52d8  platformio-core-6.1.7.tar.gz
+"

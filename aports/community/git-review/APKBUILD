@@ -1,0 +1,34 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=git-review
+pkgver=2.4.0
+pkgrel=0
+pkgdesc="git command for submitting branches to Gerrit"
+url="https://opendev.org/opendev/git-review"
+arch="noarch"
+license="Apache-2.0"
+depends="git python3 py3-requests py3-idna py3-urllib3
+py3-chardet py3-certifi py3-setuptools"
+makedepends="py3-pbr"
+checkdepends="py3-testtools py3-stestr py3-fixtures"
+subpackages="$pkgname-doc $pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://files.pythonhosted.org/packages/source/g/git-review/git-review-$pkgver.tar.gz"
+options="!check" # tests try to download and run a gerrit server (lmao)
+
+build() {
+	python3 setup.py build
+}
+
+check() {
+	python3 -m git_review.tests.check_test_id_hashes discover --list
+	python3 -m git_review.tests.prepare
+	stestr run
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+24b8b4813933a53158eacaff8b336da1e7c948377cd147487cfccab81c7211c55f8aa8348998bfdf161b4bb9ed107aaa841b643d045498690f75fa18be0aae1f  git-review-2.4.0.tar.gz
+"

@@ -1,0 +1,49 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Contributor: Natanael Copa <ncopa@alpinelinux.org>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=gexiv2
+pkgver=0.14.3
+pkgrel=0
+pkgdesc="GObject-based wrapper around the Exiv2 library"
+url="https://wiki.gnome.org/Projects/gexiv2"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="
+	exiv2-dev
+	glib-dev
+	gobject-introspection-dev
+	gtk-doc
+	meson
+	py3-gobject3
+	vala
+	"
+subpackages="py3-$pkgname-pyc py3-$pkgname:py3 $pkgname-dev $pkgname-doc"
+source="https://download.gnome.org/sources/gexiv2/${pkgver%.*}/gexiv2-$pkgver.tar.xz"
+replaces="libgexiv2"
+
+build() {
+	abuild-meson \
+		-Dgtk_doc=true \
+		-Dintrospection=true \
+		-Dvapi=true \
+		-Dtests="$(want_check && echo true || echo false)" \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+	python3 -m compileall -qf "$pkgdir"/usr/lib
+}
+
+py3() {
+	amove usr/lib/python*
+}
+
+sha512sums="
+24c97fa09b9ee32cb98da4637ea78eb72ae7e2d1792f9ebb31d63e305b3e0e1f6935b8647589c76c39ba631a15c1d8d2f3879c7dff81433786e9533b6348b6a0  gexiv2-0.14.3.tar.xz
+"

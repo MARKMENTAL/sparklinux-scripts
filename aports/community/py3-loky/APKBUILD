@@ -1,0 +1,51 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer:
+pkgname=py3-loky
+pkgver=3.4.1
+pkgrel=1
+pkgdesc="Robust implementation of concurrent.futures.ProcessPoolExecutor"
+url="https://loky.readthedocs.io/en/stable/"
+arch="noarch"
+license="BSD-3-Clause"
+depends="python3 py3-cloudpickle"
+makedepends="py3-setuptools"
+checkdepends="py3-pytest py3-psutil"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/joblib/loky/archive/$pkgver.tar.gz"
+builddir="$srcdir/loky-$pkgver"
+
+# few tests failed
+[ "$CARCH" = "loongarch64" ] && options="$options !check"
+
+build() {
+	python3 setup.py build
+}
+
+check() {
+	PYTHONPATH="$PWD/build/lib" pytest -v \
+		--deselect tests/test_loky_backend.py::TestLokyBackend::test_sync_object_handling \
+		--deselect tests/test_reusable_executor.py::TestGetReusableExecutor::test_invalid_process_number \
+		--deselect tests/test_reusable_executor.py::TestGetReusableExecutor::test_reusable_executor_thread_safety[constant-clean_start] \
+		--deselect tests/test_reusable_executor.py::TestGetReusableExecutor::test_reusable_executor_thread_safety[constant-broken_start] \
+		--deselect tests/test_reusable_executor.py::TestGetReusableExecutor::test_reusable_executor_thread_safety[varying-clean_start] \
+		--deselect tests/test_reusable_executor.py::TestGetReusableExecutor::test_reusable_executor_thread_safety[varying-broken_start] \
+		--deselect tests/test_reusable_executor.py::TestGetReusableExecutor::test_reusable_executor_reuse_true \
+		--deselect tests/test_reusable_executor.py::TestExecutorInitializer::test_reusable_initializer \
+		--deselect tests/test_process_executor_forkserver.py::TestsProcessPoolForkserverExecutor::test_no_failure_on_large_data_send \
+		--deselect tests/test_process_executor_loky.py::TestsProcessPoolLokyExecutor::test_no_failure_on_large_data_send \
+		--deselect tests/test_process_executor_spawn.py::TestsProcessPoolSpawnExecutor::test_no_failure_on_large_data_send \
+		--deselect tests/test_loky_backend.py::test_recursive_terminate \
+		--deselect tests/test_resource_tracker.py::TestResourceTracker::test_resource_tracker_sigkill \
+		--deselect tests/test_reusable_executor.py::TestExecutorDeadLock::test_deadlock_kill \
+		--deselect tests/test_reusable_executor.py::TestResizeExecutor::test_resize_after_timeout \
+		--deselect tests/test_reusable_executor.py::test_no_crash_max_workers_on_windows \
+		--deselect tests/test_worker_timeout.py::TestTimeoutExecutor::test_worker_timeout_shutdown_no_deadlock
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+435dc24a0532e6a40a67613fd1e13a06439ffe00c28b90fa36ff02255b67e0dd99d515f5659a36aa1049a9df73b16c1088989a1379a8492ebc5dbf1e53a37a06  py3-loky-3.4.1.tar.gz
+"

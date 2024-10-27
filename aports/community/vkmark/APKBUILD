@@ -1,0 +1,41 @@
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+pkgname=vkmark
+pkgver=0_git20230412
+pkgrel=0
+_commit="ab6e6f34077722d5ae33f6bd40b18ef9c0e99a15"
+pkgdesc="Vulkan benchmark"
+url="https://github.com/vkmark/vkmark"
+arch="all !s390x" # blocked by assimp
+license="LGPL-2.1-or-later"
+makedepends="
+	assimp-dev
+	glm-dev
+	meson
+	vulkan-loader-dev
+	wayland-dev
+	wayland-protocols
+	xcb-util-wm-dev
+	"
+subpackages="$pkgname-doc"
+source="https://github.com/vkmark/vkmark/archive/$_commit/vkmark-$_commit.tar.gz"
+
+builddir="$srcdir/vkmark-$_commit"
+
+build() {
+	abuild-meson \
+		. output
+	meson compile -C output
+}
+
+check() {
+	# Skip failing "util image file reads" test
+	meson test --no-rebuild --print-errorlogs -C output --test-args "exclude:Scenario: util image file reads"
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+e9c8f0db046981406d15044cf0942ce9dc53da55ce01ba78ccce5ea7a493b4308cffda8e099955a37b85b275ab5328236970511edcce01c5c50f349127341e2b  vkmark-ab6e6f34077722d5ae33f6bd40b18ef9c0e99a15.tar.gz
+"

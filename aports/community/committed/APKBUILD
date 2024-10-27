@@ -1,0 +1,47 @@
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=committed
+pkgver=1.0.20
+pkgrel=0
+pkgdesc="Nitpicking your commit history"
+url="https://github.com/crate-ci/committed"
+license="MIT OR Apache-2.0"
+# loongarch64: blocked by linux-raw-sys
+arch="all !loongarch64"
+makedepends="cargo libgit2-dev cargo-auditable"
+source="https://github.com/crate-ci/committed/archive/v$pkgver/committed-$pkgver.tar.gz"
+options="net" # fetch dependencies
+
+prepare() {
+	default_prepare
+
+	# Rust target triple
+	local target=$(rustc -vV | sed -n 's/host: //p')
+
+	# Build against system-provided libs
+	mkdir -p .cargo
+	cat >> .cargo/config.toml <<-EOF
+		[target.$target]
+		git2 = { rustc-link-lib = ["git2"] }
+	EOF
+
+	# open64
+	cargo update -p getrandom --precise 0.2.10
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm755 target/release/$pkgname -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+d20072ef1d0f0da34379b43bc97de6491b38d7a19dc761ae084751da421e452c42208c73db6b322c29ec337a7158322c05f7dbefa6b3aa40275b50fdb0d6ac84  committed-1.0.20.tar.gz
+"

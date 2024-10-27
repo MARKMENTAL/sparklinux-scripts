@@ -1,0 +1,151 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Maintainer: Valery Kartel <valery.kartel@gmail.com>
+pkgname=weston
+pkgver=14.0.0
+pkgrel=0
+_libname=lib$pkgname
+_libdir=$_libname-${pkgver%%.*}
+pkgdesc="Reference Wayland server"
+url="https://wayland.freedesktop.org/"
+arch="all"
+license="MIT"
+depends_dev="$pkgname=$pkgver-r$pkgrel"
+makedepends="
+	colord-dev
+	dbus-dev
+	freerdp-dev
+	glu-dev
+	gst-plugins-base-dev
+	gstreamer-dev
+	lcms2-dev
+	libdisplay-info-dev
+	libevdev-dev
+	libinput-dev
+	libjpeg-turbo-dev
+	libseat-dev
+	libunwind-dev
+	libva-dev
+	libwebp-dev
+	libxcb-dev
+	libxcursor-dev
+	libxkbcommon-dev
+	linux-pam-dev
+	meson
+	mtdev-dev
+	neatvnc-dev
+	pango-dev
+	pipewire-dev
+	wayland-dev
+	wayland-protocols
+	xcb-util-cursor-dev
+	xkeyboard-config
+	xwayland-dev
+	"
+_shell="shell-desktop shell-fullscreen shell-ivi"
+_client="terminal wcap-decode"
+_backend="
+	backend-drm
+	backend-headless
+	backend-rdp
+	backend-wayland
+	backend-x11
+	"
+for _sub in $_shell $_client $_backend; do
+	subpackages="$subpackages $pkgname-$_sub:_sub"
+done
+subpackages="
+	$pkgname-dev
+	$pkgname-doc
+	$subpackages
+	$pkgname-clients
+	$_libname:libs
+	$pkgname-xwayland
+	$pkgname-desktop-x11:_x11:noarch
+	"
+source="https://gitlab.freedesktop.org/wayland/weston/-/releases/$pkgver/downloads/weston-$pkgver.tar.xz"
+options="!check"
+install="$pkgname.pre-install"
+
+prepare() {
+	default_prepare
+
+	# dodge git version
+	git init -q .
+}
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dbackend-vnc=false \
+		-Dsystemd=false \
+		build
+	meson compile -C build
+}
+
+# Does not run through, see also:
+# https://github.com/alpinelinux/aports/pull/1689
+check() {
+	meson test --print-errorlogs --no-rebuild -C build
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C build
+
+	mkdir -p "$pkgdir"/usr/lib
+	mv "$pkgdir"/usr/share/pkgconfig/* "$pkgdir"/usr/lib/pkgconfig/
+}
+
+libs() {
+	depends="xkeyboard-config"
+	default_libs
+}
+
+clients() {
+	pkgdesc="Weston example clients"
+	mkdir -p "$subpkgdir"/usr/bin
+	mv "$pkgdir"/usr/bin/$pkgname-* "$subpkgdir"/usr/bin
+}
+
+xwayland() {
+	pkgdesc="Wayland module to run X Clients"
+	mkdir -p "$subpkgdir"/usr/lib/$_libdir
+	mv "$pkgdir"/usr/lib/$_libdir/xwayland.so \
+		"$subpkgdir"/usr/lib/$_libdir
+}
+
+_x11() {
+	pkgdesc="Weston desktop helper pack (x11 backend)"
+	depends="$pkgname $pkgname-shell-desktop $pkgname-xwayland
+		$pkgname-backend-x11 $pkgname-terminal"
+	mkdir -p "$subpkgdir"
+}
+
+_sub() {
+	local name path
+	case $subpkgname in
+	*-shell-*)
+		name=${subpkgname#"$pkgname"-shell-}
+		path=/usr/lib/$pkgname
+		pkgdesc="Weston shell: $name"
+		name="*$name-shell*"
+		;;
+	*-backend-*)
+		name=${subpkgname#"$pkgname"-backend-}
+		path=/usr/lib/$_libdir
+		pkgdesc="Weston backend: $name"
+		name=$name-backend.so
+		grep -q cairo "$pkgdir"/$path/$name && depends="mesa-dri-gallium"
+		;;
+	*)
+		name=$subpkgname
+		path=/usr/bin
+		[ -x "$pkgdir"/$path/$name ] || name=${subpkgname#"$pkgname"-}
+		pkgdesc="Weston client: $name"
+		;;
+	esac
+	amove $path/$name
+}
+
+sha512sums="
+8bdeed91befd5cbb0bde0f1860ff7775c1835a5fa8c3bf26e99d2f0c16e81255fcf35bf338ae02d7826463d0efdf41ba3fe78e38e4c27787831dfa331acafc08  weston-14.0.0.tar.xz
+"

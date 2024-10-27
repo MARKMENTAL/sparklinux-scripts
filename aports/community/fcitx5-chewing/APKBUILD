@@ -1,0 +1,47 @@
+# Contributor: ProgCat <progcat@protonmail.com>
+# Maintainer: Lindsay Zhou <i@lin.moe>
+pkgname=fcitx5-chewing
+pkgver=5.1.5
+pkgrel=0
+pkgdesc="Chewing Wrapper for Fcitx"
+url="https://github.com/fcitx/fcitx5-chewing"
+arch="all"
+license="LGPL-2.1-or-later"
+makedepends="
+	cmake
+	extra-cmake-modules
+	fcitx5-dev
+	gettext-dev
+	libchewing-dev
+	samurai
+	"
+subpackages="$pkgname-lang"
+source="$pkgname-$pkgver.tar.gz::https://github.com/fcitx/fcitx5-chewing/archive/refs/tags/$pkgver.tar.gz"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	CFLAGS="$CFLAGS -flto=auto" \
+	CXXFLAGS="$CXXFLAGS -flto=auto" \
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=None \
+		$CMAKE_CROSSOPTS
+	cmake --build build
+}
+
+check() {
+	cd build
+	CTEST_OUTPUT_ON_FAILURE=TRUE ctest
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+b544eb56b54d7fcb68d5f5f9b74bb648f0f3640d23758d0df98aeb10b1003ab647b5513f6bac02093d303c3385ef8c62d66050c9e7295a2fd2d3814895985752  fcitx5-chewing-5.1.5.tar.gz
+"

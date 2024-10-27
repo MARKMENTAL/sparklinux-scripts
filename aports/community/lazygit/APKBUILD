@@ -1,0 +1,37 @@
+# Contributor: Thomas Deutsch <thomas@tuxpeople.org>
+# Maintainer: Thomas Deutsch <thomas@tuxpeople.org>
+pkgname=lazygit
+pkgver=0.41.0
+pkgrel=4
+pkgdesc="Simple terminal UI for git commands"
+url="https://github.com/jesseduffield/lazygit"
+arch="all"
+license="MIT"
+# bash: for running git commands
+depends="ncurses bash"
+makedepends="go"
+options="!check" # FIXME: https://github.com/jesseduffield/lazygit/issues/1009
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/jesseduffield/lazygit/archive/v$pkgver.tar.gz
+	update-go-mod.patch"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -mod=mod -ldflags="-X main.version=$pkgver" -v
+}
+
+package() {
+	install -Dm0755 $pkgname -t "$pkgdir"/usr/bin
+
+	mkdir -p "$pkgdir"/usr/share/doc
+	mv docs "$pkgdir"/usr/share/doc/"$pkgname"
+	install -Dm0644 LICENSE -t "$pkgdir"/usr/share/licenses/"$pkgname"
+}
+
+sha512sums="
+ef1d8e2394eb3230c0489e0b0c6726536649697943fa8a7cbf95e9eb600c8fe3429e72539897f04ffd3ee35905b96600c5a79174856c4e49a22fbeada668bf4e  lazygit-0.41.0.tar.gz
+f9f5314c76c067783d2f36dcc835501ce8d7aafd6a6bd6cd23cc00c9e0c2482efbda90be04559d249a60ee557edc27d82275356b84e078e9a041df595f5bc816  update-go-mod.patch
+"

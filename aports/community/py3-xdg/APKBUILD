@@ -1,0 +1,36 @@
+# Contributor: August Klein <amatcoder@gmail.com>
+# Maintainer: August Klein <amatcoder@gmail.com>
+pkgname=py3-xdg
+_pkgname=pyxdg
+pkgver=0.28
+pkgrel=3
+pkgdesc="A python library to access freedesktop.org standards"
+options="!check" # Test fails
+url="https://freedesktop.org/wiki/Software/pyxdg"
+arch="noarch"
+license="LGPL-2.1-only"
+depends="python3"
+makedepends="py3-setuptools"
+checkdepends="py3-nose hicolor-icon-theme"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/${_pkgname:0:1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+builddir="$srcdir"/$_pkgname-$pkgver
+
+replaces="py-xdg" # Backwards compatibility
+provides="py-xdg=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	python3 setup.py build
+}
+
+check() {
+	nosetests
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+ac9dd56d72dab370da8615db6c73502472d122ff2acb1911870aa4b2b409f45d3c00642d13970401dd1000a05f10bcd9b9a7c39cf1f861b446bdf6e4a2f8c5bb  pyxdg-0.28.tar.gz
+"

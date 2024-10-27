@@ -1,0 +1,35 @@
+# Contributor: Guy Godfroy <guy.godfroy@gugod.fr>
+# Maintainer: Guy Godfroy <guy.godfroy@gugod.fr>
+pkgname=genact
+pkgver=1.4.2
+pkgrel=0
+pkgdesc="A nonsense activity generator"
+url="https://github.com/svenstaro/genact"
+# loongarch64: blocked by libc crate
+arch="all !s390x !loongarch64" # s390x: https://github.com/nix-rust/nix/issues/1968
+license="MIT"
+makedepends="cargo cargo-auditable"
+source="$pkgname-$pkgver.tar.gz::https://github.com/svenstaro/genact/archive/refs/tags/v$pkgver.tar.gz"
+options="net"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm755 target/release/genact "$pkgdir"/usr/bin/genact
+}
+
+sha512sums="
+7d862050c44c95b8b3476664aeade12ac5caefe4ec0ffde73329656a176f1ad44db41eeda0f12cbcc0aecdd35a430c18d1278bdd11ece0da4bd0be166ff689d3  genact-1.4.2.tar.gz
+"

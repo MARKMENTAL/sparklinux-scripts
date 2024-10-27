@@ -1,0 +1,107 @@
+# Maintainer: Marian Buschsieweke <marian.buschsieweke@posteo.net>
+# Contributor: Marian Buschsieweke <marian.buschsieweke@posteo.net>
+pkgname=kicad
+pkgver=8.0.5
+pkgrel=0
+pkgdesc="Cross Platform and Open Source Electronics Design Automation Suite"
+url="https://www.kicad.org/"
+# No support for s390x/riscv64 in libcontext (shipped with kicad)
+# 32-bit arm: memory alignment access error in tests
+arch="all !armhf !armv7 !riscv64 !s390x"
+license="GPL-3.0-or-later"
+makedepends="
+	boost-dev
+	cairo-dev
+	chrpath
+	cmake
+	curl-dev
+	glew-dev
+	glm-dev
+	glu-dev
+	libgit2-dev
+	mesa-dev
+	ngspice-dev
+	opencascade-dev
+	py3-wxpython
+	python3-dev
+	samurai
+	swig
+	unixodbc-dev
+	wxwidgets-dev
+	zlib-dev
+	"
+checkdepends="
+	py3-pytest
+	"
+depends="
+	python3
+	py3-cairosvg
+	"
+subpackages="
+	$pkgname-demos
+	"
+source="
+	https://gitlab.com/kicad/code/kicad/-/archive/$pkgver/kicad-$pkgver.tar.gz
+	"
+
+provides="$pkgname-opencascade=$pkgver-r$pkgrel"
+replaces="$pkgname-opencascade"
+
+build() {
+	# XXX: GLIBCXX_ASSERTIONS causes link errors and symbols are missing
+	# -DKICAD_STDLIB_LIGHT_DEBUG also enables this, maybe that works instead
+	CFLAGS="$CFLAGS -O2" \
+	CXXFLAGS="$CXXFLAGS -U_GLIBCXX_ASSERTIONS -O2" \
+	cmake -B build -G Ninja -Wno-dev \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DKICAD_USE_EGL=ON \
+		-DKICAD_SCRIPTING_WXPYTHON=OFF \
+		-DOPENGL_opengl_LIBRARY=/usr/lib/libGL.so
+	# build order workaround
+	cmake --build build --target common/pcb_lexer.h
+	cmake --build build
+}
+
+check() {
+	case "$CARCH" in
+	armv7|armhf)
+		# qa_cli requires too much memory to pass on 32bit arches
+		ctest --test-dir build --output-on-failure -E "qa_cli"
+		;;
+	x86)
+		# qa_cli requires too much memory to pass on 32bit arches
+		# qa_pcbnew: SIGTRAP***Exception/"Assert failure"
+		ctest --test-dir build --output-on-failure -E '(qa_pcbnew|qa_cli)'
+		;;
+	ppc64le|x86_64)
+		# design rule regression checks fail on ppc64le
+		# qa_pcbnew on x86_64: SIGTRAP***Exception/"Assert failure"
+		ctest --test-dir build --output-on-failure -E "qa_pcbnew"
+		;;
+	loongarch64)
+		# qa_pcbnew on loongarch64: SIGTRAP***Exception/"Assert failure"
+		ctest --test-dir build --output-on-failure -E "qa_pcbnew"
+		;;
+	*)
+		ctest --test-dir build --output-on-failure
+	esac
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	local sitedir=$(python3 -c "import site; print(site.getsitepackages()[0])")
+	chrpath -d "$pkgdir/$sitedir"/_pcbnew.so
+}
+
+demos() {
+	pkgdesc="Demos for KiCad"
+
+	amove usr/share/kicad/demos
+}
+
+sha512sums="
+a92ce6003a19ba82168b71450d810cd45d198366317fb347cfd717f3ae07a895381a40578decdd6b19f924b50b7e82acbdef7ff5ee8e9ceb10cdfe88345b5318  kicad-8.0.5.tar.gz
+"

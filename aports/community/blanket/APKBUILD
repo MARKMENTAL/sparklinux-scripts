@@ -1,0 +1,44 @@
+# Contributor: mio <miyopan@e.email>
+# Maintainer: mio <miyopan@e.email>
+pkgname=blanket
+pkgver=0.7.0
+pkgrel=0
+pkgdesc="Listen to different sounds to improve focus and increase productivity"
+url="https://github.com/rafaelmardojai/blanket"
+license="GPL-3.0-or-later"
+arch="noarch"
+depends="
+	desktop-file-utils
+	gst-plugins-bad
+	gst-plugins-base
+	gst-plugins-good
+	libadwaita
+	python3
+	py3-gst
+	py3-gobject3
+	"
+makedepends="
+	appstream-glib-dev
+	blueprint-compiler
+	meson
+	"
+subpackages="$pkgname-lang"
+source="https://github.com/rafaelmardojai/blanket/archive/$pkgver/blanket-$pkgver.tar.gz"
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+	install -Dm0644 COPYING "$pkgdir"/usr/share/licenses/blanket/COPYING
+}
+
+sha512sums="
+dc415b02deec8a898b626ed295b7a95c9b9b06bc0ad7bb86f329f1ea31d8d6fabf78e59d01091efa03f032b3ace489d9dfb47c87bd8c57f925a4ca529de42f1d  blanket-0.7.0.tar.gz
+"

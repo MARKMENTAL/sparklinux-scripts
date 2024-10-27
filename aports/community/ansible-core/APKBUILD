@@ -1,0 +1,43 @@
+# Contributor: Sean McAvoy <seanmcavoy@gmail.com>
+# Contributor: Thomas Böhler <witcher@wiredspace.de>
+# Maintainer: Sean McAvoy <seanmcavoy@gmail.com>
+pkgname=ansible-core
+_pkgname=${pkgname/-/_}
+pkgver=2.17.4
+pkgrel=0
+pkgdesc="core components of ansible: A configuration-management, deployment, task-execution, and multinode orchestration framework"
+url="https://ansible.com"
+options="!check" # for now
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="
+	py3-cryptography
+	py3-jinja2
+	py3-packaging
+	py3-paramiko
+	py3-resolvelib
+	py3-yaml
+	python3
+	"
+makedepends="py3-setuptools py3-docutils"
+subpackages="$pkgname-doc $pkgname-pyc"
+# tarball is named "ansible_core" instead of "ansible-core" since 2.16.6
+source="$pkgname-$pkgver.tar.gz::https://pypi.python.org/packages/source/a/ansible-core/ansible_core-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+replaces="ansible-base"
+
+build() {
+	python3 setup.py build
+	python3 packaging/cli-doc/build.py man --output-dir man
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+
+	install -Dm644 README.md -t "$pkgdir"/usr/share/doc/$pkgname/
+	install -Dm644 man/ansible*1 -t "$pkgdir"/usr/share/man/man1/
+}
+sha512sums="
+435376f5b050b8e1d8c65d5090020c7d89c780e3d5c738d52bfdb73b66eabd9280fbdec1bba44b90d875077f1f66c039adb799e17005d4899c484939d037ba8b  ansible-core-2.17.4.tar.gz
+"

@@ -1,0 +1,74 @@
+# Contributor: Michał Polański <michal@polanski.me>
+# Contributor: Nicolas Lorin <androw95220@gmail.com>
+# Maintainer: omni <omni+alpine@hack.org>
+pkgname=usbguard
+pkgver=1.1.3
+pkgrel=2
+pkgdesc="Software framework for implementing USB device authorization policies"
+url="https://usbguard.github.io/"
+license="GPL-2.0-or-later"
+# loongarch64: blocked by libqb
+arch="all !loongarch64"
+makedepends="
+	abseil-cpp-dev
+	asciidoc
+	audit-dev
+	catch2
+	libcap-ng-dev
+	libqb-dev
+	libseccomp-dev
+	libsodium-dev
+	pegtl
+	protobuf-dev
+	"
+checkdepends="coreutils"
+subpackages="
+	libusbguard:libs
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-openrc
+	$pkgname-bash-completion
+	$pkgname-zsh-completion
+	"
+source="https://github.com/USBGuard/usbguard/releases/download/usbguard-$pkgver/usbguard-$pkgver.tar.gz
+	usbguard.initd
+	"
+
+build() {
+	CXXFLAGS="$CXXFLAGS -flto=auto" \
+	CFLAGS="$CFLAGS -flto=auto" \
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--localstatedir=/var \
+		--disable-static \
+		--without-bundled-catch \
+		--without-bundled-pegtl \
+		--without-dbus \
+		--without-polkit \
+		--with-crypto-library=sodium
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make install DESTDIR="$pkgdir"
+	install -dm0700 "$pkgdir"/etc/usbguard/rules.d/
+
+	install -Dm0755 "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
+
+	install -Dm0644 scripts/bash_completion/usbguard \
+		"$pkgdir"/usr/share/bash-completion/completions/$pkgname
+	install -Dm0644 scripts/usbguard-zsh-completion \
+		"$pkgdir"/usr/share/zsh/site-functions/_$pkgname
+}
+
+sha512sums="
+530bfea12ec8497c30d530c73f868207aad8b0e0e917cb7c7506f6148681a6a4ff12de5cddcfea458eb2b91ce8bb8b0e68d42e2590a4dc6b15f43c18f8256cf1  usbguard-1.1.3.tar.gz
+9d6752f08df0ba510fa02c0c9b55a92f063297653480c4d8863f87f159dc51449a34643e75af7619146e2e53c91d479be91ecc0c9adc0c764d037f4df466e534  usbguard.initd
+"

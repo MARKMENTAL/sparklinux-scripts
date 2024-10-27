@@ -1,0 +1,120 @@
+# Maintainer: Nathan Angelacos <nangel@alpinelinux.org>
+pkgname=handbrake
+_pkgname=HandBrake
+pkgver=1.6.1
+pkgrel=11
+pkgdesc="Handbrake video transcoder"
+url="https://handbrake.fr"
+# x86, armhf, armv7: no svt-av1
+arch="all !x86 !armhf !armv7 !s390x"
+license="GPL-2.0-only"
+makedepends="
+	autoconf
+	automake
+	bash
+	bzip2-dev
+	cmake
+	dav1d-dev
+	dbus-glib-dev
+	ffmpeg-dev
+	fontconfig-dev
+	freetype-dev
+	fribidi-dev
+	glib-dev
+	gst-plugins-base-dev
+	gtk+3.0-dev
+	jansson-dev
+	lame-dev
+	libass-dev
+	libbluray-dev
+	libdvdnav-dev
+	libdvdread-dev
+	libgudev-dev
+	libnotify-dev
+	libogg-dev
+	libtheora-dev
+	libtool
+	libvorbis-dev
+	libvpx-dev
+	linux-headers
+	meson
+	nasm
+	numactl-dev
+	opus-dev
+	python3
+	speex-dev
+	svt-av1-dev
+	tinyxml-dev
+	x264-dev
+	x265-dev
+	xz-dev
+	zlib-dev
+	zimg-dev
+	"
+subpackages="$pkgname-lang $pkgname-gtk"
+source="https://github.com/HandBrake/HandBrake/releases/download/$pkgver/HandBrake-$pkgver-source.tar.bz2
+	handbrake-9999-remove-dvdnav-dup.patch
+	fix-missing-x265-link-flag.patch
+	gcc14.patch
+	"
+builddir="$srcdir/$_pkgname-$pkgver"
+options="!check"
+
+case "$CARCH" in
+	# Enable support HW acceleration on Intel GPUs (Quick Sync Video).
+	x86_64)
+		makedepends="$makedepends intel-media-sdk-dev onevpl-dev"
+		_conf_flags='--enable-qsv'
+		export CFLAGS="$CFLAGS -I/usr/include/vpl"
+		export CXXFLAGS="$CXXFLAGS -I/usr/include/vpl"
+		;;
+	*)
+		_conf_flags='--disable-qsv'
+		;;
+esac
+
+# This is a video transcoder, performance is the most important.
+export CFLAGS="$CFLAGS -O2 -flto=auto"
+export CXXFLAGS="$CXXFLAGS -O2 -flto=auto"
+export CPPFLAGS="$CPPFLAGS -O2 -flto=auto"
+
+prepare() {
+	default_prepare
+	update_config_guess
+	# build against external libs
+	sed -i 's:.*contrib/.*::g' \
+		make/include/main.defs
+}
+
+build() {
+	./configure \
+		--prefix=/usr \
+		--force \
+		--verbose \
+		--disable-nvenc \
+		--enable-numa \
+		--enable-x265 \
+		--disable-df-fetch \
+		--disable-gtk-update-checks \
+		$_conf_flags
+
+	make -C build
+}
+
+package() {
+	make -C build -j1 install DESTDIR="$pkgdir"
+}
+
+gtk() {
+	pkgdesc="HandBrake Video Transcoder - GUI"
+
+	amove usr/bin/ghb
+	amove usr/share
+}
+
+sha512sums="
+e5cc0fee5bf063c4cdb8f64a772dac6800a7214bfdc65042c121e0e81878599fe615b499ebf6466bb78740314374ad8b8fa364fb24ff86852183e7dbbf565617  HandBrake-1.6.1-source.tar.bz2
+a3d57dd37d518286a62554cfcc4722d6fd588a0c3966d30785100edc4476febb2b48fc4f9b2a7eb5b5dc049043fabd4398e1e190e10cbd63c25b2936824977d3  handbrake-9999-remove-dvdnav-dup.patch
+59dc985a3664849556890bd92abc7e652e47ace066f33894d518abe97439bedc00c7cc6832ec49e81aea509b51ff6b64888bfbf32d74a03634bd6578aecee3f0  fix-missing-x265-link-flag.patch
+3dd33ec338d4b479c2c4c6492f2c23b3d48fadb9089e8e22e5f4b381f920d0db95720d70ca1007989ceb613e06accfa3b0d5124aecbb3fe509d09d00cbd3a1dc  gcc14.patch
+"

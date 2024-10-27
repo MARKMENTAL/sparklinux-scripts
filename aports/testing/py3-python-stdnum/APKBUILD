@@ -1,0 +1,40 @@
+# Contributor: Fabian Affolter <fabian@affolter-engineering.ch>
+# Maintainer: Fabian Affolter <fabian@affolter-engineering.ch>
+pkgname=py3-python-stdnum
+_pkgname=python-stdnum
+pkgver=1.20
+pkgrel=0
+pkgdesc="Python module to handle standardized numbers and codes"
+url="https://arthurdejong.org/python-stdnum"
+arch="noarch"
+license="LGPL-2.0-or-later"
+depends="python3"
+makedepends="py3-setuptools py3-gpep517"
+checkdepends="py3-coverage py3-nose"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/${_pkgname:0:1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+builddir="$srcdir"/$_pkgname-$pkgver
+
+replaces="py-stdnum"                  # Backwards compatibility
+provides="py-stdnum=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	gpep517 install-wheel --destdir .testenv --prefix '' .dist/*.whl
+	.testenv/bin/python3 -m nose
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+92ec9fcb3bf71405569e93668ab1d089225da74a33095e63ee8f0116c868a4b937d093ba98e29085889d1745cc55eab13936d6ed9ceb24beecbc193c722a515e  python-stdnum-1.20.tar.gz
+"

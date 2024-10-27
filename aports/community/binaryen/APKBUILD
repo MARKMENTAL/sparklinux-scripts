@@ -1,0 +1,79 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=binaryen
+pkgver=118
+pkgrel=0
+pkgdesc="Compiler infrastructure and toolchain library for WebAssembly, in C++"
+url="https://github.com/WebAssembly/binaryen"
+arch="all !s390x"
+license="Apache-2.0"
+makedepends="
+	clang
+	cmake
+	python3
+	samurai
+	"
+checkdepends="
+	filecheck
+	gtest-dev
+	llvm-test-utils
+	nodejs
+	"
+subpackages="$pkgname-dev"
+source="https://github.com/WebAssembly/binaryen/archive/version_$pkgver/binaryen-$pkgver.tar.gz
+	use-system-gtest.patch
+	"
+builddir="$srcdir/$pkgname-version_$pkgver"
+
+build() {
+	case "$CARCH" in
+	arm*|aarch64|riscv64|loongarch64)
+		export CFLAGS="${CFLAGS/-fstack-clash-protection}"
+		export CXXFLAGS="${CFLAGS/-fstack-clash-protection}"
+		;;
+	esac
+
+	CC=clang \
+	CXX=clang++ \
+	LDFLAGS="$LDFLAGS -Wl,-z,stack-size=0x100000" \
+	cmake -G Ninja -B build \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DCMAKE_VERBOSE_MAKEFILE=ON \
+		-DBUILD_SHARED_LIBS=ON \
+		-DBUILD_TESTS=$(want_check && echo ON || echo OFF)
+	cmake --build build
+}
+
+check() {
+	# Tests are extremely chatty.
+	msg 'running tests with stdout/stderr redirected into ./check.log...'
+	python3 check.py --binaryen-bin build/bin > check.log 2>&1 || {
+		echo 'tests failed, printing last 1000 lines of check.log:' >&2
+		tail -n 1000 check.log
+
+		case "$CARCH" in
+			# XXX: Ignore test failures on 32-bit arches (broken tests)
+			#  and riscv64.
+			arm* | riscv64 | x86) return 0;;
+			*) return 1;;
+		esac
+	}
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+dev() {
+	default_dev
+
+	# XXX: doesn't exist on riscv64
+	amove usr/bin/binaryen-unittests || true
+}
+
+sha512sums="
+5f7a111ba8c1c189d2bec44d16a02b9e6ebad00f9ddd3347057467f2dfe5d98576ef35bd2ba2132f8d615ba308aa4049f86de25d8a98680191869fbcce539c8c  binaryen-118.tar.gz
+ea332616e91c7674c471eb8f8b6352c6d342a17e2b2fd585c6c2b10de89e1be74e63fe42d908af5b2e109d043085e4300905e4efb2ec57bd275db643b22e167d  use-system-gtest.patch
+"

@@ -1,0 +1,87 @@
+# Contributor: Mika Havela <mika.havela@gmail.com>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+_luaver=5.4
+pkgname=prosody
+pkgver=0.12.4
+pkgrel=1
+pkgdesc="Lua based Jabber/XMPP server"
+url="https://prosody.im/"
+arch="all"
+license="MIT"
+depends="
+	icu-data-full
+	lua$_luaver
+	lua$_luaver-busted
+	lua$_luaver-expat
+	lua$_luaver-filesystem
+	lua$_luaver-sec
+	lua$_luaver-socket
+	lua$_luaver-unbound
+	"
+makedepends="
+	icu-dev
+	libidn-dev
+	linux-headers
+	lua$_luaver-dev
+	openssl-dev>3
+	"
+checkdepends="lua-busted"
+install="prosody.pre-install"
+subpackages="$pkgname-doc $pkgname-openrc"
+pkgusers="prosody"
+pkggroups="prosody"
+source="https://prosody.im/downloads/source/prosody-$pkgver.tar.gz
+	$pkgname.logrotate
+	$pkgname.initd
+	prosody.cfg.lua.patch
+	"
+
+# secfixes:
+#   0.11.9-r0:
+#     - CVE-2021-32917
+#     - CVE-2021-32918
+#     - CVE-2021-32919
+#     - CVE-2021-32920
+#     - CVE-2021-32921
+#   0.11.10-r0:
+#     - CVE-2021-37601
+#   0.11.12-r0:
+#     - CVE-2022-0217
+
+build() {
+	./configure \
+		--prefix=/usr \
+		--sysconfdir=/etc/prosody \
+		--ostype=linux \
+		--with-lua-lib=/usr/lib \
+		--with-lua-include=/usr/include \
+		--lua-version=$_luaver \
+		--no-example-certs \
+		--runwith=lua$_luaver
+	# Don't generate certs
+	rm -f "$builddir"/certs/Makefile
+
+	make
+}
+
+check() {
+	/usr/bin/lua$_luaver /usr/bin/busted --lua=/usr/bin/lua$_luaver
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	install -d -o prosody -g prosody "$pkgdir/var/log/prosody"
+	install -d -o prosody -g prosody "$pkgdir/var/run/prosody"
+	install -d -m750 -o prosody -g prosody "$pkgdir/var/lib/prosody"
+
+	install -D -m755 "$srcdir/$pkgname.initd" "$pkgdir/etc/init.d/$pkgname"
+	install -D -m644 "$srcdir/$pkgname.logrotate" "$pkgdir/etc/logrotate.d/$pkgname"
+}
+
+sha512sums="
+e035ec9af3831c596ababbc0320f352b7253d3ee968c9937998ffc255839173c9278912a0897fa9f0a0665bc43603f8570b5e15dfd1cba4571599e86a98d8cf4  prosody-0.12.4.tar.gz
+20bc16c981072be39f967d27ed983aaae16383d922172a4f0751858d4bd12a521496d5f621ef178e9a0da61102d4c01ba709f63ad9ddf5b8e55fbb5f6793e7cb  prosody.logrotate
+cb4bea9590342aba52d06a997112eacc09cc4df3ad092eb3677a81f2f6a0d422b0983b3947cfe22241a019121fe09c6bd282b68924107dfcc5c6bbd71435eb63  prosody.initd
+1d5426a1c36ec34f47e3953dbe0522ca0bfbf97f86ae622a13db792025c0779049d958f4f899f4d14dfd085a90d7d6d3f1b7ee42f37963e305878ad239f822c9  prosody.cfg.lua.patch
+"

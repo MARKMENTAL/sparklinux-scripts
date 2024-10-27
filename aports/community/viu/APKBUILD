@@ -1,0 +1,46 @@
+# Maintainer: omni <omni+alpine@hack.org>
+pkgname=viu
+pkgver=1.5.0
+pkgrel=0
+pkgdesc="Terminal image viewer"
+# s390x: the trait `From<i32>` is not implemented for `u64` (in `terminal_size` crate)
+arch="all !s390x !riscv64"
+url="https://github.com/atanunq/viu"
+license="MIT"
+makedepends="cargo libsixel-dev cargo-auditable"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/atanunq/viu/archive/v$pkgver.tar.gz
+	cargo-update-libc.patch"
+
+prepare() {
+	default_prepare
+
+	# Build against system-provided sixel.
+	local target=$(rustc -vV | sed -n 's/host: //p')
+	mkdir -p .cargo
+	cat >> .cargo/config.toml <<-EOF
+		[target.$target]
+		sixel = { rustc-link-lib = ["sixel"] }
+	EOF
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --release --frozen --features sixel
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm0755 target/release/"$pkgname" -t "$pkgdir"/usr/bin
+	install -Dm0644 README.md -t "$pkgdir"/usr/share/doc/"$pkgname"
+	install -Dm0644 LICENSE-MIT -t "$pkgdir"/usr/share/licenses/"$pkgname"
+}
+
+sha512sums="
+26dd7b129c4ec238aa8ff0a9fdca29daed019bd59117bbc7d485c04d7b77148fc0adc3b1e179569d825ed0cdc7b389466f97a24b9546b20109fbfa041a21f324  viu-1.5.0.tar.gz
+fa15cc6e4e82a66f10e24face506bcccd7d746e5f75da2dcfa0070909af6cd2d51d37482828570d204a74e9e0e7c597c4146c343a558f88979c7fc8080c13802  cargo-update-libc.patch
+"

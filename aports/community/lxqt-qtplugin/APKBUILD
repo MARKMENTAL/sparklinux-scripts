@@ -1,0 +1,34 @@
+# Maintainer: Antoni Aloy <aaloytorrens@gmail.com>
+pkgname=lxqt-qtplugin
+pkgver=2.0.0
+pkgrel=0
+pkgdesc="Qt-LXQt plugin integration"
+url="https://github.com/lxqt/lxqt-qtplugin"
+arch="all !armhf" # armhf blocked by liblxqt-dev
+license="LGPL-2.0-or-later"
+makedepends="
+	cmake samurai lxqt-build-tools liblxqt-dev libdbusmenu-lxqt-dev
+	libfm-qt-dev qt6-qttools-dev
+	"
+options="!check" # No testsuite
+source="https://github.com/lxqt/lxqt-qtplugin/releases/download/$pkgver/lxqt-qtplugin-$pkgver.tar.xz"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		$CMAKE_CROSSOPTS .
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --build build --target install
+}
+sha512sums="
+aac58511a309f162e69cbf00ae90f611e4bd8665576388d73e97e324ade2532e8ece7098ccd0c362b0674e1491f203258635f0b81738c92690b987b0f5ccf856  lxqt-qtplugin-2.0.0.tar.xz
+"

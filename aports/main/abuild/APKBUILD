@@ -1,0 +1,130 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=abuild
+pkgver=3.13.0
+_ver=${pkgver%_git*}
+pkgrel=5
+pkgdesc="Script to build Alpine Packages"
+url="https://git.alpinelinux.org/cgit/abuild/"
+arch="all"
+license="GPL-2.0-only"
+depends="
+	apk-tools>=2.0.7-r1
+	attr
+	cmd:getcap
+	fakeroot
+	musl-utils
+	lzip
+	openssl>3
+	patch
+	pkgconf
+	scanelf
+	tar
+	"
+makedepends_build="pkgconfig scdoc"
+makedepends_host="openssl-dev>3 zlib-dev"
+makedepends="$makedepends_host $makedepends_build"
+checkdepends="cmd:setcap kyua git"
+install="$pkgname.pre-install $pkgname.pre-upgrade"
+subpackages="
+	apkbuild-cpan:cpan:noarch
+	apkbuild-gem-resolver:gems:noarch
+	apkbuild-pypi:pypi:noarch
+	abuild-rootbld:_rootbld:noarch
+	abuild-sudo:_sudo
+	$pkgname-doc
+	"
+options="suid"
+pkggroups="abuild"
+source="https://gitlab.alpinelinux.org/alpine/abuild/-/archive/$pkgver/abuild-$pkgver.tar.gz
+	0001-abuild-pass-APORTS_BOOTSTRAP-to-bubblewrap.patch
+	0001-abuild-allow-packages-to-install-under-run.patch
+	0001-abuild-skip-var-run-in-fhs-check.patch
+	"
+builddir="$srcdir"/abuild-$pkgver
+
+build() {
+	make VERSION="$pkgver-r$pkgrel"
+}
+
+check() {
+	make check
+}
+
+package() {
+	make install VERSION="$pkgver-r$pkgrel" DESTDIR="$pkgdir"
+
+	install -m 644 abuild.conf "$pkgdir"/etc/abuild.conf
+
+	case "$CARCH" in
+	aarch64|x86*|ppc64le)
+		# binutils only supports it here
+		cat >>"$pkgdir"/usr/share/abuild/default.conf <<-EOF
+
+		# binutils ld.bfd supports this on this architecture; default to it
+		export RUSTFLAGS="\$RUSTFLAGS -Clink-arg=-Wl,-z,pack-relative-relocs"
+		export LDFLAGS="\$LDFLAGS -Wl,-z,pack-relative-relocs"
+		EOF
+	esac
+
+	case "$CARCH" in
+	x86_64)
+		# https://lists.alpinelinux.org/~alpine/devel/%3C1628515011.zujvcn248v.none%40localhost%3E
+		# note that this is x86-exclusive. on other architectures, this is pretty much always bad
+		# https://github.com/rust-lang/rust/pull/106380
+		cat >>"$pkgdir"/usr/share/abuild/default.conf <<-EOF
+
+		# -fno-plt has very slight improvements to general code size and speed on x86-only,
+		# for the common system dynamic linking case
+		export CFLAGS="\$CFLAGS -fno-plt"
+		export CXXFLAGS="\$CXXFLAGS -fno-plt"
+		EOF
+		;;
+	esac
+
+	install -d -m 775 -g abuild "$pkgdir"/var/cache/distfiles
+}
+
+cpan() {
+	pkgdesc="Script to generate perl APKBUILD from CPAN"
+	depends="perl perl-libwww perl-json perl-module-build perl-module-build-tiny
+		perl-lwp-protocol-https"
+
+	amove usr/bin/apkbuild-cpan
+}
+
+gems() {
+	pkgdesc="APKBUILD dependency resolver for RubyGems"
+	depends="ruby ruby-augeas"
+
+	amove usr/bin/apkbuild-gem-resolver
+}
+
+pypi() {
+	pkgdesc="Script to generate python3 APKBUILD from PYPI"
+	depends="perl perl-libwww perl-json perl-module-build-tiny perl-lwp-protocol-https
+	perl-ipc-system-simple"
+
+	amove usr/bin/apkbuild-pypi
+}
+
+_rootbld() {
+	pkgdesc="Build packages in chroot"
+	depends="abuild bubblewrap cmd:envsubst git"
+	mkdir -p "$subpkgdir"
+}
+
+_sudo() {
+	pkgdesc="Simple privilege elevation tools for building packages"
+	depends=""
+	install_if="$pkgname=$pkgver-r$pkgrel"
+
+	amove usr/bin/abuild-sudo usr/bin/abuild-apk usr/bin/abuild-adduser \
+		usr/bin/abuild-addgroup
+}
+
+sha512sums="
+9aa46693984bd65a1a940d4547239e0a10170e82f186ab231b0d3a26b09a75cf258fae0e16f936e79cf52353dce9fc8a18881e84042b7961f390aba3f34d88da  abuild-3.13.0.tar.gz
+2d7cf76202bd50e97fa3ed517c82dd94cbddd27b43d51e41e97c4281092565046aa55cab0869b20753c6bc1d592194528700a779426b67177b9ee7632c943742  0001-abuild-pass-APORTS_BOOTSTRAP-to-bubblewrap.patch
+f7a4240972d33be36931527f4764cb8852989f724406cc079567e71875e7ca7b4c897755770a26f9901ebe9faf166d0e8eb88cb028cbf012f55ddd6efad47e6e  0001-abuild-allow-packages-to-install-under-run.patch
+b94819e61a0a5a7a835bbf7d879371ff1f1573e93c40bb9f7a05b8a54fafbf8fe9234ddaefc2f0dc280d918639fe4193422fa8a56225c622d65466049efe9824  0001-abuild-skip-var-run-in-fhs-check.patch
+"

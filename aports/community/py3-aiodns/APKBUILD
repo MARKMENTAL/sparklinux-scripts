@@ -1,0 +1,32 @@
+# Contributor: Sam Whited <sam@samwhited.com>
+# Maintainer: Sam Whited <sam@samwhited.com>
+pkgname=py3-aiodns
+_pkgname=aiodns
+pkgver=3.2.0
+pkgrel=0
+pkgdesc="A library for performing asynchronous DNS resolutions using pycares."
+url="https://pypi.org/project/aiodns/"
+arch="all"
+license="MIT"
+depends="python3 py3-pycares"
+makedepends="py3-setuptools py3-gpep517 py3-wheel"
+subpackages="$pkgname-doc $pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/${_pkgname:0:1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+options="!check" # tests not included in source package.
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+	install -Dm644 LICENSE README.rst -t "$pkgdir"/usr/share/licenses/$pkgname
+}
+
+sha512sums="
+ca6ae2d53cc0a0e5b8cd5f47da56d7db43236eb6738509d5cc088e56db996c49eba8b024cfe368e5acf44ad4de4cb5d6f949c7f0d4cd16ff4d5cc42ae3b27cb1  aiodns-3.2.0.tar.gz
+"

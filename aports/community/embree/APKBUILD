@@ -1,0 +1,54 @@
+# Contributor: Leon Marz <main@lmarz.org>
+# Maintainer: Leon Marz <main@lmarz.org>
+pkgname=embree
+pkgver=4.3.3
+pkgrel=0
+pkgdesc="High Performance Ray Tracing Kernels"
+url="https://www.embree.org/"
+arch="aarch64 x86_64" # embree needs sse2 and 64 bit
+license="Apache-2.0"
+makedepends="clang cmake onetbb-dev samurai"
+subpackages="$pkgname-static $pkgname-dev $pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/embree/embree/archive/v$pkgver.tar.gz"
+options="!check" # no tests provided
+
+build() {
+	# fixes build for arm from 3.13.4 with some broken neon instructions,
+	# and takes significantly less memory allowing higher than -j4
+	export CC=clang
+	export CXX=clang++
+
+	# build static library
+	cmake -B build-static -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DEMBREE_ISPC_SUPPORT=OFF \
+		-DEMBREE_TUTORIALS=OFF \
+		-DEMBREE_RAY_MASK=ON \
+		-DEMBREE_STATIC_LIB=ON
+	cmake --build build-static
+
+	# build shared library
+	cmake -B build-shared -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DEMBREE_ISPC_SUPPORT=OFF \
+		-DEMBREE_TUTORIALS=OFF \
+		-DEMBREE_RAY_MASK=ON
+	cmake --build build-shared
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build-static
+	DESTDIR="$pkgdir" cmake --install build-shared
+
+	# garbage embree-vars.sh installed
+	rm "$pkgdir"/usr/embree*
+}
+
+sha512sums="
+f614c72c5e5c83b8936d37d4e916711b3ab29329786e96944e851a41d5e2358cf7ac739c145aee131403b0b91f7e2ce5422e892dc88d490e29356f79b47c8581  embree-4.3.3.tar.gz
+"

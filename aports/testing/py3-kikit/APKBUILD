@@ -1,0 +1,63 @@
+# Maintainer: Marian Buschsieweke <marian.buschsieweke@posteo.net>
+pkgname=py3-kikit
+pkgver=1.6.0
+pkgrel=0
+pkgdesc="Python library and CLI tool to automate several tasks in KiCAD"
+url="https://github.com/yaqwsx/KiKit"
+# riscv64: py3-shapely
+# aarch64, armv7, armhf, loongarch64: py3-solidpython
+# s390x: kicad
+arch="noarch !riscv64 !aarch64 !armv7 !armhf !s390x !loongarch64"
+license="MIT"
+depends="
+	kicad
+	py3-click
+	py3-commentjson
+	py3-markdown2
+	py3-pcbnewtransition
+	py3-pybars3
+	py3-shapely
+	py3-solidpython
+	python3
+	"
+makedepends="
+	py3-gpep517
+	py3-python-versioneer
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="
+	$pkgname-$pkgver.tar.gz::https://github.com/yaqwsx/KiKit/archive/v$pkgver.tar.gz
+	"
+builddir="$srcdir/KiKit-$pkgver"
+
+prepare() {
+	default_prepare
+
+	# unvendor old versioneer
+	rm -f versioneer.py
+}
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	cd test/units
+	../../.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+702316b514e831c50e0c549d8a0edebcda05247c421a61156ed8261cfc42f0120111784538d99f669bfc479f0b20f5d41df04a1ee6721bbdf62fc601015b3ce6  py3-kikit-1.6.0.tar.gz
+"

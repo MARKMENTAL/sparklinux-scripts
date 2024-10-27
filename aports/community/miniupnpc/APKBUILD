@@ -1,0 +1,36 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=miniupnpc
+pkgver=2.2.8
+pkgrel=0
+pkgdesc="Library and tool to control NAT in UPnP-enabled routers"
+url="http://miniupnp.free.fr"
+arch="all"
+license="BSD-3-Clause"
+makedepends="bsd-compat-headers py3-setuptools python3-dev"
+subpackages="$pkgname-dev py3-$pkgname:_py3 $pkgname-doc"
+source="http://miniupnp.free.fr/files/miniupnpc-$pkgver.tar.gz"
+
+build() {
+	make
+	python3 setup.py build
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr install
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+_py3() {
+	pkgdesc="Python bindings for miniupnpc"
+
+	amove usr/lib/python3*
+}
+
+sha512sums="
+526c9df1485302d4c9c78062fb058cfd433463f6e7a9f4025a9f5228aef41ee61a4b9e7a76b6cfa8779b91cc3c663846a997dc1470902d7108b129155e6a3360  miniupnpc-2.2.8.tar.gz
+"

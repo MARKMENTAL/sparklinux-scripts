@@ -1,0 +1,26 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=duperemove
+pkgver=0.14.1
+pkgrel=0
+pkgdesc="Tools for deduping file systems"
+url="https://github.com/markfasheh/duperemove"
+arch="all"
+license="GPL-2.0-only"
+makedepends="glib-dev linux-headers sqlite-dev"
+options="!check"  # no tests provided
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/markfasheh/duperemove/archive/refs/tags/v$pkgver.tar.gz"
+
+build() {
+	# Defining this 2 variables prevents make from calling git
+	make VERSION=$pkgver IS_RELEASE=1
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr install
+}
+
+sha512sums="
+16af9fb002d6e51ce469869507d5d4b8f9576620746337252ad733e6f74ae275c1e83da6af1c203543b9d19890180952d87f9fad4a02d4c4e0a25577ce569191  duperemove-0.14.1.tar.gz
+"

@@ -1,0 +1,62 @@
+# Contributor: Hoang Nguyen <folliekazetani@protonmail.com>
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=helmfile
+pkgver=0.166.0
+pkgrel=0
+pkgdesc="Declarative spec for deploying helm charts"
+url="https://helmfile.readthedocs.io/"
+# armhf: ftbfs
+arch="all !armhf"
+license="MIT"
+depends="helm"
+makedepends="go"
+checkdepends="bash"
+subpackages="
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-zsh-completion
+	$pkgname-fish-completion
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/helmfile/helmfile/archive/refs/tags/v$pkgver.tar.gz"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	local _goldflags="
+	-X go.szostok.io/version.version=$pkgver
+	-X go.szostok.io/version.buildDate=$(date -u "+%Y-%m-%dT%H:%M:%S%z" ${SOURCE_DATE_EPOCH:+-d @$SOURCE_DATE_EPOCH})
+	-X go.szostok.io/version.commitDate=$(date -u "+%Y-%m-%dT%H:%M:%S%z" ${SOURCE_DATE_EPOCH:+-d @$SOURCE_DATE_EPOCH})
+	-X go.szostok.io/version.commit=0000000
+	-X go.szostok.io/version.dirtyBuild=false
+	-X github.com/helmfile/helmfile/pkg/runtime.v1Mode=true
+	"
+	go build -v -o helmfile -ldflags "$_goldflags"
+
+	for shell in bash fish zsh; do
+		./helmfile completion $shell > $pkgname.$shell
+	done
+}
+
+check() {
+	# e2e/template test requires docker
+	# shellcheck disable=2046
+	go test $(go list ./... | grep -v /e2e)
+}
+
+package() {
+	install -Dm755 $pkgname "$pkgdir"/usr/bin/$pkgname
+	install -Dm644 LICENSE -t "$pkgdir"/usr/share/licenses/$pkgname/
+
+	install -Dm644 helmfile.bash \
+		"$pkgdir"/usr/share/bash-completion/completions/helmfile
+	install -Dm644 helmfile.zsh \
+		"$pkgdir"/usr/share/zsh/site-functions/_helmfile
+	install -Dm644 helmfile.fish \
+		"$pkgdir"/usr/share/fish/vendor_completions.d/helmfile.fish
+}
+
+sha512sums="
+15faa4b8d67f1781a272b2ac022b6fda5f8d9d23ef07dc5927c54deaa81873798f45a94d49889e30510a561e3c99983ad3768d8e570fa9cc876e15fa7b88b461  helmfile-0.166.0.tar.gz
+"

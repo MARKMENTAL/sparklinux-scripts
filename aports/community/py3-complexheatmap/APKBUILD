@@ -1,0 +1,36 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+pkgname=py3-complexheatmap
+pkgver=1.7.6
+pkgrel=0
+pkgdesc="A Python package to plot complex heatmap (clustermap)"
+url="https://github.com/DingWB/PyComplexHeatmap"
+arch="noarch"
+license="MIT"
+depends="python3 py3-matplotlib py3-numpy py3-pandas py3-seaborn"
+makedepends="py3-gpep517 py3-setuptools_scm py3-wheel"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://files.pythonhosted.org/packages/source/p/pycomplexheatmap/pycomplexheatmap-$pkgver.tar.gz"
+builddir="$srcdir/pycomplexheatmap-$pkgver"
+
+export 	SETUPTOOLS_SCM_PRETEND_VERSION=$pkgver
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+# no tests provided by the upstream; use smoke test for now
+check() {
+	PYTHONPATH=build/lib python3 -c "from PyComplexHeatmap import *"
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+6e26fd62a0e010de21e8df1e7264ea218f89fa7712552a51f7934670108c23f51dcc1389d275d66f2087f127829df6b65d771a3331cb92be24788b81b4022e47  py3-complexheatmap-1.7.6.tar.gz
+"

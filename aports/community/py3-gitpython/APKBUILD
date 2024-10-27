@@ -1,0 +1,54 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=py3-gitpython
+pkgver=3.1.43
+pkgrel=1
+pkgdesc="Python3 Git Library"
+url="https://github.com/gitpython-developers/GitPython"
+arch="noarch"
+license="BSD-3-Clause"
+depends="
+	git
+	py3-gitdb2
+	py3-typing-extensions
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="
+	py3-pytest
+	py3-pytest-cov
+	py3-pytest-sugar
+	py3-toml
+	"
+subpackages="$pkgname-pyc"
+source="https://github.com/gitpython-developers/GitPython/archive/$pkgver/GitPython-$pkgver.tar.gz"
+builddir="$srcdir/GitPython-$pkgver"
+
+# secfixes:
+#   3.1.37-r0:
+#     - CVE-2023-41040
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	# There are more tests but they require testing/py3-ddt
+	.testenv/bin/python3 -m pytest test/test_config.py
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+02296a19743346eefc2c1fdf0f5ccf612edf8bdf95a1dfbb4e69f9c64e327d10f9c25abc97d4d4178acba236bd3495b0c408ce2575fcca5d5903ddace5882ec4  GitPython-3.1.43.tar.gz
+"

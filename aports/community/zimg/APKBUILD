@@ -1,0 +1,73 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Contributor: Nicolas Lorin <androw95220@gmail.com>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=zimg
+pkgver=3.0.5
+pkgrel=2
+pkgdesc="Scaling, colorspace conversion and dithering library"
+url="https://github.com/sekrit-twc/zimg"
+arch="all"
+license="WTFPL"
+makedepends="autoconf automake libtool cmake linux-headers"
+subpackages="$pkgname-doc $pkgname-dev"
+source="zimg-$pkgver.tar.gz::https://github.com/sekrit-twc/zimg/archive/release-$pkgver.tar.gz
+	zimg-gtest-1.12.0.tar.gz::https://github.com/google/googletest/archive/release-1.12.0.tar.gz
+	"
+builddir="$srcdir/zimg-release-$pkgver"
+options="!check" # we run tests in the build stage
+
+prepare() {
+	default_prepare
+	mkdir -p "$pkgdir"
+	# googletest is required in-tree
+	ln -s "$srcdir"/googletest-*/* test/extra/googletest
+	autoreconf -vfi
+}
+
+build() {
+	case "$CARCH" in
+	s390x)
+		# https://github.com/sekrit-twc/zimg/pull/156
+		;;
+	*)
+		# build and run test binaries here
+		./configure \
+			--build=$CBUILD \
+			--host=$CHOST \
+			--prefix=/usr \
+			--sysconfdir=/etc \
+			--mandir=/usr/share/man \
+			--localstatedir=/var \
+			--disable-static \
+			--enable-unit-test
+		make
+		make test/unit_test.log
+		test/unit_test
+		make clean
+		;;
+	esac
+
+	export CFLAGS="$CFLAGS -O2 -flto=auto"
+	export CXXFLAGS="$CXXFLAGS -O2 -flto=auto"
+
+	# build release binaries here without enabling tests,
+	# as they make zimg slower
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--disable-static
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+85467ec9fcf81ea1ae3489b539ce751772a1dab6c6159928b3c5aa9f1cb029f0570b4624a254d4620886f3376fbf80f9bb829a88c3fe543f99f38947951dc500  zimg-3.0.5.tar.gz
+6216e76a8c988b6b3739f3988c85f369eef2a8036c4412621a0d3d04ceeada00d35e487363be0a265035ac78f1a5065e1fe054a285c43df23b6abcc69f8bfe3d  zimg-gtest-1.12.0.tar.gz
+"

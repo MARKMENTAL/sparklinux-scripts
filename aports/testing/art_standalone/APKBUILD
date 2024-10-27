@@ -1,0 +1,77 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=art_standalone
+pkgver=0_git20240829
+pkgrel=0
+_commit="d2b95a57ec4fc79ea0438d8d0d10ceef4e761b39"
+pkgdesc="A standalone version of Dalvik with Art build in"
+url="https://gitlab.com/android_translation_layer/dalvik_standalone"
+arch="x86_64 aarch64 armv7"
+license="Apache-2.0"
+depends="wolfssl-jni"
+# bash is used by /usr/bin/dx
+depends_dev="
+	$pkgname=$pkgver-r$pkgrel
+	bash
+	"
+case "$CARCH" in
+	aarch64|armv7) depends_dev="$depends_dev vixl-dev" ;;
+esac
+makedepends="$depends_dev
+	bionic_translation-dev
+	bsd-compat-headers
+	expat-dev
+	icu-dev
+	java-common
+	libbsd-dev
+	libcap-dev
+	libunwind-dev
+	lz4-dev
+	meson
+	openjdk8-jdk
+	openssl-dev
+	python3
+	valgrind-dev
+	wolfssl-jni-dev
+	xz-dev
+	zip
+	zlib-dev
+	"
+subpackages="$pkgname-dev $pkgname-dbg"
+source="https://gitlab.com/android_translation_layer/art_standalone/-/archive/$_commit/art_standalone-$_commit.tar.gz"
+options="!check" # No tests
+builddir="$srcdir/art_standalone-$_commit"
+
+prepare() {
+	default_prepare
+
+	# Hack
+	ln -s /usr/bin/python3 python
+	export PATH="$PATH:$PWD"
+}
+
+build() {
+	make PREFIX=/usr ____LIBDIR=lib
+}
+
+package() {
+	DESTDIR="$pkgdir" make \
+		____PREFIX="$pkgdir"/usr \
+		____INSTALL_ETC="$pkgdir"/etc \
+		____LIBDIR=lib \
+		install
+}
+
+dev() {
+	default_dev
+
+	mkdir -p "$subpkgdir"/usr/lib/java
+	mv "$pkgdir"/usr/lib/java/core-all_classes.jar "$subpkgdir"/usr/lib/java
+	mv "$pkgdir"/usr/lib/java/dx.jar "$subpkgdir"/usr/lib/java
+	mkdir -p "$subpkgdir"/usr/bin
+	mv "$pkgdir"/usr/bin/dx "$subpkgdir"/usr/bin/dx
+}
+
+sha512sums="
+9658ae9597adde0fa4b2a0bfe9fcb59b17c3241de034b4b9b79817bd290d1cf9225942cb355ebb95ff81d9e7851fdbb8a4ef35cde9a876501e2e99669ff9a738  art_standalone-d2b95a57ec4fc79ea0438d8d0d10ceef4e761b39.tar.gz
+"

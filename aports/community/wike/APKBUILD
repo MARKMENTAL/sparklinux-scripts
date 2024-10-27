@@ -1,0 +1,42 @@
+# Contributor: fossdd <fossdd@pwned.life>
+# Maintainer: fossdd <fossdd@pwned.life>
+pkgname=wike
+_pkgname=Wike
+pkgver=3.1.0
+pkgrel=0
+pkgdesc="Wikipedia Reader for the GNOME Desktop"
+url="https://apps.gnome.org/Wike"
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="
+	libadwaita
+	py3-gobject3
+	py3-requests
+	webkit2gtk-6.0
+	"
+makedepends="
+	desktop-file-utils
+	meson
+	glib-dev
+	"
+checkdepends="appstream"
+subpackages="$pkgname-lang"
+source="$pkgname-$pkgver.tar.gz::https://github.com/hugolabe/Wike/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+check() {
+	meson test -C output
+}
+
+package() {
+	meson install -C output --destdir "$pkgdir"
+}
+
+sha512sums="
+cca3199ca39fdc369bf73ac207377dbe99dd4021f8352d2714a507328b55c02beeb907deb1c5b065237255b0f211b8de8e164c4f1305c8b7f64eebad08cffcfd  wike-3.1.0.tar.gz
+"

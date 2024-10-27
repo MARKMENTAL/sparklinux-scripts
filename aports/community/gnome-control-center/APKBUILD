@@ -1,0 +1,93 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Contributor: Pablo Correa Gomez <ablocorrea@hotmail.com>
+# Maintainer: team/gnome <ablocorrea@hotmail.com>
+pkgname=gnome-control-center
+pkgver=47.0.1
+pkgrel=0
+pkgdesc="GNOME control center"
+url="https://gitlab.gnome.org/GNOME/gnome-control-center"
+arch="all !s390x" # no gnome-bluetooth-dev
+license="GPL-2.0-or-later"
+depends="
+	accountsservice
+	colord
+	cups-pk-helper
+	dbus:org.freedesktop.Secrets
+	openrc-settingsd
+	setxkbmap
+	"
+makedepends="
+	accountsservice-dev
+	cairo-dev
+	colord-dev
+	colord-gtk-dev
+	cups-dev
+	docbook-xml
+	docbook-xsl
+	gcr4-dev
+	glib-dev
+	gnome-bluetooth-dev
+	gnome-desktop-dev
+	gnome-online-accounts-dev
+	gnome-settings-daemon-dev
+	gsettings-desktop-schemas-dev
+	gsound-dev
+	ibus-dev
+	itstool
+	krb5-dev
+	libadwaita-dev
+	libgtop-dev
+	libgudev-dev
+	libnma-dev
+	libpwquality-dev
+	libsecret-dev
+	libwacom-dev
+	libxml2-utils
+	libxslt
+	meson
+	modemmanager-dev
+	networkmanager-dev
+	polkit-dev
+	pulseaudio-dev
+	samba-dev
+	tecla-dev
+	udisks2-dev
+	upower-dev
+	"
+options="!check" # needs unpackaged py-dbusmock
+install="$pkgname.pre-install $pkgname.pre-upgrade"
+subpackages="$pkgname-dbg $pkgname-dev $pkgname-lang $pkgname-doc $pkgname-bash-completion"
+source="https://download.gnome.org/sources/gnome-control-center/${pkgver%.*.*}/gnome-control-center-$pkgver.tar.xz
+	README.alpine
+	gsettings_desktop_dep.patch
+	"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dibus=true \
+		-Dlocation-services=enabled \
+		. output
+
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+
+	mkdir -p "$pkgdir"/usr/lib/pkgconfig
+	mv "$pkgdir"/usr/share/pkgconfig/* "$pkgdir"/usr/lib/pkgconfig
+	rmdir "$pkgdir"/usr/share/pkgconfig
+
+	install -Dm0644 "$srcdir"/README.alpine -t "$pkgdir"/usr/share/doc/"$pkgname"
+}
+
+sha512sums="
+c1b360b97a8c98ffd22e42b062c2e7f322fa0e98657fc5b69990f075dcb952695553211ec09c80333f152f926101b2dce560f58f84bc0a6bca92856122f76c32  gnome-control-center-47.0.1.tar.xz
+350aa443149c71851ad4de0976c7fc5cb626ba0c57a8d41e6ef80da1c65ed84a4dfa2483ae92630a3b611c4bfa9360ded82b55e8cd0e3907294c025e4f6b1671  README.alpine
+5c7c88c2886d293a52a01fc9da33b1ae521a928cf5ceb784c6e0d1a32a0c39a3d0a325099cdc4436c1ca6b40aa3fe8b5e878ef8ab04d1600510df592b1b6ab78  gsettings_desktop_dep.patch
+"

@@ -1,0 +1,38 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+pkgname=lomiri-schemas
+pkgver=0.1.5
+pkgrel=0
+pkgdesc="GSettings / AccountsService schema files for Lomiri"
+arch="noarch"
+url="https://gitlab.com/ubports/development/core/lomiri-schemas"
+license="LGPL-2.1-or-later"
+makedepends="
+	cmake
+	cmake-extras
+	glib-dev
+	intltool
+	"
+source="https://gitlab.com/ubports/development/core/lomiri-schemas/-/archive/$pkgver/lomiri-schemas-$pkgver.tar.gz
+	0001-data-schemas-com.lomiri.Shell.gschema.xml.in-Add-log.patch
+	"
+options="!check" # No tests
+
+build() {
+	# Doesn't build with Ninja backend:
+	#  ninja: multiple rules generate 'data/schemas/com.lomiri.Shell.gschema.xml'
+	cmake -B build \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DCMAKE_BUILD_TYPE=None
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+fb108b8d00524beb75ccdac6b39e5cb239b9ae9250469e3083267ddaa974b0a688eeccdb2a3ab69bd2d4ee0bf2f87c0b2b6899a11f8c72fd68904086e4b7f51f  lomiri-schemas-0.1.5.tar.gz
+ff1397970b31179a1c9538bf3d929f06d9667024df202ad50d2727cd91e0979e273d9ec77bff4a109c6e942ecc74dde60704843c19dd84a5fabf4aeb91abf239  0001-data-schemas-com.lomiri.Shell.gschema.xml.in-Add-log.patch
+"

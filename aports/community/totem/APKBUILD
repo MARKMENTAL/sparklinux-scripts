@@ -1,0 +1,56 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: team/gnome <ablocorrea@hotmail.com>
+pkgname=totem
+pkgver=43.0
+pkgrel=3
+pkgdesc="Movie player for the GNOME desktop"
+url="https://wiki.gnome.org/Apps/Videos"
+arch="all !s390x !riscv64" # grilo-plugins missing
+license="GPL-2.0-or-later"
+depends="
+	grilo-plugins
+	gsettings-desktop-schemas
+	gst-libav
+	gst-plugins-good
+	gst-plugins-good-gtk
+	"
+makedepends="
+	clutter-gtk-dev
+	glib-dev
+	gnome-desktop-dev
+	gobject-introspection-dev
+	grilo-dev
+	gsettings-desktop-schemas-dev
+	gst-plugins-base-dev
+	gstreamer-dev
+	gstreamer-tools
+	gtk+3.0-dev
+	itstool
+	libhandy1-dev
+	libpeas-dev
+	libxml2-dev
+	meson
+	py3-gobject3-dev
+	totem-pl-parser-dev
+	vala
+	"
+checkdepends="xvfb-run desktop-file-utils appstream-glib"
+subpackages="$pkgname-dev $pkgname-doc $pkgname-lang"
+source="https://download.gnome.org/sources/totem/${pkgver%.*}/totem-$pkgver.tar.xz"
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+check() {
+	xvfb-run meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+b35d32ebadf4b9900ab234f07f8a7128edbc15593e1447c22f3c7a653fcbd4a2df9d45484e2decce5dd5ab67849fca1003a1ded338a0af0930b6560ee4f764ae  totem-43.0.tar.xz
+"

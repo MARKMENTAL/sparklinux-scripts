@@ -1,0 +1,74 @@
+# Maintainer: Hugo Osvaldo Barrera <hugo@whynothugo.nl>
+pkgname=ruff
+pkgver=0.6.4
+pkgrel=0
+pkgdesc="Extremely fast Python linter"
+url="https://github.com/astral-sh/ruff"
+arch="all"
+license="MIT"
+makedepends="py3-gpep517 py3-maturin cargo py3-installer"
+subpackages="
+	$pkgname-pyc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	py3-$pkgname:_python:noarch
+	"
+source="https://github.com/astral-sh/ruff/archive/$pkgver/ruff-$pkgver.tar.gz"
+# net: cargo
+options="net"
+
+export CARGO_PROFILE_RELEASE_OPT_LEVEL=2
+
+prepare() {
+	default_prepare
+
+	# shadow git repo for tests
+	git init -q
+
+	# Avoid downloading a different toolchain on systems with rustup installed.
+	rm rust-toolchain.toml
+
+	cargo fetch --locked
+}
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--config-json '{"build-args": "--frozen"}' \
+		--output-fd 3 3>&1 >&2
+
+	./target/release/ruff generate-shell-completion bash > $pkgname.bash
+	./target/release/ruff generate-shell-completion fish > $pkgname.fish
+	./target/release/ruff generate-shell-completion zsh > $pkgname.zsh
+
+	# Update ruff.schema.json as the pre-built one is generated
+	# using the '--all-features' Cargo flag which we don't pass.
+	cargo dev generate-all
+}
+
+check() {
+	unset CI_PROJECT_DIR
+
+	cargo test --frozen --workspace --exclude ruff_benchmark
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+
+	install -Dm644 $pkgname.bash \
+		"$pkgdir"/usr/share/bash-completion/completions/$pkgname
+	install -Dm644 $pkgname.fish \
+		"$pkgdir"/usr/share/fish/vendor_completions.d/$pkgname.fish
+	install -Dm644 $pkgname.zsh \
+		"$pkgdir"/usr/share/zsh/site-functions/_$pkgname
+}
+
+_python() {
+	amove usr/lib/python3.12/site-packages/
+}
+
+sha512sums="
+eca710f53532e89ea75b9f46449b7b7cb1698e0a553d23282b2d04ea5dc7da0fb235d7da73557137fcae3eb81e74924fc41017d145dc85b170fa2780111aae5d  ruff-0.6.4.tar.gz
+"

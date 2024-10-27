@@ -1,0 +1,30 @@
+# Contributor: knuxify <knuxify@gmail.com>
+# Maintainer: knuxify <knuxify@gmail.com>
+pkgname=adw-gtk3
+pkgver=5.4
+pkgrel=0
+pkgdesc="The theme from libadwaita ported to GTK-3"
+url="https://github.com/lassekongo83/adw-gtk3"
+arch="noarch"
+license="LGPL-2.1-or-later"
+makedepends="meson sassc"
+source="https://github.com/lassekongo83/adw-gtk3/archive/refs/tags/v$pkgver/adw-gtk3-$pkgver.tar.gz"
+options="!check" # no test suite
+
+build() {
+	abuild-meson \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+3c41586f11e9d5ac622ce2d1db21d8a0758976cc83d8552cf693b05766054bb913e56557c54584a8bef6527db2f21fbf0974cebc12005016a5d147b1cb6f99b5  adw-gtk3-5.4.tar.gz
+"

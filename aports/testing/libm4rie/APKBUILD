@@ -1,0 +1,42 @@
+# Contributor: Grigory Kirillov <txgk@bk.ru>
+# Maintainer:
+pkgname=libm4rie
+pkgver=20200125
+pkgrel=3
+pkgdesc="Library for fast arithmetic with dense matrices over GF(2^e) for 2 <= e <= 16"
+url="https://bitbucket.org/malb/m4rie"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="libm4ri-dev"
+source="https://bitbucket.org/malb/m4rie/downloads/m4rie-$pkgver.tar.gz"
+subpackages="$pkgname-static $pkgname-dev"
+builddir="$srcdir/m4rie-$pkgver"
+
+prepare() {
+	default_prepare
+	update_config_sub
+}
+
+build() {
+	export CFLAGS="${CFLAGS/-Os/-O3}" # gotta go fast
+
+	./configure \
+		--target="$CTARGET" \
+		--build="$CBUILD" \
+		--host="$CHOST" \
+		--prefix=/usr \
+		--enable-openmp
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+761ba9d8eeec381356b45d37a63bac9e70e2b1227435fb717d89a2358df610458fd4f7b7b4af90ad24c918bae81a25c926380761d2c514a762b92d8c661b52e7  m4rie-20200125.tar.gz
+"

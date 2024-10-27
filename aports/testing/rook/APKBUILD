@@ -1,0 +1,56 @@
+# Contributor: Sean E. Russell <ser@ser1.net>
+# Maintainer: Sean E. Russell <ser@ser1.net>
+pkgname=rook
+pkgver=0.1.3
+pkgrel=1
+pkgdesc="Lightweight, stand-alone, headless secret service tool backed by a Keepass v2 database"
+url="https://sr.ht/~ser/rook"
+arch="all"
+license="BSD-3-Clause"
+makedepends="go makeclapman"
+subpackages="$pkgname-doc $pkgname-autotype::noarch $pkgname-getattr::noarch"
+source="$pkgname-$pkgver.tar.gz::https://hg.sr.ht/~ser/rook/archive/v$pkgver.tar.gz"
+builddir="$srcdir/$pkgname-v$pkgver"
+
+build() {
+	go build -ldflags "-X main.Version=v$pkgver" -v .
+
+	mkdir man1
+	CLAPTRAP_USAGE_JSON=true ./rook | \
+		makeclapman -d man1 --author "Sean E. Russell" \
+			--description "Rook allows you to use a KeePass v2 database as storage for secrets. It provides client and server modes; the server unlocks the database and stays in memory, while the client communicates over a socket with the server and fetches data."
+}
+
+check() {
+	[ "$(./rook --version)" = "rook v$pkgver" ]
+}
+
+package() {
+	install -Dm755 rook -t "$pkgdir"/usr/bin/
+	install -Dm644 LICENSE -t "$pkgdir"/usr/share/licenses/"$pkgname"/
+	install -Dm644 README.md -t "$pkgdir"/usr/share/doc/"$pkgname"/
+	install -Dm644 man1/* -t "$pkgdir"/usr/share/man/man1/
+	install -Dm755 utils/autotype.sh "$pkgdir"/usr/bin/rook-autotype
+	install -Dm755 utils/getAttr.sh "$pkgdir"/usr/bin/rook-getattr
+}
+
+autotype() {
+	pkgdesc="Autotype support for rook"
+	depends="ripgrep xdotool xprop yad zsh rofi"
+	install_if="$pkgname=$pkgver-r$pkgrel ripgrep xdotool xorg-xprop yad zsh rofi"
+
+	amove usr/bin/rook-autotype
+}
+
+getattr() {
+	pkgdesc="Interactive utility to prompt for a single field from rook"
+	depends="xdotool rofi fzf xsel util-linux"
+	install_if="$pkgname=$pkgver-r$pkgrel rofi xsel xdotool util-linux"
+
+	amove usr/bin/rook-getattr
+}
+
+
+sha512sums="
+25fe1adfcacc469ca1ce38c4c5af01003dc6ded1ca3ddc315f2ddc41fcd86f0f9847b8e31cadea337c1d3e2afdd69469baa7d44b6281126d3d4880f24b1b8f63  rook-0.1.3.tar.gz
+"

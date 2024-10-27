@@ -1,0 +1,38 @@
+# Maintainer: Łukasz Jendrysik <scadu@yandex.com>
+# Contributor: Łukasz Jendrysik <scadu@yandex.com>
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+pkgname=gitolite
+pkgver=3.6.13
+pkgrel=0
+pkgdesc="Centralized git server, with very fine-grained access control and many powerful features"
+url="https://github.com/sitaramc/gitolite"
+arch="noarch"
+license="GPL-2.0-only"
+options="!check" # fixme: setup test environment
+depends="git perl"
+install=$pkgname.pre-install
+pkgusers="git"
+pkggroups="git"
+source="$pkgname-$pkgver.tar.gz::https://github.com/sitaramc/gitolite/archive/v$pkgver.tar.gz"
+
+# secfixes:
+#   3.6.11-r0:
+#     - CVE-2018-20683
+
+check() {
+	GITOLITE_TEST=y prove
+}
+
+package() {
+	install -d "$pkgdir"/usr/bin
+	install -d "$pkgdir"/usr/lib/gitolite
+
+	./install -to "$pkgdir"/usr/lib/gitolite
+	echo $pkgver > "$pkgdir"/usr/lib/gitolite/VERSION
+	ln -s /usr/lib/gitolite/gitolite "$pkgdir"/usr/bin/
+	install -o git -g git -d -m 700 "$pkgdir"/var/lib/git
+}
+
+sha512sums="
+95c232dd117b8849b205946b6427422abadbfb0d59fdb72f1de75813cbe3fbf63cbc0f5f5f2de4e761797c0cf5423c94805a55af87b7ff78a2d9ea9f2406dfcb  gitolite-3.6.13.tar.gz
+"

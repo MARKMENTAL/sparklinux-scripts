@@ -1,0 +1,41 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=osinfo-db-tools
+pkgver=1.11.0
+pkgrel=0
+pkgdesc="Tools for managing the osinfo database"
+url="https://libosinfo.org/"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="
+	meson
+	glib-dev
+	libxml2-dev
+	libarchive-dev
+	libxslt-dev
+	json-glib-dev
+	libsoup3-dev
+	perl
+	"
+checkdepends="py3-pytest py3-requests"
+subpackages="$pkgname-doc $pkgname-lang"
+source="https://gitlab.com/libosinfo/osinfo-db-tools/-/archive/v$pkgver/osinfo-db-tools-v$pkgver.tar.gz"
+builddir="$srcdir/osinfo-db-tools-v$pkgver"
+
+build() {
+	export CFLAGS="$CFLAGS -Wno-incompatible-pointer-types"
+	abuild-meson . output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+6667056c049e3a8f48057b18e7c6c55b1e0d759c167f5967874e5b32c549c27bac147ec9840c976d6efa874e8d1ca83ea05dad1e0c82a45dd9a53e30a6ea919b  osinfo-db-tools-v1.11.0.tar.gz
+"

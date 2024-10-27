@@ -1,0 +1,51 @@
+# Contributor: Michał Polański <michal@polanski.me>
+# Maintainer: mio <miyoyan@e.email>
+pkgname=lagrange
+pkgver=1.18.0
+pkgrel=1
+pkgdesc="Beautiful Gemini client"
+url="https://gmi.skyjake.fi/lagrange"
+license="BSD-2-Clause"
+arch="all"
+makedepends="
+	cmake
+	fribidi-dev
+	harfbuzz-dev
+	libunistring-dev
+	libwebp-dev
+	mpg123-dev
+	ncurses-static
+	openssl-dev
+	opusfile-dev
+	pcre2-dev
+	samurai
+	sdl2-dev
+	zip
+	zlib-dev
+	"
+subpackages="$pkgname-dbg $pkgname-doc"
+source="https://git.skyjake.fi/gemini/lagrange/releases/download/v$pkgver/lagrange-$pkgver.tar.gz
+	sealcurses-render.patch
+	"
+options="!check" # no test suite
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DENABLE_POPUP_MENUS=OFF \
+		-DENABLE_RESIZE_DRAW=OFF \
+		-DENABLE_TUI=ON \
+		-DENABLE_X11_XLIB=OFF \
+		-DTFDN_ENABLE_SSE41=OFF
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+29f7e100f817c22a739ac6149ba59bc9271a834ae1f61586e4f2163137c562407d6af72c9ef2e07e37c0462662a6466a3f208d0213b4b2e2b3c8df76e61dd177  lagrange-1.18.0.tar.gz
+bf207e98744401f7eb9861305ed41ba655db48613df9f369751fd5e1489a6b960f75e2a3979ca362acb623c6b3ddd2b39cab3cdfc713b0905b33f9f57d251481  sealcurses-render.patch
+"

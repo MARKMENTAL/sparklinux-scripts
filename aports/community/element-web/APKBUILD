@@ -1,0 +1,72 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Contributor: Galen Abell <galen@galenabell.com>
+# Maintainer: lauren n. liberda <lauren@selfisekai.rocks>
+pkgname=element-web
+pkgver=1.11.77
+pkgrel=0
+pkgdesc="A glossy Matrix collaboration client for the web"
+url="https://element.io/"
+#riscv64: ftbfs: memory access out of bounds
+#x86, armhf, armv7: webpack: JavaScript heap out of memory
+arch="noarch !riscv64 !x86 !armv7 !armhf"
+options="!check"
+license="Apache-2.0"
+makedepends="
+	nodejs
+	yarn
+"
+source="
+	https://github.com/vector-im/element-web/archive/refs/tags/v$pkgver/element-web-$pkgver.tar.gz
+	no-source-maps.patch
+	"
+install="$pkgname.post-upgrade"
+provides="riot-web=$pkgver-r$pkgrel"
+replaces="riot-web"
+
+export VERSION=$pkgver
+
+# secfixes:
+#   1.11.30-r0:
+#     - CVE-2023-30609
+#   1.11.26-r0:
+#     - CVE-2023-28103
+#     - CVE-2023-28427
+#   1.11.7-r0:
+#     - CVE-2022-39249
+#     - CVE-2022-39250
+#     - CVE-2022-39251
+#     - CVE-2022-39236
+#   1.11.4-r0:
+#     - CVE-2022-36059
+#     - CVE-2022-36060
+#   1.9.7-r0:
+#     - CVE-2021-44538
+#   1.8.4-r0:
+#     - CVE-2021-40823
+#     - CVE-2021-40824
+
+prepare() {
+	default_prepare
+
+	yarn install --frozen-lockfile --ignore-scripts
+}
+
+build() {
+	NODE_ENV=production yarn build
+}
+
+package() {
+	mkdir -p "$pkgdir"/usr/share/webapps \
+		"$pkgdir"/etc/element-web
+	cp -r webapp "$pkgdir"/usr/share/webapps/element-web
+	ln -s ../element-web "$pkgdir"/usr/share/webapps/riot-web
+	mv config.sample.json \
+		"$pkgdir"/etc/element-web
+	ln -sf /etc/element-web/config.json \
+		"$pkgdir"/usr/share/webapps/element-web/config.json
+}
+
+sha512sums="
+5d0c043636535919a965b744f825ac6396e0150bf1ee8ac72bc9b3216b3acd377a32aa338b18c284a2b93b9f423311ac31aa57ff0e40b98fb726b3c62a943183  element-web-1.11.77.tar.gz
+92d964d9cd53b751da404bc75b4fbeee099414933a1aa644ff8d020ed2a48a4d856a92b0adffb1ee4606bddae6b498d6dc3db59f2c7292a22ee5d29ee6da18b9  no-source-maps.patch
+"

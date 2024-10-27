@@ -1,0 +1,34 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=gom
+pkgver=0.5.3
+pkgrel=0
+pkgdesc="GObject Data Mapper"
+url="https://wiki.gnome.org/Projects/Gom"
+arch="all"
+license="LGPL-2.1-or-later"
+makedepends="meson vala gobject-introspection-dev py3-gobject3 sqlite-dev glib-dev
+	gdk-pixbuf-dev"
+subpackages="$pkgname-dev"
+source="https://download.gnome.org/sources/gom/${pkgver%.*}/gom-$pkgver.tar.xz"
+
+# gom-stress seems to segfault with new glib
+options="!check"
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+check() {
+	# gom-stress tests takes a LOOOONG time
+	meson test -C output -t 10
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+b955149847927deeb11ad81c90b7c810d3f4471f8b3b1ed3520447c0293a263d7a758ef8922d84bd1aef48904b8e791259be57c31b546b4ca961039a22a69730  gom-0.5.3.tar.xz
+"

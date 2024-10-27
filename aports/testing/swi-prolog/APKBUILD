@@ -1,0 +1,91 @@
+# Maintainer: Paul Bredbury <brebs@sent.com>
+pkgname=swi-prolog
+pkgver=9.2.7
+pkgrel=0
+pkgdesc="Versatile implementation of the Prolog programming language"
+url="https://www.swi-prolog.org"
+arch="all !riscv64" # missing libunwind-dev
+license="BSD-2-Clause AND LGPL-3.0-or-later"
+# Need to package JavaHamcrest in order to enable JPL
+subpackages="$pkgname-doc $pkgname-xpce:xpce:noarch $pkgname-xpce-doc:xpce_doc:noarch $pkgname-pyc"
+makedepends="
+	cmake
+	gmp-dev
+	libarchive-dev
+	libedit-dev
+	libunwind-dev
+	libxext-dev
+	libice-dev
+	libjpeg-turbo-dev
+	libxinerama-dev
+	libxft-dev
+	libxpm-dev
+	libxt-dev
+	ncurses-dev
+	openssl-dev
+	ossp-uuid-dev
+	pcre2-dev
+	readline-dev
+	samurai
+	unixodbc-dev
+	yaml-dev
+	zlib-dev
+	"
+# The Berkeley DB test works on all but x86, which segfaults
+# https://github.com/SWI-Prolog/issues/issues/103#issuecomment-968091401
+[ ! "$CARCH" = "x86" ] && makedepends="$makedepends db-dev"
+
+checkdepends="python3"
+source="https://www.swi-prolog.org/download/stable/src/swipl-$pkgver.tar.gz"
+builddir="$srcdir/swipl-$pkgver"
+
+build() {
+	# pgo broken with gcc12 profiles
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr
+	ninja -C build
+}
+
+check() {
+	ctest --output-on-failure --test-dir build
+}
+
+package() {
+	DESTDIR="$pkgdir" ninja -C build install
+}
+
+doc() {
+	default_doc
+	mkdir -p "$subpkgdir"/usr/share/swi-prolog
+	mv "$pkgdir"/usr/lib/swipl/doc "$subpkgdir"/usr/share/swi-prolog
+}
+
+xpce() {
+	depends="$pkgname"
+	pkgdesc="X support for $pkgname"
+	mkdir -p "$subpkgdir"/usr/lib/swipl
+	mv "$pkgdir"/usr/lib/swipl/xpce "$subpkgdir"/usr/lib/swipl
+
+	# Move doc files
+	mkdir -p "$subpkgdir"-doc/usr/lib/swipl/xpce
+	mv "$subpkgdir"/usr/lib/swipl/xpce/appl-help "$subpkgdir"-doc/usr/lib/swipl/xpce
+	mv "$subpkgdir"/usr/lib/swipl/xpce/man "$subpkgdir"-doc/usr/lib/swipl/xpce
+}
+
+xpce_doc() {
+	pkgdesc="X support for $pkgname (doc files)"
+}
+
+pyc() {
+	pkgdesc="Precompiled Python bytecode for ${subpkgname%-pyc}"
+	install_if="${subpkgname%-pyc}=$pkgver-r$pkgrel pyc"
+
+	cd "$pkgdir" || return 0
+	local IFS=$'\n'
+	amove $(find usr/lib -type d -name __pycache__)
+}
+
+sha512sums="
+fc58fa342905caaefc444145a72db4ec4996c0545965f76076a12dcb8e094b0e8ba6a9dec97851e5fc8ac81989f2b793d642bfe7869d7f452c7689202fca4b9a  swipl-9.2.7.tar.gz
+"

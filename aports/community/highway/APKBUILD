@@ -1,0 +1,70 @@
+# Maintainer: Alex Xu (Hello71) <alex_y_xu@yahoo.ca>
+pkgname=highway
+pkgver=1.0.7
+pkgrel=0
+pkgdesc="Performance-portable, length-agnostic SIMD with runtime dispatch"
+url="https://github.com/google/highway"
+arch="all"
+license="Apache-2.0"
+makedepends="cmake gtest-dev samurai"
+subpackages="
+	$pkgname-dev
+	libhwy
+	libhwy_contrib
+	libhwy_test
+	"
+source="https://github.com/google/highway/archive/$pkgver/highway-$pkgver.tar.gz"
+
+case "$CARCH" in
+	# ppc64le: detects PPC9 as baseline on the builder cpu, even though actually PPC8
+	# riscv64: https://github.com/google/highway/issues/2125
+	ppc64le|riscv64) options="$options !check" ;;
+esac
+
+build() {
+	case "$CARCH" in
+	riscv64) ;;
+	*)
+		export CFLAGS="$CFLAGS -flto=auto"
+		export CXXFLAGS="$CXXFLAGS -flto=auto"
+		;;
+	esac
+
+	CFLAGS="$CFLAGS -O2 -DNDEBUG" \
+	CXXFLAGS="$CXXFLAGS -O2 -DNDEBUG" \
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBUILD_SHARED_LIBS=ON \
+		-DBUILD_TESTING="$(want_check && echo ON || echo OFF)" \
+		-DHWY_SYSTEM_GTEST=ON \
+		-DHWY_ENABLE_EXAMPLES=OFF
+	cmake --build build
+}
+
+check() {
+	cd build
+	# https://github.com/google/highway/issues/1549
+	CTEST_OUTPUT_ON_FAILURE=TRUE ctest \
+		-E "(HighwayTestGroup/HighwayTest.*/NEON*|HwyMathTestGroup/HwyMathTest.TestAllAtan2/NEON*|SortTestGroup/SortTest.TestAllFloatInf/NEON*)"
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+libhwy() {
+	amove usr/lib/libhwy.so.*
+}
+
+libhwy_contrib() {
+	amove usr/lib/libhwy_contrib.so.*
+}
+
+libhwy_test() {
+	amove usr/lib/libhwy_test.so.*
+}
+
+sha512sums="
+6ee5007ec13ac20b5d816b38a1b31c31a06678ca6d2ea090dd75e364f04cb2cf7ad8a82d1bdfff51079efa54b9a95fb554d62e6cc1bbf7d7e794cb272032d8f5  highway-1.0.7.tar.gz
+"

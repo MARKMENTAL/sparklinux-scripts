@@ -1,0 +1,22 @@
+--- a/gui/main.cpp
++++ b/gui/main.cpp
+@@ -61,6 +61,9 @@ int main(int argc, char *argv[])
+     auto* settings = new QSettings("Cppcheck", "Cppcheck-GUI", &app);
+ 
+     // Set data dir..
++    if ((settings->value("DATADIR", QString()).toString()).isEmpty())
++        settings->setValue("DATADIR", "/usr/share/cppcheck");
++
+     const QStringList args = QApplication::arguments();
+     auto it = std::find_if(args.cbegin(), args.cend(), [](const QString& arg) {
+         return arg.startsWith("--data-dir=");
+@@ -70,6 +73,9 @@ int main(int argc, char *argv[])
+         return 0;
+     }
+ 
++    if ((settings->value(SETTINGS_LANGUAGE, QString()).toString()).isEmpty())
++        settings->setValue(SETTINGS_LANGUAGE, "en");
++
+     auto* th = new TranslationHandler(&app);
+     th->setLanguage(settings->value(SETTINGS_LANGUAGE, th->suggestLanguage()).toString());
+ 

@@ -1,0 +1,54 @@
+# Contributor: Antoine Martin (ayakael) <dev@ayakael.net>
+# Maintainer: Antoine Martin (ayakael) <dev@ayakael.net>
+pkgname=ikiwiki
+pkgver=3.20200202.4
+pkgrel=1
+pkgdesc="Ikiwiki is a wiki compiler. It converts wiki pages into HTML pages suitable for publishing on a website."
+arch="noarch"
+license="GPL-2.0-or-later"
+url="https://ikiwiki.info"
+depends="
+	perl-cgi-formbuilder
+	perl-cgi-session
+	perl-html-parser
+	perl-html-scrubber
+	perl-html-template
+	perl-locale-gettext
+	perl-mail-sendmail
+	perl-rpc-xml
+	perl-text-markdown
+	perl-timedate
+	perl-time-duration
+	perl-uri
+	perl-yaml
+	perl-yaml-libyaml
+	"
+source="
+	0001-Adjustments-for-po4a-0.7.0.patch
+	https://git.joeyh.name/index.cgi/ikiwiki.git/snapshot/ikiwiki-$pkgver.tar.gz
+	"
+subpackages="$pkgname-doc"
+
+prepare() {
+	default_prepare
+
+	# Install module into the vendor directories
+	sed -i -e 's/sbin/bin/g' Makefile.PL
+}
+
+build() {
+	perl Makefile.PL PREFIX="/usr" INSTALL_BASE= INSTALLDIRS=vendor
+	make PREFIX="/usr"
+}
+
+package() {
+	make install DESTDIR="$pkgdir"
+
+	# otherwise perl breaks
+	find "$pkgdir" \( -name '.packlist' -or -name '*.pod' \) -exec rm '{}' +
+}
+
+sha512sums="
+69cdd1a1dc131855131e1ab41ae449cb2cd5d06ab431a54d43f2dc0c6410fc6dfd14d8b81aa1ffcf26d672b1cecff7cab64b7822d11b069802df54a340b63a74  0001-Adjustments-for-po4a-0.7.0.patch
+171509bba0d5d80ebb089cb8b48cd0a75a0a90a1a0a8af8b627097f24a4033cebee4df1bb652c91a0c6cb73e08a182c551ac1bbaca15ada698455dfba83a78b8  ikiwiki-3.20200202.4.tar.gz
+"

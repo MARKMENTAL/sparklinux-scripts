@@ -1,0 +1,43 @@
+# Contributor: John Vogel <jvogel@stygian.me>
+# Maintainer: John Vogel <jvogel@stygian.me>
+pkgname=nsjail
+pkgver=3.4
+pkgrel=4
+pkgdesc="A light-weight process isolation tool"
+url="https://github.com/google/nsjail"
+# upstream supported architectures
+arch="armhf armv7 aarch64 riscv64 x86 x86_64"
+license="Apache-2.0"
+makedepends="bison flex linux-headers abseil-cpp-dev libnl3-dev protobuf-dev libbsd-dev"
+options="!check" # no tests
+subpackages="$pkgname-doc"
+_kafelver=1af0975af45ca4404f357b9a4e1636f53a01bfd3
+source="https://github.com/google/nsjail/archive/$pkgver/nsjail-$pkgver.tar.gz
+	https://github.com/google/kafel/archive/$_kafelver/kafel-$_kafelver.tar.gz
+	protobuf-23.patch
+	"
+
+prepare() {
+	default_prepare
+	mv "$srcdir"/kafel-"$_kafelver"/* "$builddir"/kafel/
+}
+
+build() {
+	make
+}
+
+package() {
+	install -D -t "$pkgdir"/usr/bin nsjail
+	install -D -t "$pkgdir"/usr/share/man/man1 nsjail.1
+	install -D -t "$pkgdir"/usr/share/doc/nsjail README.md LICENSE
+	install -d "$pkgdir"/usr/share/doc/nsjail/configs
+	for config in configs/*; do
+		install -D -t "$pkgdir"/usr/share/doc/nsjail/configs "$config"
+	done
+}
+
+sha512sums="
+085006762a02408c9e1c3ea713905230fda0c240ca553e3891b4c705abecb83bf9cb4439413c61b4979bdc1a8f2de708a6ee5dbf487cad8a70476f76607d5a36  nsjail-3.4.tar.gz
+521ab57afd6fb21dfff9d2ce20e316007b0dbff952cabc6e86a8071300a6c47351c7fe151c9c8db0c59fa3a27ca45b34934c029a3325252a2cef1b5de72e6e21  kafel-1af0975af45ca4404f357b9a4e1636f53a01bfd3.tar.gz
+1acb9d983a7eaf545a893a1951b711d2b2267131c84f7d3a37f35f69524a29ea0690f42cea65a7f009cc7c9a789c58dab56e189cae07726c7f09a60de5b0f3a8  protobuf-23.patch
+"

@@ -1,0 +1,37 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer:
+pkgname=py3-webpy
+_pkgorig=webpy
+pkgver=0.62
+pkgrel=5
+pkgdesc="A web framework for python that is as simple as it is powerful"
+url="https://www.webpy.org"
+arch="noarch"
+license="Public Domain and BSD"
+depends="python3 py3-cheroot"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest-xdist"
+subpackages="$pkgname-pyc"
+source="https://github.com/webpy/webpy/archive/$pkgver/$_pkgorig-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgorig-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto -k 'not test_routing and not test_db and not test_session and not test_application'
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+2b91977bb78e9387c78ed893b098d665a5189e7b9cb1eacbaf903564285524dabc960107b0e1ba4a85c3aedf73ef63ae05338cc71ccacad47a310970afb77cd9  webpy-0.62.tar.gz
+"

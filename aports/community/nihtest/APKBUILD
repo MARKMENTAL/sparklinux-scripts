@@ -1,0 +1,39 @@
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=nihtest
+pkgver=1.8.0
+pkgrel=0
+pkgdesc="Testing tool for command line utilities"
+url="https://github.com/nih-at/nihtest"
+arch="noarch"
+license="BSD-3-Clause"
+depends="py3-dateutil"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+subpackages="$pkgname-doc $pkgname-pyc"
+source="https://github.com/nih-at/nihtest/releases/download/v$pkgver/nihtest-$pkgver.tar.gz"
+options="!check" # need some intricate setup with cmake..
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+
+	install -Dm644 manpages/nihtest-case.man \
+		"$pkgdir"/usr/share/man/man5/nihtest-case.5
+	install -Dm644 manpages/nihtest.conf.man \
+		"$pkgdir"/usr/share/man/man5/nihtest.conf.5
+	install -Dm644 manpages/nihtest.man \
+		"$pkgdir"/usr/share/man/man1/nihtest.1
+}
+
+sha512sums="
+fdef4ce9f5990f44eda54115767fe01e2f894c0b9b398060d31a424a00d1a8df15c9f12f0d6864b3686a82875294e2c837cc481e3cda130497de6ba6d3a5f620  nihtest-1.8.0.tar.gz
+"

@@ -1,0 +1,64 @@
+# Contributor: kpcyrd <git@rxv.cc>
+# Maintainer: kpcyrd <git@rxv.cc>
+pkgname=cargo-outdated
+pkgver=0.14.0
+pkgrel=0
+pkgdesc="Cargo subcommand for displaying when Rust dependencies are out of date"
+url="https://github.com/kbknapp/cargo-outdated"
+arch="all"
+license="MIT"
+makedepends="
+	cargo
+	cargo-auditable
+	curl-dev
+	libgit2-dev
+	libssh2-dev
+	openssl-dev>3
+	zlib-dev
+	"
+subpackages="$pkgname-doc"
+options="net"
+source="$pkgname-$pkgver.tar.gz::https://github.com/kbknapp/cargo-outdated/archive/v$pkgver.tar.gz
+	"
+
+export LIBSSH2_SYS_USE_PKG_CONFIG=1
+
+prepare() {
+	default_prepare
+
+	# Rust target triple.
+	local target=$(rustc -vV | sed -n 's/host: //p')
+
+	# Build against system-provided libs
+	mkdir -p .cargo
+	cat >> .cargo/config.toml <<-EOF
+
+		[target.$target]
+		git2 = { rustc-link-lib = ["git2"] }
+	EOF
+
+	cargo add libc@0.2.155 time@0.3.35
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --release --frozen
+}
+
+check() {
+	# Increase stack size to avoid stack overflow while compiling 'p384'.
+	export RUST_MIN_STACK="4194304"
+
+	cargo test --frozen
+}
+
+package() {
+	install -Dm755 target/release/cargo-outdated -t "$pkgdir"/usr/bin
+
+	install -Dm 644 -t "$pkgdir/usr/share/doc/cargo-outdated" README.md
+}
+
+sha512sums="
+3ed221452680d32357e539ae6ca30303ecc44d6ba540cabf997ffab06f6fe833dcaa2423249d2073c04a29e692aa529bc27fc4417fd76476ac29742c70f9f436  cargo-outdated-0.14.0.tar.gz
+"

@@ -1,0 +1,53 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=py3-josepy
+_pkgname=josepy
+pkgver=1.14.0
+pkgrel=1
+pkgdesc="JOSE protocol implementation in Python"
+url="https://github.com/certbot/josepy"
+arch="noarch"
+license="Apache-2.0"
+depends="py3-cryptography py3-openssl"
+makedepends="libffi-dev python3-dev py3-gpep517 poetry py3-pytest py3-wheel"
+subpackages="$pkgname-pyc"
+source="$_pkgname-$pkgver.tar.gz::https://github.com/certbot/josepy/archive/v$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+replaces=py-josepy # Backwards compatibility
+provides=py-josepy=$pkgver-r$pkgrel # Backwards compatibility
+
+build() {
+	python3 setup.py build
+}
+
+check() {
+	python3 setup.py check
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+	# https://github.com/certbot/josepy/issues/172
+	rm CHANGELOG.rst CONTRIBUTING.md
+}
+
+sha512sums="
+e852af47871967e1d896e2260cb5d59c2882addf51f0374efe4e4ff00cd2a0710d7d5026536aba23f6a7d225a317e9b2e1dd9c27baf7ea6d101c7dccad4167df  josepy-1.14.0.tar.gz
+"

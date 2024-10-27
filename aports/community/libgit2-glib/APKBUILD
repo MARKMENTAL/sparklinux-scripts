@@ -1,0 +1,33 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=libgit2-glib
+pkgver=1.2.0
+pkgrel=3
+pkgdesc="Glib wrapper library around libgit2"
+url="https://wiki.gnome.org/Projects/Libgit2-glib"
+arch="all"
+license="LGPL-2.1-or-later"
+depends_dev="libgit2-dev"
+makedepends="py3-gobject3-dev vala gobject-introspection-dev meson $depends_dev"
+options="!check" # UTF-8 checks fail in some environments
+subpackages="$pkgname-dev"
+source="https://download.gnome.org/sources/libgit2-glib/${pkgver%.*}/libgit2-glib-$pkgver.tar.xz"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+37004e86c663ce5fe1bd54878b908575eb9195c1012e88e39c2efdb0b6cfa1de3d2ed9754cecc1b942d001698870025c87d95856f2a0a9f2d0dba1979b07b1f8  libgit2-glib-1.2.0.tar.xz
+"

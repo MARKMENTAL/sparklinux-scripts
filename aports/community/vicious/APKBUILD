@@ -1,0 +1,25 @@
+# Contributor: Kevin Daudt <kdaudt@alpinelinux.org>
+# Maintainer: Kevin Daudt <kdaudt@alpinelinux.org>
+_luaver=5.1
+pkgname=vicious
+pkgver=2.7.0
+pkgrel=0
+pkgdesc="widgets for the Awesome window manager"
+url="https://vicious.readthedocs.io/en/latest/"
+arch="noarch"
+license="GPL-2.0-or-later"
+depends="lua$_luaver"
+options="!check" # no test suite
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/vicious-widgets/vicious/archive/refs/tags/v$pkgver.tar.gz"
+
+package() {
+	install -Dm0644 ./*.lua -t "$pkgdir"/usr/share/lua/$_luaver/vicious/
+	install -Dm0644 widgets/*.lua -t "$pkgdir"/usr/share/lua/$_luaver/vicious/widgets/
+	install -Dm0644 contrib/*.lua -t "$pkgdir"/usr/share/lua/$_luaver/vicious/contrib/
+	install -Dm0644 README.md -t "$pkgdir"/usr/share/doc/vicious/
+}
+
+sha512sums="
+683816be5a667671ae11b7aa1f5ca718a79f03ebdde8c38a44f2648c1cfd3facea256f0cad04f963ba00766427f8196050a77ff7446ef427a31adfeb0fb6799c  vicious-2.7.0.tar.gz
+"

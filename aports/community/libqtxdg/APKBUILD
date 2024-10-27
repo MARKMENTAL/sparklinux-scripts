@@ -1,0 +1,46 @@
+# Maintainer: Antoni Aloy <aaloytorrens@gmail.com>
+pkgname=libqtxdg
+pkgver=4.0.0
+pkgrel=0
+pkgdesc="Qt implementation of freedesktop.org xdg specifications"
+url="https://github.com/lxqt/libqtxdg"
+arch="all"
+license="LGPL-2.0-or-later"
+depends="gtk+3.0"
+makedepends="
+	cmake samurai lxqt-build-tools qt6-qtbase-dev
+	qt6-qtsvg-dev glib-dev
+	"
+checkdepends="xvfb-run"
+subpackages="$pkgname-dev"
+source="https://github.com/lxqt/libqtxdg/releases/download/$pkgver/libqtxdg-$pkgver.tar.xz"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DBUILD_TESTS=Yes \
+		$CMAKE_CROSSOPTS .
+	cmake --build build
+
+}
+
+check() {
+	CTEST_OUTPUT_ON_FAILURE=TRUE xvfb-run cmake --build build --target test
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --build build --target install
+
+	mkdir -p "$pkgdir"/usr/lib
+	mv "$pkgdir"/usr/share/cmake "$pkgdir"/usr/lib
+}
+
+sha512sums="
+4a8a32968e74ed54d700cf65c9cfb238001f58d93a9e374e18d60023615d6277f80459dd8477205ce31a6d8caf798cde70b91681df80b1bff3b754e0586868d2  libqtxdg-4.0.0.tar.xz
+"

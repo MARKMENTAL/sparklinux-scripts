@@ -1,0 +1,52 @@
+# Contributor: Celeste <cielesti@protonmail.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=edbrowse
+pkgver=3.8.10
+pkgrel=0
+pkgdesc="Line-oriented editor, web browser, and mail client"
+url="https://edbrowse.org/"
+arch="all !s390x !ppc64le" # quickjs
+license="GPL-2.0-or-later"
+makedepends="
+	curl-dev
+	openssl-dev
+	pcre2-dev
+	perl
+	quickjs-dev
+	readline-dev
+	unixodbc-dev
+	"
+subpackages="$pkgname-doc"
+source="https://github.com/CMB/edbrowse/archive/v$pkgver/edbrowse-$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+
+	# "edbrowse -v" in check() fails if ~/.ebrc is not found
+	if want_check; then
+		touch "$srcdir"/.ebrc
+	fi
+}
+
+build() {
+	make QUICKJS_INCLUDE=/usr/include/quickjs
+}
+
+check() {
+	HOME="$srcdir" ./src/edbrowse -v
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr -C src install
+
+	install -Dvm644 doc/man-edbrowse-debian.1 \
+		"$pkgdir"/usr/share/man/man1/edbrowse.1
+	install -Dvm644 doc/sample.ebrc README \
+		-t "$pkgdir"/usr/share/doc/$pkgname/
+	install -Dvm644 COPYING \
+		-t "$pkgdir"/usr/share/licenses/$pkgname/
+}
+
+sha512sums="
+7fee22f316ed01135cf52e83868759a6d977effba5e3d78fbd8e19d6a5407bef43f13d618ff553dfe62c50ea3f3707eae1cb9284181e8f904b47316e4b5745a4  edbrowse-3.8.10.tar.gz
+"

@@ -1,0 +1,49 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=alsa-tools
+pkgver=1.2.11
+pkgrel=0
+pkgdesc="Advanced tools for certain sound cards"
+url="https://alsa-project.org/"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="fltk-dev gtk+2.0-dev gtk+3.0-dev alsa-lib-dev bash autoconf automake
+	libtool"
+options="!check" # No tests
+subpackages="$pkgname-dev $pkgname-doc $pkgname-gui:_gui"
+source="https://alsa-project.org/files/pub/tools/alsa-tools-$pkgver.tar.bz2"
+
+prepare() {
+	default_prepare
+	update_config_sub
+	update_config_guess
+	# Remove qlo10k1 package, only works with Qt2/Qt3
+	sed 's/qlo10k1//' -i Makefile
+}
+
+build() {
+	make configure CONFIGURE_ARGS="--prefix=/usr"
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	cp -r "$pkgdir"/usr/local/* "$pkgdir"/usr/
+	rm -r "$pkgdir"/usr/local
+}
+
+_gui() {
+	pkgdesc="$pkgdesc (GUI tools)"
+
+	mkdir -p "$subpkgdir"/usr/bin
+	mv "$pkgdir"/usr/bin/echomixer "$subpkgdir"/usr/bin
+	mv "$pkgdir"/usr/bin/envy24control "$subpkgdir"/usr/bin
+	mv "$pkgdir"/usr/bin/hdajackretask "$subpkgdir"/usr/bin
+	mv "$pkgdir"/usr/bin/hdspconf "$subpkgdir"/usr/bin
+	mv "$pkgdir"/usr/bin/hdspmixer "$subpkgdir"/usr/bin
+	mv "$pkgdir"/usr/bin/rmedigicontrol "$subpkgdir"/usr/bin
+}
+
+sha512sums="
+b5a29a83121a637eaa16d225875feeabaea893eabc61b97d0c18a5852d851ff2e6932bd732786bb43525b410c2bb9185261cc4509fd3ee5fd8536557f12b2154  alsa-tools-1.2.11.tar.bz2
+"

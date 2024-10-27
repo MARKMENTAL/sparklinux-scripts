@@ -1,0 +1,42 @@
+# Contributor: Galen Abell <galen@galenabell.com>
+# Maintainer: Galen Abell <galen@galenabell.com>
+pkgname=py3-icalendar
+_pyname=icalendar
+pkgver=5.0.13
+pkgrel=0
+pkgdesc="icalendar parser library for Python"
+url="https://github.com/collective/icalendar"
+arch="noarch"
+license="BSD-2-Clause"
+depends="py3-dateutil py3-tz"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest py3-hypothesis tzdata"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/i/$_pyname/$_pyname-$pkgver.tar.gz"
+builddir="$srcdir/$_pyname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --system-site-packages testenv
+	testenv/bin/python3 -m installer dist/*.whl
+	# Test fails on arm7 pipeline for some reason but isn't reproducible locally.
+	testenv/bin/python3 -m pytest -v "src/$_pyname/tests" \
+		--deselect 'src/icalendar/tests/test_unit_cal.py::test_calendars_with_same_subcomponents_in_different_order_are_equal[issue_526_calendar_with_events-issue_526_calendar_with_shuffeled_events]'
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		dist/*.whl
+
+	cd "$pkgdir"
+	rm -r usr/lib/python*/site-packages/icalendar/tests/
+}
+
+sha512sums="
+df688298acc0bf3cf25aa08b16e149abab696e44540f11695a654065b90316189460481bde17d68e7c6760c1c4bfbbc74e9d7c7e3e640b5a1978d2c6faafbb78  icalendar-5.0.13.tar.gz
+"

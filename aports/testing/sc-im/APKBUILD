@@ -1,0 +1,25 @@
+# Contributor: Roberto Oliveira <robertoguimaraes8@gmail.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=sc-im
+pkgver=0.8.4
+pkgrel=0
+pkgdesc="ncurses spreadsheet program based on SC"
+url="https://github.com/andmarti1424/sc-im"
+arch="all"
+license="BSD-4-Clause"
+makedepends="bison ncurses-dev"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/andmarti1424/sc-im/archive/v$pkgver.tar.gz"
+options="!check" # TODO: run proper tests, perhaps upstream PR 385
+
+build() {
+	make -C src prefix=/usr
+}
+
+package() {
+	make -C src install DESTDIR="$pkgdir" prefix=/usr
+}
+
+sha512sums="
+8cbd701569f13285d6cb630e239a4fab5673dd886e069561552e1be40d08179ebad15c3dd72dfb232d2575e21a08e0499b1993cf361c536792c2951d00d712a6  sc-im-0.8.4.tar.gz
+"

@@ -1,0 +1,265 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Maintainer: Timo Teräs <timo.teras@iki.fi>
+pkgname=grub
+pkgver=2.12
+pkgrel=6
+pkgdesc="Bootloader with support for Linux, Multiboot and more"
+url="https://www.gnu.org/software/grub/"
+arch="all !s390x"
+license="GPL-3.0-or-later"
+depends="initramfs-generator"
+triggers="grub.trigger=/boot"
+makedepends="autoconf automake bison flex font-unifont freetype-dev
+	fuse3-dev gawk gettext-dev libtool linux-headers lvm2-dev python3 xz-dev"
+install="$pkgname.post-upgrade"
+# strip handled by grub Makefiles, abuild strip breaks xen pv-grub
+options="!check !strip"  # Cannot test boot loader.
+subpackages="
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-mkfont
+	$pkgname-mount
+	$pkgname-bash-completion
+	"
+
+# currently grub only builds on x86*, aarch64 and ppc* systems
+case "$CARCH" in
+	x86)		_flavors="efi bios";;
+	x86_64)		_flavors="efi bios xenhost xenhost_pvh";;
+	aarch64|arm*)	_flavors="efi";;
+	mips*)		_flavors="qemu_mips";;
+	riscv*)		_flavors="efi";;
+	ppc*)		_flavors="ieee1275"; makedepends="$makedepends powerpc-utils" ;;
+	s390x)		_flavors="emu" ;;
+	loongarch64)	_flavors="efi" ;;
+esac
+for f in $_flavors; do
+	[ "$f" = "xenhost_pvh" ] && continue # xenhost_pvh shipped in the xenhost subpackage
+	subpackages="$subpackages $pkgname-$f"
+done
+
+source="https://ftp.gnu.org/gnu/grub/grub-$pkgver.tar.xz
+	update-grub
+	grub-xen-host_grub.cfg
+
+	0001-Fix-grub-mkconfig-detection-of-linux-edge-virt.patch
+	0002-ensure-grub-mkconfig-ignores-.apk-new-files.patch
+	0003-prevent-harmless-LVM-warnings-from-grub-probe.patch
+	0004-Handle-encrypted-zfs-root-partition.patch
+	0005-Alpine-Linux-fixes-for-menu.patch
+	0006-build-force-no-pie.patch
+	0007-uefi-firmware-remove-fsetup-check.patch
+	"
+
+# secfixes:
+#   2.06-r13:
+#     - CVE-2021-3697
+#   2.06-r0:
+#     - CVE-2021-3418
+#     - CVE-2020-10713
+#     - CVE-2020-14308
+#     - CVE-2020-14309
+#     - CVE-2020-14310
+#     - CVE-2020-14311
+#     - CVE-2020-14372
+#     - CVE-2020-15705
+#     - CVE-2020-15706
+#     - CVE-2020-15707
+#     - CVE-2020-25632
+#     - CVE-2020-25647
+#     - CVE-2020-27749
+#     - CVE-2020-27779
+#     - CVE-2021-20225
+#     - CVE-2021-20233
+
+prepare() {
+	default_prepare
+	PYTHON=python3 sh ./autogen.sh
+
+	# Required to fix 2.12 build - (empty) file is missing from release
+	touch "$builddir"/grub-core/extra_deps.lst
+}
+
+_build_flavor() {
+	local flavor="$1"
+	shift
+
+	msg "Building grub for platform $flavor"
+	mkdir -p "$srcdir"/build-$flavor
+	cd "$srcdir"/build-$flavor
+	$builddir/configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--target=$CTARGET \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--disable-nls \
+		--disable-werror \
+		"$@"
+	make
+}
+
+build() {
+	local f
+	for f in $_flavors; do
+		case "$f" in
+		bios)		CFLAGS="${CFLAGS/-fno-plt/}" \
+				  _build_flavor $f --with-platform=pc;;
+		efi)		_build_flavor $f --with-platform=efi --disable-efiemu;;
+		xenhost)	_build_flavor $f --with-platform=xen;;
+		xenhost_pvh)	CFLAGS="${CFLAGS/-fno-plt/}" \
+				  _build_flavor $f --with-platform=xen_pvh --target=i386;;
+		*)		_build_flavor $f --with-platform=$f;;
+
+		esac
+	done
+}
+
+_install_xen() {
+	grub_dir=$(mktemp -d)
+	cfg=$(mktemp)
+	grub_memdisk=$(mktemp)
+
+	mkdir -p $grub_dir/boot/grub
+	echo 'normal (memdisk)/grub.cfg' > $cfg
+	sed -e "s/@@PVBOOT_ARCH@@/$CARCH/g" \
+		$srcdir/grub-xen-host_grub.cfg \
+			> $grub_dir/grub.cfg
+	tar -cf - -C $grub_dir grub.cfg > $grub_memdisk
+
+	./grub-mkimage \
+		-O $CARCH-xen \
+		-c $cfg \
+		-d ./grub-core ./grub-core/*.mod \
+		-m $grub_memdisk \
+		-o $pkgdir/grub-$CARCH-xen.bin
+
+	rm -r "$grub_dir"
+	rm "$cfg" "$grub_memdisk"
+}
+
+_install_xenpvh() {
+	grub_dir=$(mktemp -d)
+	cfg=$(mktemp)
+	grub_memdisk=$(mktemp)
+
+	mkdir -p $grub_dir/boot/grub
+	echo 'normal (memdisk)/grub.cfg' > $cfg
+	sed -e "s/@@PVBOOT_ARCH@@/$CARCH/g" \
+		$srcdir/grub-xen-host_grub.cfg \
+			> $grub_dir/grub.cfg
+	tar -cf - -C $grub_dir grub.cfg > $grub_memdisk
+
+	echo "About to run grub-mkimage in: $PWD"
+	# Note: only i386-xen_pvh supported
+	./grub-mkimage \
+		-O i386-xen_pvh \
+		-c $cfg \
+		-d ./grub-core ./grub-core/*.mod \
+		-m $grub_memdisk \
+		-o $pkgdir/grub-i386-xen_pvh.bin
+
+	rm -r "$grub_dir"
+	rm "$cfg" "$grub_memdisk"
+}
+
+_install_flavor() {
+	local flavor="$1"
+	cd "$srcdir"/build-$flavor
+	case $flavor in
+	xenhost)	_install_xen;;
+	xenhost_pvh)	_install_xenpvh;;
+	*)	 	make DESTDIR="$pkgdir" install-strip;;
+	esac
+}
+
+package() {
+	# install BIOS & EFI version into the same directory
+	# and overwrite similar files.
+	for f in $_flavors; do
+		_install_flavor $f
+	done
+
+	rm -f "$pkgdir"/usr/lib/charset.alias
+	# remove grub-install warning of missing directory
+	mkdir -p "$pkgdir"/usr/share/locale
+
+	mkdir -p "$pkgdir"/etc/default/
+	cat >"$pkgdir"/etc/default/grub <<-EOF
+	GRUB_DISTRIBUTOR="Alpine"
+	GRUB_TIMEOUT=2
+	GRUB_DISABLE_SUBMENU=true
+	GRUB_DISABLE_RECOVERY=true
+	EOF
+
+	mkdir -p "$pkgdir"/usr/share/bash-completion
+	mv "$pkgdir"/etc/bash_completion.d "$pkgdir"/usr/share/bash-completion/completions
+
+	install -D -m755 "$srcdir"/update-grub "$pkgdir"/usr/sbin/update-grub
+}
+
+bios() {
+	pkgdesc="$pkgdesc (BIOS version)"
+	depends="$pkgname=$pkgver-r$pkgrel"
+	amove 'usr/lib/grub/*-pc'
+}
+
+efi() {
+	pkgdesc="$pkgdesc (EFI version)"
+	depends="$pkgname=$pkgver-r$pkgrel"
+	amove 'usr/lib/grub/*-efi' 'etc/grub.d/*_bli' 'etc/grub.d/*_uefi-firmware'
+}
+
+xenhost() {
+	pkgdesc="$pkgdesc (XEN host version)"
+	mkdir -p $subpkgdir/usr/lib/grub-xen
+	mv $pkgdir/*-xen.bin $subpkgdir/usr/lib/grub-xen/
+
+	# pick up result from xenhost_pvh build as well
+	mv $pkgdir/*-xen_pvh.bin $subpkgdir/usr/lib/grub-xen/
+}
+
+qemu_mips() {
+	pkgdesc="$pkgdesc (QEMU MIPS version)"
+	depends="$pkgname=$pkgver-r$pkgrel"
+	amove 'usr/lib/grub/*-qemu_mips'
+}
+
+ieee1275() {
+	pkgdesc="$pkgdesc (IEEE1275 version)"
+	depends="$pkgname=$pkgver-r$pkgrel powerpc-utils"
+	amove 'usr/lib/grub/*-ieee1275'
+}
+
+emu() {
+	pkgdesc="$pkgdesc (EMU version)"
+	depends="$pkgname=$pkgver-r$pkgrel"
+	amove 'usr/lib/grub/*-emu'
+}
+
+mkfont() {
+	pkgdesc="$pkgdesc (mkfont utility)"
+	depends="$pkgname=$pkgver-r$pkgrel"
+	amove usr/bin/grub-mkfont
+}
+
+mount() {
+	pkgdesc="$pkgdesc (mount utility)"
+	depends=""
+	amove usr/bin/grub-mount
+}
+
+sha512sums="
+761c060a4c3da9c0e810b0ea967e3ebc66baa4ddd682a503ae3d30a83707626bccaf49359304a16b3a26fc4435fe6bea1ee90be910c84de3c2b5485a31a15be3  grub-2.12.tar.xz
+85b3c56670fb0aaaf831cc6d7ca45faeb68b844cb17cfd6f9b51c2473f0b153cfa7b26ff8bf00a88b2ed3e0ae69a1e8f735256e6cecc91e959169606e2abf887  update-grub
+4e7394e0fff6772c89683039ccf81099ebbfe4f498e6df408977a1488fd59389b6e19afdbf0860ec271e2b2aea0df7216243dcc8235d1ca3af0e7f4d0a9d60a4  grub-xen-host_grub.cfg
+d45f416f7308f338cd187909207cd8329dcb21e22ab0573ae932110c3e108e4bafe6411ae22b5f87809bea39544660dcb03e3fea2c1c33492cd230fa6d3b2760  0001-Fix-grub-mkconfig-detection-of-linux-edge-virt.patch
+e1612f34d14644b30a63d9dc18a0eaf9617ef9f4aa6787c386e6304e15b4573f5149758936cac1ceffdb4e39f6a83e7e7c01a7ef3ed2f7bc974971ae0e2c644c  0002-ensure-grub-mkconfig-ignores-.apk-new-files.patch
+d8606bc2fc6b34e683fdba8b2a131b7d5bede907556c141a30be1d7475a65bf5e2266d577f7a0f0da91646f8605c74d083858c100d2285375474249e53c14fd4  0003-prevent-harmless-LVM-warnings-from-grub-probe.patch
+0f64ab38da309d3c91043b4b662bd8facbcad859c3150da0b15aa0874e33640de1ad7b1539f858f69d26f72512ebbaa70556f07613bea59d1ce509933ba5b753  0004-Handle-encrypted-zfs-root-partition.patch
+474f3576b45f612de4b157f951fbd334d7e136275dd2640e2d3deac7c813e4e8a8809a3b798476eb51cb0a3dd42b52583f7fe526fc78e7638f4506861c98a062  0005-Alpine-Linux-fixes-for-menu.patch
+bb792f7c7be99dee95a031e48be69698ec8e0e76a3060bff314922cca19f086525af6680fb3ea845949be85c7731659a7ab91b2b008e3d526d1549bb108053c2  0006-build-force-no-pie.patch
+c0bea923acc6affd32e78a58685e847f24e26c501b5bbabee99cc6e25c5668263e61f0bf508a6741bd75fef891ca3229f9d746ef254c72d2cb8dca7c18f92f54  0007-uefi-firmware-remove-fsetup-check.patch
+"

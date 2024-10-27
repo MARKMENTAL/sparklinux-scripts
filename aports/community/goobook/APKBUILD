@@ -1,0 +1,42 @@
+# Contributor: Ivan Tham <pickfire@riseup.net>
+# Maintainer:
+pkgname=goobook
+pkgver=3.5.2
+pkgrel=3
+pkgdesc="Access Google contacts from the command line"
+url="https://gitlab.com/goobook/goobook"
+arch="noarch !ppc64le"  # limited by py3-grpcio
+license="GPL-3.0-or-later"
+depends="
+	py3-google-api-python-client
+	py3-google-auth-httplib2
+	py3-httplib2
+	py3-oauth2client
+	py3-setuptools
+	py3-simplejson
+	py3-xdg
+	python3
+	"
+makedepends="py3-docutils py3-gpep517 py3-poetry-core"
+options="!check" # no test suite on gitlab
+subpackages="$pkgname-doc $pkgname-pyc"
+source="https://gitlab.com/goobook/goobook/-/archive/$pkgver/goobook-$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+
+	rst2man --strict goobook.1.rst goobook.1
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/goobook-*.whl
+
+	install -Dm644 goobook.1 -t "$pkgdir"/usr/share/man/man1
+}
+
+sha512sums="
+f9f824100e948010e9fb25c79ea035259dc53ce4b123b3c5251ea6cc58b27914b2b45235c08b2237fc80fd3e9f9ee8505670702f1e7dcf7387e862104cdef557  goobook-3.5.2.tar.gz
+"

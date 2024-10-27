@@ -1,0 +1,38 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+pkgname=toml-adapt
+pkgver=0.3.3
+pkgrel=1
+pkgdesc="A simple command-line interface (CLI) for manipulating toml files"
+url="https://github.com/firefly-cpp/toml-adapt"
+arch="noarch"
+license="MIT"
+depends="python3 py3-toml py3-click"
+checkdepends="py3-pytest-xdist"
+makedepends="py3-gpep517 py3-poetry-core"
+subpackages="$pkgname-doc $pkgname-pyc"
+source="https://github.com/firefly-cpp/toml-adapt/archive/$pkgver/toml-adapt-$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+
+	install -Dm644 toml-adapt.1 -t "$pkgdir"/usr/share/man/man1/
+	install -Dm644 CITATION.cff -t "$pkgdir"/usr/share/doc/$pkgname
+}
+
+sha512sums="
+ad47155f383da21b2afa720e9fe9a696175e5a3c324a3307a04a63dfb946c900e0d198bc1f27171cdef63da37f8023c15c16b3ebd339a558c683274d17d812a2  toml-adapt-0.3.3.tar.gz
+"

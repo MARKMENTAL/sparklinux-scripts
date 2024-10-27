@@ -1,0 +1,36 @@
+# Contributor: Fabian Affolter <fabian@affolter-engineering.ch>
+# Maintainer: Fabian Affolter <fabian@affolter-engineering.ch>
+pkgname=py3-sphinxcontrib-phpdomain
+pkgver=0.12.0
+pkgrel=0
+pkgdesc="Sphinx phpdomain extension"
+url="https://pypi.org/project/sphinxcontrib-phpdomain"
+arch="noarch"
+license="BSD-2-Clause"
+depends="py3-sphinx"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/markstory/sphinxcontrib-phpdomain/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir"/sphinxcontrib-phpdomain-$pkgver
+
+replaces="py-sphinxcontrib-phpdomain" # for backwards compatibility
+provides="py-sphinxcontrib-phpdomain=$pkgver-r$pkgrel" # for backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+9d06db9bcd8b16633dd12c00797c73acef4527b60b0a6f7ad1c1e624fb0098114b8e783ccc85c60075767de004878887d0f7e3fb4aaa48b351d7c03aa5556be4  py3-sphinxcontrib-phpdomain-0.12.0.tar.gz
+"

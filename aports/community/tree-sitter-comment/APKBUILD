@@ -1,0 +1,25 @@
+# Contributor: Hygna <hygna@proton.me>
+# Maintainer: Hygna <hygna@proton.me>
+pkgname=tree-sitter-comment
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Tree-sitter grammar for comment tags like TODO, FIXME(user)"
+url="https://github.com/stsewd/tree-sitter-comment"
+arch="all"
+license="MIT"
+makedepends="tree-sitter-dev"
+install_if="tree-sitter-grammars"
+source="$pkgname-$pkgver.tar.gz::https://github.com/stsewd/tree-sitter-comment/archive/refs/tags/v$pkgver.tar.gz"
+options="!check" # no tests for shared lib
+
+build() {
+	abuild-tree-sitter build
+}
+
+package() {
+	DESTDIR="$pkgdir" abuild-tree-sitter install
+}
+
+sha512sums="
+987327ebad35d9d1cc63862b45b333ccd6a83d854436abc4df150321db326fc30ac0bbc9a4601c72faf3aa8c592393d1e562fb4085a2c5e2705ab91dd363ef7d  tree-sitter-comment-0.1.0.tar.gz
+"

@@ -1,0 +1,42 @@
+# Contributor: Milan P. Stanić <mps@arvanta.net>
+# Maintainer: Milan P. Stanić <mps@arvanta.net>
+pkgname=bcachefs-tools
+pkgver=1.11.0
+pkgrel=0
+pkgdesc="userspace tools for bcachefs"
+url="https://bcachefs.org/"
+# loongarch64: libc crate fails to build
+arch="all !loongarch64"
+options="!check" # no test
+license="GPL-2-or-later"
+makedepends="
+	cargo
+	clang17-dev
+	coreutils
+	libaio-dev
+	libsodium-dev
+	llvm17-dev
+	eudev-dev
+	util-linux-dev
+	keyutils-dev
+	lz4-dev
+	userspace-rcu-dev
+	zstd-dev
+	pkgconf
+	zlib
+	"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.zst::https://evilpiepirate.org/bcachefs-tools/bcachefs-tools-$pkgver.tar.zst"
+
+build() {
+	make PREFIX=/usr
+}
+
+package() {
+	#make DESTDIR=$pkgdir PREFIX=/usr ROOT_SBINDIR="/sbin" install
+	make DESTDIR=$pkgdir PREFIX=/usr ROOT_SBINDIR="/usr/sbin" install
+}
+
+sha512sums="
+00db1c097313a001af196a24dcab81d46558bd96c3521e90b6fe99db165f90e8afc3fa7eabf989e52859d6d547de08df0b2894744b90f3b60569922bd4f1d9bf  bcachefs-tools-1.11.0.tar.zst
+"

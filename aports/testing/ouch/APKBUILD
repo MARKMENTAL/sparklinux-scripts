@@ -1,0 +1,55 @@
+# Contributor: guddaff <guddaff@protonmail.com>
+# Maintainer: guddaff <guddaff@protonmail.com>
+pkgname=ouch
+pkgver=0.5.1
+pkgrel=0
+pkgdesc="Painless compression and decompression"
+url="https://github.com/ouch-org/ouch"
+# loongarch64: blocked by libc crate
+arch="all !loongarch64"
+license="MIT"
+makedepends="cargo bzip2-dev xz-dev zlib-dev zstd-dev cargo-auditable"
+subpackages="
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="
+	$pkgname-$pkgver.tar.gz::https://github.com/ouch-org/ouch/archive/refs/tags/$pkgver.tar.gz
+	use-system-libs.patch
+	"
+
+prepare() {
+	default_prepare
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	OUCH_ARTIFACTS_FOLDER=artifacts \
+		cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm755 target/release/ouch -t "$pkgdir"/usr/bin/
+
+	cd artifacts/
+	install -Dm644 ouch.1 ouch-list.1 ouch-compress.1 ouch-decompress.1 \
+		-t "$pkgdir"/usr/share/man/man1/
+
+	install -Dm644 ouch.bash \
+		"$pkgdir"/usr/share/bash-completion/completions/ouch
+	install -Dm644 ouch.fish \
+		"$pkgdir"/usr/share/fish/vendor_completions.d/ouch.fish
+	install -Dm644 _ouch \
+		"$pkgdir"/usr/share/zsh/site-functions/_ouch
+}
+
+sha512sums="
+b30dc9bb6bf8850f30ea6e23ae202df0941c2dc80b1f9b137093c36c6c2028e4c167809e657daa8b3af7a5ed1692a350e0b4709095281ad744d9fe0e22dd42b3  ouch-0.5.1.tar.gz
+1f56e8fcef76e48a7d1f3d2aac852c610a44e2d46360e8f6639f8f75a0385202aad772734f121218b132262cfe62a701e312db1a826ce45dad099ee09acd9e1b  use-system-libs.patch
+"

@@ -1,0 +1,44 @@
+# Contributor: Will Sinatra <wpsinatra@gmail.com>
+# Maintainer: Will Sinatra <wpsinatra@gmail.com>
+pkgname=py3-vt-py
+pkgver=0.18.4
+pkgrel=0
+pkgdesc="Official Python client library for VirusTotal's REST API"
+url="https://github.com/virustotal/vt-py"
+license="Apache-2.0"
+arch="noarch"
+makedepends="py3-gpep517 py3-build py3-installer py3-setuptools py3-wheel py3-sphinx"
+checkdepends="py3-pytest-asyncio py3-pytest-httpserver py3-flask"
+depends="py3-aiohttp"
+source="$pkgname-$pkgver.tar.gz::https://github.com/VirusTotal/vt-py/archive/refs/tags/$pkgver.tar.gz"
+subpackages="$pkgname-pyc $pkgname-doc"
+builddir="$srcdir/vt-py-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+
+	PYTHONPATH=$builddir sphinx-build -b man docs/source _build
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer --destdir="$pkgdir" .dist/*.whl
+	install -Dm644 "_build/vt-py.1" -t "$pkgdir/usr/share/man/man1/"
+
+	mkdir -p "$pkgdir/usr/share/doc/$pkgname/"
+	install -Dm644 "$builddir"/docs/*.html "$pkgdir/usr/share/doc/$pkgname/"
+	install -Dm644 "$builddir"/docs/*.js "$pkgdir/usr/share/doc/$pkgname/"
+	install -dm644 "$builddir"/docs/api "$pkgdir/usr/share/doc/$pkgname/"
+	install -dm644 "$builddir"/docs/_modules "$pkgdir/usr/share/doc/$pkgname/"
+}
+
+sha512sums="
+5a8b4bf3c3ccdb7161cbb415455d13bb84211abebe9fe10ec1d37fca99f85a12a0ac4ec9516c57a048a0e2b8ad221d5c47be7462a1aaea0183046e2ca6945dd1  py3-vt-py-0.18.4.tar.gz
+"

@@ -1,0 +1,39 @@
+# Contributor: ScrumpyJack <scrumpyjack@st.ilet.to>
+# Maintainer: ScrumpyJack <scrumpyjack@st.ilet.to>
+pkgname=geeqie
+pkgver=2.4
+pkgrel=0
+pkgdesc="Gtk+ based image viewer and organiser"
+url="http://www.geeqie.org/"
+arch="all"
+license="GPL-2.0-only"
+makedepends="
+	doxygen
+	exiv2-dev
+	graphviz-dev
+	gtk+3.0-dev
+	lcms2-dev
+	libarchive-dev
+	lua5.3-dev
+	meson
+	xxd
+	"
+subpackages="$pkgname-doc $pkgname-lang"
+source="https://github.com/BestImageViewer/geeqie/releases/download/v$pkgver/geeqie-$pkgver.tar.xz
+	"
+options="!check" # no tests
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		. output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+7e0f5dff21e38a41adf0a793bd82652c5d639e84ab49403517f4b1dae042bfc5f4d02e54b54928e04a2397300acb04b130347df0be5637ee48634f5865ad346b  geeqie-2.4.tar.xz
+"

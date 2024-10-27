@@ -1,0 +1,78 @@
+# Contributor: Chloe Kudryavtsev <code@toast.bunkerlabs.net>
+# Maintainer: omni <omni+alpine@hack.org>
+pkgname=bat
+pkgver=0.24.0
+pkgrel=1
+pkgdesc="cat(1) clone with wings"
+url="https://github.com/sharkdp/bat"
+# s390x: nix crate fails to build
+# loongarch64: blocked by libc crate
+arch="all !s390x !loongarch64"
+license="Apache-2.0"
+depends="less" # Required for RAW-CONTROL-CHARS
+makedepends="
+	cargo
+	cargo-auditable
+	libgit2-dev
+	oniguruma-dev
+	"
+checkdepends="bash"
+options="net"
+subpackages="$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="https://github.com/sharkdp/bat/archive/v$pkgver/bat-$pkgver.tar.gz"
+
+# secfixes:
+#   0.21.0-r0:
+#     - CVE-2022-24713
+
+export CARGO_PROFILE_RELEASE_OPT_LEVEL="z"
+
+export RUSTONIG_DYNAMIC_LIBONIG=1  # use system libonig
+
+prepare() {
+	default_prepare
+
+	# Rust target triple.
+	local target=$(rustc -vV | sed -n 's/host: //p')
+
+	# Build against system-provided libs
+	mkdir -p .cargo
+	cat >> .cargo/config.toml <<-EOF
+		[target.$target]
+		git2 = { rustc-link-lib = ["git2"] }
+	EOF
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm755 target/release/bat "$pkgdir"/usr/bin/bat
+
+	find "$srcdir" -name bat.1 -exec install -Dm644 {} \
+		"$pkgdir"/usr/share/man/man1/bat.1 \;
+
+	find "$srcdir" -name bat.bash -exec install -Dm644 {} \
+		"$pkgdir"/usr/share/bash-completion/completions/bat \;
+
+	find "$srcdir" -name bat.fish -exec install -Dm644 {} \
+		"$pkgdir"/usr/share/fish/vendor_completions.d/bat.fish \;
+
+	find "$srcdir" -name bat.zsh -exec install -Dm644 {} \
+		"$pkgdir"/usr/share/zsh/site-functions/_bat \;
+}
+
+sha512sums="
+bcb3f818150283ac8d9195175517b17d7de0727604de3e34fc51b168507e8e22ecf91dcb60e12a53cb2f8385dc07fbe5c8123d48bf0dc3a7868a3ae9295da5c4  bat-0.24.0.tar.gz
+"

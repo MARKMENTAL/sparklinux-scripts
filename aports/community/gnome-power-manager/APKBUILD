@@ -1,0 +1,36 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=gnome-power-manager
+pkgver=43.0
+pkgrel=2
+pkgdesc="GNOME power manager"
+url="https://gitlab.gnome.org/GNOME/gnome-power-manager"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="
+	gobject-introspection-dev
+	gtk+3.0-dev
+	meson
+	upower-dev
+	"
+subpackages="$pkgname-lang"
+source="https://download.gnome.org/sources/$pkgname/${pkgver%.*}/$pkgname-$pkgver.tar.xz"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+d82c541821f09f6a3229b59ba29b1b77a0d8d11d0e10eab27edb9fc324955cc81f49395ff752bd1ecd2df456343ff8042466e91d1edf421521364a4779d67492  gnome-power-manager-43.0.tar.xz
+"

@@ -1,0 +1,52 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=gross
+pkgver=1.0.4
+pkgrel=0
+pkgdesc="Greylisting of suspicious sources"
+url="https://codeberg.org/bizdelnick/gross"
+arch="all"
+license="BSD-3-Clause"
+makedepends="c-ares-dev autoconf automake libtool sed"
+install="$pkgname.pre-install $pkgname.pre-upgrade
+	$pkgname.post-upgrade"
+subpackages="$pkgname-doc $pkgname-dev $pkgname-openrc"
+source="https://codeberg.org/bizdelnick/gross/releases/download/v$pkgver/gross-$pkgver.tar.xz
+	grossd.initd
+	grossd.confd
+	gross-1.0.1-default-conf.patch
+	gross-grey_tuple.patch
+	"
+options="!check"
+
+prepare() {
+	update_config_sub
+	default_prepare
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info
+	make -j1
+}
+
+package() {
+	make -j1 DESTDIR="$pkgdir" install
+
+	install -dD "$pkgdir"/var/run/gross
+	install -m755 -D "$srcdir"/grossd.initd "$pkgdir"/etc/init.d/grossd
+	install -m644 -D "$srcdir"/grossd.confd "$pkgdir"/etc/conf.d/grossd
+}
+
+sha512sums="
+28126ed65ca82b9826b04f6210a95865fc514b924c0f14123e822923d2ce44f2c5c80d41f5b23c3ff845f9734a8e6ca3424fa165e7955d0fa99d52ae45bb30ea  gross-1.0.4.tar.xz
+8784cd056372dced708b561548f71f24177b302efe2256626a6bb9b91374ae783be1c4d844b6f38af4b03f370b0c8c803ab9ce2f07855e630f98b585e0f65dc9  grossd.initd
+d9f8b74d13e0d3f0e2dfe20e1b7a6e50e91e81c9769d3e1afe3370edf66da5827d3b24f369216370f426a0a242a797a470408831b2cf4e880d4f17d1611a065d  grossd.confd
+90d80c1a68f71f671c19187dccaee9d475d92925a947d25e68c277b0c52f43e0e4b37c1d8f063a2ef155daa93d8f60fc19e3692f0193a9662670d47e425f37d4  gross-1.0.1-default-conf.patch
+5561d46da4848b56d9bb38aa857fe584d7c35a0c432005430b25a2280ca320c70ae8a92bb2718243198345d2919d8eb3d04fb24056c404a648a17a9a6b564c94  gross-grey_tuple.patch
+"

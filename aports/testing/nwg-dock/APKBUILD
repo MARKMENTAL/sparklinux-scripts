@@ -1,0 +1,31 @@
+# Contributor: Edd Salkield <edd@salkield.uk>
+# Maintainer: Edd Salkield <edd@salkield.uk>
+pkgname=nwg-dock
+pkgver=0.3.9
+pkgrel=6
+pkgdesc="GTK3-based dock for sway and other wlroots-based compositors"
+url="https://github.com/nwg-piotr/nwg-dock/"
+arch="all"
+license="MIT"
+makedepends="go glib-dev gtk+3.0-dev gtk-layer-shell-dev" # TODO: strip non-required
+#makedepends="go glib-dev cairo-dev gtk+3.0-dev gtk-layer-shell-dev" # TODO: strip non-required
+source="https://github.com/nwg-piotr/nwg-dock/archive/v$pkgver/nwg-dock-v$pkgver.tar.gz"
+options="!check net"	# no upstream tests
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -o bin/nwg-dock .
+}
+
+package() {
+	install -m755 -D ./bin/nwg-dock "$pkgdir"/usr/bin/nwg-dock
+	install -m644 -D -t "$pkgdir"/usr/share/nwg-dock ./config/*
+	install -m644 -D -t "$pkgdir"/usr/share/nwg-dock/images ./images/*
+}
+
+sha512sums="
+d19849659691e32a63f00b2a02c829e2cd4276f7539944e2ed7b1d630395471f1785dcb5f9cffc3a0f9aa7cde1a7305536c0ad5714750bcf0f2870e909db5c3e  nwg-dock-v0.3.9.tar.gz
+"

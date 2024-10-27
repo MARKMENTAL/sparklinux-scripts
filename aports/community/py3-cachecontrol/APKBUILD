@@ -1,0 +1,50 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=py3-cachecontrol
+_realname=cachecontrol
+pkgver=0.14.0
+pkgrel=2
+pkgdesc="httplib2 caching for requests"
+url="https://github.com/psf/cachecontrol"
+arch="noarch"
+license="Apache-2.0"
+depends="
+	py3-msgpack
+	py3-requests
+	"
+makedepends="
+	py3-flit-core
+	py3-gpep517
+	"
+checkdepends="
+	py3-cherrypy
+	py3-filelock
+	py3-lockfile
+	py3-mock
+	py3-pytest-xdist
+	py3-redis
+	"
+subpackages="$pkgname-pyc"
+source="https://github.com/psf/cachecontrol/archive/refs/tags/v$pkgver/py3-cachecontrol-$pkgver.tar.gz"
+builddir="$srcdir/$_realname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+95a7d357f7368eb2ff1b42e155675c319e0a0aa2a42e5a738990a1c6bae44a6e262b2bcaaf2eccd3d5dcff045eb17e48c60ee450fd4b6ac4219ec47bdb6aace0  py3-cachecontrol-0.14.0.tar.gz
+"

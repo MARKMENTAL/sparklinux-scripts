@@ -1,0 +1,52 @@
+# Contributor: Antoine Martin (ayakael) <dev@ayakael.net>
+# Maintainer: Antoine Martin (ayakael) <dev@ayakael.net>
+pkgname=py3-django-autocomplete-light
+pkgver=3.11.0
+pkgrel=1
+#_pkgreal is used by apkbuild-pypi to find modules at PyPI
+_pkgreal=django-autocomplete-light
+pkgdesc="Fresh autocompletes for Django"
+url="https://pypi.python.org/project/django-autocomplete-light"
+arch="noarch"
+license="MIT"
+depends="
+	py3-six
+	py3-django-querysetsequence
+	py3-django-taggit
+	py3-django-extensions
+	py3-django-nested-admin
+	"
+checkdepends="
+	py3-pytest
+	py3-flake8
+	py3-pep8-naming
+	py3-mccabe
+	py3-pytest-django
+"
+makedepends="py3-setuptools py3-gpep517 py3-wheel"
+source="$pkgname-$pkgver.tar.gz::https://github.com/yourlabs/django-autocomplete-light/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/$_pkgreal-$pkgver"
+options="!check" # depends on py3-selenium, repackaged chrome
+subpackages="$pkgname-pyc"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	cd "$builddir"/test_project
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer "$builddir"/.dist/*.whl
+	DJANGO_SETTINGS_MODULE=settings.base .testenv/bin/python3 -m pytest -v
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+a679781dbf1d491472abe9e1e1504d03e808311fa2dca9ba91930b678d151c0c360b23c6800406d6adf9b2666411a34b85ca20b20e3c9a930a537220e90d2bcc  py3-django-autocomplete-light-3.11.0.tar.gz
+"

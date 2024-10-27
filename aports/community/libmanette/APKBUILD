@@ -1,0 +1,33 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=libmanette
+pkgver=0.2.7
+pkgrel=0
+pkgdesc="Simple GObject game controller library"
+url="https://gnome.pages.gitlab.gnome.org/libmanette/"
+arch="all"
+license="LGPL-2.1-or-later"
+makedepends="meson glib-dev libgudev-dev libevdev-dev gobject-introspection-dev
+	vala"
+subpackages="$pkgname-dev"
+source="https://download.gnome.org/sources/libmanette/${pkgver%.*}/libmanette-$pkgver.tar.xz"
+
+build() {
+	abuild-meson \
+		-Dvapi=true \
+		-Dintrospection=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+c3ebaba901731d3f106379befba1c4020aa32dcd224ced7f24aab37e547644080202dfcdd0e8cbd0cb6c864410f038e483502d357ab9842ae0f25e9570d120ef  libmanette-0.2.7.tar.xz
+"

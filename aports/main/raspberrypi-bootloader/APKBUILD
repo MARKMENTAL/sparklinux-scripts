@@ -1,0 +1,71 @@
+# Contributor: Marian Buschsieweke <marian.buschsieweke@posteo.net>
+# Maintainer: Timo Teräs <timo.teras@iki.fi>
+pkgname=raspberrypi-bootloader
+# To match Alpine kernel schedule, use master branch commit id rather than older stable tagged releases
+# Keep by-the-date release numbering for consistency
+# To avoid unnecessary pkg bumps & update just pick commit of latest *.dat, *.elf, bootcode.bin files changes
+_commit=16ea77ce3c3671a2994463bf3cea72cf444ee7e1
+pkgver=1.20240913
+pkgrel=0
+pkgdesc="Bootloader files for the Raspberry Pi"
+url="https://github.com/raspberrypi/rpi-firmware"
+arch="armhf armv7 aarch64"
+license="custom"
+triggers="raspberrypi-bootloader-common.trigger=/boot"
+options="!check !strip !tracedeps !spdx"
+source="$pkgname-$pkgver.tar.gz::https://github.com/raspberrypi/rpi-firmware/archive/$_commit.tar.gz
+	update-raspberrypi-bootloader"
+subpackages="$pkgname-common $pkgname-experimental $pkgname-debug $pkgname-cutdown $pkgname-doc"
+depends="$pkgname-common=$pkgver-r$pkgrel"
+
+builddir="$srcdir/rpi-firmware-$_commit"
+
+package() {
+	local fw; for fw in bootcode.bin fixup.dat fixup4.dat start.elf start4.elf; do
+		install -D "$builddir"/$fw \
+			"$pkgdir"/boot/$fw
+	done
+	install -Dm 644 "$builddir"/LICENCE.broadcom \
+		"$pkgdir"/usr/share/licenses/$pkgname/COPYING
+	install -D -m755 "$srcdir"/update-raspberrypi-bootloader \
+		"$pkgdir"/sbin/update-raspberrypi-bootloader
+}
+
+common() {
+	pkgdesc="Common files used by Raspberry Pi bootloaders"
+	depends=
+	amove boot/bootcode.bin \
+		sbin/update-raspberrypi-bootloader
+}
+
+experimental() {
+	pkgdesc="Experimental firmware with additional codecs"
+	depends="$pkgname-common=$pkgver-r$pkgrel"
+	local fw; for fw in start_x.elf start4x.elf fixup_x.dat fixup4x.dat; do
+		install -D "$builddir"/$fw \
+				"$subpkgdir"/boot/$fw
+	done
+}
+
+debug() {
+	pkgdesc="Debug firmware"
+	depends="$pkgname-common=$pkgver-r$pkgrel"
+	local fw; for fw in start_db.elf start4db.elf fixup_db.dat fixup4db.dat; do
+		install -D "$builddir"/$fw \
+			"$subpkgdir"/boot/$fw
+	done
+}
+
+cutdown() {
+	pkgdesc="Cut-down firmware for lower memory settings"
+	depends="$pkgname-common=$pkgver-r$pkgrel"
+	local fw; for fw in start_cd.elf start4cd.elf fixup_cd.dat fixup4cd.dat; do
+		install -D "$builddir"/$fw \
+			"$subpkgdir"/boot/$fw
+	done
+}
+
+sha512sums="
+a1c8706bb79c27c4c220d2d98c93e8bde9d9c558184c624699bdf6d71ace9bda6b0e02c3afc4e64fdf794eee89820b16f8021e0f75308eef2195f2a4fe35f616  raspberrypi-bootloader-1.20240913.tar.gz
+35af8c7bdd3ab6f2bbc0290d8cb2adbe333639e9e3d9d03f3d0b981e6814a0ab56fb508e0e34e44ae3a325909cab3a76819fb6844d7eafe394996f7a0db83c0e  update-raspberrypi-bootloader
+"

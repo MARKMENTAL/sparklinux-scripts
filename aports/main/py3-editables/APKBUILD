@@ -1,0 +1,30 @@
+# Contributor: Duncan Bellamy <dunk@denkimushi.com>
+# Maintainer: Duncan Bellamy <dunk@denkimushi.com>
+pkgname=py3-editables
+pkgver=0.5
+pkgrel=2
+pkgdesc="library for creating editable wheels"
+url="https://github.com/pfmoore/editables"
+arch="noarch"
+license="MIT"
+options="!check" #pytest circular dep
+depends="python3"
+makedepends="py3-gpep517 py3-installer py3-flit-core py3-wheel"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/e/editables/editables-$pkgver.tar.gz"
+builddir="$srcdir/editables-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+eba54a4624d4df6b2aaf33a46da1dfd4b218da4f89c5832401b074eae089bc59e1eae9e16291374c9f0406923e4c9d02682dabbc91ad263203cb897ba7dc796f  editables-0.5.tar.gz
+"

@@ -1,0 +1,49 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Maintainer: Sören Tempel <soeren+alpine@soeren-tempel.net>
+pkgname=restic
+pkgver=0.17.1
+pkgrel=0
+pkgdesc="Fast, secure, efficient backup program"
+url="https://restic.net/"
+arch="all"
+license="BSD-2-Clause"
+makedepends="go"
+checkdepends="python3"
+options="net chmod-clean"
+subpackages="$pkgname-doc $pkgname-bash-completion $pkgname-zsh-completion $pkgname-fish-completion"
+source="https://github.com/restic/restic/releases/download/v$pkgver/restic-$pkgver.tar.gz"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -v ./cmd/...
+}
+
+check() {
+	# may fail if /tmp is tmpfs
+	rm internal/restic/node_xattr_all_test.go
+	RESTIC_TEST_FUSE=0 make test
+}
+
+package() {
+	install -Dm755 $pkgname "$pkgdir"/usr/bin/$pkgname
+
+	local man
+	for man in doc/man/*.?; do
+		install -Dm644 "$man" \
+			"$pkgdir"/usr/share/man/man${man##*.}/${man##*/}
+	done
+
+	install -Dm644 doc/bash-completion.sh \
+		"$pkgdir"/usr/share/bash-completion/completions/$pkgname
+	install -Dm644 doc/zsh-completion.zsh \
+		"$pkgdir"/usr/share/zsh/site-functions/_$pkgname
+	install -Dm644 doc/fish-completion.fish \
+		"$pkgdir"/usr/share/fish/vendor_completions.d/$pkgname.fish
+}
+
+sha512sums="
+668b41cff65a81c7458b58c622a35bbbc4f73561e78af399440050744d18d751cab3030163a4c192091f1e21755c6988b94fbb6dd2dc47c626582fea8711f574  restic-0.17.1.tar.gz
+"

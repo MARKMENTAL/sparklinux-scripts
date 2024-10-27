@@ -1,0 +1,34 @@
+# Contributor: Maarten van Gompel <proycon@anaproy.nl>
+# Maintainer: Maarten van Gompel <proycon@anaproy.nl>
+pkgname=mbt
+pkgver=3.10
+pkgrel=1
+pkgdesc="Memory-based Tagger and Tagger Generator"
+arch="all"
+url="https://github.com/LanguageMachines/mbt"
+license="GPL-3.0-only"
+makedepends="libtool libxml2-dev ticcutils-dev timbl-dev timblserver-dev icu-dev"
+subpackages="$pkgname-dev $pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/LanguageMachines/mbt/releases/download/v$pkgver/mbt-$pkgver.tar.gz"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--localstatedir=/var
+	make
+}
+
+check() {
+	LD_LIBRARY_PATH="$PWD/src/.libs/" make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+d18f81f7b6e57d62c6cb308f6a6426bee2d0a024418477859a4704b640eb9624c27733c32b38064a0359f7fdc4db32c0f973d476efc62ae43981e98ca9a4e253  mbt-3.10.tar.gz
+"

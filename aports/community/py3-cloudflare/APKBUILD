@@ -1,0 +1,55 @@
+# Contributor: lauren n. liberda <lauren@selfisekai.rocks>
+# Maintainer: lauren n. liberda <lauren@selfisekai.rocks>
+pkgname=py3-cloudflare
+pkgver=2.14.3
+pkgrel=1
+pkgdesc="Python wrapper for the Cloudflare Client API v4"
+url="https://github.com/cloudflare/python-cloudflare"
+arch="noarch"
+license="MIT"
+depends="
+	py3-beautifulsoup4
+	py3-future
+	py3-jsonlines
+	py3-requests
+	py3-yaml
+	python3
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="py3-pytest"
+subpackages="$pkgname-doc $pkgname-pyc"
+source="
+	https://github.com/cloudflare/python-cloudflare/archive/refs/tags/$pkgver/python-cloudflare-$pkgver.tar.gz
+
+	no-examples.patch
+	"
+builddir="$srcdir/python-cloudflare-$pkgver"
+
+build() {
+	rm -rf examples
+
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	# test_email_key_token: requires cloudflare credentials
+	.testenv/bin/python3 -m pytest -k 'not test_email_key_token'
+}
+
+package() {
+	python3 -m installer \
+		-d "$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+0af10e5f87795056a0bbe6ba22e73fe4e6c28b2f59c4f1b993b5f4896747997d9143be2b3bbc592070fee7fa3dfd604fd9dd2ab733a34c8d3a050c257203dfda  python-cloudflare-2.14.3.tar.gz
+cc344a2d5724e49dce03fb537d8b0ddc6a6ab80be7ac66d2c2defa4b805368a56074f4ad045b3623530da99aaa2c3b710c6c743636fa4528373b98eb0a35c19b  no-examples.patch
+"

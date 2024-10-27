@@ -1,0 +1,48 @@
+# Contributor: Jonas <3426-spameier@users.gitlab.alpinelinux.org>
+# Maintainer: Jonas <3426-spameier@users.gitlab.alpinelinux.org>
+pkgname=py3-aiowinreg
+_pyname=aiowinreg
+pkgver=0.0.12
+pkgrel=0
+pkgdesc="Windows registry file reader"
+url="https://github.com/skelsec/aiowinreg"
+arch="noarch"
+license="MIT"
+depends="
+	py3-prompt_toolkit
+	py3-winacl
+	python3
+	"
+makedepends="
+	py3-gpep517
+	py3-wheel
+	py3-setuptools
+	"
+checkdepends="
+	py3-pytest
+	py3-pytest-asyncio
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/skelsec/aiowinreg/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/$_pyname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+	rm -rf "$pkgdir"/usr/lib/python3.*/site-packages/tests/ # remove tests
+}
+
+sha512sums="
+98fe29865ca7936ee65596b1e5d1bc281b2699f1f11240f2a51439a364f6ddedba83513539ffc6931c36b2dff5dd07744f63af5d513be4d4dfbf9c6768ab89d6  py3-aiowinreg-0.0.12.tar.gz
+"

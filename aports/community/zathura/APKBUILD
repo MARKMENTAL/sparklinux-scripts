@@ -1,0 +1,58 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Contributor: Andrew Hills <ahills@ednos.net>
+# Contributor: Jean-Louis Fuchs <jean-louis.fuchs@adfinis-sygroup.ch>
+# Maintainer: Jean-Louis Fuchs <jean-louis.fuchs@adfinis-sygroup.ch>
+pkgname=zathura
+pkgver=0.5.8
+pkgrel=0
+pkgdesc="zathura - highly customizable and functional document viewer"
+url="https://pwmt.org/projects/zathura/"
+arch="all"
+license="Zlib"
+makedepends="
+	appstream-glib
+	check-dev
+	file-dev
+	girara-dev
+	json-glib-dev
+	libseccomp-dev
+	meson
+	ncurses
+	py3-docutils
+	py3-sphinx
+	desktop-file-utils
+	sqlite-dev
+	"
+checkdepends="mesa-dri-gallium dbus xvfb"
+subpackages="
+	$pkgname-doc
+	$pkgname-dev
+	$pkgname-lang
+	$pkgname-bash-completion
+	$pkgname-zsh-completion
+	$pkgname-fish-completion
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/pwmt/zathura/archive/refs/tags/$pkgver.tar.gz"
+
+case "$CARCH" in
+ppc64le|s390x|riscv64|loongarch64) ;;
+*) makedepends="$makedepends texlive-dev" ;;
+esac
+
+build() {
+	abuild-meson build
+	meson compile -C build
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C build
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C build
+}
+
+sha512sums="
+6954f8bf8c76526e86a4e335c18c3c68f509fbbe1081f7c74d333f8a9ba83bc5da971ad744f91408f8b0fb8f0b647ae07f02601b5efa97961155ba193c8777f6  zathura-0.5.8.tar.gz
+"

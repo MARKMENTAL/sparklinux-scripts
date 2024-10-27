@@ -1,0 +1,132 @@
+# Contributor: Will Jordan <will.jordan@gmail.com>
+# Maintainer: Will Jordan <will.jordan@gmail.com>
+pkgname=vips
+pkgver=8.15.3
+pkgrel=0
+pkgdesc="fast image processing library with low memory needs"
+url="https://libvips.github.io/libvips/"
+arch="all"
+license="LGPL-2.1-or-later"
+makedepends="
+	cfitsio-dev
+	cgif-dev
+	expat-dev
+	fftw-dev
+	giflib-dev
+	glib-dev
+	gobject-introspection-dev
+	imagemagick-dev
+	lcms2-dev
+	libexif-dev
+	libheif-dev
+	libimagequant-dev
+	libjpeg-turbo-dev
+	libpng-dev
+	librsvg-dev
+	libwebp-dev
+	meson
+	openexr-dev
+	openjpeg-dev
+	orc-dev
+	pango-dev
+	poppler-dev
+	libspng-dev
+	tiff-dev
+	zlib-dev
+	"
+checkdepends="bc"
+subpackages="
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-lang
+	$pkgname-poppler
+	$pkgname-magick
+	$pkgname-heif
+	$pkgname-tools
+	$pkgname-cpp
+	"
+source="https://github.com/libvips/libvips/releases/download/v$pkgver/vips-$pkgver.tar.xz"
+
+case "$CARCH" in
+s390x)
+	;;
+*)
+	makedepends="$makedepends libjxl-dev"
+	subpackages="$subpackages $pkgname-jxl"
+	;;
+esac
+
+case "$CARCH" in
+armhf)
+	# take forever
+	options="$options !check"
+	;;
+esac
+
+# secfixes:
+#   8.9.0-r0:
+#     - CVE-2020-20739
+#   8.8.2-r0:
+#     - CVE-2019-17534
+
+build() {
+	CFLAGS="$CFLAGS -O2" \
+	CXXFLAGS="$CXXFLAGS -O2" \
+	abuild-meson \
+		-Db_ndebug=true \
+		-Db_lto=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test -t 10 --print-errorlogs --no-rebuild -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+tools() {
+	pkgdesc="Command-line tools for $pkgname"
+
+	amove usr/bin
+}
+
+poppler() {
+	pkgdesc="Poppler support for $pkgname"
+	install_if="$pkgname=$pkgver-r$pkgrel poppler-glib"
+
+	amove usr/lib/vips-modules-${pkgver%.*}/vips-poppler.so
+}
+
+magick() {
+	pkgdesc="Imagemagick support for $pkgname"
+	install_if="$pkgname=$pkgver-r$pkgrel imagemagick"
+
+	amove usr/lib/vips-modules-${pkgver%.*}/vips-magick.so
+}
+
+jxl() {
+	pkgdesc="JpegXL support for $pkgname"
+	install_if="$pkgname=$pkgver-r$pkgrel libjxl"
+
+	amove usr/lib/vips-modules-${pkgver%.*}/vips-jxl.so
+}
+
+heif() {
+	pkgdesc="Libheif support for $pkgname"
+	install_if="$pkgname=$pkgver-r$pkgrel libheif"
+
+	amove usr/lib/vips-modules-${pkgver%.*}/vips-heif.so
+}
+
+cpp() {
+	pkgdesc="$pkgname (c++ library)"
+
+	amove usr/lib/libvips-cpp.so.*
+}
+
+sha512sums="
+7ebeacef00939dff6a03f346e1d7498c9cc6ff84aff3a273dae57ae0b2332cb1da59a94ada1b68d86578af5540c1671badd636f0916e48cc7011b9141f99fc1e  vips-8.15.3.tar.xz
+"

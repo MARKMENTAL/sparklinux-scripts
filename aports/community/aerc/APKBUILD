@@ -1,0 +1,37 @@
+# Maintainer: Steven Guikal <void@fluix.one>
+pkgname=aerc
+pkgver=0.18.2
+pkgrel=1
+pkgdesc="email client for your terminal"
+url="https://aerc-mail.org"
+arch="all"
+license="MIT"
+depends="cmd:sh less ncurses"
+makedepends="go scdoc notmuch-dev"
+checkdepends="gpg gpgme"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://git.sr.ht/~rjarry/aerc/archive/$pkgver.tar.gz"
+options="net"
+
+export GOFLAGS="$GOFLAGS -tags=notmuch"
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	unset LDFLAGS # passed as go linker flags and invalid
+	make PREFIX=/usr VERSION=$pkgver
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	unset LDFLAGS
+	make install PREFIX=/usr DESTDIR="$pkgdir" VERSION=$pkgver
+}
+
+sha512sums="
+accce8bf2d5e90bffa615e58c68cb187e2eb0ede64bbebe69735c1367c51f286d2dfa505f6b0c67a5958f32afacb9903b1c12e397e64e49403807b78d3bad25c  aerc-0.18.2.tar.gz
+"

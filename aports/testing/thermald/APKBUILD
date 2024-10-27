@@ -1,0 +1,47 @@
+# Contributor: mellotron <mellotron@tutanota.com>
+# Maintainer: Saijin-Naib <Saijin-Naib_package-maintenance@outlook.com>
+pkgname=thermald
+_pkgname=thermal_daemon
+pkgver=2.5.6
+pkgrel=0
+pkgdesc="Thermal daemon for IA"
+url="https://github.com/intel/thermal_daemon"
+arch="x86 x86_64"
+license="GPL-2.0-or-later"
+makedepends="autoconf automake libtool dbus-glib-dev libxml2-dev linux-headers
+	autoconf-archive gtk-doc upower-dev libevdev-dev"
+subpackages="$pkgname-doc $pkgname-openrc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/intel/$_pkgname/archive/v$pkgver.tar.gz
+	thermald.initd
+	"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+prepare() {
+	default_prepare
+	./autogen.sh
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--disable-werror \
+		--localstatedir=/var
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	rm -rf "$pkgdir"/etc/init/ "$pkgdir"/etc/dbus-1
+
+	install -m755 -D "$srcdir"/$pkgname.initd \
+		"$pkgdir"/etc/init.d/$pkgname
+}
+
+sha512sums="
+d039e4bd4ed203caf786c8090c27910b5b5f3886e8e4d160d6347bb2b8c1d6aaaca14958ee91ad4aedb02e67f8a6403805719bf07d55f03fe1f28f3e4378ae73  thermald-2.5.6.tar.gz
+ea8964b15fdebc2fb59e93c15b813b93691c2ba01689ac6080f1308a3063b23cba56b4539ccae87575689036f74300a1c22c9b0e77d4ecef9bc08198d7fe4892  thermald.initd
+"

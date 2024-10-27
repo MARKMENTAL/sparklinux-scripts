@@ -1,0 +1,46 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=py3-ovos-ocp-news-plugin
+pkgver=0.0.4
+pkgrel=0
+pkgdesc="ovos-core news plugin"
+url="https://github.com/OpenVoiceOS/ovos-ocp-news-plugin"
+arch="noarch !s390x !loongarch64" # blocked by py3-ovos-ocp-audio-plugin
+license="Apache-2.0"
+depends="
+	py3-beautifulsoup4
+	py3-ovos-ocp-audio-plugin
+	py3-ovos-ocp-m3u-plugin
+	py3-ovos-ocp-rss-plugin
+	py3-tz
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/OpenVoiceOS/ovos-ocp-news-plugin/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/ovos-ocp-news-plugin-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+199e9cae0b4e707db23eed4a3ab84d6f33e01451307838c57cc402d81f81e02a9ee7e40fd63faee1fddc9fbd583cd56e10306d4ca22d1b03253dc64fe93bcc28  py3-ovos-ocp-news-plugin-0.0.4.tar.gz
+"

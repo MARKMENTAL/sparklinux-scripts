@@ -1,0 +1,39 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=gvm-tools
+# follow the same version of py3-gvm
+pkgver=24.8.0
+pkgrel=0
+pkgdesc="Collection of tools for remote controlling a OpenVAS / Greenbone"
+url="https://github.com/greenbone/gvm-tools"
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="python3 py3-gvm py3-lxml"
+makedepends="py3-gpep517 py3-installer py3-poetry-core py3-wheel"
+checkdepends="py3-gvm py3-pytest"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/greenbone/gvm-tools/archive/v$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	# outdated snapshot compare
+	.testenv/bin/python3 -m pytest --ignore tests/test_parser.py
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+	mkdir -p "$pkgdir"/usr/share/$pkgname/scripts
+	cp $builddir/scripts/*.py "$pkgdir"/usr/share/$pkgname/scripts/
+}
+
+sha512sums="
+4434410424521f80adeb52785ba5c8f9a6548f9bfc9e7798f127c92b238b747485d6b1599f5f944f359cbf2327bf6a564250430aac3ac317f2847b61863fb829  gvm-tools-24.8.0.tar.gz
+"

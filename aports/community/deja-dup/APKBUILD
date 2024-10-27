@@ -1,0 +1,50 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=deja-dup
+pkgver=45.2
+pkgrel=0
+pkgdesc="Simple backup tool for GNOME"
+url="https://wiki.gnome.org/Apps/DejaDup"
+arch="all"
+license="GPL-3.0-or-later"
+depends="
+	dbus:org.freedesktop.Secrets
+	duplicity
+	py3-requests-oauthlib
+	"
+makedepends="
+	appstream-glib
+	desktop-file-utils
+	gtk4.0-dev
+	itstool
+	json-glib-dev
+	libadwaita-dev
+	libsecret-dev
+	libsoup3-dev
+	meson
+	vala
+	"
+checkdepends="
+	coreutils
+	diffutils
+	"
+subpackages="$pkgname-lang $pkgname-doc"
+source="https://gitlab.gnome.org/World/deja-dup/-/archive/$pkgver/deja-dup-$pkgver.tar.gz"
+options="!check" # fail hard on builders, work on CI and locally
+
+build() {
+	abuild-meson -Db_lto=true . output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+7abfbb32d8d99b3042f16ced8dba8cebdd152c95015722fcae457629b2ca2f50dcbb6f7551fc3f44018a972f814b3461eb2a5d2984afebae0649bc9894e8c356  deja-dup-45.2.tar.gz
+"

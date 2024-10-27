@@ -1,0 +1,32 @@
+# Contributor: Eric Kidd <git@randomhacks.net>
+# Maintainer: Holger Jaekel <holger.jaekel@gmx.de>
+pkgname=geos
+pkgver=3.12.2
+pkgrel=0
+pkgdesc="GEOS is a library providing OpenGIS and JTS spatial operations in C++."
+url="https://libgeos.org/"
+arch="all"
+license="LGPL-2.1-or-later"
+makedepends="cmake samurai"
+subpackages="$pkgname-dev"
+source="https://download.osgeo.org/geos/geos-$pkgver.tar.bz2"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBUILD_SHARED_LIBS=ON
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+af9b0eb2475c81407f0c7e2a61667bc4d90e862798b155ee40a59e7fde3d38488ef10f930e9cf309a83e436fb80e26e85e0f1d61b375b98110bbb1062645fb5d  geos-3.12.2.tar.bz2
+"

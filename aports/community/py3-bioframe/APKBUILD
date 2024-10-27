@@ -1,0 +1,39 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+pkgname=py3-bioframe
+pkgver=0.7.2
+pkgrel=0
+pkgdesc="Pandas utilities for tab-delimited and other genomic data files"
+url="https://github.com/open2c/bioframe"
+arch="noarch !armhf !armv7 !x86 !riscv64" #assertion errors
+options="net"
+license="MIT"
+depends="py3-matplotlib py3-numpy py3-pandas py3-yaml py3-requests py3-typing-extensions py3-setuptools"
+checkdepends="py3-pytest-xdist"
+makedepends="py3-gpep517 py3-hatchling py3-setuptools py3-wheel"
+subpackages="$pkgname-pyc"
+source="https://github.com/open2c/bioframe/archive/v$pkgver/bioframe-$pkgver.tar.gz"
+builddir="$srcdir/bioframe-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto --ignore="tests/test_fileops.py"
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+
+	rm -r "$pkgdir"/usr/lib/python3.*/site-packages/bioframe/io/data/
+}
+
+sha512sums="
+b4661aaf99ec106660797ddca216fbe4ce80203110304ad80ad85a773c29b5c86af0cd1c727530cc8c948259905cca674adc427433475657820b3fab62f2407c  bioframe-0.7.2.tar.gz
+"

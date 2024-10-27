@@ -1,0 +1,69 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=ngtcp2
+pkgver=1.5.0
+pkgrel=0
+pkgdesc="Implementation of IETF QUIC protocol"
+url="https://nghttp2.org/ngtcp2/"
+arch="all"
+license="MIT"
+makedepends="
+	cmake
+	gnutls-dev
+	samurai
+	"
+checkdepends="cunit-dev"
+subpackages="
+	$pkgname-dev
+	$pkgname-gnutls
+	"
+source="https://github.com/ngtcp2/ngtcp2/releases/download/v$pkgver/ngtcp2-$pkgver.tar.xz"
+
+build() {
+	# Build static library separately w/o LTO for compatibility with non-gcc
+	# and minimal size.
+	_build build-static -DENABLE_SHARED_LIB=OFF
+
+	# NOTE: -DINTERPROCEDURAL_OPTIMIZATION=ON doesn't work here.
+	export CFLAGS="$CFLAGS -flto=auto"
+	_build build-shared -DENABLE_STATIC_LIB=OFF
+}
+
+_build() {
+	local outdir="$1"; shift
+
+	local crossopts=
+	[ "$CBUILD" != "$CHOST" ] \
+		&& crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+
+	cmake -B "$outdir" -G Ninja \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_VERBOSE_MAKEFILE=ON \
+		-DENABLE_GNUTLS=ON \
+		$crossopts \
+		"$@"
+	cmake --build "$outdir"
+}
+
+check() {
+	cmake --build build-shared -t check
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build-static
+	DESTDIR="$pkgdir" cmake --install build-shared
+
+	rm -rf "$pkgdir"/usr/share/doc
+}
+
+gnutls() {
+	pkgdesc="$pkgdesc - GnuTLS backend"
+	depends="$pkgname=$pkgver-r$pkgrel"
+
+	amove usr/lib/libngtcp2_crypto_gnutls.so*
+}
+
+sha512sums="
+6c05beccac5d53c575ceaa594ac6b1d91ae9f0be01394b3520e84b51a44d3c6a71612c2c6f613d3d1b9d2992a83a68696fedbfdc3842f02d4009c95b463ad97f  ngtcp2-1.5.0.tar.xz
+"

@@ -1,0 +1,37 @@
+# Contributor: 3nodeproblem <git@3n.anonaddy.com>
+# Maintainer: 3nodeproblem <git@3n.anonaddy.com>
+pkgname=authenticator-rs
+pkgver=0.7.5
+pkgrel=0
+pkgdesc="TOTP MFA/2FA application written in Rust and GTK3"
+url="https://github.com/grumlimited/authenticator-rs"
+arch="x86_64 armv7 armhf aarch64 x86 ppc64le" # limited by rust and cargo
+license="GPL-3.0-or-later"
+subpackages="$pkgname-lang"
+makedepends="
+	cargo
+	curl-dev
+	gtk+3.0-dev
+	meson
+	openssl-dev>3
+	sqlite-dev
+	zlib-dev
+	"
+source="https://github.com/grumlimited/authenticator-rs/archive/refs/tags/$pkgver/authenticator-rs-$pkgver.tar.gz"
+options="net !check" # No tests
+
+# size optimisations
+
+
+build() {
+	RELEASE_VERSION=$pkgver make release-version
+	make release
+}
+
+package() {
+	DESTDIR="$pkgdir" make install
+}
+
+sha512sums="
+08f5362b4dc8deb8ed27caf08c2729dcdbf043382404d1e11f3d69e2862852246ea0d97e242e1c65363e05d83069c6a623e47fdc7dfce5d8623e39e5554faf31  authenticator-rs-0.7.5.tar.gz
+"

@@ -1,0 +1,45 @@
+# Contributor: Grigory Kirillov <txgk@bk.ru>
+# Maintainer:
+pkgname=yyjson
+pkgver=0.10.0
+pkgrel=0
+pkgdesc="High performance JSON library written in ANSI C"
+url="https://github.com/ibireme/yyjson"
+arch="all"
+license="MIT"
+makedepends="cmake samurai"
+subpackages="$pkgname-static $pkgname-dev $pkgname-doc"
+source="https://github.com/ibireme/yyjson/archive/$pkgver/yyjson-$pkgver.tar.gz"
+
+build() {
+	cmake -B builddir -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DBUILD_SHARED_LIBS=ON \
+		-DYYJSON_BUILD_TESTS="$(want_check && echo ON || echo OFF)" \
+		-DCMAKE_C_FLAGS="$CFLAGS -Wno-stringop-overflow" \
+		-DCMAKE_CXX_FLAGS="$CXXFLAGS -Wno-stringop-overflow"
+	cmake -B builddir-static -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DCMAKE_C_FLAGS="$CFLAGS -Wno-stringop-overflow" \
+		-DCMAKE_CXX_FLAGS="$CXXFLAGS -Wno-stringop-overflow"
+	cmake --build builddir
+	cmake --build builddir-static
+}
+
+check() {
+	ctest --output-on-failure --test-dir builddir
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install builddir
+	DESTDIR="$pkgdir" cmake --install builddir-static
+	for file in README.md doc/API.md doc/BuildAndTest.md doc/DataStructure.md; do
+		install -Dm644 "$file" -t "$pkgdir"/usr/share/doc/"$pkgname"
+	done
+}
+
+sha512sums="
+d0274bfdae6291cc54d7c306f7f9064333d3e0fd8d235428148fa5695e151e0fdd0982247a5e82fe60b27e9182ba27d5704aca4546a8dc9545117bd3a017bfb5  yyjson-0.10.0.tar.gz
+"

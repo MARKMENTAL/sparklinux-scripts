@@ -1,0 +1,108 @@
+# Contributor: gay <gay@disroot.org>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=stack
+pkgver=2.15.7
+pkgrel=0
+pkgdesc="The Haskell Tool Stack"
+url="https://haskellstack.org/"
+arch="aarch64 x86_64" # limited by ghc
+license="BSD-3-Clause"
+makedepends="
+	cabal
+	ghc
+	gmp-dev
+	sqlite-dev
+	uusi
+	zlib-dev
+	"
+checkdepends="ncurses-dev"
+subpackages="
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="https://hackage.haskell.org/package/stack-$pkgver/stack-$pkgver.tar.gz
+	cabal.project.freeze
+	"
+
+export CABAL_DIR="${CABAL_DIR:-"$srcdir/cabal"}"
+
+cabal_relax() {
+	# Following what Homebrew does
+	cat > "$builddir"/cabal.project <<-'END'
+		packages: .
+		constraints: tar < 0.6
+	END
+
+	uusi -u directory -u filepath "$builddir"/$pkgname.cabal
+}
+
+cabal_update() {
+	local repo="hackage.haskell.org"
+
+	# Default config uses HTTP, change it to HTTPS.
+	[ -f "$CABAL_DIR"/config ] || {
+		cabal user-config init
+		cabal user-config update -a \
+			"repository $repo {url: https://$repo/}"
+	}
+
+	[ -d "$builddir" ] || abuild unpack
+	msg "Freezing $pkgname dependencies"
+
+	# Resolve deps and generate fresh cabal.project.freeze with version constraints.
+	(
+		cd "$builddir" || {
+			error 'Is $builddir set correctly?'
+			return 1
+		}
+		cabal_relax
+
+		cabal v2-update
+		cabal v2-freeze --shadow-installed-packages
+
+		mv -v cabal.project.freeze "$startdir"/
+	)
+
+	if ! abuild checksum; then
+		die "Failed to update checksum, run 'abuild checksum' manually"
+	fi
+}
+
+prepare() {
+	cabal_relax
+	default_prepare
+
+	ln -svf "$srcdir"/cabal.project.freeze "$builddir"/
+}
+
+build() {
+	cabal v2-update
+	cabal v2-build stack:exes \
+		--jobs=${JOBS:-1} \
+		--prefix=/usr \
+		--docdir=/usr/share/doc/$pkgname \
+		--sysconfdir=/etc \
+		--enable-relocatable
+}
+
+check() {
+	cabal test
+}
+
+package() {
+	cd dist-newstyle/build/*-linux/ghc-*/$pkgname-$pkgver/build/$pkgname
+	install -Dvm755 $pkgname -t "$pkgdir"/usr/bin/
+
+	./stack --bash-completion-script stack | install -Dm644 /dev/stdin \
+		"$pkgdir"/usr/share/bash-completion/completions/$pkgname
+	./stack --fish-completion-script stack | install -Dm644 /dev/stdin \
+		"$pkgdir"/usr/share/fish/vendor_completions.d/$pkgname.fish
+	./stack --zsh-completion-script stack | install -Dm644 /dev/stdin \
+		"$pkgdir"/usr/share/zsh/site-functions/_$pkgname
+}
+
+sha512sums="
+0a0e2fca52b17e3fbc5091da9fc7dd639a50c37519ae8ea27954536381d63bda4e1f20ca047e061dc898cac35a0551c996ced6f8d87184fe8e5be03e03d3cb82  stack-2.15.7.tar.gz
+bbc0b3a3aa65412e053a0a580c139872c74e3446fdcb46bbcfe0f37b773d54ee0527d8ff6dad46b19c881c0aed459ff298cbd2d81888064362cef226c09dcf14  cabal.project.freeze
+"

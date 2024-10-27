@@ -1,0 +1,25 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=wayclip
+pkgver=0.4.2
+pkgrel=0
+pkgdesc="Wayland clipboard utility"
+url="https://sr.ht/~noocsharp/wayclip"
+arch="all"
+license="ISC"
+makedepends="wayland-dev"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver-2.tar.gz::https://git.sr.ht/~noocsharp/wayclip/archive/$pkgver.tar.gz"
+options="!check"  # no tests provided
+
+build() {
+	make
+}
+
+package() {
+	make install DESTDIR="$pkgdir" PREFIX=/usr
+}
+
+sha512sums="
+d7d42d0e871788552bd1e6999b50710930715f647aa17ef27ec5014612cc4d9d03b69a7b9636b62ce300f2e549e7b434492ab34ae15a0690a80781b720b090e3  wayclip-0.4.2-2.tar.gz
+"

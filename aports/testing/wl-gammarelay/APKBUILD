@@ -1,0 +1,29 @@
+# Contributor: Michał Polański <michal@polanski.me>
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=wl-gammarelay
+pkgver=0.1.1
+pkgrel=9
+pkgdesc="Control color temperature and brightness under Wayland via DBus"
+url="https://github.com/jeremija/wl-gammarelay"
+license="GPL-3.0"
+arch="all"
+makedepends="go wayland-dev"
+source="https://github.com/jeremija/wl-gammarelay/archive/v$pkgver/wl-gammarelay-$pkgver.tar.gz"
+options="!check net" # no test suite, fetch dependencies
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	make -C protocol
+	go build -ldflags "-X main.Version=$pkgver"
+}
+
+package() {
+	install -Dm755 wl-gammarelay "$pkgdir"/usr/bin/wl-gammarelay
+}
+
+sha512sums="
+94251802a30bc5ecad9755c95c740cf0c56b2483e6bd08d7a77c34ec87e13f7ebf8f029e408053e0e03f4ce202e36d24f23c0c463271bca680ad4fd72eec9391  wl-gammarelay-0.1.1.tar.gz
+"

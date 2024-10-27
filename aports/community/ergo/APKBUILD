@@ -1,0 +1,58 @@
+# Contributor: Kay Thomas <kaythomas@pm.me>
+# Maintainer: Kay Thomas <kaythomas@pm.me>
+pkgname=ergo
+pkgver=2.14.0
+pkgrel=0
+pkgdesc="A modern IRC server (daemon/ircd) written in Go"
+url="https://ergo.chat"
+arch="all"
+license="MIT"
+options="!check" # no test suite
+makedepends="go"
+subpackages="$pkgname-doc $pkgname-openrc"
+pkgusers="ergo"
+pkggroups="ergo"
+install="$pkgname.pre-install"
+source="$pkgname-$pkgver.tar.gz::https://github.com/ergochat/ergo/archive/refs/tags/v$pkgver.tar.gz
+	ergo.initd
+	ergo.confd
+	ircd.yaml
+	"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	make CGO_ENABLED=1 build
+}
+
+package() {
+	install -Dm755 ergo -t "$pkgdir"/usr/bin/
+
+	install -Dm644 "$srcdir"/ircd.yaml \
+		-t "$pkgdir"/etc/ergo/
+
+	install -dm755 -o ergo -g ergo \
+		"$pkgdir"/var/ergo
+
+	cp -a "$builddir"/languages \
+		"$pkgdir"/var/ergo/languages
+
+	install -Dm644 docs/*.md \
+		-t "$pkgdir"/usr/share/doc/$pkgname/
+	install -Dm644 LICENSE \
+		-t "$pkgdir"/usr/share/licenses/$pkgname/
+
+	install -Dm755 "$srcdir"/$pkgname.initd \
+		"$pkgdir"/etc/init.d/$pkgname
+	install -Dm644 "$srcdir"/$pkgname.confd \
+		"$pkgdir"/etc/conf.d/$pkgname
+}
+
+sha512sums="
+b0f2518085c85ed8a5e558535b55d5444010f47bec4f050b980e4c45b3469b84616cdbb26e46148ac72d94f8acbf73c0bc157c5f1a5af99c5e6ff375ffe1dbdf  ergo-2.14.0.tar.gz
+1fd4e2a31ebbf7ade88294b18e2705a6caac4f0b0d402a3f324f929cc786d2dee104f600ec4213817f1fd7f22fa10c1303307ee342eb57968be9dfba7851e912  ergo.initd
+c9856c141ab4b8b2dee63996678613a787d1aae8345d8baa2df9bc4427306f00b71a8a0fd7e30fd4e7b78cece982ec189ca1e73e703f2617e353d30fbd736491  ergo.confd
+72183e66b8259ab0291bdfa59d2ab431a66f251979be3313238c7a6c81d0ece9b35d829b05fd1a0d61c6dcf9ffb35a73fedf43999e6932083182cee31c670b17  ircd.yaml
+"

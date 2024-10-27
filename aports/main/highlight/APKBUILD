@@ -1,0 +1,31 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+_luaver=5.4
+pkgname=highlight
+pkgver=4.13
+pkgrel=0
+pkgdesc="Fast and flexible source code highlighter"
+url="http://www.andre-simon.de/doku/highlight/highlight.html"
+arch="all"
+options="!check" # No test suite.
+license="GPL-3.0-or-later"
+makedepends="lua$_luaver-dev boost-dev"
+subpackages="
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="http://www.andre-simon.de/zip/highlight-$pkgver.tar.bz2"
+
+build() {
+	make cli LUA_PKG_NAME=lua5.4
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+45f36ce3256567d45806d8cd31d595fb38c3d59933e9d99aeb980c9115a304c3b81597ac906c4439dd919e4983de8a9559fd52efa280bdb86c607efc4959c5ae  highlight-4.13.tar.bz2
+"

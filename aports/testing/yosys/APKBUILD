@@ -1,0 +1,89 @@
+# Contributor: Dominika Liberda <ja@sdomi.pl>
+# Maintainer: Dominika Liberda <ja@sdomi.pl>
+pkgname=yosys
+pkgver=0.42
+pkgrel=0
+pkgdesc="Yosys Open SYnthesis Suite"
+url="https://yosyshq.net"
+# doesn't build
+arch="all !s390x !riscv64"
+license="ISC"
+depends="
+	abc
+	"
+makedepends="
+	bash
+	bison
+	boost-dev
+	flex
+	gawk
+	graphviz-dev
+	libffi-dev
+	lld
+	protobuf-dev
+	python3
+	readline-dev
+	tcl-dev
+	zlib-dev
+	"
+checkdepends="
+	iverilog
+	"
+subpackages="$pkgname-dev py3-$pkgname:py3:noarch"
+source="
+	https://github.com/YosysHQ/yosys/archive/refs/tags/yosys-$pkgver.tar.gz
+	"
+builddir="$srcdir/$pkgname-$pkgname-$pkgver/"
+
+prepare() {
+	default_prepare
+
+	local pyver="$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+
+	cat > Makefile.conf <<- EOF
+	CONFIG:=gcc
+	PREFIX:=/usr
+	ABCEXTERNAL:=abc
+	BOOST_PYTHON_LIB:=-lpython$pyver -lboost_python${pyver/./}
+	ENABLE_LIBYOSYS:=1
+	ENABLE_NDEBUG:=1
+	ENABLE_PROTOBUF:=1
+	ENABLE_PYOSYS:=1
+	ENABLE_ABC:=1
+	EOF
+}
+
+build() {
+	# Not using LTO, as test segfault with LTO enabled. Not unique to Alpine:
+	# https://gitlab.archlinux.org/archlinux/packaging/packages/yosys/-/blob/main/PKGBUILD?ref_type=heads#L20
+	make CXX=g++
+}
+
+check() {
+	case "$CARCH" in
+	arm*|x86)
+		# remove tests failing on 32-bit platforms:
+		rm -f tests/simple/string_format.v
+		sed -i Makefile -e '/tests\/cxxrtl/d'
+		;;
+	esac
+	make CXX=g++ test
+}
+
+package() {
+	make CXX=g++ DESTDIR="$pkgdir" install
+
+	# link python to the global yosys
+	ln -sfv /usr/lib/yosys/libyosys.so "$pkgdir"/usr/lib/python3*/site-packages/pyosys/libyosys.so
+}
+
+py3() {
+	pkgdesc="$pkgdesc (python module)"
+	depends="python3 $pkgname=$pkgver-r$pkgrel"
+
+	amove usr/lib/python3*
+}
+
+sha512sums="
+2f85beeaf672a3cfd9dc0841d08265a518270e9929ac84cfd346330b460dfbdeec89f7c78b68d9dfbb598175c0beaee9f9c47bc04aaf8fdb719822fd5bd11dd2  yosys-0.42.tar.gz
+"

@@ -1,0 +1,69 @@
+# Contributor: Hoang Nguyen <folliekazetani@protonmail.com>
+# Maintainer: omni <omni+alpine@hack.org>
+pkgname=systeroid
+pkgver=0.4.4
+pkgrel=0
+pkgdesc="A more powerful alternative to sysctl(8)"
+# riscv64: rust broken
+# loongarch64: blocked by nix crate
+arch="all !riscv64 !loongarch64"
+url="https://systeroid.cli.rs/"
+license="Apache-2.0"
+makedepends="cargo libxcb-dev cargo-auditable"
+checkdepends="linux-lts-doc xclip"
+subpackages="$pkgname-doc $pkgname-tui:_tui $pkgname-tui-doc:_tui_doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/orhun/systeroid/archive/refs/tags/v$pkgver.tar.gz"
+
+# For armhf, no linux-lts-doc, nor linux-rpi-doc, also tests may stall
+# For ppc64le CONFIG_BSD_PROCESS_ACCT is not set in lts.ppc64le.config
+case $CARCH in
+	armhf|ppc64le) options="!check" ;;
+esac
+
+
+prepare() {
+	default_prepare
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	case "$CARCH" in
+	s390x)
+		# Fail to build nix crate
+		cargo auditable build --release --frozen -p systeroid
+		cargo auditable build --release --frozen --no-default-features -p systeroid-tui
+		;;
+	*)
+		cargo auditable build --release --frozen
+		;;
+	esac
+}
+
+check() {
+	NO_COLOR=1 cargo test --frozen --no-default-features
+}
+
+package() {
+	install -Dm0755 target/release/systeroid target/release/systeroid-tui \
+		-t "$pkgdir"/usr/bin/
+	install -Dm0644 man8/systeroid.8 -t "$pkgdir"/usr/share/man/man8/
+}
+
+_tui() {
+	pkgdesc="$pkgname terminal user interface"
+	amove usr/bin/systeroid-tui
+}
+
+_tui_doc() {
+	pkgdesc="$pkgname terminal user interface (documentation)"
+
+	cd "$builddir"
+	install -Dm0644 man8/systeroid-tui.8 -t "$subpkgdir"/usr/share/man/man8/
+
+	default_doc
+	install_if="docs $pkgname-tui=$pkgver-r$pkgrel"
+}
+
+sha512sums="
+61d8f8bdd34404f57e237f0843f67c1aaf9d9e552fd7857bc770db1ebf6296ed6f1c86edcf620cde271ba86f9039ce39209908c2a0076bee8cf05aa2925351a3  systeroid-0.4.4.tar.gz
+"

@@ -1,0 +1,36 @@
+# Contributor: Galen Abell <galen@galenabell.com>
+# Maintainer: Galen Abell <galen@galenabell.com>
+pkgname=py3-cfgv
+_pyname=cfgv
+pkgver=3.4.0
+pkgrel=1
+pkgdesc="Validate configuration and produce human readable error messages"
+url="https://github.com/asottile/cfgv"
+arch="noarch"
+license="MIT"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="$_pyname-$pkgver.tar.gz::https://github.com/asottile/cfgv/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/$_pyname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --system-site-packages testenv
+	testenv/bin/python3 -m installer dist/*.whl
+	testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		dist/*.whl
+}
+
+sha512sums="
+7d3939bb99bc446f30774cad8f0ddeb1ff867e63d19e4178e5c5281b8f4300c08375936170b8ab0278b040439f59d0276b0c8924f02cd410e73037fb4729af57  cfgv-3.4.0.tar.gz
+"

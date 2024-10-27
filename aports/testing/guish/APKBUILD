@@ -1,0 +1,31 @@
+# Maintainer: Francesco Palumbo <phranz@subfc.net>
+# Contributor: Francesco Palumbo <phranz@subfc.net>
+pkgname=guish
+pkgver=2.6.10
+pkgrel=0
+pkgdesc="Language and swiss army knife to make and modify GUIs"
+# others not supported yet
+arch="x86 x86_64 armhf armv7 aarch64"
+url="https://codeberg.org/phranz/guish"
+license="GPL-3.0-or-later"
+makedepends="libx11-dev libxtst-dev imlib2-dev"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://codeberg.org/phranz/guish/archive/$pkgver.tar.gz"
+builddir="$srcdir/guish"
+
+build() {
+	make
+}
+
+check() {
+	make tests
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr install
+	install -Dm644 COPYING "$pkgdir"/usr/share/licenses/$pkgname/COPYING
+}
+
+sha512sums="
+ddebd1f8383b91e0bf16a77eb05c4ddb5dd7129a33a75bd86b4393df21def2664e8a431bec36becd52af0ca332776707a88786fd843e7fcc85ba6123ee47a65f  guish-2.6.10.tar.gz
+"

@@ -1,0 +1,42 @@
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Contributor: Antoni Aloy <aaloytorrens@gmail.com>
+pkgname=lomiri-settings-components
+pkgver=1.1.1
+pkgrel=1
+pkgdesc="Lomiri settings Components"
+arch="all"
+url="https://gitlab.com/ubports/development/core/lomiri-settings-components"
+license="GPL-3.0-only AND LGPL-3.0-only"
+makedepends="
+	cmake
+	cmake-extras
+	qt5-qtdeclarative-dev
+	samurai
+	"
+source="https://gitlab.com/ubports/development/core/lomiri-settings-components/-/archive/$pkgver/lomiri-settings-components-$pkgver.tar
+	qmltestrunner.patch
+	"
+subpackages="$pkgname-lang"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_BUILD_TYPE=None
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+21e170a558f4d34d5e06918d0b63ae95eb6791b2fdbfe5438dfbdf61c87abcbbd37149dd3f35158a775608db0257f503b3fe0f8ee78dd924c96cd36fa51d2b1b  lomiri-settings-components-1.1.1.tar
+0cbe24ba24468ccfae80b6d6b49c68b55e44561ac7914645746af15ee252c12341f2b401390cffbed520963d1cb7da6980f99520ee820528de964b8a714b87b4  qmltestrunner.patch
+"

@@ -1,0 +1,27 @@
+# Contributor: Andrew Hills <ahills@ednos.net>
+# Contributor: Jean-Louis Fuchs <jean-louis.fuchs@adfinis-sygroup.ch>
+# Maintainer: Jean-Louis Fuchs <jean-louis.fuchs@adfinis-sygroup.ch>
+pkgname=zathura-ps
+pkgver=0.2.8
+pkgrel=0
+pkgdesc="zathura-ps - plugin adds PostScript support to zathura"
+url="https://pwmt.org/projects/zathura-ps/"
+arch="all"
+license="Zlib"
+depends="zathura"
+makedepends="zathura-dev poppler-dev libspectre-dev meson ninja"
+options="!check"
+source="https://pwmt.org/projects/zathura-ps/download/zathura-ps-$pkgver.tar.xz"
+
+build() {
+	abuild-meson build
+	meson compile -C build
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C build
+}
+
+sha512sums="
+29ed9d5585df1151af50835daa75a11befbd0fe10e95b4a37c7b548e1442edd3f52a7d0afce8cca93ce70ced6381cdf23311cea004e3e38a6cb323ba13eb7039  zathura-ps-0.2.8.tar.xz
+"

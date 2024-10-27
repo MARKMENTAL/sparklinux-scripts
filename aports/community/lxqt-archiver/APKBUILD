@@ -1,0 +1,42 @@
+# Maintainer: Antoni Aloy <aaloytorrens@gmail.com>
+pkgname=lxqt-archiver
+pkgver=1.0.0
+pkgrel=0
+pkgdesc="Simple and lightweight desktop-agnostic Qt file archiver"
+url="https://github.com/lxqt/lxqt-archiver"
+arch="all !armhf"
+license="LGPL-2.0-or-later"
+depends="tar"
+makedepends="
+	cmake samurai lxqt-build-tools qt6-qttools-dev
+	libfm-qt-dev json-glib-dev menu-cache-dev libexif-dev
+	"
+options="!check" # No testsuite
+subpackages="$pkgname-lang"
+source="https://github.com/lxqt/lxqt-archiver/releases/download/$pkgver/lxqt-archiver-$pkgver.tar.xz"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		$CMAKE_CROSSOPTS .
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --build build --target install
+}
+
+lang() {
+	install_if="lang $pkgname=$pkgver-r$pkgrel"
+	amove usr/share/$pkgname/translations
+}
+
+sha512sums="
+12552539cb7601c3c1422ed00d6fa8ed0ebed744ce8b7b4a3e3cc8bd59bf8df165008fa63b0ce173b58309001f35c33a219cd80e7568acf12c4c896320fc5061  lxqt-archiver-1.0.0.tar.xz
+"

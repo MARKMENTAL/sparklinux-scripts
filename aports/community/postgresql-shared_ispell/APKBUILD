@@ -1,0 +1,30 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=postgresql-shared_ispell
+_projname=shared_ispell
+pkgver=1.1.0_git20221118
+_gitrev=82e0e10d04906ee0c7a906da27d99b658face22a
+pkgrel=1
+pkgdesc="PostgreSQL shared ispell dictionary extension"
+url="https://github.com/postgrespro/shared_ispell"
+arch="all"
+license="PostgreSQL"
+makedepends="postgresql-dev"
+install="$pkgname.post-install"
+source="https://github.com/postgrespro/shared_ispell/archive/$_gitrev/$_projname-$_gitrev.tar.gz"
+builddir="$srcdir/$_projname-$_gitrev"
+options="!check"  # XXX: tests require running PostgreSQL
+
+build() {
+	make USE_PGXS=1
+}
+
+package() {
+	depends="postgresql$(pg_config --major-version)"
+
+	make install USE_PGXS=1 DESTDIR="$pkgdir"
+}
+
+sha512sums="
+9c67746d39d00a11d7f07f0492cec5147c30a1f517aaa85d575b31b2667952e756a50acbb93a31384d5fa996abf689639817c9cc2c3ae2fdc0799ed9a2d19bc4  shared_ispell-82e0e10d04906ee0c7a906da27d99b658face22a.tar.gz
+"

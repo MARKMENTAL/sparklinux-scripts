@@ -1,0 +1,44 @@
+# Contributor: Fabian Affolter <fabian@affolter-engineering.ch>
+# Maintainer: Fabian Affolter <fabian@affolter-engineering.ch>
+pkgname=py3-chameleon
+pkgver=4.5.4
+pkgrel=0
+pkgdesc="Fast Python HTML/XML Template Compiler"
+url="https://chameleon.readthedocs.org"
+arch="noarch"
+license="BSD-3-Clause AND BSD-4-Clause AND Python-2.0 AND ZPL-2.1"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/malthe/chameleon/archive/$pkgver.tar.gz"
+builddir="$srcdir"/chameleon-$pkgver
+
+replaces="py-chameleon" # Backwards compatibility
+provides="py-chameleon=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+
+	rm -r "$pkgdir"/usr/lib/python3*/site-packages/chameleon/tests
+}
+
+sha512sums="
+2820282d54a7a727a8765c2d8fe29281faa86ff2ef3c55ce0f2f107d03abc900588abe9884a371e15f00f24a3d97cd010bd9448264a28acdc627338f1a86096e  py3-chameleon-4.5.4.tar.gz
+"

@@ -1,0 +1,48 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Maintainer: Carlo Landmeter <clandmeter@alpinelinux.org>
+pkgname=c-ares
+pkgver=1.33.1
+pkgrel=0
+pkgdesc="Asynchronous DNS/names resolver library"
+url="https://c-ares.org/"
+arch="all"
+license="MIT"
+makedepends="gtest-dev"
+subpackages="$pkgname-doc $pkgname-static $pkgname-dev $pkgname-utils::noarch"
+source="https://github.com/c-ares/c-ares/releases/download/v$pkgver/c-ares-$pkgver.tar.gz"
+
+# secfixes:
+#   1.27.0-r0:
+#     - CVE-2024-25629
+#   1.17.2-r0:
+#     - CVE-2021-3672
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--enable-shared
+	make
+}
+
+check() {
+	test/arestest --gtest_filter=-*.Live*
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	cd src/tools
+	install -Dm755 -t "$pkgdir"/usr/bin \
+		adig ahost
+}
+
+utils() {
+	amove usr/bin
+}
+
+sha512sums="
+b5ec4f08539be552f01d49f03327e3999754b940d83c63fbd934c2ed34cf7f05c3f90c9eb64a78a3d7862280bf75765296576a70a6029257daaf90e3e35ab3e4  c-ares-1.33.1.tar.gz
+"

@@ -1,0 +1,51 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: team/kde <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=kde-applications
+pkgname=katomic
+pkgver=24.08.1
+pkgrel=0
+# armhf blocked by extra-cmake-modules
+arch="all !armhf"
+url="https://kde.org/applications/games/org.kde.katomic"
+pkgdesc="A fun and educational game built around molecular geometry"
+license="GPL-2.0-or-later AND GFDL-1.2-only"
+makedepends="
+	extra-cmake-modules
+	qt6-qtbase-dev
+	kcoreaddons-dev
+	kconfig-dev
+	kcrash-dev
+	kwidgetsaddons-dev
+	ki18n-dev
+	kxmlgui-dev
+	knewstuff-dev
+	kdoctools-dev
+	kdbusaddons-dev
+	libkdegames-dev
+	samurai
+	"
+subpackages="$pkgname-doc $pkgname-lang"
+_repo_url="https://invent.kde.org/games/katomic.git"
+source="https://download.kde.org/stable/release-service/$pkgver/src/katomic-$pkgver.tar.xz"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+c8d61a24e45b280b6a7cdc70089dd23a57b5c177a798cc7ee0359fee893bbd66821f4c290a9d01e208ae48a96928329c84fd2b6feb64338afdabed791560b3ab  katomic-24.08.1.tar.xz
+"

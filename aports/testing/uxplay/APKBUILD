@@ -1,0 +1,46 @@
+# Contributor: Angelo Verlain <hey@vixalien.com>
+# Maintainer: Angelo Verlain <hey@vixalien.com>
+pkgname=uxplay
+_gitname=UxPlay
+pkgver=1.69
+pkgrel=0
+arch="all"
+url="https://github.com/FDH2/$_gitname"
+pkgdesc="AirPlay Unix mirroring server"
+license="GPL-3.0-or-later"
+depends="
+	gst-plugins-good
+	gst-plugins-bad
+	gst-libav
+	"
+makedepends="
+	cmake
+	openssl-dev
+	libplist-dev
+	avahi-dev
+	gstreamer-dev
+	gst-plugins-base-dev
+	"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz
+	uxplay.desktop
+	"
+options="!check"
+
+builddir="$srcdir/$_gitname-$pkgver"
+
+build() {
+	cmake -B build
+	cmake --build build
+}
+
+package() {
+	install -Dm755 "$builddir/build/uxplay" "$pkgdir/usr/bin/uxplay"
+	install -Dm644 "$srcdir/uxplay.desktop" "$pkgdir/usr/share/applications/uxplay.desktop"
+	install -Dm644 "$builddir/uxplay.1" "$pkgdir/usr/share/man/man1/uxplay.1"
+}
+
+sha512sums="
+58d3dbce1a9f378b90ef630280626b75f1db9f7aa97aebe474d01f5a0e076d5ed077cf9d0d6e57e9e97f68c1660175c179f60375db96655469a87de2fb7ebd6e  uxplay-1.69.tar.gz
+113ff76fa2761df54ec610f2ae2cdfc50ee6489102e82d2157c61d25b78e381406db94a3e1f119f4d8acd5fc34be3e97e56a693e3fc77086b42a67ca3168da17  uxplay.desktop
+"

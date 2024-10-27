@@ -1,0 +1,26 @@
+# Contributor: David Demelier <markand@malikania.fr>
+# Maintainer: David Demelier <markand@malikania.fr>
+pkgname=libretro-vecx
+pkgver=0_git20230109
+pkgrel=0
+_commit="33a8a89e92dbcef047a12e2c02dd55878be02a8f"
+pkgdesc="libretro adaptation of vecx"
+url="https://github.com/libretro/libretro-vecx"
+arch="all"
+license="GPL-3.0-only"
+makedepends="mesa-dev"
+source="$pkgname-$_commit.tar.gz::https://github.com/libretro/libretro-vecx/archive/$_commit.tar.gz"
+builddir="$srcdir/libretro-vecx-$_commit"
+options="!check" # No tests
+
+build() {
+	make -f Makefile.libretro
+}
+
+package() {
+	install -Dm644 vecx_libretro.so "$pkgdir"/usr/lib/libretro/vecx_libretro.so
+}
+
+sha512sums="
+e89a5348b9330b18e34991ba60672e3bb524ba93a7ba80447643f3559372f3fa685e1278d3dc1051f84eaa5c7f344ba5c376f8c196f82a2d44a89da65b50fe9b  libretro-vecx-33a8a89e92dbcef047a12e2c02dd55878be02a8f.tar.gz
+"

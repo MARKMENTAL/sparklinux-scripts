@@ -1,0 +1,42 @@
+# Contributor: Andy Hawkins <andy@gently.org.uk>
+# Maintainer: Andy Hawkins <andy@gently.org.uk>
+pkgname=py3-rkm-codes
+pkgver=0.6
+pkgrel=2
+pkgdesc="Number format for compact robust labels"
+url="https://nurdletech.com/linux-utilities/rkm_codes/"
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="
+	python3
+	py3-quantiphy
+	"
+makedepends="
+	py3-flit-core
+	py3-gpep517
+	"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="https://github.com/KenKundert/rkm_codes/archive/v$pkgver/rkm_codes-v$pkgver.tar.gz"
+builddir="$srcdir/rkm_codes-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+94de0a57da95d298c9d5d26e33ee6aa12e4702a7e359b519cd99429f2c91d7b4c961acc85170cfcb88a24f6dca8e587a5ba01c77043bba67d73d1be651c26ab2  rkm_codes-v0.6.tar.gz
+"

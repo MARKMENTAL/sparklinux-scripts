@@ -1,0 +1,46 @@
+# Contributor: Clayton Craft <clayton@craftyguy.net>
+# Maintainer: Clayton Craft <clayton@craftyguy.net>
+pkgname=mingw-w64-libusb
+pkgver=1.0.27
+pkgrel=0
+pkgdesc="MinGW-w64 library that provides generic access to USB device for Windows"
+options="!check"
+url="https://libusb.info/"
+arch="x86_64 x86"
+license="LGPL-2.1-only"
+makedepends="
+	mingw-w64-gcc
+	mingw-w64-binutils
+	"
+source="https://github.com/libusb/libusb/releases/download/v$pkgver/libusb-$pkgver.tar.bz2"
+builddir="$srcdir/libusb-$pkgver"
+
+case "$CARCH" in
+	x86_64)
+		_target="x86_64-w64-mingw32"
+		_configure_args="--disable-lib32 --enable-lib64"
+		;;
+	x86)
+		_target="i686-w64-mingw32"
+		_configure_args="--disable-lib64 --enable-lib32"
+		;;
+esac
+
+build() {
+	export LDFLAGS="${LDFLAGS/-Wl,-z,pack-relative-relocs/}"
+	./configure \
+		--prefix=/usr/$_target \
+		--host=$_target \
+		--target=$_target \
+		$_configure_args \
+		CC=$_target-gcc
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+42abbbcf2564f86cc2f05826aeefa6beb03c9f89dc9fe05bdfa351caa3dbd07713ce193daadecf29557604dd3cbc770c8031a78e1ad0a8df3627c3f551d28ff0  libusb-1.0.27.tar.bz2
+"

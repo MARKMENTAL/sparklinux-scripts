@@ -1,0 +1,47 @@
+# Maintainer: Antoni Aloy <aaloytorrens@gmail.com>
+pkgname=pcmanfm-qt
+pkgver=2.0.0
+pkgrel=0
+pkgdesc="Qt port of pcmanfm"
+url="https://github.com/lxqt/pcmanfm-qt"
+arch="all !armhf"
+license="LGPL-2.0-or-later"
+depends="desktop-file-utils lxqt-menu-data"
+makedepends="
+	cmake
+	layer-shell-qt-dev
+	libexif-dev
+	libfm-qt-dev
+	lxqt-build-tools
+	menu-cache-dev
+	qt6-qttools-dev
+	samurai
+	"
+subpackages="$pkgname-doc $pkgname-lang"
+source="https://github.com/lxqt/pcmanfm-qt/releases/download/$pkgver/pcmanfm-qt-$pkgver.tar.xz"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		$CMAKE_CROSSOPTS
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --build build --target install
+}
+
+lang() {
+	install_if="lang $pkgname=$pkgver-r$pkgrel"
+	amove usr/share/$pkgname/translations
+}
+
+sha512sums="
+b4f46245d8e14874546bd95d47fdab41988a6caef3fef45509e3fd12f11d79ab71a0d44a60ca755b097caf7471bc3cd1160078f020270fd6a7cbf58283a4bda3  pcmanfm-qt-2.0.0.tar.xz
+"

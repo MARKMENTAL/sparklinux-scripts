@@ -1,0 +1,69 @@
+# Contributor: Galen Abell <galen@galenabell.com>
+# Contributor: Maxim Karasev <begs@disroot.org>
+# Maintainer: Galen Abell <galen@galenabell.com>
+pkgname=i3status-rust
+pkgver=0.33.1
+pkgrel=0
+pkgdesc="i3status replacement in Rust"
+url="https://github.com/greshake/i3status-rust"
+# loongarch64: blocked by libc crate
+arch="all !s390x !loongarch64" # try unpinning s390x once nix crate is updated to 0.28
+license="GPL-3.0-only"
+makedepends="
+	cargo
+	cargo-auditable
+	curl-dev
+	dbus-dev
+	lm-sensors-dev
+	notmuch-dev
+	openssl-dev>3
+	pulseaudio-dev
+	"
+options="net"
+provides="i3status-rs=$pkgver-r$pkgrel"
+subpackages="$pkgname-doc"
+source="
+	https://github.com/greshake/i3status-rust/archive/refs/tags/v$pkgver/i3status-rust-v$pkgver.tar.gz
+	https://dev.alpinelinux.org/archive/i3status-rs/i3status-rs-$pkgver.1
+	"
+
+_common_features="pulseaudio,notmuch,maildir,icu_calendar"
+
+case "$CARCH" in
+	armhf | armv7 | x86)
+		# pipewire crate does not build on 32-bit arches: https://gitlab.freedesktop.org/pipewire/pipewire-rs/-/issues/43
+		_cargo_opts="--no-default-features --features $_common_features"
+		;;
+	*)
+		makedepends="$makedepends clang-dev pipewire-dev"
+		_cargo_opts="--features $_common_features,pipewire"
+		;;
+esac
+
+prepare() {
+	default_prepare
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --release --frozen $_cargo_opts
+}
+
+check() {
+	cargo test $_cargo_opts
+}
+
+package() {
+	install -Dm755 target/release/i3status-rs -t "$pkgdir"/usr/bin/
+
+	install -Dm644 "$srcdir"/i3status-rs-$pkgver.1 \
+		"$pkgdir"/usr/share/man/man1/i3status-rs.1
+
+	install -Dm644 files/themes/* -t "$pkgdir"/usr/share/i3status-rust/themes/
+	install -Dm644 files/icons/* -t "$pkgdir"/usr/share/i3status-rust/icons/
+}
+
+sha512sums="
+756dd99603c98c4cf3167ffb1c769d766aae1347361459e9d128c10249c2e287983efda6c6496db5429a81f24c5c54a3bc5e54a38b3b2e93f2cb98a6d5dfffe3  i3status-rust-v0.33.1.tar.gz
+45933c5d140e397d84c3096fbe2a5af356f13c17ca3bc8f817af517f0b1d770455ae19177a439d47a95fe8ef94df869d88ee3c050184501969ec71eb6d474cf5  i3status-rs-0.33.1.1
+"

@@ -1,0 +1,32 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=smenu
+pkgver=1.4.0
+pkgrel=0
+pkgdesc="A standard input word picker"
+url="https://github.com/p-gen/smenu"
+arch="all"
+license="GPL-2.0-only"
+makedepends="ncurses-dev"
+options="!check"  # tests seems to need full terminal to run
+subpackages="$pkgname-doc"
+source="https://github.com/p-gen/smenu/archive/v$pkgver/smenu-$pkgver.tar.gz"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+52d646064e6b3010d8736aa9b2d012abd1637b73d0adc577e1820fd70aa9012ef115d63f8dbda814d27a97d7467d63521d11a704df470262a67319c1f788c061  smenu-1.4.0.tar.gz
+"

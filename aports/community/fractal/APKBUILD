@@ -1,0 +1,59 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=fractal
+pkgver=8
+pkgrel=0
+pkgdesc="Matrix group messaging app"
+url="https://wiki.gnome.org/Apps/Fractal"
+arch="x86_64 aarch64 ppc64le" # limited by Rust + crate dependencies
+license="GPL-3.0-or-later"
+depends="
+	dbus:org.freedesktop.Secrets
+	gst-plugins-good-gtk
+	xdg-utils
+	"
+makedepends="
+	cargo
+	clang-libclang
+	cmake
+	dbus-dev
+	desktop-file-utils
+	glib-dev
+	gmp-dev
+	gspell-dev
+	gst-editing-services-dev
+	gst-plugins-bad-dev
+	gst-plugins-base-dev
+	gstreamer-dev
+	gtk4.0-dev
+	gtksourceview5-dev
+	libadwaita-dev
+	libshumate-dev
+	meson
+	openssl-dev
+	pipewire-dev
+	xdg-desktop-portal-dev
+	"
+options="!check" # no tests
+subpackages="$pkgname-lang"
+source="$pkgname-$pkgver.tar.gz::https://gitlab.gnome.org/GNOME/fractal/-/archive/$pkgver/fractal-$pkgver.tar.gz"
+
+case "$CARCH" in
+	x86)
+		export CFLAGS="$CFLAGS -fno-stack-protector"
+		;;
+esac
+
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+6a77843ff0fd3171ed674de59d074df04de335310a0c4aff96da04860bf003c76b12fb424e75af69deb6bd0a4770867e4c9cdba9191c7646cfa183b06bde4faf  fractal-8.tar.gz
+"

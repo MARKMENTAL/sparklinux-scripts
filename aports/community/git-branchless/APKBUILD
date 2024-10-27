@@ -1,0 +1,74 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=git-branchless
+pkgver=0.9.0
+pkgrel=1
+pkgdesc="Suite of tools to help you visualize, navigate, manipulate, and repair your commit graph"
+url="https://github.com/arxanas/git-branchless"
+# riscv64: test fails
+# s390x, loongarch64: nix crate fails to build
+arch="all !riscv64 !s390x !loongarch64"
+license="MIT OR Apache-2.0"
+makedepends="
+	cargo
+	cargo-auditable
+	libgit2-dev
+	libssh2-dev
+	openssl-dev>3
+	sqlite-dev
+	"
+checkdepends="
+	bash
+	git
+	"
+subpackages="$pkgname-doc"
+source="https://github.com/arxanas/git-branchless/archive/v$pkgver/git-branchless-$pkgver.tar.gz
+	unbundle-sqlite.patch
+	"
+options="net"
+
+export LIBSSH2_SYS_USE_PKG_CONFIG=1  # use system libssh2
+
+prepare() {
+	default_prepare
+
+	# Rust target triple.
+	local target=$(rustc -vV | sed -n 's/host: //p')
+
+	# Build against system-provided libs
+	mkdir -p .cargo
+	cat >> .cargo/config.toml <<-EOF
+		[target.$target]
+		git2 = { rustc-link-lib = ["git2"] }
+	EOF
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	# NOTE: The first two skipped tests hang on CI, see
+	#  https://github.com/arxanas/git-branchless/pull/159 for more info.
+	#  The other two are probably broken.
+	TEST_GIT_EXEC_PATH=$(git --exec-path) \
+	TEST_GIT=$(which git) \
+	RUST_BACKTRACE=1 \
+	cargo test --workspace --frozen -- \
+		--skip=test_checkout_pty \
+		--skip=test_next_ambiguous_interactive \
+		--skip=command::test_test::test_test_config_strategy \
+		--skip=command::test_test::test_test_verbosity
+}
+
+package() {
+	install -D -m755 target/release/git-branchless -t "$pkgdir"/usr/bin/
+	./target/release/git-branchless install-man-pages "$pkgdir"/usr/share/man/
+}
+
+sha512sums="
+b391360e8e2f08312c3c8a3589a251c248884a329333ffa837dd82bd4e29f47f5bf83100135c222174fb055d7c04c4abc7017a925e37ff61469d8756186b53bf  git-branchless-0.9.0.tar.gz
+dc80e42a3dd95c22c212bf3d440d605842d2f30c52517b1a2de8f62cca5a312ca9939ac9c2e50c1b005fb6b0597810a4f8897062bc1171a22a54df3419b4d384  unbundle-sqlite.patch
+"

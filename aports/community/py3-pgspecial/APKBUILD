@@ -1,0 +1,36 @@
+# Contributor: Thomas Boerger <thomas@webhippie.de>
+# Maintainer: omni <omni+alpine@hack.org>
+pkgname=py3-pgspecial
+pkgver=2.1.2
+pkgrel=0
+pkgdesc="Meta-commands handler for Postgres Database"
+url="https://pypi.org/project/pgspecial"
+arch="noarch"
+license="BSD-3-Clause"
+depends="py3-click py3-psycopg-c py3-sqlparse"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest py3-configobj"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/dbcli/pgspecial/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/pgspecial-$pkgver"
+
+replaces="py-pgspecial" # Backwards compatibility
+provides="py-pgspecial=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel --wheel-dir .dist --output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+d5457edfe09dfb0a75c3dd65ea6e77199f5738a7f03f7c8c316956749a8f010a8a3d2dfdc09bd345f3cc1a7c3b7d4656ceb7a3fa61f9f3f62835c0eab320875c  py3-pgspecial-2.1.2.tar.gz
+"

@@ -1,0 +1,43 @@
+# Maintainer: Guy Godfroy <guy.godfroy@gugod.fr>
+pkgname=py3-bite-parser
+pkgver=0.2.4
+pkgrel=1
+pkgdesc="Asynchronous parser taking incremental bites out of your byte input stream"
+url="https://github.com/jgosmann/bite-parser"
+arch="noarch"
+license="MIT"
+makedepends="
+	py3-gpep517
+	py3-poetry-core
+	py3-wheel
+	"
+checkdepends="
+	py3-pytest-asyncio
+	py3-pytest-forked
+	py3-pytest-xdist
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/jgosmann/bite-parser/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/bite-parser-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto --forked
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+	rm -r "$pkgdir"/usr/lib/python*/site-packages/bite/tests
+}
+
+sha512sums="
+57edf56b27c07e3b113481b63d7db95053822c28c03111950e86eaeb15efd7be98e11652019e81a24d928d7dd7fe1781cedaa43d844c3a618377c1c8beb82e1a  py3-bite-parser-0.2.4.tar.gz
+"

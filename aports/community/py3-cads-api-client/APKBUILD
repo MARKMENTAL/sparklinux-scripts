@@ -1,0 +1,37 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+pkgname=py3-cads-api-client
+pkgver=1.4.2
+pkgrel=0
+pkgdesc="CADS API Python client for developing and testing"
+url="https://github.com/ecmwf-projects/cads-api-client"
+arch="noarch"
+license="Apache-2.0"
+depends="py3-attrs py3-multiurl py3-requests py3-responses py3-typing-extensions"
+makedepends="py3-gpep517 py3-setuptools_scm py3-wheel"
+checkdepends="py3-pytest-xdist"
+subpackages="$pkgname-pyc"
+source="https://github.com/ecmwf-projects/cads-api-client/archive/v$pkgver/cads-api-client-$pkgver.tar.gz"
+builddir="$srcdir/cads-api-client-$pkgver"
+
+build() {
+	export SETUPTOOLS_SCM_PRETEND_VERSION=$pkgver
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+08bc453b62da389bde40da3802aaa4491c9d49241a9238147834e8381e5459cb0c1da700c1eca1e21cf70891d1a3f0b390b872967db36fabfce395e9060805be  cads-api-client-1.4.2.tar.gz
+"

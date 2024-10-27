@@ -1,0 +1,50 @@
+# Contributor: Antoine Martin (ayakael) <dev@ayakael.net>
+# Maintainer: Antoine Martin (ayakael) <dev@ayakael.net>
+pkgname=py3-channels
+_pyname="channels"
+pkgver=4.1.0
+pkgrel=2
+arch="noarch"
+pkgdesc="Developer-friendly asynchrony for Django"
+url="https://pypi.python.org/project/channels"
+license="BSD-3-Clause"
+depends="
+	py3-django
+	py3-asgiref
+	py3-daphne
+	"
+makedepends="
+	py3-setuptools
+	py3-gpep517
+	py3-wheel
+	"
+checkdepends="
+	py3-pytest
+	py3-pytest-django
+	py3-pytest-asyncio
+	py3-async-timeout
+"
+source="$pkgname-$pkgver-gh.tar.gz::https://github.com/django/channels/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir"/$_pyname-$pkgver
+subpackages="$pkgname-pyc"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -v
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+2891ac6b507c59db5eb2acf78da180afdee45a1dc26dfc1f8530f13a7e7142490dbf75fdd821913906f33f42de6e28a7c85607734b8bea9b172d915498d4f5a3  py3-channels-4.1.0-gh.tar.gz
+"

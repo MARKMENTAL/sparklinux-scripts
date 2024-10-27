@@ -1,0 +1,38 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer:
+pkgname=tl-expected
+pkgver=1.1.0
+pkgrel=0
+pkgdesc="C++11/14/17 std::expected with functional-style extensions"
+options="!check"
+url="https://github.com/TartanLlama/expected"
+arch="noarch"
+license="CC0-1.0"
+makedepends="cmake samurai"
+source="$pkgname-$pkgver.tar.gz::https://github.com/TartanLlama/expected/archive/v$pkgver.tar.gz"
+builddir="$srcdir/expected-$pkgver"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DEXPECTED_ENABLE_TESTS=OFF \
+		$CMAKE_CROSSOPTS
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	mkdir -p "$pkgdir"/usr/lib
+	mv "$pkgdir"/usr/share/cmake "$pkgdir"/usr/lib
+}
+
+sha512sums="
+ce970c31582869af9d0b3349f386db207dd4881db0bdfd3744331b0a62fe2886dde598a75882fb00254afa3549fb9d4c2bd1ff7682744891d403edfd4ff73492  tl-expected-1.1.0.tar.gz
+"

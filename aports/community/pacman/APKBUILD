@@ -1,0 +1,69 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=pacman
+pkgver=7.0.0
+pkgrel=0
+pkgdesc="A simple library-based package manager"
+options="!check" # Depends on not packaged fakechroot
+url="https://www.archlinux.org/pacman/"
+arch="all"
+license="GPL-2.0-or-later"
+depends="bash libarchive-tools"
+depends_dev="gettext-dev"
+makedepends="
+	$depends_dev
+	asciidoc
+	curl-dev
+	gpgme-dev
+	libarchive-dev
+	meson
+	openssl-dev>3
+	"
+subpackages="
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-lang
+	$pkgname-bash-completion
+	$pkgname-zsh-completion
+	"
+source="https://gitlab.archlinux.org/pacman/pacman/-/archive/v$pkgver/pacman-v$pkgver.tar.gz
+	use-gettext-libintl.patch
+	"
+builddir="$srcdir/$pkgname-v$pkgver"
+
+provides="$pkgname-makepkg=$pkgver-r$pkgrel"
+replaces="$pkgname-makepkg"
+
+# secfixes:
+#   5.2.0-r0:
+#     - CVE-2019-18183
+#     - CVE-2019-18182
+#   5.1.3-r0:
+#     - CVE-2019-9686
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dscriptlet-shell=/usr/bin/bash \
+		-Di18n=true \
+		-Ddoc=enabled \
+		build
+	meson compile -C build
+}
+
+check() {
+	meson test -C build
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install -C build
+
+	mkdir -p "$pkgdir"/usr/lib/pkgconfig
+	mv "$pkgdir"/usr/share/pkgconfig/* "$pkgdir"/usr/lib/pkgconfig
+	rmdir -p "$pkgdir"/usr/share/pkgconfig || true
+}
+
+sha512sums="
+c26916775e5bccea878da3d77b17b2e2c99b70f5d8dab99929395ec92ff3b145ae8bc996207ebaada3aa0ab87e95904ec6fdf7bbb08c1a1b823af7732049e1bf  pacman-v7.0.0.tar.gz
+07ee2b14ceafcc5e8081722a77d7fccebca1de6cb354504dcdb77068e45dc2b908ea71cc32863a256f9b8eb49164a786d334867b21d9eab30880b686f17cba52  use-gettext-libintl.patch
+"

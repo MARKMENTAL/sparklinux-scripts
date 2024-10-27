@@ -1,0 +1,112 @@
+# Maintainer: Thomas Böhler <witcher@wiredspace.de>
+# Contributor: Thomas Böhler <witcher@wiredspace.de>
+pkgname=gnucash
+pkgver=5.8
+pkgrel=0
+pkgdesc=" GnuCash Double-Entry Accounting Program"
+url="https://gnucash.org/"
+# s390x: Tests fail because of test-gnc-{timezone,datetime} (SEGFAULT)
+arch="all !s390x"
+license="GPL-2.0-or-later OR GPL-3.0-or-later"
+# dconf: gsettings backend for storing gnucash global preferences
+depends="
+	dconf
+	guile
+	"
+# TODO: optional:
+# AQBANKING: gwenhywfar, gwenhywfar-dev, aqbanking...?
+#   gwengui-gtk3 doesn't seem to be packaged for alpine yet
+# OFX: libofx-dev...?
+makedepends="
+	bash
+	boost-dev
+	cmake
+	glib-dev
+	gtest-dev
+	guile-dev
+	libdbi-dev
+	libsecret-dev
+	libxml2-dev
+	libxslt-dev
+	perl
+	python3-dev
+	samurai
+	swig
+	webkit2gtk-dev
+	"
+checkdepends="
+	libdbi-drivers
+	tzdata
+	"
+subpackages="
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-lang
+	py3-$pkgname:_py3
+	"
+# strip: Unable to recognise the format of the input file
+# "./usr/lib/guile/3.0/site-ccache/gnucash/json/syntax.go"
+#
+# seems to be related to https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=907061
+options="!strip"
+# Releases are available from both sourceforge *and* GitHub, but the website
+# only seems to link to sourceforge so the former is used.
+source="
+	$pkgname-$pkgver.tar.gz::https://sourceforge.net/projects/gnucash/files/gnucash%20%28stable%29/$pkgver/gnucash-$pkgver.tar.gz/download
+	disable-gnc-date.patch
+	disable-gnc-timezone-and-test-lots.patch
+	"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		local crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_BUILD_TYPE=None \
+		-DWITH_PYTHON=ON \
+		-DWITH_AQBANKING=OFF \
+		-DWITH_OFX=OFF \
+		$crossopts
+
+	cmake --build build
+}
+
+check() {
+	# TODO:
+	# - test-lots sporadically fails
+	# - test-gnc-date: test_qof_print_date_buff uses %Y date format but prints
+	#   %y instead
+	# - test-gnc-numeric:
+	#   - "123\xE2\x80\xAF" "456" is printed as "123456" but should be "123,456"
+	#   - "123.456" should be "123,456"
+	ninja -C build check
+}
+
+package() {
+	DESTDIR="$pkgdir" ninja -C build install
+
+	install -Dm644 LICENSE "$pkgdir"/usr/share/licenses/"$pkgname"/LICENSE
+	install -Dm644 -t "$pkgdir"/usr/share/doc/"$pkgname"/ \
+		README \
+		README.dependencies \
+		NEWS \
+		DOCUMENTERS \
+		AUTHORS
+}
+
+_py3() {
+	pkgdesc="$pkgdesc (python bindings)"
+
+	mkdir -p "$subpkgdir"/usr/lib/
+	amove usr/lib/python3*
+}
+
+sha512sums="
+32969c3fa6002b199120fe000a196629c0a695f70d099082c2587c062ed8c16f204935c2e920e3a630acca620529b1841eeb9ad78258470076415ef275f83d84  gnucash-5.8.tar.gz
+a7723a11aeb082290373d574d2971b6e768b83936995316792caa44ddd2d08b41e0aab02622796d0b297c054623d95db9b7c6136792aa28cb649d310d80d731f  disable-gnc-date.patch
+eced870915434711c3260188a48ce8446f95c4d4258a61600785734e82cd1f483e8e3fa9013234899b80e775ef0f51d17a688a30d311d7786f5ae79ab606962a  disable-gnc-timezone-and-test-lots.patch
+"

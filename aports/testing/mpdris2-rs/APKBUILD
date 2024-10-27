@@ -1,0 +1,37 @@
+# Contributor: Matthias Ahouansou <matthias@ahouansou.cz>
+# Maintainer: Matthias Ahouansou <matthias@ahouansou.cz>
+pkgname=mpdris2-rs
+pkgver=0.2.3
+pkgrel=0
+pkgdesc="Exposing MPRIS V2.1 D-Bus interface for mpd"
+url="https://github.com/szclsya/mpdris2-rs"
+# loongarch64: blocked by libc crate
+arch="all !loongarch64"
+license="GPL-3.0-or-later"
+depends="dbus"
+makedepends="
+	cargo
+	cargo-auditable
+"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/szclsya/mpdris2-rs/archive/refs/tags/$pkgver.tar.gz"
+options="net !check" # no tests
+
+prepare() {
+	default_prepare
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --release --frozen
+}
+
+package() {
+	install -Dm 755 target/release/mpdris2-rs "$pkgdir"/usr/bin/mpdris2-rs
+
+	install -Dm 655 COPYING "$pkgdir"/usr/share/licenses/"$pkgname"/COPYING
+}
+
+sha512sums="
+0a6bb577dd80a658f6b492ac3e9dd15337d8cf7d3dd2ffc672f94245856b67ae6ac1e6848cf3fccf8150e40bfed4c90b7ba3c301a874dd22f680fd05d5d4c4b5  mpdris2-rs-0.2.3.tar.gz
+"

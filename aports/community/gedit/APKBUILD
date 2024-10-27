@@ -1,0 +1,56 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: mio <miyopan@e.email>
+pkgname=gedit
+pkgver=48.0
+pkgrel=0
+pkgdesc="An easy-to-use and general-purpose text editor"
+url="https://gedit-technology.github.io/apps/gedit/"
+arch="all !s390x"
+license="GPL-2.0-only"
+depends_dev="gedit=$pkgver-r$pkgrel"
+makedepends="
+	appstream-dev
+	glib-dev
+	gobject-introspection-dev
+	gspell-dev
+	gtk+3.0-dev
+	gtk-doc
+	itstool
+	libgedit-gtksourceview-dev
+	libgedit-tepl-dev
+	libpeas-dev
+	libx11-dev
+	libxml2-dev
+	meson
+	perl
+	"
+checkdepends="appstream-glib desktop-file-utils"
+depends="gsettings-desktop-schemas"
+subpackages="$pkgname-dev $pkgname-doc $pkgname-lang $pkgname-pyc"
+source="https://download.gnome.org/sources/gedit/${pkgver%.*}/gedit-$pkgver.tar.xz"
+
+prepare() {
+	default_prepare
+
+	case $CARCH in
+	# sigsegv
+	s390x) sed -i '/test-open-links/d' plugins/openlinks/unit-tests/meson.build ;;
+	esac
+}
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+c8d8709d2615389b5329c6da2cf99cea74eeb09b6d25043a71261d89416eb31a704309d5bb9958d3133afb457685fec2a294e25934186936039b10e49e6787ef  gedit-48.0.tar.xz
+"

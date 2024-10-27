@@ -1,0 +1,40 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Pablo Correa Gómez <pcg@pcorreag.tk>
+pkgname=gnome-firmware
+pkgver=46.0
+pkgrel=0
+pkgdesc="Install firmware on devices"
+url="https://gitlab.gnome.org/World/gnome-firmware"
+arch="all !armhf !ppc64le !s390x !riscv64 !loongarch64" # limited by fwupd
+license="GPL-2.0-only"
+makedepends="
+	elogind-dev
+	fwupd-dev
+	gtk4.0-dev
+	help2man
+	libadwaita-dev
+	libxmlb-dev
+	meson
+	"
+options="!check" # no tests
+subpackages="$pkgname-doc $pkgname-lang"
+source="https://gitlab.gnome.org/World/gnome-firmware/-/archive/$pkgver/gnome-firmware-$pkgver.tar.gz"
+provides="gnome-firmware-updater=$pkgver-r$pkgrel"
+replaces="gnome-firmware-updater"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dsystemd=false \
+		-Delogind=true \
+		. output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+9d9285c3abb5e1e5c7877d4eefb0845534251bf253fcaafadf855cd00a9c93945693668b41fb4e9b9caa7caa057f65de873c9e85e393e28cf4c921f261831c72  gnome-firmware-46.0.tar.gz
+"

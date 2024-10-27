@@ -1,0 +1,73 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=pinentry-ui
+pkgver=1.3.0
+pkgrel=1
+pkgdesc="Graphical UI's for Pinentry"
+url="https://www.gnupg.org/aegypten2/"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="
+	gcr-dev
+	gtk+2.0-dev
+	libassuan-dev
+	libcap-dev
+	libgpg-error-dev
+	libsecret-dev
+	qt6-qtbase-dev
+	"
+subpackages="
+	pinentry-gtk
+	pinentry-gnome
+	pinentry-qt
+	"
+source="https://gnupg.org/ftp/gcrypt/pinentry/pinentry-$pkgver.tar.bz2"
+builddir="$srcdir/pinentry-$pkgver"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--enable-fallback-curses \
+		--enable-libsecret \
+		--disable-pinentry-curses \
+		--enable-pinentry-gnome3 \
+		--enable-pinentry-gtk2 \
+		--enable-pinentry-qt
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	# created by post install scripts so we can override with other UI versions
+	rm -f "$pkgdir"/usr/bin/pinentry
+}
+
+gtk() {
+	install="$subpkgname.post-install $subpkgname.post-deinstall"
+
+	amove usr/bin/pinentry-gtk*
+}
+
+gnome() {
+	depends="gcr"
+	install="$subpkgname.post-install $subpkgname.post-deinstall"
+
+	amove usr/bin/pinentry-gnome3
+}
+
+qt() {
+	install="$subpkgname.post-install $subpkgname.post-deinstall"
+
+	amove usr/bin/pinentry-qt*
+}
+
+sha512sums="
+1bbac81c6811cffc8969a46494e6daa6b8447802f47ff6fa3e4dc9ac244cf6e5f629834c9b6a60770d06bff6c9932ad4059f10d2fdf93fd9e26fd5d21c0e3732  pinentry-1.3.0.tar.bz2
+"

@@ -1,0 +1,28 @@
+# Contributor: Sergiy Stupar <owner@sestolab.pp.ua>
+# Maintainer: Sergiy Stupar <owner@sestolab.pp.ua>
+pkgname=rdrview
+pkgver=0.1.2
+pkgrel=0
+pkgdesc="Command line tool to extract the main content from a webpage"
+url="https://github.com/eafer/rdrview"
+arch="all"
+license="Apache-2.0"
+makedepends="libxml2-dev curl-dev libseccomp-dev"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/eafer/rdrview/archive/v$pkgver.tar.gz
+	curl-7.85.0-CURLOPT_PROTOCOLS-deprecation.patch
+	"
+options="!check" # tests are quite involved and have a bunch of requirements
+
+build() {
+	make
+}
+
+package() {
+	make PREFIX=/usr DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+85ba2dea88c67f6dd82c272003e993f6a7afb374f2ed3e1ddc72013c880fa9b7ccabc803e64ea4d16f15bc8fe077cea7cccab97bd1db59bf0760f88b0223fcd1  rdrview-0.1.2.tar.gz
+d6365e45ed754d1a404f6a832153961fabfeb63b82c2a66a5c20a49f3adac77a1d018465963d2cfe13798b6d2b0ab09805fa0a36761aedde9297d81edaf1f51b  curl-7.85.0-CURLOPT_PROTOCOLS-deprecation.patch
+"

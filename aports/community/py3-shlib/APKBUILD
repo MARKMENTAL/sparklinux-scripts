@@ -1,0 +1,47 @@
+# Contributor: Andy Hawkins <andy@gently.org.uk>
+# Maintainer: Andy Hawkins <andy@gently.org.uk>
+pkgname=py3-shlib
+pkgver=1.6
+pkgrel=2
+pkgdesc="Shell Library"
+url="https://nurdletech.com/linux-utilities/shlib/"
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="
+	python3
+	py3-braceexpand
+	py3-inform
+	"
+makedepends="
+	py3-flit-core
+	py3-gpep517
+	py3-installer
+	"
+checkdepends="
+	py3-pytest
+	"
+subpackages="$pkgname-pyc"
+source="https://github.com/KenKundert/shlib/archive/v$pkgver/shlib-v$pkgver.tar.gz"
+builddir="$srcdir/shlib-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	cd .testenv
+	bin/python3 -m pytest ..
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+6a3b86bf16debc01e4c1ea87ed176c1d520014b278c873448ecd746470fc6bbed7368dc423a1943af0b7e7c9e0f7b2c844771a7899e123c754e666be6c1d161f  shlib-v1.6.tar.gz
+"

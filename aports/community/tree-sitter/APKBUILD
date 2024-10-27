@@ -1,0 +1,60 @@
+# Contributor: TBK <alpine@jjtc.eu>
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: TBK <alpine@jjtc.eu>
+pkgname=tree-sitter
+pkgver=0.22.2
+pkgrel=1
+pkgdesc="Incremental parsing system for programming tools"
+url="https://tree-sitter.github.io/"
+license="MIT"
+arch="all"
+depends_dev="jq" # needed for abuild-tree-sitter
+makedepends="bash"
+checkdepends="nodejs"
+subpackages="
+	$pkgname-static
+	$pkgname-dev
+	$pkgname-grammars::noarch
+"
+source="
+	tree-sitter-$pkgver.tar.gz::https://github.com/tree-sitter/tree-sitter/archive/refs/tags/v$pkgver.tar.gz
+	abuild-tree-sitter
+"
+# tests require git cloning remote fixtures
+# also for cli/wasm only
+options="!check"
+
+build() {
+	# static & shared lib
+	make
+
+	# TODO - build wasm bindings
+	# wasm bindings
+	#script/build-wasm
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr install
+
+	install -Dm755 "$srcdir"/abuild-tree-sitter -t "$pkgdir"/usr/bin/
+	# Prepare directory for grammars provided by other aports.
+	mkdir -p "$pkgdir"/usr/lib/tree-sitter
+}
+
+dev() {
+	default_dev
+
+	amove usr/bin/abuild-tree-sitter
+}
+
+grammars() {
+	pkgdesc="Meta package for pulling in all tree-sitter grammars"
+	depends=""
+
+	mkdir -p "$subpkgdir"
+}
+
+sha512sums="
+a42d744f6e1db7c7c842804f3435b87ccb5d0df2363a18eee38353f12f18c8cf0c6211bf0225fd5f2c0431ca8531aa4ddd73d87d42b80fa35c3c701cae2d7856  tree-sitter-0.22.2.tar.gz
+3ddaf38e368371ec7fef8846f9f40d2c1be9166f50f22c84e886f22bd7950cfe4125b16c41722c2d0abfe6b9fbf08f19332d292e4d8bc422a8ff57f99793e67c  abuild-tree-sitter
+"

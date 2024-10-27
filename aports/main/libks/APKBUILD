@@ -1,0 +1,33 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=libks
+pkgver=1.8.2
+pkgrel=1
+pkgdesc="Foundational support for signalwire C products"
+url="https://github.com/signalwire/libks"
+arch="all"
+license="MIT"
+makedepends="cmake samurai util-linux-dev openssl-dev>3"
+subpackages="$pkgname-dev $pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/signalwire/libks/archive/refs/tags/v$pkgver.tar.gz
+disable-failing-tests.patch"
+
+build() {
+	cmake -B . -G Ninja \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DCMAKE_INSTALL_PREFIX=/usr
+	cmake --build .
+}
+
+check() {
+	ctest --test-dir . --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install .
+}
+
+sha512sums="
+5c976803ce649e0690c5b4c14e16e2f08e21cbce67d21fcaaf1f3edbc83c110ad68eb1798b1f5601bd3245992fe471eee1e584d7232c8727957e6804e899b923  libks-1.8.2.tar.gz
+2b9dcde2423531ce9677780c8bd1781450ace473fb9e176fd7449deeef51dc323af9825011f856e3494a7efaf688aff802b7c58105d65e3d21c22bfc71cffbaa  disable-failing-tests.patch
+"

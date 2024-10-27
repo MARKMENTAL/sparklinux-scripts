@@ -1,0 +1,41 @@
+# Contributor: Michael Mason <ms13sp@gmail.com>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=grep
+pkgver=3.11
+pkgrel=0
+pkgdesc="Searches input files for lines containing a match to a specified pattern"
+url="https://www.gnu.org/software/grep/grep.html"
+arch="all"
+license="GPL-3.0-or-later"
+makedepends="pcre2-dev autoconf automake"
+checkdepends="coreutils bash diffutils"
+subpackages="$pkgname-doc"
+source="https://mirrors.kernel.org/gnu/grep/grep-$pkgver.tar.xz"
+
+build() {
+	CFLAGS="$CFLAGS -flto=auto"\
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--bindir=/bin \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--disable-nls
+	make
+}
+
+check() {
+	make check || {
+		cat tests/test-suite.log
+	}
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+f254a1905a08c8173e12fbdd4fd8baed9a200217fba9d7641f0d78e4e002c1f2a621152d67027d9b25f0bb2430898f5233dc70909d8464fd13d7dd9298e65c42  grep-3.11.tar.xz
+"

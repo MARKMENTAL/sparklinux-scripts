@@ -1,0 +1,200 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+
+_flavor=sophgo
+pkgname=linux-$_flavor
+pkgver=6.1.90
+case $pkgver in
+	*.*.*)	_kernver=${pkgver%.*};;
+	*.*)	_kernver=$pkgver;;
+esac
+pkgrel=0
+arch=riscv64
+pkgdesc="Linux Sophgo kernel"
+url="https://www.kernel.org"
+depends="initramfs-generator"
+subpackages="$pkgname-dev $pkgname-doc"
+_depends_dev="perl gmp-dev mpc1-dev mpfr-dev elfutils-dev bash flex bison zstd"
+makedepends="$_depends_dev sed installkernel bc linux-headers linux-firmware-any openssl-dev>3 mawk
+	diffutils findutils zstd pahole python3 gcc>=13.1.1_git20230624"
+options="!strip	!check"
+license="GPL-2.0-only"
+source="https://cdn.kernel.org/pub/linux/kernel/v${pkgver%%.*}.x/linux-$_kernver.tar.xz
+	https://cdn.kernel.org/pub/linux/kernel/v${pkgver%%.*}.x/patch-$pkgver.xz
+	https://dev.alpinelinux.org/archive/sophgo-patches/sophgo-$pkgver-alpine.patch
+	sophgo.riscv64.config
+	"
+builddir="$srcdir"/linux-$_kernver
+
+prepare() {
+	local _patch_failed=
+	cd "$srcdir"/linux-$_kernver
+	if [ "${pkgver%.0}" = "$pkgver" ]; then
+		msg "Applying patch-$pkgver.xz"
+		unxz -c < "$srcdir"/patch-$pkgver.xz | patch -p1 -N
+	fi
+
+	# first apply patches in specified order
+	for i in $source; do
+		case $i in
+		*.patch)
+			msg "Applying $i..."
+			if ! patch -s -p1 -N -i "$srcdir"/${i##*/}; then
+				echo $i >>failed
+				_patch_failed=1
+			fi
+			;;
+		esac
+	done
+
+	if ! [ -z "$_patch_failed" ]; then
+		error "The following patches failed:"
+		cat failed
+		return 1
+	fi
+
+	# remove localversion from patch if any
+	rm -f localversion*
+
+	local flavor=
+	for flavor in $_flavors; do
+		local _builddir="$srcdir"/build-$flavor.$CARCH
+		mkdir -p "$_builddir"
+		echo "-$pkgrel-$flavor" > "$_builddir"/localversion-alpine
+		_genconfig $flavor
+		make -C "$srcdir"/linux-$_kernver \
+			O="$_builddir" \
+			ARCH="$_carch" \
+			olddefconfig
+		_verifyconfig $flavor
+	done
+}
+
+build() {
+	unset LDFLAGS CFLAGS CPPFLAGS CXXFLAGS
+	export KBUILD_BUILD_TIMESTAMP="$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EPOCH})"
+	local _builddir="$srcdir/build-$_flavor-$arch"
+
+	mkdir -p "$_builddir"
+	echo "-$pkgrel-$_flavor" > "$_builddir"/localversion-alpine
+	cp "$srcdir"/"$_flavor.$arch.config" "$_builddir"/.config
+	msg "Configuring kernel"
+	make -C "$builddir" \
+		O="$_builddir" \
+		olddefconfig
+
+	msg "Build kernel"
+	cd "$_builddir"
+	make CC="${CC:-gcc}" \
+		AWK="${AWK:-mawk}" \
+		KBUILD_BUILD_VERSION="$((pkgrel + 1 ))-Alpine"
+}
+
+package() {
+	depends="$depends linux-firmware-any"
+	local _builddir="$srcdir/build-$_flavor-$arch"
+	export KBUILD_BUILD_TIMESTAMP="$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EPOCH})"
+	cd "$_builddir"
+	local _abi_release="$(make -s kernelrelease)"
+
+	mkdir -p "$pkgdir"/boot "$pkgdir"/lib/modules
+	make modules_install zinstall dtbs_install \
+		INSTALL_MOD_PATH="$pkgdir" \
+		INSTALL_MOD_STRIP=1 \
+		INSTALL_PATH="$pkgdir"/boot \
+		INSTALL_DTBS_PATH="$pkgdir/boot/dtbs-$_flavor"
+
+	rm -f "$pkgdir"/lib/modules/"$_abi_release"/build \
+		"$pkgdir"/lib/modules/"$_abi_release"/source
+	rm -rf "$pkgdir"/lib/firmware
+
+	install -D -m644 include/config/kernel.release \
+		"$pkgdir"/usr/share/kernel/$_flavor/kernel.release
+
+	mkdir -p "$pkgdir"/usr/share/doc
+	cp -r "$builddir"/Documentation \
+		"$pkgdir"/usr/share/doc/linux-doc-"$pkgver"/
+	# remove files that aren't part of the documentation itself
+	for nondoc in \
+		.gitignore conf.py docutils.conf \
+		dontdiff Kconfig Makefile
+	do
+		rm "$pkgdir"/usr/share/doc/linux-doc-"$pkgver"/"$nondoc"
+	done
+	# create /usr/share/doc/linux-doc symlink
+	cd "$pkgdir"/usr/share/doc; ln -s linux-doc-"$pkgver" linux-doc
+}
+
+
+dev() {
+	local _builddir="$srcdir/build-$_flavor-$arch"
+	local _abi_release="$(make -C "$_builddir" -s kernelrelease)"
+	# copy the only the parts that we really need for build 3rd party
+	# kernel modules and install those as /usr/src/linux-headers,
+	# simlar to what ubuntu does
+	#
+	# this way you dont need to install the 300-400 kernel sources to
+	# build a tiny kernel module
+	#
+	pkgdesc="Headers and script for third party modules for $_flavor kernel"
+	depends="$_depends_dev"
+	local dir="$subpkgdir"/usr/src/linux-headers-"$_abi_release"
+	export KBUILD_BUILD_TIMESTAMP="$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EPOCH})"
+
+	# first we import config, run prepare to set up for building
+	# external modules, and create the scripts
+	mkdir -p "$dir"
+	cp -a "$_builddir"/.config "$_builddir"/localversion-alpine \
+		"$dir"/
+
+	make -C "$builddir" \
+		O="$dir" \
+		AWK="${AWK:-mawk}" \
+		prepare modules_prepare scripts
+
+	# remove the stuff that points to real sources. we want 3rd party
+	# modules to believe this is the sources
+	rm "$dir"/Makefile "$dir"/source
+
+	# copy the needed stuff from real sources
+	#
+	# this is taken from ubuntu kernel build script
+	# http://kernel.ubuntu.com/git/ubuntu/ubuntu-zesty.git/tree/debian/rules.d/3-binary-indep.mk
+	cd "$builddir"
+	find .  -path './include/*' -prune \
+		-o -path './scripts/*' -prune -o -type f \
+		\( -name 'Makefile*' -o -name 'Kconfig*' -o -name 'Kbuild*' -o \
+		   -name '*.sh' -o -name '*.pl' -o -name '*.lds' -o -name 'Platform' \) \
+		-print | cpio -pdm "$dir"
+
+	cp -a scripts include "$dir"
+
+	find "arch/riscv" -name include -type d -print | while IFS='' read -r folder; do
+		find "$folder" -type f
+	done | sort -u | cpio -pdm "$dir"
+
+	install -Dm644 "$_builddir"/Module.symvers \
+		"$dir"/Module.symvers
+
+	# remove unneeded things
+	msg "Removing documentation..."
+	rm -r "$dir"/Documentation
+	find "$dir" -type f -name '*.o' -printf 'Removing %P\n' -delete
+
+	msg "Removing unneeded arch headers..."
+	for i in "$dir"/arch/*; do
+		if [ "${i##*/}" != riscv ]; then
+			echo "  ${i##*/}"
+			rm -r "$i"
+		fi
+	done
+
+	mkdir -p "$subpkgdir"/lib/modules/"$_abi_release"
+	ln -sf /usr/src/linux-headers-"$_abi_release" \
+		"$subpkgdir"/lib/modules/"$_abi_release"/build
+}
+sha512sums="
+6ed2a73c2699d0810e54753715635736fc370288ad5ce95c594f2379959b0e418665cd71bc512a0273fe226fe90074d8b10d14c209080a6466498417a4fdda68  linux-6.1.tar.xz
+d7df5d40a61204a31056e152cc4841a3ff9390e356d4b9f73eca496a1a57f2278c2b2341e4f95e0416bb80c81d4251acc4527c1a3b819baf225174cf8f24c562  patch-6.1.90.xz
+54b5149ddb17396b127b0d5d5595fa5301bcbb68c7a0c5e95b6e4e4d7e2e59f2dd17e5dc20b5e8756644f5d9df89cbec7227e9136c197845fe1d7597cec33709  sophgo-6.1.90-alpine.patch
+c06c0822898247a247bdb6cc9ebe954c1edd15376fe8ffc2c595dfd1cb2e7b63cf52b7a25fc0227b6f9681d546d690134b43e2d3bfb972e6b65696b0ff45e188  sophgo.riscv64.config
+"

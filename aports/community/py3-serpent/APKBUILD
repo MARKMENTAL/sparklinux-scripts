@@ -1,0 +1,37 @@
+# Maintainer: Antoine Martin (ayakael) <dev@ayakael.net>
+pkgname=py3-serpent
+_pyname=serpent
+pkgver=1.41
+pkgrel=4
+pkgdesc="Serialization based on ast.literal_eval for Python"
+url="https://pypi.org/project/serpent/"
+arch="noarch"
+license="MIT"
+depends="python3"
+makedepends="py3-setuptools py3-gpep517 py3-wheel"
+checkdepends="py3-attrs py3-tz"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/${_pyname:0:1}/$_pyname/$_pyname-$pkgver.tar.gz"
+builddir="$srcdir/$_pyname-$pkgver"
+
+replaces="py-serpent" # Backwards compatiblity
+provides="py-serpent=$pkgver-r$pkgrel" # Backwards compatiblity
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 setup.py test
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+cab6f9e36d2f777e58cd5f3d1dd6e11626e0f222ecb2adb8e5997338c76ed357c461dadd00010cfd43ffc6a0b1addd7de06d86b7a82ca796719e4bde2d9f4813  serpent-1.41.tar.gz
+"

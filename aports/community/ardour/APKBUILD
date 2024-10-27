@@ -1,0 +1,80 @@
+# Maintainer: Oliver Smith <ollieparanoid@postmarketos.org>
+# Contributor: Saijin-Naib <Saijin-Naib_package-maintenance@outlook.com>
+# Contributor: David Demelier <markand@malikania.fr>
+pkgname=ardour
+pkgver=8.7.0
+pkgrel=0
+pkgdesc="professional-grade digital audio workstation"
+url="https://ardour.org/"
+arch="all !ppc64le" # Does not build on ppc64le.
+license="GPL-2.0-or-later AND CC0-1.0 AND MIT"
+makedepends="
+	alsa-lib-dev
+	atkmm-dev
+	aubio-dev
+	boost-dev
+	fftw-dev
+	fluidsynth-dev
+	gtk+2.0-dev
+	gtkmm-dev
+	hidapi-dev
+	itstool
+	jack-dev
+	libarchive-dev
+	liblo-dev
+	libpng-dev
+	libsamplerate-dev
+	libsigc++-dev
+	libsndfile-dev
+	libusb-dev
+	lilv-dev
+	lrdf-dev
+	lv2-dev
+	pulseaudio-dev
+	python3
+	readline-dev
+	redland-dev
+	rubberband-dev
+	serd-dev
+	sratom-dev
+	suil-dev
+	taglib-dev
+	vamp-sdk-dev
+	"
+source="https://community.ardour.org/src/Ardour-$pkgver.tar.bz2
+	0001-Unset-HAVE_GNU_FTW.patch
+	"
+builddir="$srcdir/Ardour-$pkgver"
+ldpath="/usr/lib/ardour8"
+
+build() {
+	export LINKFLAGS="$LDFLAGS"
+	python3 waf configure \
+		--prefix=/usr \
+		--cxx11 \
+		--keepflags \
+		--optimize \
+		--freedesktop \
+		--no-phone-home \
+		--with-backends=pulseaudio,jack,alsa,dummy
+		#FIXME: add missing dependencies
+		# --use-external-libs
+	python3 waf build
+}
+
+check() {
+	python3 waf test
+}
+
+package() {
+	python3 waf install --destdir="$pkgdir"
+
+	mkdir -p "$pkgdir"/usr/share/metainfo
+	mv "$pkgdir"/usr/share/appdata/*.xml "$pkgdir"/usr/share/metainfo
+	rmdir "$pkgdir"/usr/share/appdata
+}
+
+sha512sums="
+cd2cdc1360b01d23cd3df62ee949ecab9d5d8da5112636438c2ef8a88d188503bcd7f09f2a5d8e07460dacbc35cecd96e8edbc748adccc50b5a90375f2f742d0  Ardour-8.7.0.tar.bz2
+3cee45fa222f3a1990b4ba7f936f821ee412e9c5b26f326f107ecb0e6519a0e9c3bd54c9e78f1f7bcfb2a1e79b2733cc4b8bd36fe2fea685a5419735cd0f80fd  0001-Unset-HAVE_GNU_FTW.patch
+"

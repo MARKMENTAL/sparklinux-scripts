@@ -1,0 +1,51 @@
+# Contributor: prspkt <prspkt@protonmail.com>
+# Maintainer: prspkt <prspkt@protonmail.com>
+pkgname=foliate
+pkgver=3.1.1
+pkgrel=0
+_foliatejs=04b8789267aa0d4bc9313a3205dd5cc2e836733e
+pkgdesc="Simple and modern eBook viewer"
+url="https://johnfactotum.github.io/foliate/"
+arch="noarch !armhf !s390x !riscv64" # missing gjs
+license="GPL-3.0-or-later"
+depends="
+	desktop-file-utils
+	gjs
+	libadwaita
+	webkit2gtk-6.0
+	"
+makedepends="
+	gettext-dev
+	gjs-dev
+	glib-dev
+	gtk4.0-dev
+	libadwaita-dev
+	meson
+	webkit2gtk-6.0-dev
+	"
+subpackages="$pkgname-lang"
+options="!check"
+source="https://github.com/johnfactotum/foliate/archive/$pkgver/foliate-$pkgver.tar.gz
+	https://github.com/johnfactotum/foliate-js/archive/$_foliatejs/foliate-js-$_foliatejs.tar.gz
+	"
+
+prepare() {
+	default_prepare
+
+	rmdir -v src/foliate-js
+	ln -sv "$srcdir"/foliate-js-$_foliatejs src/foliate-js
+}
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+e447f1278ee749822b1de010051c1c7e1b462b7e41bbc94112c2390c2a3449529b092f570da30c983dc37f4c700712bdf3d4c6beaca99d43ee38fe50b2ea66e3  foliate-3.1.1.tar.gz
+b1ade24f4afd1699746099cdab79a4e9f2e2cf4991b709b7daf1fe0a15fc3239a5c33feab4df57c1bf38c49df28e8daf99557fb468e31fd5d7bfcdf6758c30eb  foliate-js-04b8789267aa0d4bc9313a3205dd5cc2e836733e.tar.gz
+"

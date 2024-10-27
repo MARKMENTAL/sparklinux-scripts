@@ -1,0 +1,57 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=qt5-qtwebchannel
+pkgver=5.15.10_git20230612
+pkgrel=1
+_module="${pkgname#qt5-}"
+_pkgver=74c0625337c8a8de0a465878c7e7d238e8d979ed
+_fullname=$_module-$_pkgver
+pkgdesc="Library for seamless integration of C++ +and QML applications with HTML/JavaScript clients."
+url="https://www.qt.io/developers/"
+arch="all"
+license="LGPL-2.1-only AND LGPL-3.0-only AND GPL-3.0-only AND Qt-GPL-exception-1.0"
+options="!check" # No tests
+makedepends="
+	qt5-qtbase-dev
+	qt5-qtdeclarative-dev
+	qt5-qtwebsockets-dev
+	"
+subpackages="$pkgname-dev"
+source="https://dev.alpinelinux.org/archive/qt/$_fullname.tar.xz"
+builddir="$srcdir/$_fullname"
+
+_disturl="dev.alpinelinux.org:/archive/qt/"
+snapshot() {
+	clean
+	makedepends="git xz rsync tar" deps
+	mkdir -p "$srcdir" && cd "$srcdir"
+	git clone --filter=tree:0 https://invent.kde.org/qt/qt/$_module.git .
+	git archive --format tar --prefix=$_fullname/ $_pkgver > "$SRCDEST"/$_fullname.tar
+	xz -vv -T0 -9 -e "$SRCDEST"/$_fullname.tar
+	rsync --progress -La "$SRCDEST"/$_fullname.tar.xz $_disturl
+}
+
+prepare() {
+	default_prepare
+
+	# We need to make the build system think we're running in a git repository
+	# so it correctly symlinks during the build
+	mkdir .git
+}
+
+build() {
+	qmake-qt5
+	make
+}
+
+package() {
+	make INSTALL_ROOT="$pkgdir" install
+
+	# Drop QMAKE_PRL_BUILD_DIR because reference the build dir
+	find "$pkgdir/usr/lib" -type f -name '*.prl' \
+		-exec sed -i -e '/^QMAKE_PRL_BUILD_DIR/d' {} \;
+}
+
+sha512sums="
+9f6419fc9baae6ff991b7d0b865822bd10088e1d630548a4530466c42b29b1126460a13c7f8b6bd8254f429169706c98b672b3c72af057409b7e2ab2888eae33  qtwebchannel-74c0625337c8a8de0a465878c7e7d238e8d979ed.tar.xz
+"

@@ -1,0 +1,32 @@
+# Contributor: Alex Yam <alex@alexyam.com>
+# Maintainer: Alex Yam <alex@alexyam.com>
+pkgname=cgif
+pkgver=0.4.1
+pkgrel=0
+pkgdesc="fast and lightweight GIF encoder written in C"
+url="https://github.com/dloebl/cgif"
+arch="all"
+license="MIT"
+makedepends="meson"
+subpackages="$pkgname-dev"
+source="$pkgname-$pkgver.tar.gz::https://github.com/dloebl/cgif/archive/refs/tags/v$pkgver.tar.gz"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dtests=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+3483279ee734506509f173fc573a7ae2f869c98a53ccdb0025670e0b5a16f5959cb79d16121ebf19bc9a24bd265075ccfe6c238e0d6f3f383db1cf7ae0e90c99  cgif-0.4.1.tar.gz
+"

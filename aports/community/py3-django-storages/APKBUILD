@@ -1,0 +1,52 @@
+# Contributor: Celeste <cielesti@protonmail.com>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=py3-django-storages
+pkgver=1.14.4
+pkgrel=0
+pkgdesc="Custom storage backends for Django"
+url="https://django-storages.readthedocs.io/"
+arch="noarch"
+license="BSD-3-Clause"
+depends="py3-django"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="
+	py3-boto3
+	py3-cryptography
+	py3-paramiko
+	py3-pytest-cov
+	py3-rsa
+	py3-tox
+	"
+subpackages="$pkgname-pyc"
+source="https://github.com/jschneier/django-storages/archive/$pkgver/py3-django-storages-$pkgver.tar.gz"
+builddir="$srcdir/django-storages-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	DJANGO_SETTINGS_MODULE=tests.settings \
+		.testenv/bin/python3 -m pytest \
+			--ignore tests/test_azure.py \
+			--ignore tests/test_dropbox.py \
+			--ignore tests/test_gcloud.py \
+			--ignore tests/test_s3.py
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+537945c5815d2a3b71dfa9122e8abb983921acd9b2a49d13edb1003c0cc8f2643992789dd6467a261fc3f857bbefc947ab67b1872acc937c5ac4d668c40ffc91  py3-django-storages-1.14.4.tar.gz
+"

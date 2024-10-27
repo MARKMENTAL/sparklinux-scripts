@@ -1,0 +1,63 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Contributor: André Klitzing <aklitzing@gmail.com>
+# Maintainer: André Klitzing <aklitzing@gmail.com>
+pkgname=libbytesize
+pkgver=2.11
+pkgrel=0
+pkgdesc="Library for working with arbitrary big sizes in bytes"
+options="!check" # Tests require dealing with locales
+url="https://github.com/storaged-project/libbytesize"
+arch="all"
+license="LGPL-2.1-or-later"
+makedepends="gettext-dev gmp-dev mpfr-dev pcre2-dev python3"
+checkdepends="bash py3-six"
+subpackages="
+	$pkgname-dev
+	$pkgname-lang
+	py3-$pkgname:_py:noarch
+	$pkgname-doc
+	$pkgname-tools:_tools:noarch
+	"
+source="https://github.com/storaged-project/libbytesize/releases/download/$pkgver/libbytesize-$pkgver.tar.gz"
+
+build() {
+	CFLAGS="$CFLAGS -flto=auto -lintl" \
+	./configure \
+		--host=$CHOST \
+		--build=$CBUILD \
+		--prefix=/usr \
+		--disable-dependency-tracking
+	make
+}
+
+check() {
+	# Disable test that depends on unpackaged pocketlint
+	sed -i 's|canary_tests.sh$||g' tests/Makefile
+
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+_py() {
+	pkgdesc="Python bindings for $pkgname"
+	depends="python3"
+
+	replaces="py-libbytesize" # Backwards compatibility
+	provides="py-libbytesize=$pkgver-r$pkgrel" # Backwards compatibility
+
+	amove usr/lib/python*
+}
+
+_tools() {
+	pkgdesc="Tools for libbytesize"
+	depends="py-$pkgname"
+
+	amove usr/bin
+}
+
+sha512sums="
+eb539c878cc0f857772b07aac4aca2732d3298fa649011f3f8a95fce83b1cc5b5b7001f6bb0c168ed47b7886d34c2e139ded9e66994a9a10784f9f7944475190  libbytesize-2.11.tar.gz
+"

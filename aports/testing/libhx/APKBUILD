@@ -1,0 +1,28 @@
+# Maintainer: Noel Kuntze <noel.kuntze@thermi.consulting>
+pkgname=libhx
+pkgver=4.24
+pkgrel=0
+pkgdesc="library for queue, tree, I/O and utility functions"
+arch="all"
+url="https://inai.de/projects/libhx/"
+license="GPL-3.0-only"
+makedepends="linux-headers"
+subpackages="$pkgname-dev"
+source="https://inai.de/files/libhx/libHX-$pkgver.tar.xz"
+builddir="$srcdir/libHX-$pkgver"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+a8e87b7cb1f49bb119b2b7e3088045e1245390170b6e672ed5d3bbc1fd48bf2630b8b481e7589adb25e24b76ac8a0053ccdb6ba7d5b3cf945ccef5ab678ef521  libHX-4.24.tar.xz
+"

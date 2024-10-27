@@ -1,0 +1,37 @@
+# Contributor: River Dillon <oss@outerpassage.net>
+# Maintainer: River Dillon <oss@outerpassage.net>
+pkgname=alex
+pkgver=3.5.0.0
+pkgrel=0
+pkgdesc="lexical analyser generator for Haskell"
+url="https://www.haskell.org/alex/"
+arch="x86_64 aarch64" # limited by ghc
+license="BSD-3-Clause"
+makedepends="ghc libffi-dev"
+subpackages="$pkgname-doc"
+source="https://hackage.haskell.org/package/alex-$pkgver/alex-$pkgver.tar.gz"
+
+build() {
+	# ghc version path
+	export PATH="$PATH:/usr/lib/llvm14/bin"
+	runhaskell Setup.hs configure \
+		"--prefix=/usr" \
+		"--datasubdir=$pkgname" \
+		"--docdir=\$datadir/doc/$pkgname" \
+		"--enable-tests"
+	runhaskell Setup.hs build -j "--ghc-options=-j -O1"
+}
+
+check() {
+	runhaskell Setup.hs test
+}
+
+package() {
+	docdir="usr/share/doc/$pkgname"
+	runhaskell Setup.hs copy "--destdir=$pkgdir"
+	rm "$pkgdir/$docdir/LICENSE" # no need to include a standard license
+}
+
+sha512sums="
+c1da20dd14a79e74a500a9b10e405cca707a56423574a7cff8410d0ba5a7ab890090da13b7cb34e7646091398b276101281590ecb7bf2b55d25a240360b8fb95  alex-3.5.0.0.tar.gz
+"

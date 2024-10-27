@@ -1,0 +1,66 @@
+# Maintainer: kpcyrd <git@rxv.cc>
+# Contributor: kpcyrd <git@rxv.cc>
+# Contributor: Bartłomiej Piotrowski <bpiotrowski@alpinelinux.org>
+pkgname=cjdns
+pkgver=22
+pkgrel=4
+pkgdesc="A routing engine designed for security, scalability, speed and ease of use"
+url="https://github.com/cjdelisle/cjdns"
+# loongarch64: blocked by ring crate
+arch="all !s390x !ppc64le !riscv64 !loongarch64"
+license="GPL-3.0-or-later"
+makedepends="
+	cargo
+	cargo-auditable
+	linux-headers
+	nodejs
+	"
+install="$pkgname.post-install"
+subpackages="$pkgname-doc $pkgname-openrc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/cjdelisle/cjdns/archive/cjdns-v$pkgver.tar.gz
+	getrandom-0.2.10.patch
+	"
+builddir="$srcdir/$pkgname-$pkgname-v$pkgver"
+options="net"
+
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target=$CTARGET --locked
+}
+
+build() {
+	export CJDNS_RELEASE_VERSION="$pkgver"
+	cargo auditable build --release --frozen
+}
+
+check() {
+	./target/release/cjdroute --help
+}
+
+package() {
+	find ./target/release -maxdepth 1 -type f -perm -a=x \
+		-exec install -Dm755 -t "$pkgdir"/usr/sbin/ {} \+
+	install -Dm755 contrib/openrc/cjdns "$pkgdir/etc/init.d/cjdns"
+	install -Dm644 doc/man/cjdroute.1 \
+		"$pkgdir/usr/share/man/man1/cjdroute.1"
+	install -Dm644 doc/man/cjdroute.conf.5 \
+		"$pkgdir/usr/share/man/man5/cjdroute.conf.5"
+	install -Dm 644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+	install -Dm644 -t "$pkgdir/usr/share/doc/$pkgname" \
+		doc/admin-api.md \
+		doc/configure.md \
+		doc/djc_layer_model.md \
+		doc/nat-gateway.md \
+		doc/network-services.md \
+		doc/non-root-user.md \
+		doc/security_specification.md \
+		doc/shorewall_and_vpn_gateway_howto.md \
+		doc/tunnel.md
+}
+
+sha512sums="
+fd22ae084edf174052b2683fc5591aeb036791b1a710f49d57cab475b1fdc7e7a2d4fcc3482d5fd401e15b8fef49a8985bea93a4b5a192c62b31647c4667b610  cjdns-22.tar.gz
+1a7ae666d8cf251a1db3c51b43f148273441ce66b852b14d51dc843e849e5d52338a53f235604383747933626b873e2ad29fde578765dc924b1fe81ec7a25ff3  getrandom-0.2.10.patch
+"

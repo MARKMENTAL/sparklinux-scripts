@@ -1,0 +1,71 @@
+# Maintainer: Leonardo Arena <rnalrd@alpinelinux.org>
+pkgname=filezilla
+pkgver=3.67.0
+pkgrel=0
+pkgdesc="FTP Client"
+url="https://filezilla-project.org/"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="
+	autoconf
+	automake
+	boost-dev
+	gnutls-dev
+	gtk+3.0-dev
+	libfilezilla-dev
+	libidn-dev
+	libtool
+	pugixml-dev
+	sqlite-dev
+	wxwidgets-dev
+	xdg-utils
+	"
+subpackages="$pkgname-doc $pkgname-lang"
+source="https://download.filezilla-project.org/client/FileZilla_${pkgver}_src.tar.xz"
+
+case "$CARCH" in
+s390x) options="$options !check";; # ratelimit_test fails
+esac
+
+# secfixes:
+#   3.66.4-r0:
+#     - CVE-2023-48795
+
+prepare() {
+	default_prepare
+
+	# patched autoconf
+	NOCONFIGURE=1 autoreconf -vif
+}
+
+build() {
+	case "$CARCH" in
+	x86)
+		# fails to build otherwise
+		export CFLAGS="$CFLAGS -D_FORCE_SOFTWARE_SHA"
+		;;
+	esac
+	CFLAGS="$CFLAGS -flto=auto" \
+	CXXFLAGS="$CXXFLAGS -flto=auto" \
+	./configure \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--without-dbus \
+		--disable-manualupdatecheck \
+		--disable-autoupdatecheck
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+b2d4cd45f2ed7e70fbb11500a42fe0d0e51919831a35bcfb439455d03af8eb744eb25d7f7b6ea9a94c424065e4d071d9706fcf46019da829d1318c099ab8108c  FileZilla_3.67.0_src.tar.xz
+"

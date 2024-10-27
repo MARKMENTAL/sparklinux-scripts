@@ -1,0 +1,48 @@
+# Contributor: Fabricio Silva <hi@fabricio.dev>
+# Maintainer: Fabricio Silva <hi@fabricio.dev>
+pkgname=recyclarr-cli
+pkgver=7.2.4
+pkgrel=0
+pkgdesc="Automatically sync TRaSH guides to your Sonarr and Radarr instances"
+url="https://github.com/recyclarr/recyclarr"
+arch="x86_64 aarch64 armv7" # limited by dotnet
+license="MIT"
+options="net !check !strip" # strip breaks the package
+depends="dotnet8-runtime git"
+makedepends="dotnet8-sdk"
+source="
+	$pkgname-$pkgver.tar.gz::https://github.com/recyclarr/recyclarr/archive/refs/tags/v$pkgver.tar.gz
+	0001-disable-gitversion.patch
+	"
+builddir="$srcdir/recyclarr-$pkgver"
+
+prepare() {
+	default_prepare
+
+	# apply patch version
+	local _ver="$pkgver-r$pkgrel.alpine"
+	(
+		cd src/Recyclarr.Cli
+		sed -i "s/{Version}/$_ver/" Program.cs
+		sed -i "s/{Version}/$_ver/" Console/Setup/ProgramInformationDisplayTask.cs
+	)
+}
+
+build() {
+	dotnet publish src/Recyclarr.Cli \
+		--no-self-contained \
+		--use-current-runtime \
+		--configuration Release \
+		--output publish \
+		-p:PublishSingleFile=true \
+		-p:DisableGitVersionTask=true
+}
+
+package() {
+	install -Dm755 publish/recyclarr -t "$pkgdir"/usr/bin
+}
+
+sha512sums="
+cbf7d378889cce04f2992760c7c9e04d47607fecb180748e5ecff2ed79a2881a89764d83856d63e4fd19b8781909e48b04b396f72015f662e18a403488e9ac1d  recyclarr-cli-7.2.4.tar.gz
+ed44885591a7edd446a673bc5ce79fb41dba9d3ffb56167dd2c1e3c0dc739f004c7af39caa940f7a5eb14191fd1e025b0a0b6892371ddcbe9844a38328c4487c  0001-disable-gitversion.patch
+"

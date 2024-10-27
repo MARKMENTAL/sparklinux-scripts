@@ -1,0 +1,52 @@
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=libclc
+# follow llvm versioning
+pkgver=18.1.8
+pkgrel=1
+_llvmver=${pkgver%%.*}
+pkgdesc="Open source implementation of the library requirements of the OpenCL C programming language"
+url="https://libclc.llvm.org/"
+arch="all"
+license="Apache-2.0 WITH LLVM-exception"
+depends_dev="$pkgname=$pkgver-r$pkgrel"
+makedepends="
+	clang$_llvmver
+	cmake
+	llvm$_llvmver-dev
+	llvm$_llvmver-static
+	llvm$_llvmver-gtest
+	samurai
+	spirv-llvm-translator-dev
+	"
+checkdepends="llvm$_llvmver-test-utils"
+subpackages="$pkgname-dev"
+source="https://github.com/llvm/llvm-project/releases/download/llvmorg-$pkgver/libclc-$pkgver.src.tar.xz
+	https://github.com/llvm/llvm-project/releases/download/llvmorg-$pkgver/cmake-$pkgver.src.tar.xz
+	"
+builddir="$srcdir/libclc-$pkgver.src"
+
+build() {
+	CC=clang-$_llvmver \
+	CXX=clang++-$_llvmver \
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DLIBCLC_TARGETS_TO_BUILD="amdgcn--;amdgcn--amdhsa;amdgcn-mesa-mesa3d;r600--;nvptx--;nvptx64--;nvptx--nvidiacl;nvptx64--nvidiacl;spirv-mesa3d-;spirv64-mesa3d-" \
+		-DLLVM_CONFIG="llvm-config-$_llvmver" \
+		-DLLVM_SPIRV=/usr/bin/llvm-spirv \
+		-DCMAKE_MODULE_PATH="$srcdir/cmake-$pkgver.src/Modules"
+	cmake --build build
+}
+
+check() {
+	cmake --build build --target test
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+532e990b164b0e45ad92b4ca80d53fc6ec79fd31406d239079615342866e7f70e7a9aa8bbe025b82ee61d9c52a286b280797e83f8ac69f96dbdbbe8591dad9f0  libclc-18.1.8.src.tar.xz
+e02243b491f9e688db28d7b53270fcf87debf09d3c95b136a7c7b96e26890de68712c60a1e85f5a448a95ad8c81f2d8ae77047780822443bbe39f1a9e6211007  cmake-18.1.8.src.tar.xz
+"

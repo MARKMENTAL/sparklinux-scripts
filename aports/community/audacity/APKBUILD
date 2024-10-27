@@ -1,0 +1,102 @@
+# Contributor: Natanael Copa <ncopa@alpinelinux.org>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=audacity
+pkgver=3.6.2
+pkgrel=0
+pkgdesc="Multitrack audio editor"
+url="https://www.audacityteam.org/"
+# s390x: fails to build
+arch="all !s390x"
+license="GPL-3.0-or-later"
+makedepends="
+	alsa-lib-dev
+	cmake
+	expat-dev
+	ffmpeg-dev
+	flac-dev
+	jack-dev
+	lame-dev
+	libid3tag-dev
+	libmad-dev
+	libogg-dev
+	libsndfile-dev
+	libvorbis-dev
+	lilv-dev
+	lv2-dev
+	mpg123-dev
+	nasm
+	opusfile-dev
+	portaudio-dev
+	portmidi-dev
+	rapidjson-dev
+	samurai
+	soundtouch-dev
+	soxr-dev
+	sqlite-dev
+	suil-dev
+	vamp-sdk-dev
+	wavpack-dev
+	wxwidgets-dev
+	zlib-dev
+	"
+subpackages="$pkgname-doc $pkgname-lang"
+source="https://github.com/audacity/audacity/releases/download/Audacity-$pkgver/audacity-sources-$pkgver.tar.gz"
+# no tests
+options="!check"
+ldpath="/usr/lib/audacity"
+
+provides="tenacity=$pkgver-r$pkgrel"
+replaces="tenacity"
+
+builddir="$srcdir"/audacity-sources-$pkgver
+
+prepare() {
+	default_prepare
+
+	# hide aports version
+	git init -q .
+}
+
+build() {
+	case "$CARCH" in
+	x86)
+		local arch="-DHAVE_SSE=OFF -DHAVE_SSE2=OFF -DHAVE_MMX=OFF"
+		;;
+	x86_64)
+		local arch="-DHAVE_SSE=ON -DHAVE_SSE2=ON -DHAVE_MMX=ON"
+		;;
+	esac
+
+	if [ "$CBUILD" != "$CHOST" ]; then
+		cmake_crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+
+	cmake -B build -G Ninja -Wno-dev \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DAUDACITY_BUILD_LEVEL=2 \
+		-Daudacity_conan_enabled=OFF \
+		-Daudacity_has_vst3=OFF \
+		-Daudacity_has_crashreports=OFF \
+		-Daudacity_has_networking=OFF \
+		-Daudacity_has_sentry_reporting=OFF \
+		-Daudacity_has_updates_check=OFF \
+		-Daudacity_lib_preference=system \
+		-Daudacity_obey_system_dependencies=ON \
+		-Daudacity_use_portsmf=local \
+		-Daudacity_use_sbsms=local \
+		-Daudacity_use_twolame=local \
+		$cmake_crossopts \
+		$arch
+
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+2c898a5a18b0e9a251f2c18a67bc58b1d2a8f8f427f528cdf96cc51d75448183c66d48aa3e4903048d3762ce7466fb1d646927efb34eccebb27c40daaa6823cf  audacity-sources-3.6.2.tar.gz
+"

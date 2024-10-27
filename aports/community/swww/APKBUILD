@@ -1,0 +1,58 @@
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=swww
+pkgver=0.9.5
+pkgrel=0
+pkgdesc="Efficient animated wallpaper daemon for Wayland compositors"
+url="https://github.com/LGFae/swww"
+# loongarch64: fails to build rustix crate
+arch="all !loongarch64"
+license="GPL-3.0-or-later"
+makedepends="
+	cargo
+	cargo-auditable
+	libxkbcommon-dev
+	lz4-dev
+	wayland-dev
+	scdoc
+	"
+subpackages="
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/LGFae/swww/archive/refs/tags/v$pkgver.tar.gz"
+options="!check" # Requires the binary to be available in PATH
+
+prepare() {
+	default_prepare
+
+	# Busybox's basename applet doesn't implement --suffix argument
+	sed -i 's/--suffix/-s/' doc/gen.sh
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+	sh ./doc/gen.sh
+}
+
+package() {
+	for binary in swww swww-daemon; do
+		install -Dm755 target/release/$binary -t "$pkgdir"/usr/bin/
+	done
+
+	install -Dm644 doc/generated/*.1 -t "$pkgdir"/usr/share/man/man1/
+
+	install -Dm644 completions/swww.bash \
+		"$pkgdir"/usr/share/bash-completion/completions/swww
+	install -Dm644 completions/swww.fish \
+		"$pkgdir"/usr/share/fish/vendor_completions.d/swww.fish
+	install -Dm644 completions/_swww \
+		"$pkgdir"/usr/share/zsh/site-functions/_swww
+}
+
+sha512sums="
+79e599357ba5b28bd5b963b4d4949962948ba482ad870e9909946d1d892f5aa9d78fcea3e7294371880842b2b9a1a29354bf3199f82cd142fbd1156f34440aae  swww-0.9.5.tar.gz
+"

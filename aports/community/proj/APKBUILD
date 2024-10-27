@@ -1,0 +1,66 @@
+# Contributor: Holger Jaekel <holger.jaekel@gmx.de>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=proj
+pkgver=9.4.1
+pkgrel=0
+pkgdesc="PROJ coordinate transformation software library"
+url="https://proj.org/"
+arch="all"
+license="MIT"
+makedepends="
+	cmake
+	curl-dev
+	nlohmann-json
+	samurai
+	sqlite
+	sqlite-dev
+	tiff-dev
+	"
+checkdepends="
+	bash
+	gtest-dev
+	"
+subpackages="
+	$pkgname-doc
+	$pkgname-util:util
+	$pkgname-dev
+	"
+source="
+	https://download.osgeo.org/proj/proj-$pkgver.tar.gz
+	builtins-tolerance.patch
+	"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		local crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=None \
+		-DUSE_EXTERNAL_GTEST=ON \
+		-DRUN_NETWORK_DEPENDENT_TESTS=OFF \
+		-DBUILD_TESTING="$(want_check && echo ON || echo OFF)" \
+		$crossopts
+	cmake --build build
+}
+
+check() {
+	CTEST_OUTPUT_ON_FAILURE=TRUE ctest --test-dir build --force-new-ctest-process -E '(test_network)'
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+util() {
+	pkgdesc="Cartographic projection library (utilities)"
+
+	amove usr/bin
+}
+
+sha512sums="
+e9e4a80125a9481709fa7a16c8ceed7c5480c1d9152fe0c16ff69cd976081b9f41e23783459ee2a50771ec7f6210f46167de5af9ee943ff274bd27a1de4b6305  proj-9.4.1.tar.gz
+7f3a8393463ec20ac9566cb83b891b1a7e00b32360218213f6ee7b1e2874d163445a7784ba8ffdedd75e8afd93f58798b7d8989dd2731f4b6634839b2388b8e6  builtins-tolerance.patch
+"

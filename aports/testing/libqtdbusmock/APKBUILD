@@ -1,0 +1,45 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+pkgname=libqtdbusmock
+pkgver=0.9.1
+pkgrel=1
+pkgdesc="Library for mocking DBus interactions using Qt"
+url='https://gitlab.com/ubports/development/core/libqtdbusmock'
+arch="all"
+license="LGPL-3.0-only"
+makedepends="
+	cmake
+	cmake-extras
+	gmock
+	gtest-dev
+	libqtdbustest
+	networkmanager-dev
+	qt5-qtbase-dev
+	samurai
+	"
+checkdepends="
+	py3-dbusmock
+	procps
+	"
+source="https://gitlab.com/ubports/development/core/libqtdbusmock/-/archive/$pkgver/libqtdbusmock-$pkgver.tar.gz"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_BUILD_TYPE=None
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+d33a93aca9d7320f2246f800c62c1e97bc1b4af9e8408c7eeafa697862669ccc3c818a1e97143e93747087c0a55b247e4e6748ddbc2b624f2e07845b842e9028  libqtdbusmock-0.9.1.tar.gz
+"

@@ -1,0 +1,91 @@
+# Contributor: Alexander Edland <alpine@ocv.me>
+# Contributor: knuxify <knuxify@gmail.com>
+# Maintainer: Will Sinatra <wpsinatra@gmail.com>
+pkgname=mgba
+pkgver=0.10.3
+pkgrel=1
+pkgdesc="Game Boy Advance Emulator"
+url="https://mgba.io"
+# 0 != 0x1 check
+arch="all !s390x"
+arch="$arch !armhf" # Missing qt5-qtmultimedia-dev
+license="MPL-2.0"
+makedepends="
+	cmake
+	cmocka-dev
+	elfutils-dev
+	ffmpeg-dev
+	imagemagick-dev
+	libedit-dev
+	libepoxy-dev
+	libpng-dev
+	libzip-dev
+	python3-dev
+	qt5-qtbase-dev
+	qt5-qtmultimedia-dev
+	qt5-qttools-dev
+	samurai
+	sdl2-dev
+	zlib-dev
+	"
+checkdepends="py3-cffi py3-cached-property"
+subpackages="$pkgname-doc libmgba libmgba-dev $pkgname-qt"
+source="mgba-$pkgver.tar.gz::https://github.com/mgba-emu/mgba/archive/$pkgver.tar.gz"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+
+	case "$CARCH" in
+	aarch64|armv7)
+		# setting USE_EPOXY fails things because of wrong gl.h includes(?)
+		local armstuff=OFF
+		;;
+	*)
+		local armstuff=ON
+		;;
+	esac
+	cmake -G Ninja -B build \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DBUILD_TEST="$(want_check && echo ON || echo OFF)" \
+		-DBUILD_SUITE="$(want_check && echo ON || echo OFF)" \
+		-DUSE_DISCORD_RPC=OFF \
+		-DUSE_EPOXY=$armstuff \
+		$CMAKE_CROSSOPTS
+	cmake --build build
+}
+
+check() {
+	cd build
+	LD_LIBRARY_PATH="$PWD" \
+		ctest --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	# remove test leftovers
+	rm -f "$pkgdir"/usr/bin/mgba-fuzz
+	rm -f "$pkgdir"/usr/bin/tbl-fuzz
+}
+
+qt() {
+	pkgdesc="Qt5 frontend for the mGBA emulator"
+
+	amove usr/bin/mgba-qt
+	amove usr/share/applications
+}
+
+libmgba() {
+	pkgdesc="Shared library of mGBA"
+
+	amove usr/lib
+}
+
+sha512sums="
+de92725a18f00ec8645a75cf434a667bfc5aba954d0ae8be188241371a4a310214123be2cec13d20dbff4f660b401364efb51c43c7bdc24eea40454949062a52  mgba-0.10.3.tar.gz
+"

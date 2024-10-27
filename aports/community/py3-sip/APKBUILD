@@ -1,0 +1,38 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=py3-sip
+pkgver=6.8.6
+pkgrel=1
+pkgdesc="A tool that makes it easy to create Python bindings for C and C++ libraries"
+options="!check" # No testsuite
+url="https://www.riverbankcomputing.com/software/sip/"
+arch="all"
+license="custom:sip"
+depends="
+	py3-packaging
+	py3-ply
+	py3-setuptools
+	py3-toml
+	"
+makedepends="python3-dev py3-gpep517 py3-wheel"
+subpackages="$pkgname-pyc"
+source="https://pypi.python.org/packages/source/s/sip/sip-$pkgver.tar.gz"
+builddir="$srcdir/sip-$pkgver"
+
+replaces="py-sip" # Backwards comptibility
+provides="py-sip=$pkgver-r$pkgrel" # Backwards comptibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/sip-*.whl
+}
+
+sha512sums="
+c884c58fc51708e2dd247453f2214e6b01d7e1a9a0166b4228feb5d996310ace2665238dde26af34907e596a0a1c710fc130ae79297f430f73f639a3eb781a50  sip-6.8.6.tar.gz
+"

@@ -1,0 +1,39 @@
+# Contributor: Kevin Daudt <kdaudt@alpinelinux.org>
+# Maintainer: Kevin Daudt <kdaudt@alpinelinux.org>
+pkgname=nfpm
+pkgver=2.40.0
+pkgrel=0
+pkgdesc="a simple apk, Deb and RPM packager without external dependencies"
+url="https://nfpm.goreleaser.com/"
+arch="all !riscv64"
+license="MIT"
+options="net" # net for go
+makedepends="go"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/goreleaser/nfpm/archive/v$pkgver.tar.gz"
+
+# secfixes:
+#   2.35.2-r0:
+#     - CVE-2023-49568
+
+export GOFLAGS="$GOFLAGS -modcacherw"
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -ldflags "-X main.version=$pkgver" -v -o nfpm ./cmd/nfpm/main.go
+}
+
+check() {
+	go test
+}
+
+package() {
+	install -Dm0755 nfpm "$pkgdir"/usr/bin/nfpm
+	install -Dm0644 LICENSE.md "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+}
+
+sha512sums="
+2689b6320d1aadc58d39ac0f5f13ee4cc86903cdc0c0506a40f30f557ad3e7a5eadd8082edc25d321921a18cddaeb496976f19ff4c268769dabccc6efa732a80  nfpm-2.40.0.tar.gz
+"

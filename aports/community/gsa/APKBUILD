@@ -1,0 +1,37 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=gsa
+pkgver=23.3.0
+pkgrel=0
+pkgdesc="Greenbone Security Assistant - The web frontend for the Greenbone Vulnerability Management (GVM) framework "
+url="https://github.com/greenbone/gsa"
+# riscv64: NonErrorEmittedError: (Emitted value instead of an instance of Error) [object Object]
+# s390x, x86, ppc64le, loongarch64: rollup module not supported
+# Error: Your current platform "linux" and architecture $arch combination is not yet supported by the native Rollup build
+arch="noarch !riscv64 !s390x !x86 !ppc64le !loongarch64"
+license="AGPL-3.0-or-later"
+options="net !check"
+makedepends="yarn nodejs-current"
+source="$pkgname-$pkgver.tar.gz::https://github.com/greenbone/gsa/archive/refs/tags/v$pkgver.tar.gz
+remove-husky-git-hook.patch"
+
+prepare() {
+	default_prepare
+	rm -rf build
+}
+
+build() {
+	export NODE_OPTIONS="--openssl-legacy-provider"
+	yarn add terser
+	yarn build
+}
+
+package() {
+	mkdir -p "$pkgdir"/usr/share/gvm/gsad/web/
+	cp -r build/* "$pkgdir"/usr/share/gvm/gsad/web/
+}
+
+sha512sums="
+d9eaa282ba4babf3f42939f4918b5726fa539e4c4fe64e89ae77cf1887b2f10d5a97f085b168264e7b23c468f194e0c58c565ee86458812065947a4d96c43788  gsa-23.3.0.tar.gz
+373b20e1ec695fa8b070417490c51984ba40b58057ea92253d7a678f2a0178c12340d5360ad0883aa378af3c13c634c32c95c348154815b9eecb982a54d3d24e  remove-husky-git-hook.patch
+"

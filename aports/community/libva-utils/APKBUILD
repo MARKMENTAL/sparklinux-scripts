@@ -1,0 +1,37 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Contributor: Taner Tas <taner76@gmail.com>
+# Maintainer: Clayton Craft <clayton@craftyguy.net>
+pkgname=libva-utils
+pkgver=2.22.0
+pkgrel=0
+pkgdesc="Intel VA-API Media Applications and Scripts for libva"
+options="!check" # Most tests fail
+url="https://github.com/intel/libva-utils"
+arch="all"
+license="MIT"
+makedepends="
+	meson
+	libva-glx-dev
+	libdrm-dev
+	wayland-dev
+	"
+source="https://github.com/01org/libva-utils/archive/$pkgver/libva-utils-$pkgver.tar.gz"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Ddrm=true \
+		-Dx11=true \
+		-Dwayland=true \
+		-Dtests=false \
+		. output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+30a7093a544f4081b412f7d9b1ef350426be95880b8eb342bd8c36d2c5ba10606e107587aafb930057e8db4bcec8f3c5e3c327645d7a84013673ff616d09325d  libva-utils-2.22.0.tar.gz
+"

@@ -1,0 +1,32 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=iceauth
+pkgver=1.0.10
+pkgrel=0
+pkgdesc="X.Org ICE authority file utility"
+url="https://xorg.freedesktop.org/"
+arch="all"
+license="MIT"
+subpackages="$pkgname-doc"
+makedepends="libice-dev util-macros"
+source="https://www.x.org/releases/individual/app/iceauth-$pkgver.tar.xz"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--mandir=/usr/share/man
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+cfadac03a3f72f3c0bb58f67984a033847c76e7e3fdd9ebce583c0554d7f9484faf5053d878f5a82a543cdcc8e2ef8acecadb8830bd3c53584d7ec950cb51cc3  iceauth-1.0.10.tar.xz
+"

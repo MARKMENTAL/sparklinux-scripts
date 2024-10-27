@@ -1,0 +1,66 @@
+# Contributor: Alex Yam <alex@alexyam.com>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=wasi-compiler-rt
+# match llvm ver
+pkgver=18.1.8
+_llvmver="${pkgver%%.*}"
+_wasi_sdk_ver=wasi-sdk-22
+pkgrel=1
+pkgdesc="WASI LLVM compiler runtime"
+url="https://compiler-rt.llvm.org/"
+arch="all"
+options="!check" # TODO: check
+license="Apache-2.0 WITH LLVM-exception"
+makedepends="
+	clang
+	cmake
+	libxml2-dev
+	llvm$_llvmver-dev
+	llvm$_llvmver-static
+	llvm$_llvmver-gtest
+	python3-dev
+	samurai
+	wasi-libc
+	wasi-libcxx
+	zlib-dev
+	"
+source="https://github.com/llvm/llvm-project/releases/download/llvmorg-$pkgver/llvm-project-$pkgver.src.tar.xz
+	wasi-sdk-$_wasi_sdk_ver.tar.gz::https://github.com/WebAssembly/wasi-sdk/archive/refs/tags/$_wasi_sdk_ver.tar.gz
+	"
+builddir="$srcdir"/llvm-project-$pkgver.src
+
+prepare() {
+	default_prepare
+
+	mv "$srcdir"/wasi-sdk-$_wasi_sdk_ver/wasi-sdk.cmake "$builddir"
+	mv "$srcdir"/wasi-sdk-$_wasi_sdk_ver/cmake/Platform cmake
+}
+
+build() {
+	export CFLAGS="$CFLAGS -fno-exceptions --sysroot=/usr/share/wasi-sysroot"
+	cmake -B build -G Ninja -S compiler-rt -Wno-dev \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DCMAKE_MODULE_PATH="$builddir"/cmake \
+		-DCMAKE_TOOLCHAIN_FILE="$builddir"/wasi-sdk.cmake \
+		-DCMAKE_C_COMPILER_WORKS=ON \
+		-DCMAKE_CXX_COMPILER_WORKS=ON \
+		-DCOMPILER_RT_BAREMETAL_BUILD=ON \
+		-DCOMPILER_RT_INCLUDE_TESTS=OFF \
+		-DCOMPILER_RT_HAS_FPIC_FLAG=OFF \
+		-DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON \
+		-DCOMPILER_RT_OS_DIR=wasi \
+		-DWASI_SDK_PREFIX=/usr \
+		-DCMAKE_INSTALL_PREFIX=/usr/lib/llvm$_llvmver/lib/clang/$_llvmver/
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	rm -r "$pkgdir"/usr/lib/llvm$_llvmver/lib/clang/$_llvmver/include
+}
+
+sha512sums="
+25eeee9984c8b4d0fbc240df90f33cbb000d3b0414baff5c8982beafcc5e59e7ef18f6f85d95b3a5f60cb3d4cd4f877c80487b5768bc21bc833f107698ad93db  llvm-project-18.1.8.src.tar.xz
+b2a6da27459c951d1c4781381d4fafce535a6b15ba91be4dc7e3295dfc6d7c62b81671a0d9bf4c206a8f54572415894a2b4b1ac7b5eb93da205d22abd13d35bf  wasi-sdk-wasi-sdk-22.tar.gz
+"

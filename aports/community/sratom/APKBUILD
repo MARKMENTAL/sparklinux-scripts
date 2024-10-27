@@ -1,0 +1,34 @@
+# Contributor: David Demelier <markand@malikania.fr>
+# Maintainer: David Demelier <markand@malikania.fr>
+pkgname=sratom
+pkgver=0.6.16
+pkgrel=0
+pkgdesc="library for serialising LV2 atoms to and from RDF"
+url="https://drobilla.net/software/sratom"
+arch="all"
+license="ISC"
+makedepends="
+	meson
+	serd-dev
+	sord-dev
+	lv2-dev
+	"
+subpackages="$pkgname-dev"
+source="https://download.drobilla.net/sratom-$pkgver.tar.xz"
+
+build() {
+	abuild-meson -Db_lto=true . output
+	meson compile -C output
+}
+
+check() {
+	meson test --print-errorlogs --no-rebuild -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+8e01eec642bff63745e8d99a814780ff34e4b79cc99699a1bb7ddac60da8808231d3b4a615a1d87464cbcf4dc26b8ec39e71688a268d493df71dc75892bf6479  sratom-0.6.16.tar.xz
+"

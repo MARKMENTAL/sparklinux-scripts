@@ -1,0 +1,38 @@
+# Maintainer: Simon Zeni <simon@bl4ckb0ne.ca>
+pkgname=jellyfin-web
+pkgver=10.9.11
+pkgrel=0
+pkgdesc="Web Client for Jellyfin"
+url="https://jellyfin.org/"
+# armv7: oom
+arch="x86_64 aarch64"
+options="net" # net for npm
+license="GPL-2.0-only"
+install="$pkgname.post-install"
+depends="jellyfin"
+makedepends="npm"
+source="$pkgname-$pkgver.tar.gz::https://github.com/jellyfin/jellyfin-web/archive/refs/tags/v$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+
+	npm ci --no-audit
+}
+
+build() {
+	npm run build:production
+}
+
+check() {
+	npm test
+}
+
+package() {
+	mkdir -p "$pkgdir"/usr/share/webapps/jellyfin-web
+
+	cp -r "$builddir"/dist/* "$pkgdir"/usr/share/webapps/jellyfin-web
+}
+
+sha512sums="
+1a8195f0cd4650e15fffed78d7b20b159441fe13a626bdf198bc51cf1a839836fc51f43da3ba876cf83788f3f7ec4e0402e5eeeaba25c6bc547232c1b30cc65d  jellyfin-web-10.9.11.tar.gz
+"

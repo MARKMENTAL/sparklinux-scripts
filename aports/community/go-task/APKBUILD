@@ -1,0 +1,62 @@
+# Contributor: Kevin Daudt <kdaudt@alpinelinux.org>
+# Maintainer: Kevin Daudt <kdaudt@alpinelinux.org>
+pkgname=go-task
+pkgver=3.39.2
+pkgrel=0
+pkgdesc="Task runner written in Go, installed as go-task"
+url="https://taskfile.dev/"
+arch="all"
+license="MIT"
+makedepends="go"
+subpackages="
+	$pkgname-doc
+	$pkgname-task::noarch
+	$pkgname-bashcomp::noarch
+	$pkgname-fishcomp::noarch
+	$pkgname-zshcomp::noarch
+	"
+options="net"
+source="$pkgname-$pkgver.tar.gz::https://github.com/go-task/task/archive/refs/tags/v$pkgver.tar.gz
+	completion-rename-to-go-task.patch
+	"
+builddir="$srcdir/task-$pkgver"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -v -ldflags="-X main.version=$pkgver" github.com/go-task/task/v3/cmd/task
+}
+
+check() {
+	go build -o bin/ ./cmd/sleepit
+	go test -v ./...
+}
+
+package() {
+	install -Dm0755 task "$pkgdir"/usr/bin/go-task
+	install -Dm0644 website/docs/usage.mdx -t "$pkgdir"/usr/share/doc/go-task/
+
+	install -Dm0644 completion/bash/task.bash \
+		"$pkgdir"/usr/share/bash-completion/completions/go-task.bash
+	install -Dm0644 completion/fish/task.fish \
+		"$pkgdir"/usr/share/fish/vendor_completions.d/go-task.fish
+	install -Dm0644 completion/zsh/_task \
+		"$pkgdir"/usr/share/zsh/site-functions/_go_task
+
+	install -Dm0644 LICENSE -t "$pkgdir"/usr/share/licenses/$pkgname/
+}
+
+task() {
+	pkgdesc="Task runner, written in Go, installed as task"
+	depends="!task"
+
+	mkdir -p "$subpkgdir/usr/bin"
+	ln -s /usr/bin/go-task "$subpkgdir/usr/bin/task"
+}
+
+sha512sums="
+6c599a1541b175a0c51a5fd4bf7534a59321910cc2e0b8bb223ffce8fc2e91ff98ed99560440eaf844e89ec55ef6041a9d814bf6b51d91c1b76fdb899a57ca8e  go-task-3.39.2.tar.gz
+6b0be68bc8ab4e5761f09d5928cdc7f85228c5b6f59e6fdccd29dcfbca096a82387f568931f2dc023ce8f2127ac1797b8f02364399a6768b482d45e0794bada1  completion-rename-to-go-task.patch
+"

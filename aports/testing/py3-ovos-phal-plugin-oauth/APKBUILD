@@ -1,0 +1,43 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=py3-ovos-phal-plugin-oauth
+pkgver=0.1.0
+pkgrel=0
+pkgdesc="OAuth plugin for OVOS"
+url="https://github.com/OpenVoiceOS/ovos-PHAL-plugin-oauth"
+# loongarch64: blocked by py3-ovos-backend-client
+arch="noarch !loongarch64"
+license="Apache-2.0"
+depends="
+	py3-flask
+	py3-oauthlib
+	py3-ovos-backend-client
+	py3-ovos-bus-client
+	py3-ovos-utils
+	py3-pillow
+	py3-qrcode
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/OpenVoiceOS/ovos-PHAL-plugin-oauth/archive/refs/tags/$pkgver.tar.gz"
+options="!check" # No tests
+builddir="$srcdir/ovos-PHAL-plugin-oauth-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+496174bc76d04ad06986bf17ba386b4092f192c18e72bf9c3cddff109410b06835c9e36f2a101e19d8d150487dffe90edf2d518dd622f2b97a1fc44f7e270c68  py3-ovos-phal-plugin-oauth-0.1.0.tar.gz
+"

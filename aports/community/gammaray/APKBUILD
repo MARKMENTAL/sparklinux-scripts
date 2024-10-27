@@ -1,0 +1,47 @@
+# Contributor: Luca Weiss <luca@lucaweiss.eu>
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+pkgname=gammaray
+pkgver=3.1.0
+pkgrel=0
+pkgdesc="A tool for examining the internals of a Qt application and to some extent also manipulate it"
+url="https://www.kdab.com/development-resources/qt-tools/gammaray/"
+# ppc64le, s390x, armhf, riscv64 and loongarch64 blocked by qt5-qtwebengine
+# x86 blocked by lldb
+arch="all !ppc64le !s390x !armhf !riscv64 !x86 !loongarch64"
+license="GPL-2.0-or-later"
+depends="lldb"
+makedepends="
+	cmake
+	kcoreaddons5-dev
+	qt5-qtbase-dev
+	qt5-qtconnectivity-dev
+	qt5-qtdeclarative-dev
+	qt5-qtlocation-dev
+	qt5-qtscript-dev
+	qt5-qtsvg-dev
+	qt5-qttools-dev
+	qt5-qtwayland-dev
+	qt5-qtwebengine-dev
+	samurai
+	syntax-highlighting5-dev
+	"
+subpackages="$pkgname-dev $pkgname-doc"
+source="https://github.com/KDAB/GammaRay/releases/download/v$pkgver/gammaray-$pkgver.tar.gz"
+options="!check" # No tests
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+	gzip "$pkgdir"/usr/share/man/man1/gammaray.1
+}
+
+sha512sums="
+efc6b075c99966e0b3f1f058b29ff9b4ad2349818e5ff71cfdccfb889807ac6b6afe95d981d033ac773fdfd965320d7644adf19a229160f545b4468d9ab53202  gammaray-3.1.0.tar.gz
+"

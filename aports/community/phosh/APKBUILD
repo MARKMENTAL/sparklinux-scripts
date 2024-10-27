@@ -1,0 +1,132 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Contributor: Danct12 <danct12@disroot.org>
+# Contributor: Newbyte <newbyte@disroot.org>
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: team/phosh <newbyte@postmarketos.org>
+pkgname=phosh
+pkgver=0.41.1
+pkgrel=0
+_minorver=${pkgver%.*}
+_minorver=${_minorver#*.}
+pkgdesc="Wayland shell for GNOME on mobile devices"
+# armhf: blocked by gnome-shell-schemas
+# Blocked on s390x by gnome-session, gnome-settings-daemon, squeekboard and libhandy
+# Blocked on ppc64le by gnome-session
+arch="all !armhf !s390x !ppc64le"
+url="https://gitlab.gnome.org/World/Phosh/phosh"
+license="GPL-3.0-only"
+triggers="$pkgname.trigger=/usr/lib/phosh/plugins/prefs"
+depends="
+	adwaita-icon-theme
+	bash
+	dbus-x11
+	dbus:org.freedesktop.Secrets
+	desktop-file-utils
+	font-adobe-source-code-pro
+	font-cantarell
+	gnome-control-center
+	gnome-session
+	gnome-settings-daemon
+	gnome-shell-schemas
+	gsettings-desktop-schemas
+	phoc
+	phosh-keyboard
+	xwayland
+	"
+makedepends="
+	callaudiod-dev
+	elogind-dev
+	evince-dev
+	evolution-data-server-dev
+	feedbackd-dev
+	gcr-dev
+	gettext-dev
+	glib-dev
+	gmobile-dev
+	gnome-bluetooth-dev
+	gnome-desktop-dev
+	gtk+3.0-dev
+	libadwaita-dev
+	libgudev-dev
+	libhandy1-dev
+	libsecret-dev
+	linux-pam-dev
+	meson
+	networkmanager-dev
+	polkit-elogind-dev
+	pulseaudio-dev
+	py3-docutils
+	upower-dev
+	wayland-dev
+	wayland-protocols
+	"
+checkdepends="xvfb-run"
+# the ordering here is important - libphosh split functions need to run first to move the libphosh-0
+# headers/pkgconfig/lib into the libphosh packages, before the top level -dev package gobbles
+# up the rest.
+subpackages="
+	libphosh
+	libphosh-dev:libphosh_dev
+	$pkgname-dbg
+	$pkgname-lang
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-portalsconf
+	"
+source="https://sources.phosh.mobi/releases/phosh/phosh-${pkgver/_/.}.tar.xz
+	phosh.desktop
+	"
+builddir="$srcdir/$pkgname-${pkgver/_/.}"
+somask="libphosh.so.0_${_minorver}"
+
+prepare() {
+	default_prepare
+	sed -i 's/\.rc/_rc/' meson.build
+}
+
+build() {
+	# phoc tests need a running Wayland compositor
+	abuild-meson \
+		-Db_lto=true \
+		-Dphoc_tests=disabled \
+		-Dman=true \
+		-Dbindings-lib=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	xvfb-run -a meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir/" meson install --no-rebuild --skip-subprojects -C output
+
+	install -D -m644 "$srcdir"/phosh.desktop \
+		"$pkgdir"/usr/share/wayland-sessions/phosh.desktop
+
+	# https://gitlab.alpinelinux.org/alpine/aports/-/merge_requests/64741#note_402279
+	rm -r "$pkgdir"/usr/lib/systemd
+}
+
+portalsconf() {
+	install_if="$pkgname=$pkgver-r$pkgrel xdg-desktop-portal>=1.17.1"
+	amove usr/share/xdg-desktop-portal/phosh-portals.conf
+}
+
+libphosh() {
+	pkgdesc="Experimental library for embedding Phosh"
+	provides="so:libphosh.so.0_$_minorver=$pkgver-r$pkgrel"
+	amove "usr/lib/libphosh.so.0_$_minorver"
+}
+
+libphosh_dev() {
+	amove usr/include/libphosh-0
+	amove usr/lib/libphosh.so
+	amove usr/lib/pkgconfig/libphosh-0.pc
+}
+
+sha512sums="
+e8d1049478821f26aab093f83046ad414b356ba9566bd434e5368b2116ce0e865e3b2367f7015a1d64c8eeb533ec31f7c1aa1e79c6d00543b6cce48503350a59  phosh-0.41.1.tar.xz
+8ca4893a751311de326e198314669f5a276092ade99c6353c4c9ce070713fb1a5b1615e7fecb93b428dc79fd4001a9af43d24eafaf2545d7db464963fda25330  phosh.desktop
+"

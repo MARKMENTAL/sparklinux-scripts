@@ -1,0 +1,68 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=keyd
+pkgver=2.4.3
+pkgrel=0
+pkgdesc="A key remapping daemon for Linux"
+url="https://github.com/rvaiya/keyd"
+arch="all"
+license="MIT"
+makedepends="cmd:scdoc linux-headers"
+install="$pkgname.pre-install $pkgname.pre-upgrade"
+subpackages="
+	$pkgname-application-mapper:application_mapper:noarch
+	$pkgname-doc
+	$pkgname-openrc
+	"
+source="$pkgname-$pkgver-2.tar.gz::https://github.com/rvaiya/keyd/archive/v$pkgver/keyd-$pkgver.tar.gz
+	musl-time64.patch
+	fix-makefile.patch
+	$pkgname.initd
+	"
+options="!check"  # doesn't work on CI
+
+prepare() {
+	default_prepare
+
+	sed -i 's/\bsudo systemctl restart keyd\b/doas rc-service keyd restart/' \
+		docs/keyd.scdoc
+
+	sed -i 's|/var/run/|/run/|g' \
+		docs/keyd-application-mapper.scdoc \
+		src/keyd.c
+
+	sed -i '/\bgroupadd keyd\b/d' Makefile
+}
+
+build() {
+	make
+	make man
+}
+
+check() {
+	make test
+}
+
+package() {
+	# Enable installation of quirks file.
+	mkdir -p "$pkgdir"/usr/share/libinput
+
+	make install DESTDIR="$pkgdir"
+
+	install -D -m755 "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
+	echo uinput | install -D -m644 /dev/stdin "$pkgdir"/usr/lib/modules-load.d/$pkgname.conf
+}
+
+application_mapper() {
+	pkgdesc="$pkgdesc - application specific remapping"
+	depends="$pkgname=$pkgver-r$pkgrel python3"
+
+	amove usr/bin/keyd-application-mapper
+}
+
+sha512sums="
+9d5f3a8aa9398c45fb5062ab152a0b1e09efc13fd12b658b993e991df727085ad8ccd69267f87e159abfb79265c8650bd070174b83b4b1cb3f1b3396d55727bd  keyd-2.4.3-2.tar.gz
+2c9340cda19f6b64ec6be02f79caec83d7bf21c6813081fb763615c03969dd7050281b61fa3951635eaa953f99520b875d5b1b088c083ff1154ffe50bbdb6fd1  musl-time64.patch
+a6d63fdea7c277a4580bc14b51eccef5288ae7456496b6983b20c4433143a390e5f1c0a993e699acaa1ae0babad0ff8d130f39ca3da0708f1ccd898ce7d84ed8  fix-makefile.patch
+5fb22510cd89ce23e347773d2b49a7be5b342899f1653f8dbac1ca0a85dca54091be3f165dd0952a9384851c109ab6b20ec3dfa15dc7c6b7ce53d46e1723b2e2  keyd.initd
+"

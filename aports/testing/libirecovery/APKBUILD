@@ -1,0 +1,43 @@
+# Contributor: Kasper K <kasperkantz@outlook.com>
+# Maintainer: Kasper K <kasperkantz@outlook.com>
+pkgname=libirecovery
+pkgver=1.1.0
+pkgrel=0
+pkgdesc="Library and utility to talk to iBoot/iBSS via USB on Mac OS X, Windows, and Linux"
+url="https://libimobiledevice.org"
+arch="all"
+license="LGPL-2.1-or-later"
+makedepends="
+	libimobiledevice-glue-dev
+	libusb-dev
+	readline-dev
+	"
+subpackages="$pkgname-dev $pkgname-progs"
+source="https://github.com/libimobiledevice/libirecovery/releases/download/$pkgver/libirecovery-$pkgver.tar.bz2"
+
+build() {
+	./configure \
+		--host=$CHOST \
+		--build=$CBUILD \
+		--prefix=/usr \
+		--disable-static
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+progs() {
+	pkgdesc="Tools that talks iPhone and iPod Touch devices' protocols on Linux"
+	depends=""
+	amove usr/bin
+}
+
+sha512sums="
+c37c426651abd2b8532ddf46c9c004fc5993c3ab6f559f920a64db68c4ffd582109348d5954f3cda8915f8dc8195c9b93075587a841655865bdef08234c58fc4  libirecovery-1.1.0.tar.bz2
+"

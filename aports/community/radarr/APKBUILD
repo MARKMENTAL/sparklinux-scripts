@@ -1,0 +1,118 @@
+# Contributor: Fabricio Silva <hi@fabricio.dev>
+# Maintainer: Fabricio Silva <hi@fabricio.dev>
+pkgname=radarr
+pkgver=5.11.0.9244
+pkgrel=0
+pkgdesc="Movie download automation for usenet and torrents."
+url="https://github.com/Radarr/Radarr"
+arch="x86_64 aarch64 armv7" # limited by dotnet
+license="GPL-3.0-only"
+options="net" # net for nuget and yarn
+depends="aspnetcore6-runtime sqlite-libs"
+makedepends="dotnet6-sdk yarn"
+subpackages="$pkgname-openrc"
+install="$pkgname.pre-install"
+source="
+	$pkgname-$pkgver.tar.gz::https://github.com/Radarr/Radarr/archive/refs/tags/v$pkgver.tar.gz
+	0001-disable-restart.patch
+	radarr.initd
+	radarr.confd
+	package_info
+	"
+builddir="$srcdir/Radarr-$pkgver"
+pkgusers="radarr"
+pkggroups="radarr"
+
+# secfixes:
+#   5.5.3.8819-r0:
+#     - CVE-2024-32655
+
+# map arch to dotnet
+case $CARCH in
+	x86_64) _dotnet_arch="x64" ;;
+	aarch64) _dotnet_arch="arm64" ;;
+	armv7) _dotnet_arch="arm" ;;
+	*) _dotnet_arch="$CARCH" ;;
+esac
+
+# custom variables
+_runtime="linux-musl-$_dotnet_arch"
+_framework="net6.0"
+_output="_output"
+_artifacts="$_output/$_framework/$_runtime/publish"
+
+prepare() {
+	default_prepare
+
+	# increase max opened files
+	ulimit -n 4096
+
+	# replace version info
+	local buildprops=src/Directory.Build.props
+	sed -i "/<AssemblyVersion>/s/>.*<\//>$pkgver<\//" "$buildprops"
+	sed -i "/<AssemblyConfiguration>/s/>.*<\//>master<\//" "$buildprops"
+
+	export BROWSERSLIST_IGNORE_OLD_DATA=true
+	yarn install --frozen-lockfile --network-timeout 120000
+}
+
+build() {
+	dotnet build src \
+		-p:RuntimeIdentifiers="$_runtime" \
+		-p:Configuration=Release \
+		-p:SelfContained=false \
+		-t:PublishAllRids
+	yarn build --env production --no-stats
+
+	# fix ffprobe permissions
+	chmod +x "$_artifacts"/ffprobe
+
+	# cleanup
+	find "$_artifacts" \( \
+		-name "ServiceUninstall.*" -o \
+		-name "ServiceInstall.*" -o \
+		-name "Radarr.Windows.*" \) -delete
+
+	mv "$_output"/UI "$_artifacts"
+}
+
+check() {
+	local _filters="Category!=ManualTest&Category!=AutomationTest&Category!=WINDOWS"
+
+	# skipping:
+	# 	IntegrationTest: broken
+	# 	DiskTransferServiceFixture: CI fails due disk permission
+	_filters="$_filters&Category!=IntegrationTest&FullyQualifiedName!~DiskTransferServiceFixture"
+
+	# link build to tests
+	ln -sf ../../$_artifacts _tests/$_framework/$_runtime/bin
+	mkdir -p ~/.config/Radarr
+
+	dotnet test src \
+		--runtime "$_runtime" \
+		--configuration Release \
+		--filter "$_filters" \
+		--no-build
+}
+
+package() {
+	local destdir="$pkgdir"/usr/lib/radarr
+
+	# use package_info to disable update feature
+	install -Dm644 "$srcdir"/package_info "$destdir"/package_info
+	echo "PackageVersion=$pkgver-r$pkgrel" >>"$destdir"/package_info
+
+	cp -af "$_artifacts" "$destdir"/bin
+	chown -R "$pkgusers:$pkggroups" "$destdir"
+
+	install -Dm755 "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
+	install -Dm644 "$srcdir"/$pkgname.confd "$pkgdir"/etc/conf.d/$pkgname
+}
+
+sha512sums="
+2bfb42bc3ed0e9b6eecb7f8c1789054a8741c196d3f81125964ff91aec82aa7056a02df21cb64b16e971db9ae04a96b31797ad41ed46426fe1ce77b0cf4f9b2d  radarr-5.11.0.9244.tar.gz
+753520379a6c5f2899b4ddfd820d5573598a32cb105f74c6fd978a3f2c98895cf709ef2d9afe2bae8c4856da86cb6a1364f5713ea7ef6a36bb21b5a5840c1471  0001-disable-restart.patch
+fc61194f8cf6d87cb8ec13db39e7d953bdcd2fae0fdf47ebe7701e52bfad5a92313f76a7bdbb04608170dbaec0e5895788079d284f988fd99fe19f7e61f2e836  radarr.initd
+7f30d17b9a66b34786ff9f62954eda1677296fc724dde9e2b4f1edb6f19bce8b3df5806d661e48751bd4ebdf6faecd9632d89c1fb35d41ad01ea892fdad71ded  radarr.confd
+67c4dd1cf8259296d994c350dfd3962d23333071889ce0b4ef6b2f4cbb4349490c5dbe4dcc202c99bab7a5c4b7611be56d7c8835b2b13924526c45311db1c3fb  package_info
+"

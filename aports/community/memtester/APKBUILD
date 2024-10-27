@@ -1,0 +1,39 @@
+# Contributor: Olliver Schinagl <oliver@schinagl.nl>
+# Maintainer: Olliver Schinagl <oliver@schinagl.nl>
+pkgname=memtester
+pkgver=4.6.0
+pkgrel=1
+pkgdesc="userspace utility for testing the memory subsystem for faults"
+url="https://pyropus.ca/software/memtester/"
+arch="all"
+license="GPL-2.0-or-later"
+options="!check" # No checks available
+subpackages="$pkgname-doc $pkgname-static"
+source="https://pyropus.ca/software/memtester/old-versions/memtester-$pkgver.tar.gz"
+
+build() {
+	sed -n -i 's|^\(cc.*\)$|\1 -static|p' "$builddir/conf-ld"
+	make
+	mv "$builddir/memtester" "$builddir/memtester-static"
+
+	sed -i 's| -static$||g' "$builddir/conf-ld"
+	make
+}
+
+static() {
+	install -D -m 0755 "$builddir/memtester-static" "$subpkgdir/usr/bin/memtester-static"
+}
+
+package() {
+	install -D -m 0755 "memtester" "$pkgdir/usr/bin/memtester"
+
+	install -D -m 0644 "memtester.8" \
+	        "$pkgdir/usr/share/man/man8/memtester.8.gz"
+	install -D -m 0644 -t "$pkgdir/usr/share/doc/$pkgname/" \
+	        'README' \
+	        'README.tests'
+}
+
+sha512sums="
+d60dd46a5d4ecb2ab35a5acdb99b714584cdf601b81454e3f7fa9dd224555b7a48cef666538b43c5dd7b2870bb74284e0cae6fb2eed19cf706818c7a955ab161  memtester-4.6.0.tar.gz
+"

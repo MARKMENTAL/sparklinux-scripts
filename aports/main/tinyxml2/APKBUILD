@@ -1,0 +1,31 @@
+# Contributor: André Klitzing <aklitzing@gmail.com>
+# Maintainer: André Klitzing <aklitzing@gmail.com>
+pkgname=tinyxml2
+pkgver=10.0.0
+pkgrel=0
+pkgdesc="Simple, small and efficient C++ XML parser"
+url="https://github.com/leethomason/tinyxml2"
+arch="all"
+license="Zlib"
+makedepends="meson"
+subpackages="$pkgname-dev"
+source="$pkgname-$pkgver.tar.gz::https://github.com/leethomason/tinyxml2/archive/$pkgver.tar.gz"
+
+build() {
+	abuild-meson \
+		-Dtests=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+a359d33bc12fad455b53d81011dbe12727cae0aabfaa5704f1a25807ca216dd854a571291029886c0beedeca5c3b6393dd49c4718773e18a0e008abbdb3de36a  tinyxml2-10.0.0.tar.gz
+"

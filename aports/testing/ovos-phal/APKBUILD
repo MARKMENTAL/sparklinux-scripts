@@ -1,0 +1,54 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=ovos-phal
+pkgver=0.2.3
+pkgrel=0
+pkgdesc="Plugin based Hardware Abstraction Layer for OVOS"
+url="https://github.com/OpenVoiceOS/ovos-PHAL"
+# loongarch64: blocked by py3-ovos-plugin-manager
+arch="noarch !loongarch64"
+license="Apache-2.0"
+depends="
+	py3-ovos-bus-client
+	py3-ovos-config
+	py3-ovos-phal-plugin-connectivity-events
+	py3-ovos-phal-plugin-ipgeo
+	py3-ovos-phal-plugin-network-manager
+	py3-ovos-phal-plugin-oauth
+	py3-ovos-phal-plugin-system
+	py3-ovos-plugin-manager
+	py3-ovos-utils
+	py3-ovos-workshop
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="
+	py3-pytest
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/OpenVoiceOS/ovos-PHAL/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/ovos-PHAL-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+e5d710862677e55d725b85220a5255d6eaafe20a5919dc902b739e64a39f5ccac5f2357c30593a7f0cbcf11e61635fb298d44faaea34f09a236be76fcd6b2cc6  ovos-phal-0.2.3.tar.gz
+"

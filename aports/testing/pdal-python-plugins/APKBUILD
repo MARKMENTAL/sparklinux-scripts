@@ -1,0 +1,33 @@
+# Contributor: Brian Vuyk <bvuyk@sama.com>
+# Maintainer: Brian Vuyk <bvuyk@sama.com>
+pkgname=pdal-python-plugins
+pkgver=1.2.1
+pkgrel=3
+pkgdesc="Supports embedding Python in PDAL pipelines with the readers.numpy and filters.python drivers."
+url="https://github.com/PDAL/python-plugins"
+arch="aarch64 armhf armv7 loongarch64 ppc64le riscv64 x86 x86_64" # Exclude s390x due to test failures.
+license="BSD-3-Clause"
+depends="python3 py3-numpy"
+checkdepends="pdal"
+makedepends="cmake pdal-dev py3-numpy-dev python3-dev py3-setuptools py3-packaging py3-scikit-build ninja"
+source="https://files.pythonhosted.org/packages/source/p/pdal-plugins/pdal-plugins-1.2.1.tar.gz"
+builddir="$srcdir/pdal-plugins-$pkgver"
+
+build() {
+	python3 setup.py build -DWITH_TESTS=ON
+}
+
+check() {
+	export PDAL_DRIVER_PATH=$(python3 -c "import os, skbuild; print(os.path.join(skbuild.constants.SKBUILD_DIR(), 'cmake-build'))")
+	pdal --drivers
+	$PDAL_DRIVER_PATH/pdal_filters_python_test
+	$PDAL_DRIVER_PATH/pdal_io_numpy_test
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+328bb1960c823e442f08e3b3f7aca0e98a0755bc4fd655ad57d4efa202ecab4fc034ce85bb8015e7d0f0b13f4556b25cc9fb18d9f1b4281dbf65c23e21b2e577  pdal-plugins-1.2.1.tar.gz
+"

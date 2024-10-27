@@ -1,0 +1,31 @@
+# Contributor: ScrumpyJack <scrumpyjack@st.ilet.to>
+# Maintainer: ScrumpyJack <scrumpyjack@st.ilet.to>
+pkgname=frotz
+pkgver=2.54
+pkgrel=1
+pkgdesc="Portable Z-Machine Interpreter"
+url="https://davidgriffith.gitlab.io/frotz/"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="libao-dev libmodplug-dev libsamplerate-dev libsndfile-dev
+	ncurses-dev"
+subpackages="$pkgname-doc"
+source="https://gitlab.com/DavidGriffith/frotz/-/archive/$pkgver/frotz-$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+	# use our cflags
+	sed -i 's/^CFLAGS +=/CFLAGS ?=/g' Makefile
+}
+
+build() {
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr install
+}
+
+sha512sums="
+88f3586219f18d00bee97e2b52b0d257952dd58942b006b636a634fcca18857a92c131e4ff8251fa092a61f0f112dbe8b95c3eed438ecf37bed31fb3b3645562  frotz-2.54.tar.gz
+"

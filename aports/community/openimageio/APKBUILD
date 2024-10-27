@@ -1,0 +1,89 @@
+# Contributor: Mark Riedesel <mark@klowner.com>
+# Contributor: Damian Kurek <starfire24680@gmail.com>
+# Maintainer: Leon Marz <main@lmarz.org>
+pkgname=openimageio
+pkgver=2.5.15.0
+pkgrel=0
+pkgdesc="Image I/O library supporting a multitude of image formats"
+options="!check" # more than 10% of all tests fail
+url="https://sites.google.com/site/openimageio/"
+# s390x has missing dependency ptex-dev
+arch="all !s390x"
+license="Apache-2.0"
+makedepends="cmake
+	boost-dev
+	bzip2-dev
+	ffmpeg-dev
+	fmt-dev
+	freetype-dev
+	giflib-dev
+	hdf5-dev
+	libheif-dev
+	libraw-dev
+	libwebp-dev
+	mesa-dev
+	onetbb-dev
+	opencolorio-dev
+	openexr-dev
+	openjpeg-dev
+	ptex-dev
+	ptex-static
+	python3-dev
+	py3-pybind11-dev
+	qt6-qtbase-dev
+	robin-map
+	samurai
+	tiff-dev
+	"
+subpackages="py3-$pkgname:_python $pkgname-dev $pkgname-doc $pkgname-tools"
+source="$pkgname-$pkgver.tar.gz::https://github.com/OpenImageIO/oiio/archive/v$pkgver.tar.gz"
+builddir="$srcdir/OpenImageIO-$pkgver"
+
+build() {
+	local _py_version=$(python3 --version | cut -c 8-11)
+	local _iv="ON"
+
+	case "$CARCH" in
+		aarch64|armv7|armhf)
+			_iv="OFF";;
+	esac
+
+	# fails to build with fortify source enabled
+	export CXXFLAGS="$CXXFLAGS -U_FORTIFY_SOURCE"
+
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DCMAKE_SKIP_RPATH=ON \
+		-DBUILD_TESTING=OFF \
+		-DSTOP_ON_WARNING=OFF \
+		-DENABLE_iv=$_iv \
+		-DINSTALL_FONTS=OFF
+	cmake --build build
+}
+
+check() {
+	cd build
+	ctest -E broken
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+tools() {
+	pkgdesc="Tools for manipulating a multitude of image formats"
+
+	amove usr/bin
+}
+
+_python() {
+	pkgdesc="Python bindings for OpenImageIO image I/O library"
+
+	amove usr/lib/python*
+}
+
+sha512sums="
+8b8529120db65dface8935912d558b29bf40c4d8d0c68abbb010dcb041075b58f21fba3954c1b0010fa7111ccb78ec8d342ab2834dfe464930f9a7e0b6d06dd5  openimageio-2.5.15.0.tar.gz
+"

@@ -1,0 +1,35 @@
+# Contributor: Natanael Copa <ncopa@alpinelinux.org>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=libsecret
+pkgver=0.21.4
+pkgrel=0
+pkgdesc="Library for storing and retrieving passwords and other secrets"
+url="https://wiki.gnome.org/Projects/Libsecret"
+arch="all"
+license="LGPL-2.1-or-later"
+makedepends="glib-dev libxslt-dev docbook-xsl libgcrypt-dev
+	gobject-introspection-dev vala meson"
+checkdepends="py3-dbus py3-gobject3 xvfb-run dbus-x11"
+options="!check" # gjs is in community now
+subpackages="$pkgname-static $pkgname-dev $pkgname-doc $pkgname-lang"
+source="https://gitlab.gnome.org/GNOME/libsecret/-/archive/$pkgver/libsecret-$pkgver.tar.bz2"
+
+build() {
+	abuild-meson \
+		--default-library=both \
+		-Dgtk_doc=false \
+		output
+	meson compile -C output
+}
+
+check() {
+	xvfb-run meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+6618e0096ae2e500071f997957085080e2c0c8c8e6ed7927f13a6ee51c70b91b61b46706982be2e2254e6af3f803461aaf5c02a62651b6a5eb8d93014d3dc0ad  libsecret-0.21.4.tar.bz2
+"

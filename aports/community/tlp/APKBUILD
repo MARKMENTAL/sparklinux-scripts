@@ -1,0 +1,48 @@
+# Contributor: Ivan Tham <pickfire@riseup.net>
+# Contributor: Nero <nero@w1r3.net>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=tlp
+pkgver=1.6.1
+pkgrel=1
+pkgdesc="Linux Advanced Power Management"
+url="https://linrunner.de/en/tlp/tlp.html"
+arch="noarch"
+license="GPL-2.0-or-later"
+options="!check"  # no test suite
+depends="perl usbutils flock grep" # /usr/share/tlp/tlp-readconfs uses perl (see #11181)
+subpackages="
+	$pkgname-doc
+	$pkgname-openrc
+	$pkgname-rdw
+	$pkgname-bash-completion
+	$pkgname-zsh-completion
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/linrunner/TLP/archive/$pkgver.tar.gz
+	tlp.initd
+	"
+builddir="$srcdir/TLP-$pkgver"
+
+build() {
+	make
+}
+
+package() {
+	make TLP_WITH_SYSTEMD=0 DESTDIR="$pkgdir" install-tlp
+
+	install -Dm644 man/*.1 -t "$pkgdir"/usr/share/man/man1
+	install -Dm644 man/*.8 -t "$pkgdir"/usr/share/man/man8
+	install -Dm755 "$srcdir"/tlp.initd "$pkgdir"/etc/init.d/$pkgname
+}
+
+rdw() {
+	pkgdesc="Linux Advanced Power Management - Radio Device Wizard"
+	depends="$pkgname=$pkgver-r$pkgrel"
+
+	cd "$builddir"
+	make DESTDIR="$subpkgdir" install-rdw
+}
+
+sha512sums="
+de88c4b4ae7d742eeec2bce7e43ccd99f971620541edc416471a46cb76a4f0c072821348d6c7f7fc44e7c70f2e3cde231d74546424ece533b2b2f531aee22b79  tlp-1.6.1.tar.gz
+e6de216b2540413812711b3304cdc29c8729d527080cfd747ba382db50166dd21c6c27ff467f9f2a967e92007c7a311b00e88262952c34a22f417578c66cf4e7  tlp.initd
+"

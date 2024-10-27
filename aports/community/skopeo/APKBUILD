@@ -1,0 +1,62 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Maintainer: Carlo Landmeter <clandmeter@alpinelinux.org>
+pkgname=skopeo
+pkgver=1.16.1
+pkgrel=0
+# set this to the gitrev of the version
+_gitrev=fe07cc958acae9bb520f685474a50178e00b815b
+pkgdesc="Work with remote images registries - retrieving information, images, signing content"
+url="https://github.com/containers/skopeo"
+license="Apache-2.0"
+arch="all"
+options="net !check" # needs docker
+depends="containers-common"
+makedepends="
+	bash
+	btrfs-progs-dev
+	glib-dev
+	go
+	go-md2man
+	gpgme-dev
+	libselinux-dev
+	linux-headers
+	lvm2-dev
+	ostree-dev
+	"
+subpackages="
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="https://github.com/containers/skopeo/archive/v$pkgver/skopeo-$pkgver.tar.gz"
+
+# secfixes:
+#   1.15.1-r0:
+#     - CVE-2024-3727
+#   1.5.2-r0:
+#     - CVE-2021-41190
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	# https://github.com/mattn/go-sqlite3/issues/1164
+	export CGO_CFLAGS="$CFLAGS -D_LARGEFILE64_SOURCE"
+
+	make GIT_COMMIT=$_gitrev all
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr install-docs install-completions
+	install -Dm755 bin/skopeo -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+104b2492901a172e2ba75179492f9e8bf070aec649596ea902384d7a5d875665d8d28e2fc41cf69895208ccfca5e96c2cadeabd235143b0ec5da12e7edc31fcf  skopeo-1.16.1.tar.gz
+"

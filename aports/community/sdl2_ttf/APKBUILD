@@ -1,0 +1,41 @@
+# Contributor: August Klein <amatcoder@gmail.com>
+# Maintainer: August Klein <amatcoder@gmail.com>
+pkgname=sdl2_ttf
+pkgver=2.20.2
+pkgrel=0
+pkgdesc="A library which allows you to use TrueType fonts in your SDL applications"
+url="http://www.libsdl.org/projects/SDL_ttf/"
+arch="all"
+license="Zlib"
+makedepends="
+	cmake
+	freetype-dev
+	harfbuzz-dev
+	mesa-dev
+	samurai
+	sdl2-dev
+	"
+subpackages="$pkgname-dev $pkgname-doc"
+source="https://github.com/libsdl-org/SDL_ttf/releases/download/release-$pkgver/SDL2_ttf-$pkgver.tar.gz"
+builddir="$srcdir"/SDL2_ttf-$pkgver
+options="!check"  # no test suite
+
+# secfixes:
+#   2.20.0-r0:
+#     - CVE-2022-27470
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DSDL2TTF_HARFBUZZ=ON
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+b54e93b100712e3764cd80d4e4b16cd4c2a6853620f675941a4214320b0ee29a583d57ad56cd5fdb5c7a32d7615cbf43bc3fa55337b01623cee7219ebb43667c  SDL2_ttf-2.20.2.tar.gz
+"

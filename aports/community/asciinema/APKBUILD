@@ -1,0 +1,38 @@
+# Contributor: Fabian Affolter <fabian@affolter-engineering.ch>
+# Contributor: fossdd <fossdd@pwned.life>
+# Maintainer: fossdd <fossdd@pwned.life>
+pkgname=asciinema
+pkgver=2.4.0
+pkgrel=2
+pkgdesc="Command line recorder for the asciinema.org service"
+url="https://github.com/asciinema/asciinema"
+arch="all"
+license="GPL-3.0-or-later"
+depends="python3 ncurses"
+makedepends="py3-setuptools py3-wheel py3-gpep517 py3-installer"
+checkdepends="py3-pytest"
+subpackages="$pkgname-doc $pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/asciinema/asciinema/archive/v$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/asciinema-$pkgver-py3-none-any.whl
+
+	install -Dm644 man/asciinema.1 -t "$pkgdir"/usr/share/man/man1/
+}
+
+sha512sums="
+3902661524e960b96946eaacdcbde4ceacb949020c14912c65ce33fa5b50c070f69255e4848ab24f78f1e6275511d2bba455532b11bf01552ca9ae62264d75ba  asciinema-2.4.0.tar.gz
+"

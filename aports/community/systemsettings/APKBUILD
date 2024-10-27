@@ -1,0 +1,69 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: team/kde <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=kde-plasma
+pkgname=systemsettings
+pkgver=6.1.5
+pkgrel=0
+pkgdesc="Plasma system manager for hardware, software, and workspaces"
+# armhf blocked by qt6-qtdeclarative
+# s390x blocked by plasma-workspace
+arch="all !armhf !s390x"
+url="https://kde.org/plasma-desktop/"
+license="GPL-2.0-or-later"
+depends="kirigami"
+makedepends="
+	extra-cmake-modules
+	kcmutils-dev
+	kconfig-dev
+	kcrash-dev
+	kdbusaddons-dev
+	kdeclarative-dev
+	kdoctools-dev
+	ki18n-dev
+	kiconthemes-dev
+	kio-dev
+	kirigami-dev
+	kitemmodels-dev
+	kitemviews-dev
+	kpackage-dev
+	krunner-dev
+	kservice-dev
+	kwidgetsaddons-dev
+	kwindowsystem-dev
+	kxmlgui-dev
+	plasma-activities-stats-dev
+	plasma-workspace-dev
+	qt6-qtbase-dev
+	qt6-qtdeclarative-dev
+	samurai
+	"
+
+case "$pkgver" in
+	*.90*) _rel=unstable;;
+	*) _rel=stable;;
+esac
+subpackages="$pkgname-doc $pkgname-zsh-completion $pkgname-lang"
+_repo_url="https://invent.kde.org/plasma/systemsettings.git"
+source="https://download.kde.org/stable/plasma/$pkgver/systemsettings-$pkgver.tar.xz"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build build
+}
+
+check() {
+	ctest
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+c5cb2d8563a9a80da8c81cbd94d1d29f851f2882bc36628e7e76fb07fc55daf3f3db05bbe9078c8d097da4185675f41fdbe2c9940705cd14e142d47db374adba  systemsettings-6.1.5.tar.xz
+"

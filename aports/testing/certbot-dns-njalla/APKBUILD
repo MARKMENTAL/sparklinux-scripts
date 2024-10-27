@@ -1,0 +1,43 @@
+# Contributor: Nulo <git@nulo.in>
+# Maintainer: Nulo <git@nulo.in>
+pkgname=certbot-dns-njalla
+pkgver=1.0.2
+pkgrel=3
+pkgdesc="Certbot plugin for using the Njalla DNS API"
+url="https://github.com/chaptergy/certbot-dns-njalla"
+# options="!check" # TODO: enable tests
+arch="noarch"
+license="Apache-2.0"
+depends="
+	certbot
+	py3-acme
+	py3-dns-lexicon
+	py3-dnspython
+	"
+makedepends="py3-setuptools py3-gpep517"
+checkdepends="
+	py3-mock
+	py3-requests
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/chaptergy/certbot-dns-njalla/archive/v$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	gpep517 install-wheel --destdir .testenv --prefix '' .dist/*.whl
+	.testenv/bin/python3 -m unittest discover -p '*_test.py'
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+91223a70bf9f097f5b2f1cd75ce79626dfcb760e3b3146c31d701df4f63e2cfefc83368b4c5b6151415a443108adf2a653e3f38b5eeac859a6f93feb9ecb42c0  certbot-dns-njalla-1.0.2.tar.gz
+"

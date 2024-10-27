@@ -1,0 +1,36 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Maintainer: Sören Tempel <soeren+alpine@soeren-tempel.net>
+pkgname=bvi
+pkgver=1.4.2
+pkgrel=1
+pkgdesc="Display-oriented editor for binary files based on vi"
+url="https://bvi.sourceforge.net/"
+arch="all"
+license="GPL-3.0-or-later"
+makedepends="ncurses-dev"
+subpackages="$pkgname-doc"
+source="https://downloads.sourceforge.net/sourceforge/bvi/bvi-$pkgver.src.tar.gz"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--datadir=/usr/share/doc
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	mkdir -p "$pkgdir"/usr/share/doc/$pkgname/
+	install -Dm644 CHANGES README CREDITS \
+		"$pkgdir"/usr/share/doc/$pkgname/
+}
+
+sha512sums="
+e2b23b75e5984e222060d3ad99381e1c54f45c28796b0dfe781072c406191272ffff2849218f90c29a398b245af604aa8f0f5448791bc5f3a2ef0f8395ca92c3  bvi-1.4.2.src.tar.gz
+"

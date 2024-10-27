@@ -1,0 +1,32 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=nemo-qml-plugin-configuration
+pkgver=0.2.8
+pkgrel=0
+pkgdesc="Nemo QML configuration plugin"
+url="https://github.com/sailfishos/nemo-qml-plugin-configuration"
+arch="all"
+license="BSD-3-Clause"
+makedepends="
+	mlite-dev
+	qt5-qtbase-dev
+	qt5-qtdeclarative-dev
+	"
+source="https://github.com/sailfishos/nemo-qml-plugin-configuration/archive/$pkgver/nemo-qml-plugin-configuration-$pkgver.tar.gz"
+options="!check"
+
+build() {
+	qmake-qt5
+	make
+}
+
+package() {
+	INSTALL_ROOT="$pkgdir" make install
+
+	# Remove installed tests
+	rm -r "$pkgdir"/opt
+}
+
+sha512sums="
+cc2985a004fda5e541f1ca9854d82b18e534aad5efc52f345e066f05893866384e66f30955b07d5247d9a3a6b98666388b23fa6117842bc57d8d99e130defcf6  nemo-qml-plugin-configuration-0.2.8.tar.gz
+"

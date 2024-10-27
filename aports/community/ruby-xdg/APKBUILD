@@ -1,0 +1,46 @@
+# Contributor: Kevin Daudt <kdaudt@alpinelinux.org>
+# Maintainer: Kevin Daudt <kdaudt@alpinelinux.org>
+pkgname=ruby-xdg
+pkgver=8.5.0
+pkgrel=0
+pkgdesc="xdg base directory standard library for ruby"
+url="https://www.alchemists.io/projects/xdg/"
+arch="noarch"
+license="Hippocratic-2.1"
+depends="ruby"
+checkdepends="ruby-rake ruby-bundler"
+options="!check" # requires bundler-leak
+source="$pkgname-$pkgver.tar.gz::https://github.com/bkuhlmann/xdg/archive/refs/tags/$pkgver.tar.gz
+	gemspec-remove-signing.patch
+	"
+builddir="$srcdir/xdg-$pkgver"
+
+build() {
+	gem build xdg.gemspec
+}
+
+check() {
+	rspec
+}
+
+package() {
+	local gemdir="$pkgdir/$(ruby -e 'puts Gem.default_dir')"
+
+	gem install \
+		--local \
+		--install-dir "$gemdir" \
+		--bindir "$pkgdir/usr/bin" \
+		--ignore-dependencies \
+		--no-document \
+		--verbose \
+		xdg
+
+	rm -r "$gemdir"/cache \
+		"$gemdir"/extensions \
+		"$gemdir"/doc
+}
+
+sha512sums="
+ffc1953efed13991ca4bed368884124e17e003cf0758895d5cf0fc7ed8a325f611829959ca89b6f271aeb1e67da8df1152e7577b28e1d4e85edf7d1b855f2af0  ruby-xdg-8.5.0.tar.gz
+476605cf0db302b1a424e42d162bb815d8ab0dee189691dfa0e6157107b234c8d84862a30ddf0aa253223ee8ec084284f5b082448e964545c28d5f9e54c7eee3  gemspec-remove-signing.patch
+"

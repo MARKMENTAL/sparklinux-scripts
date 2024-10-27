@@ -1,0 +1,125 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: team/gnome <ablocorrea@hotmail.com>
+pkgname=gtk4.0
+pkgver=4.16.2
+pkgrel=0
+pkgdesc="The GTK Toolkit (v4)"
+url="https://www.gtk.org/"
+arch="all"
+options="!check" # Test suite is known to fail upstream
+license="LGPL-2.1-or-later"
+subpackages="$pkgname-dbg $pkgname-demo $pkgname-dev $pkgname-doc $pkgname-lang"
+depends="shared-mime-info gtk-update-icon-cache tzdata iso-codes"
+depends_dev="
+	at-spi2-core-dev
+	gdk-pixbuf-dev
+	glib-dev
+	libepoxy-dev
+	libxext-dev
+	libxi-dev
+	libxinerama-dev
+	libxkbcommon-dev
+	vulkan-headers
+	wayland-dev
+	wayland-protocols
+	"
+makedepends="
+	$depends_dev
+	cairo-dev
+	colord-dev
+	cups-dev
+	expat-dev
+	fontconfig-dev
+	gettext-dev
+	gi-docgen
+	gnutls-dev
+	gobject-introspection-dev
+	graphene-dev
+	gst-plugins-bad-dev
+	gstreamer-dev
+	iso-codes-dev
+	libice-dev
+	libx11-dev
+	libxcomposite-dev
+	libxcursor-dev
+	libxdamage-dev
+	libxfixes-dev
+	libxrandr-dev
+	meson
+	pango-dev
+	perl
+	py3-docutils
+	sassc
+	shaderc
+	tiff-dev
+	vulkan-loader-dev
+	zlib-dev
+	"
+source="https://download.gnome.org/sources/gtk/${pkgver%.*}/gtk-$pkgver.tar.xz"
+builddir="$srcdir/gtk-$pkgver"
+
+build() {
+	CFLAGS="$CFLAGS -O2" \
+	CPPFLAGS="$CPPFLAGS -O2" \
+	abuild-meson \
+		-Ddocumentation=true \
+		-Dintrospection=enabled \
+		-Dbroadway-backend=true \
+		-Dman-pages=true \
+		-Dbuild-tests=false \
+		-Dbuild-testsuite=false \
+		. output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+
+	# use gtk-update-icon-cache from gtk+3.0 for now. The icon cache is forward
+	# compatible so this is fine.
+	# do the same for gtk4-update-icon-cache
+	rm -f "$pkgdir"/usr/bin/gtk-update-icon-cache
+	rm -f "$pkgdir"/usr/bin/gtk4-update-icon-cache
+	rm -f "$pkgdir"/usr/share/man/man1/gtk-update-icon-cache.1
+}
+
+demo() {
+	pkgdesc="$pkgdesc (demonstration application)"
+	amove \
+		usr/bin/gtk4-demo \
+		usr/bin/gtk4-demo-application \
+		usr/bin/gtk4-icon-browser \
+		usr/bin/gtk4-node-editor \
+		usr/bin/gtk4-print-editor \
+		usr/bin/gtk4-widget-factory \
+		usr/share/applications/org.gtk.Demo4.desktop \
+		usr/share/applications/org.gtk.IconBrowser4.desktop \
+		usr/share/applications/org.gtk.PrintEditor4.desktop \
+		usr/share/applications/org.gtk.WidgetFactory4.desktop \
+		usr/share/applications/org.gtk.gtk4.NodeEditor.desktop \
+		usr/share/glib-2.0/schemas/org.gtk.Demo4.gschema.xml \
+		usr/share/gtk-4.0/gtk4builder.rng \
+		usr/share/icons \
+		usr/share/metainfo
+}
+
+dev() {
+	default_dev
+
+	amove \
+		usr/bin/gtk4-builder-tool \
+		usr/bin/gtk4-encode-symbolic-svg \
+		usr/bin/gtk4-query-settings \
+		usr/share/gtk-4.0/valgrind
+}
+
+lang() {
+	default_lang
+
+	# These are some localized emoji labels.
+	amove usr/share/gtk-4.0/emoji
+}
+
+sha512sums="
+ae1c30b99bf28dcf45a6183c20f44f1facfc701d43bf77727c7f38880922026beef9f651a4fd9c9464b1dcd5238274738bad3a789225147d9449e4b2fc0cb171  gtk-4.16.2.tar.xz
+"

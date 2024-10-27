@@ -1,0 +1,42 @@
+# Contributor: Oleg Titov <oleg.titov@gmail.com>
+# Maintainer: Oleg Titov <oleg.titov@gmail.com>
+pkgname=zim-tools
+pkgver=3.3.0
+pkgrel=1
+pkgdesc="Various ZIM command line tools"
+url="https://github.com/openzim/zim-tools"
+arch="all"
+license="GPL-3.0-or-later"
+makedepends="
+	docopt-cpp-dev
+	file-dev
+	gtest-dev
+	gumbo-parser-dev
+	libzim-dev
+	meson
+	mustache
+	zlib-dev
+	"
+replaces="zimwriterfs"
+provides="zimwriterfs=$pkgver-r$pkgrel"
+subpackages="$pkgname-doc"
+source="zim-tools-$pkgver.tar.gz::https://github.com/openzim/zim-tools/archive/$pkgver.tar.gz"
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+check() {
+	meson test -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+
+	install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+}
+
+sha512sums="
+3aecfc7fe8fe87c6281eb188763592f59248eff703d357c614e025df5f09248fe5e18e3ccf6615a9d4350ee0ec5ca204afe9238945acd6bbff4768aa8736f077  zim-tools-3.3.0.tar.gz
+"

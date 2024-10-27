@@ -1,0 +1,30 @@
+# Contributor: Alex Yam <alex@alexyam.com>
+# Maintainer: Alex Yam <alex@alexyam.com>
+pkgname=py3-bookkeeper
+pkgver=4.16.2
+pkgrel=2
+pkgdesc="Python client for Apache Bookkeeper"
+url="https://github.com/apache/bookkeeper"
+arch="noarch"
+license="Apache-2.0"
+depends="python3"
+makedepends="py3-setuptools py3-gpep517"
+subpackages="$pkgname-pyc"
+source="bookkeeper-release-$pkgver.tar.gz::https://github.com/apache/bookkeeper/archive/refs/tags/release-$pkgver.tar.gz"
+builddir="$srcdir/bookkeeper-release-$pkgver/stream/clients/python"
+options="!check" # test requires bookkeeper server
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+2826cbd9c8769a8d6f9d0c6102999684bccf9f667ca693e5f6fabb1e4c99ce096a9f99b51d87e5eae311bd5a8f3b8557e93edaaa8a00fd0e21be68aad44811eb  bookkeeper-release-4.16.2.tar.gz
+"

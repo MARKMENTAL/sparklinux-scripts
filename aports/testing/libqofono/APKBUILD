@@ -1,0 +1,56 @@
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+pkgname=libqofono
+pkgver=0.123
+pkgrel=1
+pkgdesc="Library for accessing the ofono daemon, and a Qt declarative plugin for it"
+url="https://github.com/sailfishos/libqofono"
+# armhf: blocked by qt5-qtdeclarative
+# riscv64: Qt6 build segfaults
+arch="all !armhf !riscv64"
+license="LGPL-2.1-or-later"
+depends_dev="
+	qt5-qtbase-dev
+	qt5-qtdeclarative-dev
+	qt6-qtbase-dev
+	qt6-qtdeclarative-dev
+	"
+makedepends="$depends_dev"
+subpackages="$pkgname-dev $pkgname-qt5:_qt5 $pkgname-qt6:_qt6"
+source="https://github.com/sailfishos/libqofono/archive/$pkgver/libqofono-$pkgver.tar.gz"
+options="!check" # requires running ofono
+
+build() {
+	mkdir build-qt5 && cd build-qt5
+	/usr/lib/qt5/bin/qmake ..
+	make
+
+	mkdir ../build-qt6 && cd ../build-qt6
+	/usr/lib/qt6/bin/qmake ..
+	make
+}
+
+package() {
+	cd build-qt5
+	INSTALL_ROOT="$pkgdir" make install
+
+	cd ../build-qt6
+	INSTALL_ROOT="$pkgdir" make install
+
+	# Remove installed tests
+	rm -r "$pkgdir"/opt
+}
+
+_qt5() {
+	amove usr/lib/libqofono-qt5.so*
+	amove usr/lib/qt5
+}
+
+_qt6() {
+	amove usr/lib/libqofono-qt6.so*
+	amove usr/lib/qt6
+}
+
+sha512sums="
+507922990630b7d7220ce6f44d43602a72a7b0163d0a3dbb042d1016f5481bd110d34e40c6085c79a43f2035dfcbdc06363cfce1a7d6323187c608f9ee6dbaa3  libqofono-0.123.tar.gz
+"

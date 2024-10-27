@@ -1,0 +1,58 @@
+# Contributor: Bradley J Chambers <brad.chambers@gmail.com>
+# Maintainer: Bradley J Chambers <brad.chambers@gmail.com>
+pkgname=libgeotiff
+pkgver=1.7.3
+pkgrel=0
+pkgdesc="TIFF based interchange format for georeferenced raster imagery"
+url="https://trac.osgeo.org/geotiff"
+arch="all"
+license="Public-Domain"
+makedepends="
+	autoconf
+	automake
+	libtool
+	proj-dev
+	"
+subpackages="
+	$pkgname-dev
+	$pkgname-doc
+	"
+source="https://download.osgeo.org/geotiff/libgeotiff/libgeotiff-$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+	update_config_sub
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--disable-static
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+check() {
+	# generate an example GeoTIFF
+	bin/makegeo
+
+	# list-out the GeoTIFF tags and keys associated with the generated GeoTIFF
+	bin/listgeo newgeo.tif > metadata.txt
+
+	# check if some tags are extracted correctly
+	grep "Ellipsoid: 7016/Everest 1830 (1967 Definition) (6377298.56,6356097.55)" metadata.txt
+	grep "Projection Linear Units: 9001/metre (1.000000m)" metadata.txt
+	grep "Upper Left    (130d 0' 0.00\"E, 32d 0' 0.00\"N)" metadata.txt
+	grep "Lower Left    (130d 0' 0.00\"E, 12d 0' 0.00\"N)" metadata.txt
+	grep "Upper Right   (150d 0' 0.00\"E, 32d 0' 0.00\"N)" metadata.txt
+	grep "Lower Right   (150d 0' 0.00\"E, 12d 0' 0.00\"N)" metadata.txt
+}
+
+sha512sums="
+a523d6117c7433fe37b7c0cdcba81698426cd4b084bcb35c7dacc9e87bfda1ab7a4c16a9aa64a69dedb78edc2f85e8032bf8b158411f50909603e04d13821cd3  libgeotiff-1.7.3.tar.gz
+"

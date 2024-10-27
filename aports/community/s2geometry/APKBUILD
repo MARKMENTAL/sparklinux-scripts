@@ -1,0 +1,54 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=s2geometry
+pkgver=0.11.1
+pkgrel=0
+pkgdesc="Computational geometry and spatial indexing on the sphere"
+url="https://s2geometry.io/"
+# s390x fails endian check
+arch="all !s390x"
+license="Apache-2.0"
+depends_dev="
+	abseil-cpp-dev
+	openssl-dev>3
+	"
+makedepends="$depends_dev
+	cmake
+	gtest-dev
+	python3-dev
+	samurai
+	swig
+	"
+source="https://github.com/google/s2geometry/archive/v$pkgver/s2geometry-v$pkgver.tar.gz
+	fix-newer-openssl.patch
+	"
+subpackages="$pkgname-dev py3-$pkgname:_py3"
+options="!check" # No test target available
+
+build() {
+	# Tests require unavailable googlemock directory
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBUILD_EXAMPLES=OFF \
+		-DBUILD_TESTS=OFF \
+		-DWITH_PYTHON=ON
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+_py3() {
+	pkgdesc="$pkgdesc (Python)"
+	depends="python3"
+
+	amove usr/lib/python3*
+}
+
+sha512sums="
+c500029c6e9cc412a29a8a74961688b0a504f60b1a7698ef84c0d0ae760e3c3f05e7068fb1154c9755d907f82e3bc09f8bf1d0ff629cbd3bad6e70169187dd37  s2geometry-v0.11.1.tar.gz
+a7b79ce8ec0f45cc6e04925d1530c56126de23b168fc6f5bc22905a8af0006a7aab59dbebf194a5e69bbcf6da9168836e4de775d9cea926ff49e9ebf4471693a  fix-newer-openssl.patch
+"

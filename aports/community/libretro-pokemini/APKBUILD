@@ -1,0 +1,25 @@
+# Contributor: David Demelier <markand@malikania.fr>
+# Maintainer: David Demelier <markand@malikania.fr>
+pkgname=libretro-pokemini
+pkgver=0_git20220726
+pkgrel=0
+_commit="9ba2c2d98bef98794095f3ef50e22f1a3cbc6166"
+pkgdesc="obscure nintendo handheld emulator"
+url="https://github.com/libretro/PokeMini"
+arch="all"
+license="GPL-3.0-or-later"
+source="$pkgname-$_commit.tar.gz::https://github.com/libretro/PokeMini/archive/$_commit.tar.gz"
+builddir="$srcdir/PokeMini-$_commit"
+options="!check" # No tests
+
+build() {
+	make -f Makefile.libretro
+}
+
+package() {
+	install -Dm644 pokemini_libretro.so "$pkgdir"/usr/lib/libretro/pokemini_libretro.so
+}
+
+sha512sums="
+94431b293ff5e784a08ffb649a9df4a3d32fe2558d58831dcfd0020efcc03110e3601a83f3cea961eebe454d067142cc9726fe59da935ece295ec7dd63fbdd1e  libretro-pokemini-9ba2c2d98bef98794095f3ef50e22f1a3cbc6166.tar.gz
+"

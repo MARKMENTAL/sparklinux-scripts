@@ -1,0 +1,45 @@
+# Contributor: Daniel Everett <deverett@gmail.com>
+# Maintainer: Daniel Everett <deverett@gmail.com>
+pkgname=py3-pyscard
+_pkgname=pyscard
+pkgver=2.0.8
+pkgrel=1
+pkgdesc="pyscard smartcard library for python"
+url="https://github.com/LudovicRousseau/pyscard"
+arch="all"
+license="LGPL-2.1-or-later"
+depends="pcsc-lite"
+makedepends="
+	pcsc-lite-dev
+	python3-dev
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	swig
+	"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/p/pyscard/pyscard-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	mv -v smartcard smartcard.src
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+245602aaab024a1d9f3e2ae46482d6e18253f7e9a3c419f40e746ad2578bbf58c1f56f9a7ec139c9ca5048e2d1a7505002d98b6d54d8906af4f4cfab225d5a09  pyscard-2.0.8.tar.gz
+"

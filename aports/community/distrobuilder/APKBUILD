@@ -1,0 +1,62 @@
+# Contributor: Carlo Landmeter <clandmeter@alpinelinux.org>
+# Maintainer: Sean McAvoy <seanmcavoy@gmail.com>
+pkgname=distrobuilder
+pkgver=3.0
+pkgrel=0
+pkgdesc="System container image builder"
+url="https://linuxcontainers.org/distrobuilder/"
+arch="all !armhf !armv7"
+license="Apache-2.0"
+depends="gnupg xz"
+makedepends="go linux-headers"
+subpackages="$pkgname-lxc::noarch $pkgname-lxd::noarch $pkgname-incus::noarch $pkgname-doc"
+checkdepends="squashfs-tools"
+options="net"
+source="https://github.com/lxc/distrobuilder/archive/refs/tags/distrobuilder-$pkgver.tar.gz"
+builddir="$srcdir/distrobuilder-distrobuilder-$pkgver"
+options="net"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+export GOFLAGS="$GOFLAGS -modcacherw"
+
+build() {
+	go build -o out ./distrobuilder
+}
+
+check() {
+	# FIXME: skip some failing tests
+	go test -v -skip "TestIncus*|TestGetLatestRelease" ./...
+}
+
+package() {
+	install -Dm755 out "$pkgdir"/usr/bin/$pkgname
+	install -Dm644 -t "$pkgdir"/usr/share/doc/distrobuilder doc/*.md
+	install -Dm644 -t "$pkgdir"/usr/share/doc/distrobuilder/examples doc/examples/*.yaml
+}
+
+lxc() {
+	pkgdesc="$pkgdesc (for LXC)"
+	depends="$pkgname"
+	install_if="$pkgname=$pkgver-r$pkgrel lxc"
+	mkdir -p "$subpkgdir"
+}
+
+lxd() {
+	pkgdesc="$pkgdesc (for LXD)"
+	depends="$pkgname squashfs-tools"
+	install_if="$pkgname=$pkgver-r$pkgrel lxd"
+	mkdir -p "$subpkgdir"
+}
+
+incus() {
+	pkgdesc="$pkgdesc (for incus)"
+	depends="$pkgname squashfs-tools"
+	install_if="$pkgname=$pkgver-r$pkgrel incus"
+	mkdir -p "$subpkgdir"
+}
+
+sha512sums="
+d0060a78d3f7b7758c4d52a2c0840e57a9c66fd4435aa3fab41ed8e6395b57a3d1bc7ca4012734d2546572d43b34815df2926f04016a490cf4721c92a363d318  distrobuilder-3.0.tar.gz
+"

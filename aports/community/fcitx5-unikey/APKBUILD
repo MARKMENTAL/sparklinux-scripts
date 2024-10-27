@@ -1,0 +1,49 @@
+# Contributor: Lindsay Zhou <i@lin.moe>
+# Maintainer: Lindsay Zhou <i@lin.moe>
+pkgname=fcitx5-unikey
+pkgver=5.1.4
+pkgrel=0
+pkgdesc="Unikey Wrapper for Fcitx"
+url="https://github.com/fcitx/fcitx5-unikey"
+arch="all"
+license="LGPL-2.0-or-later AND GPL-2.0-or-later"
+makedepends="
+	cmake
+	extra-cmake-modules
+	fcitx5-dev
+	fcitx5-qt-dev
+	gettext-dev
+	qt6-qtbase-dev
+	samurai
+	"
+subpackages="$pkgname-lang"
+source="$pkgname-$pkgver.tar.gz::https://github.com/fcitx/fcitx5-unikey/archive/refs/tags/$pkgver.tar.gz"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	CFLAGS="$CFLAGS -flto=auto" \
+	CXXFLAGS="$CXXFLAGS -flto=auto" \
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=None \
+		-DENABLE_TEST="$(want_check && echo ON || echo OFF)" \
+		$CMAKE_CROSSOPTS
+	cmake --build build
+}
+
+check() {
+	cd build
+	CTEST_OUTPUT_ON_FAILURE=TRUE ctest
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+6d8f92e35acc23fe191e5600efe873ad3f774190d26a2c3fd1f60ac1392b11bcf1ff865a860babed79964188a7951aa81d3e9f3a962614feb4daebf754a031e1  fcitx5-unikey-5.1.4.tar.gz
+"

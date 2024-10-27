@@ -1,0 +1,50 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer:
+pkgname=gtksourceview5
+pkgver=5.12.1
+pkgrel=0
+pkgdesc="A text widget adding syntax highlighting and more to GNOME"
+url="https://wiki.gnome.org/Projects/GtkSourceView"
+arch="all"
+license="GPL-2.0-or-later"
+depends_dev="
+	gtk4.0-dev
+	libxml2-dev
+	"
+makedepends="$depends_dev
+	gobject-introspection-dev
+	libxslt
+	meson
+	pcre2-dev
+	vala
+	"
+checkdepends="
+	dbus
+	ibus
+	mesa-dri-gallium
+	xvfb-run
+	"
+subpackages="$pkgname-dev $pkgname-lang"
+source="https://download.gnome.org/sources/gtksourceview/${pkgver%.*}/gtksourceview-$pkgver.tar.xz"
+builddir="$srcdir/gtksourceview-$pkgver"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	XDG_RUNTIME_DIR="$(mktemp -d -p "$builddir")" \
+	xvfb-run -a dbus-run-session -- \
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+64c347df505c640feb2d5885a3fa047a3a5dc6bf86b031ec9f8eec5544bc9d996ca3bfd41aea78ebfa9171a206a64d88773d53f1bc8d0f2171429c1ee788cd40  gtksourceview-5.12.1.tar.xz
+"

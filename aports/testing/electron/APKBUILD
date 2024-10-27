@@ -1,0 +1,578 @@
+# Maintainer: lauren n. liberda <lauren@selfisekai.rocks>
+pkgname=electron
+pkgver=30.5.1
+_semver="${pkgver/_beta/-beta.}"
+pkgrel=0
+_chromium=124.0.6367.243
+_copium_tag=124.5
+_depot_tools=495b23b39aaba2ca3b55dd27cadc523f1cb17ee6
+pkgdesc="Electron cross-platform desktop toolkit"
+url="https://github.com/electron/electron"
+arch="aarch64 x86_64" # same as chromium
+license="MIT"
+depends="gtk+3.0 so:libudev.so.1 xdg-utils"
+_llvmver=18
+makedepends="
+	ada-dev
+	alsa-lib-dev
+	aom-dev
+	base64-dev
+	bash
+	brotli-dev
+	bsd-compat-headers
+	bzip2-dev
+	c-ares-dev
+	cairo-dev
+	clang$_llvmver-dev
+	clang-extra-tools
+	compiler-rt
+	crc32c-dev
+	cups-dev
+	curl-dev
+	dav1d-dev
+	dbus-glib-dev
+	double-conversion-dev
+	eudev-dev
+	ffmpeg-dev
+	findutils
+	flac-dev
+	flatbuffers-dev
+	flex
+	freetype-dev
+	gperf
+	gtk+3.0-dev
+	gn
+	gzip
+	harfbuzz-dev
+	hdrhistogram-c-dev
+	highway-dev
+	hunspell-dev
+	http-parser-dev
+	hwdata-dev
+	java-jdk
+	jpeg-dev
+	krb5-dev
+	lcms2-dev
+	libarchive-tools
+	libavif-dev
+	libbsd-dev
+	libcap-dev
+	libdrm-dev
+	libevent-dev
+	libexif-dev
+	libgcrypt-dev
+	libjpeg-turbo-dev
+	libnotify-dev
+	libsecret-dev
+	libusb-dev
+	libva-dev
+	libwebp-dev
+	libxcomposite-dev
+	libxcursor-dev
+	libxinerama-dev
+	libxml2-dev
+	libxrandr-dev
+	libxscrnsaver-dev
+	libxslt-dev
+	linux-headers
+	lld
+	llvm$_llvmver
+	mesa-dev
+	minizip-dev
+	nghttp2-dev
+	nodejs
+	npm
+	nss-dev
+	openh264-dev
+	opus-dev
+	pciutils-dev
+	perl
+	pipewire-dev
+	pulseaudio-dev
+	py3-httplib2
+	py3-jinja2
+	py3-parsing
+	py3-setuptools
+	py3-six
+	python3
+	qt5-qtbase-dev
+	rsync
+	rust
+	samurai
+	speex-dev
+	sqlite-dev
+	xcb-proto
+	yarn
+	zlib-dev
+	zstd-dev
+	"
+subpackages="$pkgname-lang $pkgname-dev"
+# the lower patches are specific to electron, the top ones are from the equivalent chromium version
+source="https://ab-sn.lnl.gay/electron-$_semver-$_chromium.tar.zst
+	copium-$_copium_tag.tar.gz::https://codeberg.org/selfisekai/copium/archive/$_copium_tag.tar.gz
+	chromium-revert-drop-of-system-java.patch
+	compiler.patch
+	disable-dns_config_service.patch
+	disable-failing-tests.patch
+	fc-cache-version.patch
+	fix-missing-cstdint-include-musl.patch
+	fix-opus.patch
+	fstatat-32bit.patch
+	gdbinit.patch
+	generic-sensor-include.patch
+	import-version.patch
+	libstdc++13.patch
+	mman.patch
+	musl-auxv.patch
+	musl-sandbox.patch
+	musl-tid-caching.patch
+	musl-v8-monotonic-pthread-cont_timedwait.patch
+	no-execinfo.patch
+	no-mallinfo.patch
+	no-res-ninit-nclose.patch
+	no-sandbox-settls.patch
+	partalloc-no-tagging-arm64.patch
+	perfetto-libstdc++.patch
+	pvalloc.patch
+	random-fixes.patch
+	quiche-array.patch
+	system-zstd.patch
+	temp-failure-retry.patch
+	yes-musl.patch
+
+	icon.patch
+	python-jinja-3.10.patch
+	webpack-hash.patch
+	unbundle-node.patch
+	system-zlib-headers.patch
+
+	default.conf
+	electron.desktop
+	electron-launcher.sh
+	"
+_copium_patches="
+	cr124-iwyu-sys-select-dawn-terminal.patch
+	cr124-libwebp-shim-sharpyuv.patch
+	"
+# tests are todo for some base checks
+options="!check net suid"
+builddir="$srcdir/electron-$_semver-$_chromium"
+
+export PATH="$PATH:/usr/lib/qt5/bin"
+
+export CC=clang-$_llvmver
+export CXX=clang++-$_llvmver
+
+# required to find the tools
+export AR=llvm-ar
+export NM=llvm-nm
+export LD=clang++-$_llvmver
+
+# less log spam, reproducible
+export CFLAGS="${CFLAGS/-g/} -O2 -Wno-builtin-macro-redefined -Wno-deprecated-declarations -Wno-shift-count-overflow -Wno-ignored-attributes"
+export CXXFLAGS="${CXXFLAGS/-g/} -O2 -Wno-builtin-macro-redefined -Wno-deprecated-declarations -Wno-invalid-constexpr"
+export CPPFLAGS="${CPPFLAGS/-g/} -D__DATE__=  -D__TIME__=  -D__TIMESTAMP__="
+case "$CARCH" in
+	aarch64|arm*|riscv64)
+		# not supported by clang here
+		export CFLAGS="${CFLAGS/-fstack-clash-protection}"
+		export CXXFLAGS="${CXXFLAGS/-fstack-clash-protection}"
+		;;
+esac
+
+# breaks chromium-based stuff
+export CXXFLAGS="${CXXFLAGS/-D_GLIBCXX_ASSERTIONS=1}"
+
+# creates a dist tarball that does not need to git clone everything at build time.
+_distbucket="sakamoto/lnl-aports-snapshots/"
+snapshot() {
+	deps
+	# vpython3 execs system python3 with this set
+	export VPYTHON_BYPASS="manually managed python not supported by chrome operations"
+	export CHROMIUM_BUILDTOOLS_PATH="$srcdir/src/buildtools"
+	export DEPOT_TOOLS_UPDATE=0
+	mkdir -p "$srcdir"
+	cd "$srcdir"
+
+	if ! [ -d depot_tools ]; then
+		(
+			git clone --depth 1 -b main https://chromium.googlesource.com/chromium/tools/depot_tools.git
+			cd depot_tools
+			git fetch --depth 1 origin $_depot_tools
+			git checkout $_depot_tools
+		)
+	fi
+
+	export PATH="$PATH:$srcdir/depot_tools"
+
+	echo "solutions = [
+	{
+		\"name\": \"src/electron\",
+		\"url\": \"https://github.com/electron/electron.git@v$_semver\",
+		\"deps_file\": \"DEPS\",
+		\"managed\": False,
+		\"custom_deps\": {
+			\"src\": \"https://chromium.googlesource.com/chromium/src.git@$_chromium\",
+		},
+		\"custom_vars\": {},
+	},
+	]" > .gclient
+
+	python3 depot_tools/gclient.py sync \
+		--no-history \
+		--nohooks
+
+	python3 src/build/landmines.py
+	python3 src/build/util/lastchange.py -o src/build/util/LASTCHANGE
+	python3 src/build/util/lastchange.py -s src/third_party/dawn \
+		--revision src/gpu/webgpu/DAWN_VERSION
+	python3 src/build/util/lastchange.py -m GPU_LISTS_VERSION \
+		--revision-id-only --header src/gpu/config/gpu_lists_version.h
+	python3 src/build/util/lastchange.py -m SKIA_COMMIT_HASH \
+		-s src/third_party/skia --header src/skia/ext/skia_commit_hash.h
+
+	# rolled newer chromium with it included
+	sed -i '/reland_mojom_ts_generator_handle_empty_module_path_identically_to.patch/d' src/electron/patches/chromium/.patches
+
+	python3 src/electron/script/apply_all_patches.py \
+		src/electron/patches/config.json
+
+	mv src $pkgname-$_semver-$_chromium
+
+	# extra binaries are most likely things we don't want, so nuke them all
+	for elf in $(scanelf -RA -F "%F" $pkgname-$_semver-$_chromium); do
+		rm -f "$elf"
+	done
+
+	msg "generating tarball.. (this takes a while)"
+	tar -cf $pkgname-$_semver-$_chromium.tar \
+		--exclude="ChangeLog*" \
+		--exclude="testdata/*" \
+		--exclude="test_data/*" \
+		--exclude="android_rust_toolchain/*" \
+		--exclude-backups \
+		--exclude-caches-all \
+		--exclude-vcs \
+		$pkgname-$_semver-$_chromium
+
+	zstd --auto-threads=logical --ultra --long -22 -T"${ZSTD_LIMIT:-0}" -vv $pkgname-$_semver-$_chromium.tar -o "$SRCDEST"/$pkgname-$_semver-$_chromium.tar.zst
+	mcli cp "$SRCDEST"/$pkgname-$_semver-$_chromium.tar.zst "$_distbucket"
+}
+
+prepare() {
+	default_prepare
+
+	for i in $_copium_patches; do
+		case "$i" in
+			*.patch)
+				msg "${i%::*}"
+				patch -p1 -i "$srcdir/copium/$i" || failed="$failed $i"
+				;;
+		esac
+	done
+	if [ ! -z "$failed" ]; then
+		error "The following patches failed to apply:"
+		for i in $failed; do
+			printf "  %s\n" "$i" >&2
+		done
+		exit 1
+	fi
+
+	git init -q .
+
+	# link to system tools
+	ln -sfv /usr/bin/clang-format buildtools/linux64/clang-format
+	mkdir -p third_party/node/linux/node-linux-x64/bin
+	ln -sfv /usr/bin/node third_party/node/linux/node-linux-x64/bin/node
+	ln -sfv /usr/bin/java third_party/jdk/current/bin/java
+
+	(
+		cd electron
+		git init -q .
+		git config user.email "example@example.com"
+		git config user.name "example"
+		git config commit.gpgsign false
+		git add LICENSE
+		git commit -m "init"
+		git tag "v$_semver"
+		git pack-refs
+		yarn install --frozen-lockfile --no-scripts
+	)
+
+	(
+		cd third_party/node
+		./update_npm_deps
+	)
+
+	# reusable system library settings
+	# flatbuffers - tensorflow has a few static_asserts for a specific patch version
+	# libavif - https://github.com/AOMediaCodec/libavif/commit/50a541469c98009016af8dcc9f83a1be79f3a7d9
+	# libaom - https://aomedia.googlesource.com/aom/+/706ee36dcc82%5E%21/
+	#   but watch this space: https://aomedia-review.googlesource.com/c/aom/+/188606
+	# jsoncpp, re2, snappy, swiftshader, vulkan, woff2 - needs use_custom_libcxx=false
+	local chromium_use_system="
+		brotli
+		crc32c
+		dav1d
+		double-conversion
+		ffmpeg
+		flac
+		fontconfig
+		freetype
+		harfbuzz-ng
+		highway
+		icu
+		libdrm
+		libevent
+		libjpeg
+		libsecret
+		libusb
+		libwebp
+		libxml
+		libxslt
+		openh264
+		opus
+		zlib
+		zstd
+		"
+
+	for _lib in $chromium_use_system jinja2 libjpeg_turbo; do
+		msg "Removing buildscripts for system provided $_lib"
+		find . -type f -path "*third_party/$_lib/*" \
+			\! -path "*third_party/$_lib/chromium/*" \
+			\! -path "*third_party/$_lib/google/*" \
+			\! -path './base/third_party/icu/*' \
+			\! -path './third_party/libxml/*' \
+			\! -path './third_party/pdfium/third_party/freetype/include/pstables.h' \
+			\! -path './third_party/harfbuzz-ng/utils/hb_scoped.h' \
+			\! -path './third_party/crashpad/crashpad/third_party/zlib/zlib_crashpad.h' \
+			\! -regex '.*\.\(gn\|gni\|gyp\|gypi\|isolate\|py\)' \
+			-delete
+	done
+
+	# llhttp - 9.x needed, 8.x in repo (2023-12-17)
+	# ada - needs use_custom_libcxx=false
+	local node_use_system="
+		base64
+		brotli
+		cares
+		corepack
+		histogram
+		nghttp2
+		nghttp3
+		ngtcp2
+		zlib
+		"
+	# some of these are provided by system, e.g. brotli. some are from chromium,
+	# e.g. boringssl (as openssl). some are not in use at all (corepack)
+	for _lib in $node_use_system openssl; do
+		msg "Removing buildscripts for $_lib"
+		find . -type f -path "*third_party/electron_node/deps/$_lib/*" \
+			\! -path "*third_party/electron_node/deps/$_lib/chromium/*" \
+			\! -path "*third_party/electron_node/deps/$_lib/google/*" \
+			\! -regex '.*\.\(gn\|gni\|gyp\|gypi\|isolate\|py\)' \
+			-delete
+	done
+	# XXX: hack. unbundle-node.patch uses this list to switch things
+	# in config.gypi. https://github.com/electron/electron/issues/40836
+	echo $node_use_system > third_party/electron_node/use_system.txt
+
+	rm -rf third_party/electron_node/tools/inspector_protocol/jinja2
+
+	# https://groups.google.com/a/chromium.org/d/topic/chromium-packagers/9JX1N2nf4PU/discussion
+	touch chrome/test/data/webui/i18n_process_css_test.html
+	# Use the file at run time instead of effectively compiling it in
+	sed 's|//third_party/usb_ids/usb.ids|/usr/share/hwdata/usb.ids|g' \
+		-i services/device/public/cpp/usb/BUILD.gn
+
+	msg "Running debundle script"
+	python3 build/linux/unbundle/replace_gn_files.py --system-libraries \
+		$chromium_use_system
+	python3 third_party/libaddressinput/chromium/tools/update-strings.py
+
+	# prevent annoying errors when regenerating gni
+	sed -i 's,^update_readme$,#update_readme,' \
+		third_party/libvpx/generate_gni.sh
+
+	# allow system dependencies in "official builds"
+	sed -i 's/OFFICIAL_BUILD/GOOGLE_CHROME_BUILD/' \
+		tools/generate_shim_headers/generate_shim_headers.py
+
+	# https://crbug.com/893950
+	sed -i -e 's/\<xmlMalloc\>/malloc/' -e 's/\<xmlFree\>/free/' \
+		third_party/blink/renderer/core/xml/*.cc \
+		third_party/blink/renderer/core/xml/parser/xml_document_parser.cc \
+		third_party/libxml/chromium/*.cc \
+		third_party/maldoca/src/maldoca/ole/oss_utils.h
+
+	_configure
+}
+
+_configure() {
+	cd "$builddir"
+	msg "Configuring build"
+
+	case "$USE_CCACHE" in
+	1)
+		local cc_wrapper="ccache"
+		;;
+	*)
+		local cc_wrapper=""
+		;;
+	esac
+
+	local maglev=true
+	local symbol_level=0
+	local vaapi=true
+
+	# shellcheck disable=2089
+	local gn_config="
+		import(\"//electron/build/args/release.gn\")
+
+		blink_enable_generated_code_formatting=false
+		cc_wrapper=\"$cc_wrapper\"
+		chrome_pgo_phase=0
+		clang_base_path=\"/usr\"
+		clang_use_chrome_plugins=false
+		clang_version=\"$_llvmver\"
+		custom_toolchain=\"//build/toolchain/linux/unbundle:default\"
+		disable_fieldtrial_testing_config=true
+		enable_hangout_services_extension=true
+		enable_nacl=false
+		enable_nocompile_tests=false
+		enable_stripping=false
+		enable_rust=true
+		enable_vr=false
+		fatal_linker_warnings=false
+		ffmpeg_branding=\"Chrome\"
+		host_toolchain=\"//build/toolchain/linux/unbundle:default\"
+		icu_use_data_file=false
+		is_cfi=false
+		is_clang=true
+		is_component_ffmpeg=true
+		is_debug=false
+		is_official_build=true
+		link_pulseaudio=true
+		proprietary_codecs=true
+		regenerate_x11_protos=true
+		rtc_link_pipewire=true
+		rtc_use_pipewire=true
+		rustc_version=\"yes\"
+		rust_sysroot_absolute=\"/usr\"
+		symbol_level=$symbol_level
+		treat_warnings_as_errors=false
+		use_custom_libcxx=true
+		use_lld=true
+		use_pulseaudio=true
+		use_safe_libstdcxx=false
+		use_system_libffi=true
+		use_sysroot=false
+		use_thin_lto=false
+		use_vaapi=$vaapi
+		v8_enable_maglev=$maglev
+
+		skia_use_dawn=false
+		use_dawn=false
+		use_system_ada=false
+		use_system_base64=true
+		use_system_cares=true
+		use_system_histogram=true
+		use_system_lcms2=true
+		use_system_libffi=true
+		use_system_llhttp=false
+		use_system_nghttp2=true
+		"
+
+	# shellcheck disable=2086,2090,2116
+	gn gen out/Release --args="$(echo $gn_config)" \
+		--export-compile-commands
+}
+
+build() {
+	export PATH="$PATH:/usr/lib/qt5/bin"
+
+	ninja -C out/Release \
+		copy_node_headers \
+		electron_dist_zip \
+		node_gypi_headers \
+		node_version_header
+
+}
+
+package() {
+	mkdir -p "$pkgdir"/usr/lib/electron "$pkgdir"/usr/bin
+
+	bsdtar -xf out/Release/dist.zip -C "$pkgdir"/usr/lib/electron
+
+	chmod u+s "$pkgdir"/usr/lib/electron/chrome-sandbox
+
+	install -Dm755 "$srcdir"/electron-launcher.sh "$pkgdir"/usr/bin/electron
+	install -Dm755 "$srcdir"/default.conf "$pkgdir"/etc/electron/default.conf
+
+	mkdir -p "$pkgdir"/usr/include/electron
+	cp -rv "$builddir"/out/Release/gen/node_headers "$pkgdir"/usr/include/electron
+	ln -sv /usr/include/electron/node_headers/include/node "$pkgdir"/usr/include/electron/node
+
+	mkdir -p "$pkgdir"/usr/include/electron/node_headers/include/nan
+	cp -v "$builddir"/third_party/nan/*.h "$pkgdir"/usr/include/electron/node_headers/include/nan
+	ln -sv /usr/include/electron/node_headers/include/nan "$pkgdir"/usr/include/electron/nan
+
+	install -Dm644 electron/default_app/icon.png \
+		"$pkgdir"/usr/share/icons/hicolor/1024x1024/apps/electron.png
+	install -Dm644 "$srcdir"/electron.desktop \
+		-t "$pkgdir"/usr/share/applications/
+}
+
+lang() {
+	pkgdesc="$pkgdesc (translations)"
+	install_if="$pkgname=$pkgver-r$pkgrel lang"
+
+	mkdir -p "$subpkgdir"/usr/lib/electron/locales
+
+	mv "$pkgdir"/usr/lib/electron/locales/*.pak \
+		"$subpkgdir"/usr/lib/electron/locales
+	mv "$subpkgdir"/usr/lib/electron/locales/en-US.pak \
+		"$pkgdir"/usr/lib/electron/locales
+}
+
+sha512sums="
+1600d70dd12188cf1f24557999bf98d5d7533cf206b076fc856c28aa0264fcac1d66c4659ddc848ea1d2fb5c6c80b2bfd303d9203c219dd2fe764c5eb27cbe03  electron-30.5.1-124.0.6367.243.tar.zst
+13c647dc2024e27ae8a4d7e8f1202037a342f4a7054477226665c332029e1b6f1d8b99004c2b2809bcf1e6c19b1359ef5e1c971552d7ced59c5b43d5a836af88  copium-124.5.tar.gz
+29bb685e03356a77df5fd347cdf55194cc8b3265c421cc76e54d64edefc329dbcb052deb26b22e8f587ce68456876c071de1b7d258dd0fcc6ee66c875ec4a020  chromium-revert-drop-of-system-java.patch
+54eb147c0af2ba096d1df375a289b339ee855ab1a9114e7c747753f0274a6bafb7212c1859b7885454c4529d9a5e3bd9559fc14e8e006f23ccd381895fa68d15  compiler.patch
+4057cc78f10bfd64092bc35a373869abb1d68b880cdbca70422f39ffd78a929c19c7728d4d4c40709aaba25581148a93ae5343e724849fd35323062ed68753fa  disable-dns_config_service.patch
+111bc22fb704d97759988268a40d6b356c51b0bd7a8119a694e905ffe21850ff64e91566cd0dd0c9d62fcb46dca8acc821436c34eb0ba78be872ee4f7ec88a7b  disable-failing-tests.patch
+5fc5c012c1db6cf1ba82f38c6f3f4f5ca3a209e47ac708a74de379b018e0649b7694877c9571ef79002dde875ffc07b458a3355425f1c01867f362c66c2bc1bf  fc-cache-version.patch
+9200f78bad70e95c648a5e8392d50642190600f655c6baa366ff6467ebad52d3b3f305dad58f3610da67136f4b723557653b174ec5c25be8d8737ee04d9ee09f  fix-missing-cstdint-include-musl.patch
+b24563e9a738c00fce7ff2fbdee3d7c024d9125d7c74d9ab90af6bdb16f7ec8419f2c8aa78c0640f6d5d81c17dc2c673a194401d354f466749672729b48ed068  fix-opus.patch
+c63dee5044353eb306a39ca1526158c0f003ab310ecb03d1c368dc2a979454590c84b8d3c15484517d5e66bb8add9b231da9abbadf2e50850abd72ac1345c4ab  fstatat-32bit.patch
+33ee60863cc438ef57ffef92ba4cf67a856a5ffc16138bce241bcf87e47b15154aa86918e793c26f7ec4dc62a445257ad5673ed7001daf22c4043cf6cc57da7f  gdbinit.patch
+36a764fa73443b47d38050b52dbe6ad2fa8d67201ff4ccdbad13b52308ef165ca046aac6f9609fe35890a6485f0f3e672e78cc41e3e44f3cdc7f145e540524e8  generic-sensor-include.patch
+8de65109ece27ea63bd469f2220c56b8c752ba0a50fdf390082a2d5ae74b8e010199126175569f6d5084270dd4e0571e68aec32c0bca8211a6699925b3a09124  import-version.patch
+c49a1b06e061faa430d66dd5b404ef6c843e4d8a6e9012e963009a161b4726f8eb92c4da8fa710f8861f6e4daa8be5f68abee41a7d9fc02f2a0eb61ce53b5fdd  libstdc++13.patch
+e75f57ae34c97ca1caf15fa4b4106c6c1e79c31ed66869cf92ed9ea0c449886c9511e455047c17c1e9ad8b9a46ad4948511a4f2995a4b6030fb4d1c7ae21d038  mman.patch
+99bcc7dd485b404a90c606a96addab1d900852128d44fb8cea8acc7303189ef87c89a7b0e749fd0e10c5ef5f6bf1fadeb5c16a34503cab6a59938ce2653d887e  musl-auxv.patch
+50c274a420bb8a7f14fcb56e40920dac8f708792a4520789b4987facea459bef88113d5a2b60fa8c57bee6e92bff3617d6b73fa305c8c44614c638971cffd440  musl-sandbox.patch
+e7163ac5810ac85366cef2447412287c856e3d67c6b77f219a6e5a418b1965b98e449c409424ad0704a5bded9355dd0aec3dc4585918ce5a2ab36c079707afe2  musl-tid-caching.patch
+92eb002718026611f5542362ad69b67f0a398ff71b3fca5c05d55cb5c6f9f29334e5e127bb4860cfaa3fba0f0d4c901e2b98808217e7dc02e254a64a5c9521aa  musl-v8-monotonic-pthread-cont_timedwait.patch
+73bca6c6f9873f2f11cef04f3f41f71e0ae86e7e2d77e14db4298675fec390744c5081f6fdb14052e5ee2b5885be1198c3aa6068eb2b656d1a665c0c3f36e708  no-execinfo.patch
+8e17101d69e23b456a9c03dc2fe95bcd56846389707ba6f4720192a9e9168406d20d9168dbebbb3a47d921ec92e478f0e390f46e6b9bb43a34dda217c6e6448b  no-mallinfo.patch
+e4c4e5bc6f828f9c883dd418c0ba01887949c29c311f76206a1ec29f620b0c0ba0452949dc2778a9c46ea066405857536964a36436a68eecf7da7952736333cf  no-res-ninit-nclose.patch
+6dc4d8dc92e685dace62265a1ddb3aebc558aed54d20ff6d36b030be0c48d7e84662326c31363612492574d9a03c62653cdc21a60995b97dee1d75cae86a9f9b  no-sandbox-settls.patch
+d4ac7f350806b4410ccb1df3b0ad7e90a7b6d724a16919761aa2d47a6f21008c7374da528b05b754ee712b85d23adfb113c7f7b9ca2ed5b47644fe3ea0cb9119  partalloc-no-tagging-arm64.patch
+8e1aca983890c78d81a6f888b2cf1aa42878d1f8523e87d63b800e1e468cbfd33e5ff6a0975775ca222fe82f30c6497da95505da01b091c8776a44c98ac86f0f  perfetto-libstdc++.patch
+2eb434b4fc6aee77026492644cd86772a543d9845f112a75cd4c3e1f25c9435cc31f8454c1c73223451fc9be69b86e822ff68821978f67f2fc8bcba50296d8e0  pvalloc.patch
+803b8117c65132f76bec42054a4b2257a078b15b07fd08645fec2dfd51aa4e0075a9015300cd579d4ae0d757d9850b9988e080cfc2eea093f6684fdf82c4722c  random-fixes.patch
+86f612dd2b39602984a75b1b11c2ab8bc8cc6b4e78fae998570a777a6901ae45fdcdb22e46dd006dab703a0674e64c72cf8120af2dc5b9e78004f402c7e65358  quiche-array.patch
+b3beb98b539fe160fbc493ba410ae0f68540cc4b6834f1f8ce9a22c3f4f59ef5d583ad48793e10549fd02a701f833a3969791ef4524322cd1e715ca5bf226bc8  system-zstd.patch
+e48693e6b7aeebf69a5acbf80d9a35defe4c23835121dfeb58b051ac7c527e758a41004f4d193274fe1b01c0bfb1dbc77b09cb6a404a3fdee507a2918afb0edb  temp-failure-retry.patch
+914ccf649d7771f19f209ab97f99c481aebc6f66174d68e8b539f6ad4a70bc8cb0fae2df6dadbf0415958ffb3574c420fe029079dcce45f5e5add4db2e903566  yes-musl.patch
+465107da7818b237e3c144a318ab80c3c9343b51ed38b8971ef204692d13346929becbe94cefad4c153788d3a200642143584d5ca070f6304e768ba2139c19ec  icon.patch
+e05180199ee1d559e4e577cedd3e589844ecf40d98a86321bf1bea5607b02eeb5feb486deddae40e1005b644550331f6b8500177aa7e79bcb3750d3c1ceb76c3  python-jinja-3.10.patch
+2aa340854316f1284217c0ca17cbf44953684ad6c7da90815117df30928612eb9fb9ffb734b948dfc309cd25d1a67cd57f77aac2d052a3dd9aca07a3a58cbb30  webpack-hash.patch
+ebb18a0e2eba4b4606e900fa82f4b57fe91dcbdc943e17544bccb3c9a011a49b4331cdbee59629e44b80184bad4ea54ec887c0bfcd00cda8d5686060dbf365e3  unbundle-node.patch
+1b35edcf0b41e39e20c4d64dbb978bcaab8036f2fe839930709b269c50cb1321458a15b4d0013246f9e03f58f250a1e3a57ea910db1aa0adbd602a6a11ad33b9  system-zlib-headers.patch
+e8ea87c547546011c4c8fc2de30e4f443b85cd4cfcff92808e2521d2f9ada03feefb8e1b0cf0f6b460919c146e56ef8d5ad4bb5e2461cc5247c30d92eb4d068e  default.conf
+191559fc7aa1ea0353c6fb0cc321ee1d5803a0e44848c8be941cfab96277b0de6a59962d373e2a2a1686c8f9be2bcf2d2f33706759a339a959e297d3f7fda463  electron.desktop
+5f7ba5ad005f196facec1c0f26108356b64cafb1e5cfa462ff714a33b8a4c757ac00bfcb080da09eb5b65032f8eb245d9676a61ec554515d125ed63912708648  electron-launcher.sh
+"

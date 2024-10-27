@@ -1,0 +1,38 @@
+# Contributor: Michał Polański <michal@polanski.me>
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=sops
+pkgver=3.9.0
+pkgrel=0
+pkgdesc="Simple and flexible tool for managing secrets"
+url="https://github.com/getsops/sops"
+license="MPL-2.0"
+arch="all"
+makedepends="go"
+checkdepends="gpg gpg-agent"
+source="https://github.com/getsops/sops/archive/v$pkgver/sops-$pkgver.tar.gz"
+options="net" # for downloading Go modules
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -v ./cmd/sops
+}
+
+check() {
+	# remove -trimpath. PGP tests tries to access a local PGP key.
+	# kms and hcvault tests attempt to spawn a docker container.
+	# shellcheck disable=2046
+	GOFLAGS="${GOFLAGS/-trimpath/}" go test \
+		-skip TestPGP \
+		$(go list ./... | grep -v -e '/kms$' -e '/hcvault$')
+}
+
+package() {
+	install -Dm755 sops -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+fa03aaec0109ba41cd1620a5237569279fb42a62e108a7c68f11f9421134a2ab1f43107df9add5df9fa74f6b9e12319c207d7c15117feec8260bceb9439c8c44  sops-3.9.0.tar.gz
+"

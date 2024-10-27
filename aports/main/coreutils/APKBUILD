@@ -1,0 +1,95 @@
+# Contributor: Valery Kartel <valery.kartel@gmail.com>
+# Contributor: Michael Mason <ms13sp@gmail.com>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=coreutils
+pkgver=9.5
+pkgrel=1
+pkgdesc="The basic file, shell and text manipulation utilities"
+url="https://www.gnu.org/software/coreutils/"
+arch="all"
+license="GPL-3.0-or-later"
+makedepends="acl-dev attr-dev utmps-dev perl openssl-dev"
+subpackages="$pkgname-doc $pkgname-env $pkgname-fmt $pkgname-sha512sum:_sha512sum"
+install="$pkgname.post-deinstall"
+source="https://ftp.gnu.org/gnu/coreutils/coreutils-$pkgver.tar.xz
+	renameat2-fakeroot.patch
+	"
+options="!check" # FAIL: tests/cp/reflink-auto
+
+# secfixes:
+#   9.4-r2:
+#     - CVE-2024-0684
+#   8.30-r0:
+#     - CVE-2017-18018
+
+build() {
+	CFLAGS="$CFLAGS -I/usr/include/utmps -flto=auto" \
+	LIBS="-lutmps -lskarnet" \
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--disable-nls \
+		--enable-no-install-program=hostname,su,kill,uptime \
+		--enable-single-binary=symlinks \
+		--enable-single-binary-exceptions=env,fmt,sha512sum \
+		--with-openssl
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	# we put this separately
+	depends="
+		coreutils-env=$pkgver-r$pkgrel
+		coreutils-fmt=$pkgver-r$pkgrel
+		coreutils-sha512sum=$pkgver-r$pkgrel
+		"
+	make DESTDIR="$pkgdir" install
+
+	rm -rf "$pkgdir"/usr/lib/charset.alias
+	rmdir -p "$pkgdir"/usr/lib 2>/dev/null || true
+
+	install -d "$pkgdir"/bin "$pkgdir"/usr/sbin
+	cd "$pkgdir"/usr/bin/
+
+	# binaries that busybox puts in /bin
+	local busybox_bin="base64 cat chgrp chmod chown cp date dd df echo false ln ls
+		mkdir mknod mktemp mv nice printenv pwd rm rmdir sleep stat stty sync touch true uname"
+
+	# as these binaries live in /bin on busybox, we want to put them in /bin with coreutils
+	for i in $busybox_bin; do
+		rm "$pkgdir"/usr/bin/$i
+		ln -s ../usr/bin/coreutils "$pkgdir"/bin/$i
+	done
+
+	# chroot lives in /usr/sbin with busybox
+	rm "$pkgdir"/usr/bin/chroot
+	ln -s ../bin/coreutils "$pkgdir"/usr/sbin/chroot
+
+	# resolve conflict between shadow and coreutils for cmd:groups
+	rm "$pkgdir"/usr/bin/groups
+}
+
+env() {
+	amove usr/bin/env
+}
+
+fmt() {
+	amove usr/bin/fmt
+}
+
+_sha512sum() {
+	amove usr/bin/sha512sum
+}
+
+sha512sums="
+2ca0deac4dc10a80fd0c6fd131252e99d457fd03b7bd626a6bc74fe5a0529c0a3d48ce1f5da1d3b3a7a150a1ce44f0fbb6b68a6ac543dfd5baa3e71f5d65401c  coreutils-9.5.tar.xz
+a0317f6f42a0f821c6ec6745ff0f6be4ed9d2330ef1f886947a80a0f24dcddc6a28660c1d661da996577cc26b02c095a8aa058e553050acf90bce445ab07136a  renameat2-fakeroot.patch
+"

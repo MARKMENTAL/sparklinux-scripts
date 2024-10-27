@@ -1,0 +1,54 @@
+# Contributor: mio <miyopan@e.email>
+# Maintainer: mio <miyopan@e.email>
+pkgname=rime-plum
+pkgver=0_git20240417
+pkgrel=0
+_gitrev=4c28f11f451facef809b380502874a48ba964ddb
+pkgdesc="Rime configuration manager and input schemas"
+url="https://github.com/rime/plum"
+license="LGPL-3.0-or-later"
+arch="noarch"
+depends="
+	librime
+	opencc
+	"
+makedepends="
+	bash
+	git
+	librime-tools
+	"
+subpackages="
+	$pkgname-data
+	$pkgname-tools
+	"
+source="$pkgname-$_gitrev.tar.gz::https://github.com/rime/plum/archive/$_gitrev.tar.gz"
+options="!check" # No tests
+builddir="$srcdir"/plum-"$_gitrev"
+
+build() {
+	make preset-bin
+}
+
+package() {
+	depends="
+		$pkgname-data=$pkgver-r$pkgrel
+		$pkgname-tools=$pkgver-r$pkgrel
+		"
+	DESTDIR="$pkgdir" make install
+	install -Dm 755 "$builddir"/rime-install "$pkgdir"/usr/bin/rime-install
+}
+
+data() {
+	pkgdesc="$pkgdesc (input schemas)"
+	amove usr/share/rime-data
+}
+
+tools() {
+	pkgdesc="$pkgdesc (configuration tools)"
+	depends="bash git"
+	amove usr/bin/rime-install
+}
+
+sha512sums="
+3a6d404d67e39950cbe814222e6ebe9d537cb787050481a9e3ae3a7773f25046978034eaf9b260e2bccbd81ab055a37a07f64f05cace4abe4658396daa514d30  rime-plum-4c28f11f451facef809b380502874a48ba964ddb.tar.gz
+"

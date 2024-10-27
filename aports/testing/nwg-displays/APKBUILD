@@ -1,0 +1,36 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer:
+pkgname=nwg-displays
+pkgver=0.3.13
+pkgrel=1
+pkgdesc="Output management utility for sway Wayland compositor"
+url="https://github.com/nwg-piotr/nwg-displays"
+arch="noarch"
+license="MIT"
+depends="
+	gtk+3.0
+	gtk-layer-shell
+	py3-gobject3
+	py3-i3ipc
+	python3
+	wlr-randr
+	"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+subpackages="$pkgname-pyc"
+source="https://github.com/nwg-piotr/nwg-displays/archive/v$pkgver/nwg-displays-$pkgver.tar.gz"
+options="!check"  # no tests provided
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+ccf708b5c528519c323951c6a2b2c0b0f5228fdfdf7e94f54f15eeb82d7fa52c8b49bf91399f6801651d02226592dc8cb6833dfe9d0cb59b5c420dd8462e1850  nwg-displays-0.3.13.tar.gz
+"

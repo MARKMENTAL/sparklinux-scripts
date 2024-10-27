@@ -1,0 +1,49 @@
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=py3-validate-pyproject
+pkgver=0.19
+pkgrel=0
+pkgdesc="Validation library for simple check on pyproject.toml"
+url="https://validate-pyproject.readthedocs.io"
+arch="noarch"
+license="MPL-2.0"
+depends="
+	py3-fastjsonschema
+	python3
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-setuptools_scm
+	py3-wheel
+	"
+checkdepends="py3-pytest-xdist"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/abravalheri/validate-pyproject/archive/refs/tags/v$pkgver.tar.gz
+	no-useless-check.patch
+	fix-tests.patch
+	"
+builddir="$srcdir/validate-pyproject-$pkgver"
+options="net" # tests require network
+
+build() {
+	gpep517 build-wheel	\
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto -k 'not test_downloaded and not test_private_classifier'
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+0be378240214213d5c33b7a6fda2331a11d2d30039c2712ee4f13cc5a92a38c85edc3bb97d27bc4325496de4e8fdc69677e68054f7888f7d1f1d1f330d8e1752  py3-validate-pyproject-0.19.tar.gz
+9d2335bd0a44b1c9fb13bf5e621b5c661e4aac6e9275a30f04e75211ca0768c42b1a1fb6d85ce328d935997e65b216da93d88e8fb680304d7fdf65aac3220e95  no-useless-check.patch
+31f23c937db8db402bf345dd44034710244a7004025e81212241abffcf8fb76213e656b2833225fa3baeb4ecb31a15dea7d5dcce323a685214005e7fa077a239  fix-tests.patch
+"

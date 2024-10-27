@@ -1,0 +1,25 @@
+# Maintainer: Simon Zeni <simon@bl4ckb0ne.ca>
+pkgname=qbe
+pkgver=1.2
+pkgrel=0
+pkgdesc="A simple C compiler backend"
+url="https://c9x.me/compile/"
+arch="x86_64 aarch64 riscv64"
+license="MIT"
+source="$pkgname-$pkgver.tar.xz::https://c9x.me/compile/release/qbe-$pkgver.tar.xz"
+
+build() {
+	make PREFIX=/usr
+}
+
+check() {
+	make check
+}
+
+package() {
+	make PREFIX=/usr DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+b3ffd172e95346b3bfae1d2aff4c22a32af8bd4443d073f6fbb711f41db01f072ca7a8108901508cd4a8366567dab46510e0438716d35548591fdf37cee49971  qbe-1.2.tar.xz
+"

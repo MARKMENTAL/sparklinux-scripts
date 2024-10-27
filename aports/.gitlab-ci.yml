@@ -1,0 +1,145 @@
+stages:
+  - verify
+  - trigger
+
+variables:
+  GIT_STRATEGY: clone
+  GIT_DEPTH: "500"
+
+# only rune pipelines for merge requests or when tags are pushed  (for triggers)
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_TAG
+
+lint:
+  stage: verify
+  image: alpinelinux/apkbuild-lint-tools:latest
+  interruptible: true
+  script:
+    - lint
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  tags:
+    - docker-alpine
+    - x86_64
+
+.build:
+  stage: verify
+  image: alpinelinux/alpine-gitlab-ci:latest
+  interruptible: true
+  script:
+    - build.sh
+  artifacts:
+    paths:
+      - packages/
+      - keys/
+      - logs/
+    expire_in: 1 day
+    when: always
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+build-x86_64:
+  extends: .build
+  artifacts:
+    name: MR${CI_MERGE_REQUEST_ID}_x86_64
+  tags:
+    - docker-alpine
+    - ci-build
+    - x86_64
+
+build-x86:
+  extends: .build
+  image:
+    name: alpinelinux/alpine-gitlab-ci:latest-x86
+    entrypoint: ["linux32", "sh", "-c"]
+  artifacts:
+    name: MR${CI_MERGE_REQUEST_ID}_x86
+  tags:
+    - docker-alpine
+    - ci-build
+    - x86
+
+build-s390x:
+  extends: .build
+  artifacts:
+    name: MR${CI_MERGE_REQUEST_ID}_s390x
+  tags:
+    - docker-alpine
+    - ci-build
+    - s390x
+
+build-ppc64le:
+  extends: .build
+  artifacts:
+    name: MR${CI_MERGE_REQUEST_ID}_ppc64le
+  tags:
+    - docker-alpine
+    - ci-build
+    - ppc64le
+
+build-aarch64:
+  extends: .build
+  artifacts:
+    name: MR${CI_MERGE_REQUEST_ID}_aarch64
+  tags:
+    - docker-alpine
+    - ci-build
+    - aarch64
+
+build-armv7:
+  extends: .build
+  image:
+    name: alpinelinux/alpine-gitlab-ci:latest-armv7
+    entrypoint: ["linux32", "sh", "-c"]
+  artifacts:
+    name: MR${CI_MERGE_REQUEST_ID}_armv7
+  tags:
+    - docker-alpine
+    - ci-build
+    - armv7
+
+build-armhf:
+  extends: .build
+  image:
+    name: alpinelinux/alpine-gitlab-ci:latest-armhf
+    entrypoint: ["linux32", "sh", "-c"]
+  artifacts:
+    name: MR${CI_MERGE_REQUEST_ID}_armhf
+  tags:
+    - docker-alpine
+    - ci-build
+    - armhf
+
+build-riscv64:
+  extends: .build
+  artifacts:
+    name: MR${CI_MERGE_REQUEST_ID}_riscv64
+  tags:
+    - docker-alpine
+    - ci-build
+    - riscv64
+
+build-loongarch64:
+  extends: .build
+  artifacts:
+    name: MR${CI_MERGE_REQUEST_ID}_loongarch64
+  variables:
+    MIRROR: https://dev.alpinelinux.org/
+  tags:
+    - docker-alpine
+    - ci-build
+    - loongarch64
+  allow_failure: true
+
+trigger_build_image:
+  stage: trigger
+  rules:
+    - if: $CI_COMMIT_TAG
+  variables:
+    APORTS_TAG: $CI_COMMIT_TAG
+  trigger:
+    project: clandmeter/alpine-disk-image
+    branch: master

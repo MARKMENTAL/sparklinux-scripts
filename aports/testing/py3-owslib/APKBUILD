@@ -1,0 +1,36 @@
+# Contributor: Holger Jaekel <holger.jaekel@gmx.de>
+# Maintainer: Holger Jaekel <holger.jaekel@gmx.de>
+pkgname=py3-owslib
+#_pkgreal is used by apkbuild-pypi to find modules at PyPI
+_pkgreal=OWSLib
+pkgver=0.31.0
+pkgrel=0
+pkgdesc="OGC Web Service utility library"
+url="https://pypi.org/project/OWSLib/"
+arch="noarch"
+license="BSD-3-Clause"
+depends="python3 py3-dateutil py3-tz py3-requests py3-lxml"
+checkdepends="python3-dev py3-pytest py3-tox py3-lxml"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/O/OWSLib/OWSLib-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgreal-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	tox --sitepackages
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+4182ca1df362c2f30bff843d7937c642d730d7d5de312a20d8f2c8396653ee52265218a17fe6ee0777accccc7ebbe6eee94fc7f160dc495015361fe3981907cf  OWSLib-0.31.0.tar.gz
+"

@@ -1,0 +1,44 @@
+# Contributor: Patrycja Rosa <alpine@ptrcnull.me>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=labwc
+pkgver=0.8.0
+pkgrel=0
+pkgdesc="Wayland stacking compositor"
+url="https://github.com/labwc/labwc"
+arch="all"
+license="GPL-2.0-only"
+depends="xwayland"
+makedepends="
+	cairo-dev
+	glib-dev
+	libinput-dev
+	librsvg-dev
+	libxml2-dev
+	meson
+	pango-dev
+	scdoc
+	wayland-protocols
+	wlroots-dev
+	"
+subpackages="$pkgname-doc $pkgname-lang"
+source="https://github.com/labwc/labwc/archive/$pkgver/labwc-$pkgver.tar.gz
+	remove-aports-git-version.patch
+	"
+
+build() {
+	abuild-meson . output -Dman-pages=enabled
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+2ba4aca6e1f94f57c43ac44624ac9a8e2b22ee6b161c8a3c1b229e3bc1f397cd8fce94a9c91fbb7ca30d380b74a27c88f3cc5a810b7b8096581007d1281b8385  labwc-0.8.0.tar.gz
+08b1c7f45eda434400b61b8cad1d0e800c8f4ecd9e3f93fc42b10f4e8e0e599ed61a7a7e363dfa0acb45b174269278c136a244ec87940e84cc2362cdda5f5ef6  remove-aports-git-version.patch
+"

@@ -1,0 +1,24 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=tree-sitter-html
+pkgver=0.20.2
+pkgrel=0
+pkgdesc="HTML grammar for tree-sitter"
+url="https://github.com/tree-sitter/tree-sitter-html"
+arch="all"
+license="MIT"
+makedepends="tree-sitter-dev"
+install_if="tree-sitter-grammars"
+source="https://github.com/tree-sitter/tree-sitter-html/archive/v$pkgver/tree-sitter-html-$pkgver.tar.gz"
+options="!check"  # no tests for shared lib
+
+build() {
+	abuild-tree-sitter build
+}
+package() {
+	DESTDIR="$pkgdir" abuild-tree-sitter install
+}
+
+sha512sums="
+4ebdc4cdff525e54d774bde6b53ced5d8d0e2fea5cd54f006c39354544752856c520ce7b53eb268b6ef60185236102b8003b5de389fdb85454126b6ee689bb61  tree-sitter-html-0.20.2.tar.gz
+"

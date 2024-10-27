@@ -1,0 +1,54 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Simon Zeni <simon@bl4ckb0ne.ca>
+pkgname=sdl12-compat
+# Have the same version as the last upstream release
+pkgver=1.2.64
+pkgrel=3
+pkgdesc="SDL-1.2 compat layer that uses SDL-2.0"
+url="https://github.com/libsdl-org/sdl12-compat"
+arch="all"
+license="BSD-3-Clause"
+depends="sdl2"
+makedepends="cmake samurai sdl2-dev"
+checkdepends="glu-dev mesa-dev"
+subpackages="$pkgname-static $pkgname-dbg $pkgname-dev"
+source="$pkgname-$pkgver.tar.gz::https://github.com/libsdl-org/sdl12-compat/archive/release-$pkgver.tar.gz"
+builddir="$srcdir/$pkgname-release-$pkgver"
+options="!check" # these are manual tests, not actual
+
+# Otherwise the package will fail installation if sdl is already present
+# NOTE(Leo): remove this before the release of 3.15
+replaces="sdl"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		local crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	CFLAGS="$CFLAGS -O2 -DNDEBUG -flto=auto -I/usr/include/directfb" \
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DSDL12TESTS="$(want_check && echo ON || echo OFF)" \
+		$crossopts
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	# Claim the provider 'pc:sdl=$pkgver' by creating a symlink
+	# so packages can find it
+	ln -s sdl12_compat.pc "$pkgdir"/usr/lib/pkgconfig/sdl.pc
+}
+
+dev() {
+	# Otherwise the package will fail installation if sdl is already present
+	# NOTE(Leo): remove this before the release of 3.15
+	replaces="sdl-dev"
+
+	default_dev
+}
+
+sha512sums="
+cd551666d2e6a2de273ee29b9a68a5472933a5f5a6340616510051e78f0a96af68a2f13f4473431d6b58ad89a379d672b3a3e82bc86ded01943b6bc3ca7947d2  sdl12-compat-1.2.64.tar.gz
+"

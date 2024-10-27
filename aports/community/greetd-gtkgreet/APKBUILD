@@ -1,0 +1,45 @@
+# Contributor: Sean McAvoy <seanmcavoy@gmail.com>
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Sean McAvoy <seanmcavoy@gmail.com>
+pkgname=greetd-gtkgreet
+_projname=gtkgreet
+pkgver=0.7_git20230509
+_gitrev=bf6c07be5019c83b274cefb94e3f7ad25944b29f
+pkgrel=0
+pkgdesc="GTK-based greeter for greetd"
+url="https://git.sr.ht/~kennylevinsen/gtkgreet"
+# s390x, riscv64: blocked by greetd
+arch="all !s390x !riscv64"
+license="GPL-3.0-only"
+depends="greetd"
+makedepends="
+	gtk+3.0-dev
+	gtk-layer-shell-dev
+	json-c-dev
+	meson
+	scdoc
+	"
+provides="$_projname=$pkgver-r$pkgrel"
+subpackages="$pkgname-doc $pkgname-lang"
+source="$pkgname-$_gitrev.tar.gz::https://git.sr.ht/~kennylevinsen/gtkgreet/archive/$_gitrev.tar.gz"
+builddir="$srcdir/$_projname-$_gitrev"
+
+build() {
+	abuild-meson \
+		-Dlayershell=enabled \
+		-Dman-pages=enabled \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+445f49ecc6ff197823576fc4d74285993dd21563b1df3f91c1862c08deb03ede6ed007f3a1eea0072793f5eb6f0de55f393a2e8d14a4e06419b926b8a69b0010  greetd-gtkgreet-bf6c07be5019c83b274cefb94e3f7ad25944b29f.tar.gz
+"

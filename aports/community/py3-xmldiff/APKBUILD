@@ -1,0 +1,36 @@
+# Contributor: Sascha Brawer <sascha@brawer.ch>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=py3-xmldiff
+pkgver=2.7.0
+pkgrel=0
+pkgdesc="Creates diffs of XML files"
+url="https://github.com/Shoobx/xmldiff"
+arch="noarch"
+license="MIT"
+depends="py3-lxml"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/x/xmldiff/xmldiff-$pkgver.tar.gz"
+builddir="$srcdir/xmldiff-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+e285c0e30b4a6f057dd4888599a6bd354b1f1465598eafa7a9ac91d3eb2e8b04e25e466d410dde84d1b6986b647d3759bad322036f3c5c9cd498e8fc291ab888  xmldiff-2.7.0.tar.gz
+"

@@ -1,0 +1,48 @@
+# Maintainer:
+pkgname=linuxptp
+pkgver=4.3
+pkgrel=0
+pkgdesc="User space PTP stack for Linux"
+url="https://linuxptp.nwtime.org/"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="
+	bsd-compat-headers
+	linux-headers
+	"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/richardcochran/linuxptp/archive/refs/tags/v$pkgver.tar.gz"
+options="!check" # no tests
+
+_bins="hwstamp_ctl nsm phc2sys phc_ctl pmc ptp4l timemaster ts2phc tz2alt"
+for _bin in $_bins; do
+	depends="$depends $pkgname-$_bin=$pkgver-r$pkgrel"
+	subpackages="$subpackages $pkgname-$_bin:split"
+done
+
+build() {
+	make \
+		CC="${CC:-cc}" \
+		version="$pkgver" \
+		EXTRA_CFLAGS="$CFLAGS -flto=auto"
+}
+
+package() {
+	make \
+		prefix=/usr \
+		mandir=/usr/share/man \
+		DESTDIR="$pkgdir" \
+		install
+}
+
+split() {
+	local name="${subpkgname#"$pkgname"-}"
+	pkgdesc="$pkgdesc ($name utility)"
+	depends=""
+
+	amove usr/sbin/$name
+}
+
+sha512sums="
+1cd5a65f53080ddbe01a1125cbf21c20cebed06f727e76a7d1cddee2514c229a7efd9b465bad839ffd923d0679da84316936368b3740d64c085d9f09e5b683df  linuxptp-4.3.tar.gz
+"

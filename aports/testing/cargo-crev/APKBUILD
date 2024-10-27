@@ -1,0 +1,39 @@
+# Contributor: lauren n. liberda <lauren@selfisekai.rocks>
+# Maintainer: lauren n. liberda <lauren@selfisekai.rocks>
+pkgname=cargo-crev
+pkgver=0.25.9
+pkgrel=0
+pkgdesc="Cryptographically verifiable code review system for cargo"
+url="https://github.com/crev-dev/cargo-crev"
+# s390x, armhf: failing tests
+arch="all !s390x !armhf"
+license="MPL-2.0 OR MIT OR Apache-2.0"
+makedepends="cargo cargo-auditable openssl-dev"
+source="https://github.com/crev-dev/cargo-crev/archive/v$pkgver/cargo-crev-$pkgver.tar.gz"
+
+export OPENSSL_NO_VENDOR=1
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release -p cargo-crev --no-default-features
+}
+
+check() {
+	# Increase stack size to avoid stack overflow while compiling 'p384'.
+	export RUST_MIN_STACK="4194304"
+
+	cargo test --frozen --no-default-features
+}
+
+package() {
+	install -Dm755 target/release/cargo-crev "$pkgdir"/usr/bin/cargo-crev
+}
+
+sha512sums="
+6d09880c1577d9a2140563aa1c37a11a15a420cbfb1098658d6b7c07541ffaf1fcec55aa720338564bb4a549cfb5b8fd79b792c2f36fec2982327f873e8d0cb8  cargo-crev-0.25.9.tar.gz
+"

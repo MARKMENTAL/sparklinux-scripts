@@ -1,0 +1,54 @@
+# Contributor: ScrumpyJack <scrumpyjack@st.ilet.to>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=rawtherapee
+pkgver=5.10
+pkgrel=1
+pkgdesc="Powerful cross-platform raw image processing program"
+url="https://rawtherapee.com"
+arch="all"
+license="GPL-3.0-or-later"
+makedepends="
+	bzip2-dev
+	cmake
+	exiv2-dev
+	expat-dev
+	fftw-dev
+	glib-dev
+	gtk+3.0-dev
+	gtk-engines-dev
+	gtkmm3-dev
+	lcms2-dev
+	lensfun-dev
+	libcanberra-dev
+	libiptcdata-dev
+	libjpeg-turbo-dev
+	libpng-dev
+	librsvg-dev
+	libsigc++-dev
+	mercurial
+	samurai
+	tiff-dev
+	zlib-dev
+	"
+options="!check"
+subpackages="$pkgname-doc $pkgname-dbg"
+source="https://rawtherapee.com/shared/source/rawtherapee-$pkgver.tar.xz
+	libjpeg-turbo.patch
+	"
+
+build() {
+	export CXXFLAGS="$CXXFLAGS -flto=auto"
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+79d6d54f90fec6006d3dff53aca00ccd385c398ebede2f06a223905d69e1045c6ab772bd5aca4bde01d9086c3c03183be22c0df521166b1af63b60bd7d0e1cfc  rawtherapee-5.10.tar.xz
+ba8ae49b70efaeeec67cebbe0df82ee6027f240a59b3cdf6be5a03550b702492612a5fe9731153b9d095ab76d1fcc55425dfcb4216bf8f5d9b6360b6b809d16b  libjpeg-turbo.patch
+"

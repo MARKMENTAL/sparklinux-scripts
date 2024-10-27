@@ -1,0 +1,43 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer:
+pkgname=intel-media-driver
+pkgver=23.4.3
+pkgrel=0
+pkgdesc="Intel Media Driver for VAAPI"
+options="!check" # tests can't run in check(), only on install
+url="https://github.com/intel/media-driver"
+arch="x86_64"
+license="BSD-3-Clause AND MIT"
+makedepends="
+	cmake
+	intel-gmmlib-dev
+	libpciaccess-dev
+	libva-dev
+	samurai
+	"
+subpackages="$pkgname-dev"
+source="$pkgname-$pkgver.tar.gz::https://github.com/intel/media-driver/archive/intel-media-$pkgver.tar.gz"
+builddir="$srcdir/media-driver-intel-media-$pkgver"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja -Wno-dev \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DINSTALL_DRIVER_SYSCONF=OFF \
+		-DMEDIA_BUILD_FATAL_WARNINGS=OFF \
+		$CMAKE_CROSSOPTS
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+f28967d5474d43878ce6bf3e793c1a129fa0cd0240a2478d5d56ceb1fba3171ee8389c328818d90f914cabdd26caf1e7185dc9b38cd911a799b1fe2d8bc1ddfb  intel-media-driver-23.4.3.tar.gz
+"

@@ -1,0 +1,44 @@
+# Contributor: Fabricio Silva <hi@fabricio.dev>
+# Maintainer: Fabricio Silva <hi@fabricio.dev>
+pkgname=py3-plexapi
+_pkgname=python-plexapi
+pkgver=4.15.16
+pkgrel=0
+pkgdesc="Python bindings for the Plex API"
+url="https://github.com/pkkid/python-plexapi"
+arch="noarch"
+license="BSD-3-Clause"
+# tests requires an instance of plex running
+# net for sphinx
+options="net !check"
+depends="
+	python3
+	py3-requests
+	"
+makedepends="
+	py3-gpep517
+	py3-recommonmark
+	py3-setuptools
+	py3-sphinx_rtd_theme
+	py3-wheel
+	"
+subpackages="$pkgname-doc $pkgname-pyc"
+source="https://github.com/pkkid/python-plexapi/archive/$pkgver/py3-plexapi-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+	sphinx-build -W -b man docs man
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+	install -Dm644 man/pythonplexapi.1 -t "$pkgdir"/usr/share/man/man1
+}
+
+sha512sums="
+3b3e54340e6264be159b4380f29b2a785df3f550d14aa5a47ad628a2b09f5eaf94f1e9d472969d28bdce2feb61c1a8825a953f94a958db9a6a33d9755f57e0a4  py3-plexapi-4.15.16.tar.gz
+"

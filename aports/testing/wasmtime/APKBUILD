@@ -1,0 +1,79 @@
+# Contributor: Patrycja Rosa <alpine@ptrcnull.me>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=wasmtime
+pkgver=22.0.0
+pkgrel=1
+pkgdesc="Fast and secure runtime for WebAssembly"
+url="https://wasmtime.dev/"
+# others unsupported
+arch="aarch64 x86_64"
+license="Apache-2.0"
+depends_dev="libwasmtime=$pkgver-r$pkgrel"
+makedepends="
+	cargo
+	cargo-auditable
+	chrpath
+	cmake
+	rust-wasm
+	samurai
+	zstd-dev
+	"
+subpackages="libwasmtime-static libwasmtime $pkgname-dev"
+source="https://github.com/bytecodealliance/wasmtime/releases/download/v$pkgver/wasmtime-v$pkgver-src.tar.gz
+	system-zstd.patch
+	"
+builddir="$srcdir/wasmtime-v$pkgver-src"
+# net: fetch dependencies
+# check: custom_limiter_detect_os_oom_failure fails with oom for some reason
+options="!check net"
+
+
+prepare() {
+	default_prepare
+
+	git init -q
+	# can't patch deps with vendor dir
+	rm -fv .cargo/config.toml
+	rm -rf vendor
+
+	# Rust target triple.
+	local target=$(rustc -vV | sed -n 's/host: //p')
+
+	# Build against system-provided libs
+	mkdir -p .cargo
+	cat >> .cargo/config.toml <<-EOF
+		[target.$target]
+		zstd = { rustc-link-lib = ["zstd"] }
+	EOF
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+	cargo auditable build --frozen --release -p wasmtime-c-api
+	cmake -G Ninja -B build-capi -S crates/c-api \
+		-DCMAKE_INSTALL_PREFIX=/usr
+	cmake --build build-capi
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm755 target/release/wasmtime -t "$pkgdir"/usr/bin/
+	# remove gigantic useless rpath to /usr/lib
+	chrpath -d target/release/libwasmtime.so
+	install -Dm644 target/release/libwasmtime.so -t "$pkgdir"/usr/lib/
+	DESTDIR="$pkgdir" cmake --install build-capi
+}
+
+libwasmtime() {
+	amove usr/lib
+}
+
+sha512sums="
+a689e95e892c1488bd331b432a2f4b94c2c523c4ae1c8608028d41a5439bb4f74d43260c7fb9cc48c5ccf48525d7c00e63b410218c08fbeab364f9275968901e  wasmtime-v22.0.0-src.tar.gz
+86f5254142cbe0adb6fd573169a89bbf40d60f5690944f8b29be4d89ee714a1d7745b8e7742326507f28dbf193e0a813dec0fa095c8da1d1215e0556b7ecb9c3  system-zstd.patch
+"

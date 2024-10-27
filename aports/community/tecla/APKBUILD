@@ -1,0 +1,35 @@
+# Contributor: Krassy Boykinov <kboykinov@teamcentrixx.com>
+# Maintainer: Krassy Boykinov <kboykinov@teamcentrixx.com>
+pkgname=tecla
+pkgver=47.0
+pkgrel=0
+pkgdesc="Libadwaita keyboard layout viewer for the Gnome Desktop"
+url="https://gitlab.gnome.org/GNOME/tecla"
+arch="all"
+license="GPL-2.0-or-later"
+options="!check" # no tests
+makedepends="
+	gtk4.0-dev
+	libadwaita-dev
+	libxkbcommon-dev
+	meson
+	"
+subpackages="$pkgname-dev $pkgname-lang" # !! watch for -doc in future updates
+source="https://download.gnome.org/sources/tecla/${pkgver%.*}/tecla-$pkgver.tar.xz"
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+	# move pkgconfigs to /usr/lib/
+	mkdir -p "$pkgdir"/usr/lib/
+	mv "$pkgdir"/usr/share/pkgconfig "$pkgdir"/usr/lib/
+
+}
+
+sha512sums="
+82c29b7672d78d0cdb1dccd95c159ba4fbbe2cda36b5b491b0dde530985fa718d382a0d0c78dffacad50e5d817db1874447069f383de8e2895f6d6216cefb8fc  tecla-47.0.tar.xz
+"

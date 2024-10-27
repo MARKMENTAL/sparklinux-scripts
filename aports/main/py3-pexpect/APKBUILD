@@ -1,0 +1,42 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=py3-pexpect
+_pkgname=pexpect
+pkgver=4.9
+pkgrel=1
+pkgdesc="Make Python a better tool for controlling and automating other programs"
+url="https://pexpect.readthedocs.io/en/stable/"
+arch="noarch"
+license="ISC"
+depends="python3 py3-ptyprocess"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest bash coreutils"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/pexpect/$_pkgname/archive/$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	# tests that don't expect ansi colors
+	_tests_colors="not test_async_replwrap_multiline and not REPLWrapTestCase"
+	# tests that have 'python' hardcoded
+	_tests_py2="not test_100000 and not test_run_exit"
+
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -k "$_tests_colors and $_tests_py2"
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+222aa3a2aba174f1f9c9e5bbf71aa59fbc1c1830fce6691ecb01ec4f0613b1f2141da489a6bd7bfd226f46d98d52a16e1f5a5b7345bcf6557110bfd52cd5f31e  py3-pexpect-4.9.tar.gz
+"

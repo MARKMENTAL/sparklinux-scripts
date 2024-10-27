@@ -1,0 +1,74 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+pkgname=openrazer
+pkgver=3.8.0
+pkgrel=1
+pkgdesc="Open source driver and user-space daemon to control Razer lighting and other features on GNU/Linux"
+url="https://openrazer.github.io/"
+arch="noarch"
+license="GPL-2.0-only"
+depends="
+	py3-daemonize
+	py3-dbus
+	py3-gobject3
+	py3-setproctitle
+	py3-udev
+	"
+makedepends="
+	py3-setuptools
+	"
+subpackages="
+	$pkgname-doc
+	$pkgname-src
+	py3-$pkgname-pyc
+	py3-$pkgname:py3
+	"
+source="https://github.com/openrazer/openrazer/archive/v$pkgver/openrazer-v$pkgver.tar.gz"
+options="!check" # No tests
+
+# secfixes:
+#   3.4.0-r0:
+#     - CVE-2022-29021
+#     - CVE-2022-29022
+#     - CVE-2022-29023
+#   3.5.1-r0:
+#     - CVE-2022-23467
+
+package() {
+	DESTDIR="$pkgdir" make appstream_install udev_install daemon_install xdg_install
+
+	# We don't have systemd
+	rm -r "$pkgdir"/usr/lib/systemd
+}
+
+src() {
+	depends="akms"
+
+	cd "$builddir"
+	DESTDIR="$subpkgdir" make setup_dkms
+
+	# We don't have dkms but use akms instead
+	#rm "$pkgdir"/usr/src/openrazer-driver-$pkgver/dkms.conf
+
+	cat >"$subpkgdir"/usr/src/openrazer-driver-$pkgver/AKMBUILD <<-EOF
+	modname=openrazer-driver
+	modver=$pkgver
+	built_modules='razeraccessory.ko razerkbd.ko razerkraken.ko razermouse.ko'
+
+	build() {
+		touch "\$builddir"/Makefile
+		make \$MAKEFLAGS -C "\$kernel_srcdir" M="\$builddir" src="\$srcdir"/driver modules
+	}
+	EOF
+}
+
+py3() {
+	depends="py3-numpy"
+
+	cd "$builddir"
+	DESTDIR="$subpkgdir" make python_library_install
+}
+
+sha512sums="
+5ec059017591e8942f4c623deb4fa394c4c1d8a0eb14f80491c00976848964c07b4f56bb542f9e5cea84818b296fd05c768feb9eef3d1c9e8e087e5497319fe5  openrazer-v3.8.0.tar.gz
+"

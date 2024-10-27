@@ -1,0 +1,49 @@
+# Maintainer: Sertonix <sertonix@posteo.net>
+_pkgname=strip-nondeterminism
+pkgname=perl-$_pkgname
+pkgver=1.14.0
+pkgrel=0
+_pkgdesc="Tool for stripping bits of non-deterministic information from files"
+pkgdesc="$_pkgdesc (perl module)"
+depends="perl perl-archive-zip"
+# optional dependency: perl-archive-cpio
+checkdepends="perl-archive-cpio"
+url="https://salsa.debian.org/reproducible-builds/strip-nondeterminism"
+arch="noarch"
+license="GPL-3.0-only"
+subpackages="
+	$pkgname-doc
+	$_pkgname:cmd
+	"
+source="https://salsa.debian.org/reproducible-builds/strip-nondeterminism/-/archive/$pkgver/strip-nondeterminism-$pkgver.tar.bz2"
+builddir="$srcdir/strip-nondeterminism-$pkgver"
+
+build() {
+	PERL_MM_USE_DEFAULT=1 perl Makefile.PL \
+		INSTALLDIRS=vendor \
+		NO_PACKLIST=1 \
+		NO_PERLLOCAL=1
+	make
+}
+
+check() {
+	make test
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	# remove debian specific helper
+	find "$pkgdir" -name 'dh_strip_nondeterminism*' -delete
+}
+
+cmd() {
+	pkgdesc="$_pkgdesc"
+	depends="$pkgname=$pkgver-r$pkgrel"
+
+	amove usr/bin/strip-nondeterminism
+}
+
+sha512sums="
+917e44cd8b2c869ebf1218eef20014fd5be1fcbf4aee84787b792add902e0e1022e46a713c5cf36f066c99e605169750bf35fe1fb75b021df597079c55bc2d61  strip-nondeterminism-1.14.0.tar.bz2
+"

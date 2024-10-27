@@ -1,0 +1,80 @@
+# Contributor: ProgCat <progcat@protonmail.com>
+# Maintainer: Lindsay Zhou <i@lin.moe>
+pkgname=fcitx5-qt
+pkgver=5.1.6
+pkgrel=0
+pkgdesc="Qt library and IM module for Fcitx5"
+url="https://github.com/fcitx/fcitx5-qt"
+arch="all"
+license="LGPL-2.1-or-later AND BSD-3-Clause"
+makedepends="
+	cmake
+	extra-cmake-modules
+	fcitx5-dev
+	libxkbcommon-dev
+	libxcb-dev
+	libxkbcommon-dev
+	libxcb-dev
+	libx11-dev
+	libxcb-dev
+	libxkbcommon-dev
+	qt5-qtbase-dev
+	qt6-qtbase-dev
+	qt6-qtwayland-dev
+	samurai
+	"
+subpackages="
+	$pkgname-dev
+	$pkgname-lang
+	$pkgname-qt5
+	$pkgname-qt6
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/fcitx/fcitx5-qt/archive/refs/tags/$pkgver.tar.gz"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	CXXFLAGS="$CXXFLAGS -flto=auto -DNDEBUG" \
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=None \
+		-DENABLE_QT4=Off \
+		-DENABLE_QT6=ON \
+		$CMAKE_CROSSOPTS
+	cmake --build build
+}
+
+check() {
+	cd build
+	CTEST_OUTPUT_ON_FAILURE=TRUE ctest
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+qt5() {
+	pkgdesc="$pkgdesc (Qt5)"
+	install_if="$pkgname=$pkgver-r$pkgrel qt5-qtbase-x11"
+
+	amove usr/lib/libFcitx5Qt5*
+	amove usr/lib/qt5
+	amove usr/libexec/fcitx5-qt5-gui-wrapper
+	amove usr/share/applications/org.fcitx.fcitx5-qt5-gui-wrapper.desktop
+}
+
+qt6() {
+	pkgdesc="$pkgdesc (Qt6)"
+	install_if="$pkgname=$pkgver-r$pkgrel qt6-qtbase-x11"
+
+	amove usr/lib/libFcitx5Qt6*
+	amove usr/lib/fcitx5/qt6
+	amove usr/lib/qt6
+}
+
+sha512sums="
+cb6a92369340199b22e64525902e6eb71e4149bedc720eb087b4f8d59513c64c35a7adcd0a90b51440d1b48fd6a881d7ea07363d2da9767cc66c21b72f97916e  fcitx5-qt-5.1.6.tar.gz
+"

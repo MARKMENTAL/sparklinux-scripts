@@ -1,0 +1,31 @@
+# Maintainer: Will Sinatra <wpsinatra@gmail.com>
+pkgname=font-spleen
+pkgver=2.1.0
+pkgrel=0
+pkgdesc="Monospaced bitmap font"
+url="https://github.com/fcambus/spleen"
+arch="noarch"
+license="BSD-2-Clause"
+subpackages="consolefont-spleen:_consolefont"
+source="https://github.com/fcambus/spleen/releases/download/$pkgver/spleen-$pkgver.tar.gz"
+builddir="$srcdir/spleen-$pkgver"
+options="!check" # font
+
+build() {
+	gzip -9n ./*.psfu
+}
+
+package() {
+	install -Dm644 ./*.psfu.gz \
+		-t "$pkgdir"/usr/share/consolefonts/
+	install -Dm644 ./*.otb fonts.alias \
+		-t "$pkgdir"/usr/share/fonts/spleen/
+}
+
+_consolefont() {
+	amove usr/share/consolefonts
+}
+
+sha512sums="
+296577e5bf1464e124a0a8d21626af689681b8259703ee834ffacda84c76e24c59721d734a5bb1876210f4b59c1b6a3be14d5ca0d61d89c33cae4a5108f34e7b  spleen-2.1.0.tar.gz
+"

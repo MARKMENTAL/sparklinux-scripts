@@ -1,0 +1,36 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=waydroid-sensors
+pkgver=0.2.0
+pkgrel=0
+pkgdesc="Waydroid sensors"
+url="https://github.com/waydroid/waydroid-sensors"
+# s390x blocked by libgbinder
+arch="all !s390x"
+license="GPL-3.0-only"
+depends="sensorfw"
+makedepends="
+	cmake
+	glib-dev
+	libgbinder-dev
+	libglibutil-dev
+	samurai
+	"
+source="https://github.com/waydroid/waydroid-sensors/archive/$pkgver/waydroid-sensors-$pkgver.tar.gz"
+options="!check" # No tests
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+0371f4a204127624c95aabf5139efc53ea53878b639bb2868d23f2e34a559ffaea54dcc157e8fc1e200444806beb6d6b914660997a9c7d8cf4e616889d85d0af  waydroid-sensors-0.2.0.tar.gz
+"

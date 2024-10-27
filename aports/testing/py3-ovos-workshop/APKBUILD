@@ -1,0 +1,52 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=py3-ovos-workshop
+pkgver=0.1.3
+pkgrel=0
+pkgdesc="Frameworks, templates and patches for the mycroft universe"
+url="https://github.com/OpenVoiceOS/OVOS-workshop"
+# loongarch64: blocked by py3-ovos-backend-client
+arch="noarch !loongarch64"
+license="Apache-2.0"
+depends="
+	py3-ovos-backend-client
+	py3-ovos-config
+	py3-ovos-config
+	py3-ovos-lingua-franca
+	py3-ovos-utils
+	py3-rapidfuzz
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="
+	py3-adapt-parser
+	py3-pytest
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/OpenVoiceOS/ovos-workshop/archive/refs/tags/${pkgver//_alpha/a}.tar.gz"
+options="!check" # OVOS-utils
+builddir="$srcdir/OVOS-workshop-${pkgver//_alpha/a}"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+db500fa56850873a00dc416fb0bb09173a44c5c7f04f62af8fc6ddeffd3215e08a80baf2b8695ccd88832ace1c151d62ef10c3a228b1eeaa6140fca25cab8144  py3-ovos-workshop-0.1.3.tar.gz
+"

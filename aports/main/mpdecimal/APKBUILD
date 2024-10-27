@@ -1,0 +1,33 @@
+# Contributor: Stefan Stutz <stutz@pm.me>
+# Maintainer: Stefan Stutz <stutz@pm.me>
+pkgname=mpdecimal
+pkgver=4.0.0
+pkgrel=0
+pkgdesc="complete implementation of the General Decimal Arithmetic Specification"
+url="https://www.bytereef.org/mpdecimal/index.html"
+arch="all"
+license="BSD-2-Clause"
+subpackages="$pkgname-doc $pkgname-dev"
+source="https://www.bytereef.org/software/mpdecimal/releases/mpdecimal-$pkgver.tar.gz"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--target=$CTARGET \
+		--prefix=/usr
+	make
+}
+
+check() {
+	# The new test target *make check_local* does not attempt to download
+	# dectest.zip.  This is useful for packagers whose infrastructure does
+	# not allow downloading during the testing phase.
+	make check_local
+}
+
+package() {
+	make install DESTDIR="$pkgdir"
+}
+sha512sums="
+7610ac53ac79f7a8a33fa7a3e61515810444ec73ebca859df7a9ddc18e96b990c99323172810c9cc7f6d6e1502c0be308cd443d6c2d5d0c871648e4842e05d59  mpdecimal-4.0.0.tar.gz
+"

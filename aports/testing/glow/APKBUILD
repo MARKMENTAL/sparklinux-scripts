@@ -1,0 +1,55 @@
+# Contributor: Hoang Nguyen <folliekazetani@protonmail.com>
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=glow
+pkgver=2.0.0
+pkgrel=0
+pkgdesc="Markdown renderer on the CLI, with pizzazz"
+url="https://github.com/charmbracelet/glow"
+arch="all"
+license="MIT"
+makedepends="go"
+subpackages="
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="https://github.com/charmbracelet/glow/archive/v$pkgver/glow-$pkgver.tar.gz"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -v -ldflags "-X main.Version=$pkgver"
+
+	for shell in bash fish zsh; do
+		./$pkgname completion $shell > $pkgname.$shell
+	done
+
+	./$pkgname man > $pkgname.1
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	install -Dm755 $pkgname -t "$pkgdir"/usr/bin/
+
+	install -Dm644 $pkgname.bash \
+		"$pkgdir"/usr/share/bash-completion/completions/$pkgname
+	install -Dm644 $pkgname.fish \
+		"$pkgdir"/usr/share/fish/vendor_completions.d/$pkgname.fish
+	install -Dm644 $pkgname.zsh \
+		"$pkgdir"/usr/share/zsh/site-functions/_$pkgname
+
+	install -Dm644 $pkgname.1 \
+		"$pkgdir"/usr/share/man/man1/$pkgname.1
+	install -Dm644 LICENSE \
+		"$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+}
+
+sha512sums="
+ac8142512eff949979203b42955e03b511aa6b6e335071d9fcd9a461d291e1d00d4192f39a470d9b4925b48294fab87469cbec7ecf5d5f8bc988d9c8238a4a80  glow-2.0.0.tar.gz
+"

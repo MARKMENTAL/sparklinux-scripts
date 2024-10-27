@@ -1,0 +1,36 @@
+# Contributor: Haelwenn (lanodan) Monnier <contact+alpine@hacktivis.me>
+# Maintainer: Haelwenn (lanodan) Monnier <contact+alpine@hacktivis.me>
+pkgname=py3-http-ece
+#_pkgreal is used by apkbuild-pypi to find modules at PyPI
+_pkgreal=http_ece
+pkgver=1.2.0
+pkgrel=1
+pkgdesc="Encrypted Content Encoding for HTTP"
+url="https://pypi.org/project/http-ece"
+arch="noarch"
+license="MIT"
+depends="py3-cryptography"
+checkdepends="py3-nose py3-coverage"
+makedepends="py3-setuptools"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/${_pkgreal:0:1}/$_pkgreal/$_pkgreal-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgreal-$pkgver"
+
+build() {
+	python3 setup.py build
+}
+
+check() {
+	python3 setup.py test
+}
+
+package() {
+	python3 setup.py install \
+		--prefix=/usr \
+		--root="$pkgdir" \
+		--single-version-externally-managed
+}
+
+sha512sums="
+84173c190798c1706eda826b49efbe5db394d4216a236df9265c7995cf7baf151d653c6ff34d4fd981513303808062bdebf7cc1d98bc7543bc352a11631f3180  http_ece-1.2.0.tar.gz
+"

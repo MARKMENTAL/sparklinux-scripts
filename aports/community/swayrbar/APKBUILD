@@ -1,0 +1,36 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=swayrbar
+pkgver=0.4.0
+pkgrel=0
+pkgdesc="A status command for Sway's swaybar"
+url="https://sr.ht/~tsdh/swayr/"
+# loongarch64: libc crate fails to build
+arch="all !loongarch64"
+license="GPL-3.0-or-later"
+makedepends="cargo cargo-auditable"
+source="$pkgname-$pkgver.tar.gz::https://git.sr.ht/~tsdh/swayr/archive/swayrbar-$pkgver.tar.gz"
+builddir="$srcdir/swayr-swayrbar-$pkgver"
+
+export CARGO_PROFILE_RELEASE_OPT_LEVEL="z"
+
+prepare() {
+	default_prepare
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build -p swayrbar --release --frozen
+}
+
+check() {
+	cargo test -p swayrbar --frozen
+}
+
+package() {
+	install -D -m755 target/release/$pkgname -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+b734c0cb8f904cab372bd59b3d4b22ca1d8c664ab149947a9c5149e580319f993e421de918cb11d0f429a519f353a3dc2c5c6644c79384288628accd3676f123  swayrbar-0.4.0.tar.gz
+"

@@ -1,0 +1,95 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Peter Shkenev <santurysim@gmail.com>
+pkgname=libxkbcommon
+pkgver=1.7.0
+pkgrel=1
+pkgdesc="keyboard handling library"
+url="https://www.xkbcommon.org/"
+arch="all"
+license="MIT"
+depends="xkeyboard-config"
+depends_dev="libxkbcommon-x11=$pkgver-r$pkgrel"
+makedepends="
+	bison
+	libxcb-dev
+	libxml2-dev
+	meson
+	wayland-dev
+	wayland-protocols
+	xkeyboard-config-dev
+	doxygen
+	graphviz
+	"
+subpackages="
+	$pkgname-static
+	$pkgname-doc
+	$pkgname-dev
+	$pkgname-x11
+	xkbcli
+	xkbcli-doc:xkbcli_doc
+	xkbcli-bash-completion
+	"
+source="https://xkbcommon.org/download/libxkbcommon-$pkgver.tar.xz
+	allow-skip-test.patch
+	"
+
+build() {
+	abuild-meson \
+		-Denable-wayland=true \
+		-Denable-docs=true \
+		-Denable-x11=true \
+		-Ddefault_library=both \
+		build
+	meson compile -C build
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C build
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C build
+}
+
+doc() {
+	pkgdesc="Keyboard handling library (documentation)"
+	install_if="docs $pkgname=$pkgver-r$pkgrel"
+	# XXX: depends on default_doc implementation details
+	# Library docs are HTML in /usr/share/doc and don't require any special
+	# processing, while xkbcli docs are man pages. So we move doc directory to
+	# the subpackage...
+	amove usr/share/doc/libxkbcommon
+}
+
+x11() {
+	pkgdesc="$pkgdesc (x11 support)"
+
+	amove usr/lib/*x11*.so.*
+}
+
+xkbcli() {
+	pkgdesc="xkb command-line tool with interactive debugger"
+
+	amove usr/bin/xkbcli
+	amove usr/libexec/xkbcommon/xkbcli*
+}
+
+xkbcli_doc() {
+	# ... and run default_doc here to let abuild process man pages
+	default_doc
+	pkgdesc="xkb command-line tool with interactive debugger (documentation)"
+	install_if="docs xkbcli=$pkgver-r$pkgrel"
+}
+
+bashcomp() {
+	default_bashcomp
+
+	pkgdesc="Bash completions for xkbcli"
+	install_if="xkbcli=$pkgver-r$pkgrel bash-completion"
+}
+
+
+sha512sums="
+4b74a9f3f63e2ebc1cbdcaa963c70362e55fa527e1d89b6a1fd30d7a84a8b60c1b3dc99bcfbde85aa31890e0b2f62f0bad3c8ff8340fe6a930ee662b33448ba5  libxkbcommon-1.7.0.tar.xz
+17608171e5fe145030585a84ac43770a5f3d57a8d083b27ee443f08e886e046a802833658f68bcd2c07834ec7c95d5fa952414d6940a9ae4c38736c55d0bf98f  allow-skip-test.patch
+"

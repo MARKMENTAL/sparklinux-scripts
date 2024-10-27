@@ -1,0 +1,93 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Contributor: Natanael Copa <ncopa@alpinelinux.org>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=librsvg
+pkgver=2.59.0
+pkgrel=0
+pkgdesc="SAX-based renderer for SVG files into a GdkPixbuf"
+url="https://wiki.gnome.org/Projects/LibRsvg"
+arch="all"
+license="LGPL-2.1-or-later"
+depends_dev="rsvg-convert=$pkgver-r$pkgrel"
+makedepends="
+	bzip2-dev
+	cairo-dev
+	cargo
+	cargo-c
+	dav1d-dev
+	font-dejavu
+	gi-docgen
+	glib-dev
+	gobject-introspection-dev
+	gtk+3.0-dev
+	libgsf-dev
+	meson
+	py3-docutils
+	rust
+	vala
+	"
+install="$pkgname.post-upgrade"
+subpackages="
+	$pkgname-dbg
+	$pkgname-dev
+	$pkgname-doc
+	rsvg-convert:_convert
+	rsvg-convert-doc:_convert_doc:noarch
+	"
+source="https://download.gnome.org/sources/librsvg/${pkgver%.*}/librsvg-$pkgver.tar.xz
+	"
+# tests are very dependent on versions of pango/cairo/freetype
+options="!check net"
+
+# secfixes:
+#   2.56.3-r0:
+#     - CVE-2023-38633
+#   2.50.4-r0:
+#     - RUSTSEC-2020-0146
+#   2.46.2-r0:
+#     - CVE-2019-20446
+
+export RUSTFLAGS="$RUSTFLAGS -C debuginfo=1"
+
+prepare() {
+	default_prepare
+	git init -q
+}
+
+build() {
+	abuild-meson \
+		-Dintrospection=enabled \
+		-Dpixbuf=enabled \
+		-Dpixbuf-loader=enabled \
+		-Dvala=enabled \
+		-Dtests="$(want_check && echo true || echo false)" \
+		-Davif=enabled \
+		output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+_convert() {
+	pkgdesc="CLI utility to convert SVG files to PNG format"
+
+	amove usr/bin/rsvg-convert
+}
+
+_convert_doc() {
+	pkgdesc="CLI utility to convert SVG files to PNG format (documentation)"
+	depends=""
+	install_if="docs ${subpkgname%-doc}=$pkgver-r$pkgrel"
+
+	pkgdir="$pkgdir-doc" amove usr/share/man/man1/rsvg-convert.*
+}
+
+sha512sums="
+1c62cf6e1fc275c9ee3eee6760904c080bbf9ca440c12b1b44c9196aa99c074222d34d4469afa56927bc3afbcdfe9e777fa7ae593d767c845e54da60fecfaf49  librsvg-2.59.0.tar.xz
+"

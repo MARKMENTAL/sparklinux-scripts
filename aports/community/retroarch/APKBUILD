@@ -1,0 +1,52 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: David Demelier <markand@malikania.fr>
+pkgname=retroarch
+# If you plan to upgrade RetroArch, you also need to upgrade the following
+# packages at the same time:
+# - libretro-database
+# - libretro-core-info
+# - retroarch-assets
+# - retroarch-joypad-autoconfig
+pkgver=1.19.1
+pkgrel=0
+arch="all"
+url="https://retroarch.com"
+pkgdesc="Reference frontend for the libretro API"
+license="GPL-2.0-only"
+depends="retroarch-assets retroarch-joypad-autoconfig libretro-core-info libretro-database"
+makedepends="linux-headers mesa-dev qt5-qtbase-dev wayland-dev wayland-protocols
+	zlib-dev alsa-lib-dev pulseaudio-dev sdl2-dev flac-dev mbedtls2-dev libusb-dev
+	openssl-dev>3 ffmpeg4-dev libxkbcommon-dev eudev-dev vulkan-loader-dev"
+source="$pkgname-$pkgver.tar.gz::https://github.com/libretro/retroarch/archive/v$pkgver.tar.gz
+	config.patch
+	"
+subpackages="$pkgname-doc"
+builddir="$srcdir/RetroArch-$pkgver"
+options="!check" # No tests
+
+build() {
+	CFLAGS="$CFLAGS -I/usr/include/directfb"
+	./configure \
+		--prefix=/usr \
+		--disable-builtinflac \
+		--disable-builtinmbedtls \
+		--disable-builtinzlib \
+		--disable-discord \
+		--disable-vg \
+		--disable-videocore \
+		--enable-bluetooth \
+		--enable-dynamic \
+		--enable-egl \
+		--enable-kms \
+		--enable-wifi
+	make
+}
+
+package() {
+	DESTDIR="$pkgdir" make install
+}
+
+sha512sums="
+35e44ffc776cbc7f58fa76c686d3c3693d125fccf482c8f3b66378058b8400ada37ebf2549e9bd362e46c3bfb586971a217cc3142dcf7a7468c95ec78638ee23  retroarch-1.19.1.tar.gz
+e4e97afc0e0efe6fa92c1b55ebd7400b0efd1154001279753bb1c363953a1d5720751d2a07d6426bd26f7ed630e3e5da1db4389b8c6a86535509547de85590f7  config.patch
+"

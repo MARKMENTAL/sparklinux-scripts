@@ -1,0 +1,58 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=git-interactive-rebase-tool
+pkgver=2.3.0
+pkgrel=0
+pkgdesc="Terminal based sequence editor for interactive rebase"
+url="https://gitrebasetool.mitmaro.ca"
+# loongarch64: libc crate fails to build
+arch="all !loongarch64"
+license="GPL-3.0-or-later"
+makedepends="cargo libgit2-dev zlib-dev cargo-auditable"
+subpackages="$pkgname-doc"
+source="https://github.com/MitMaro/git-interactive-rebase-tool/archive/$pkgver/git-interactive-rebase-tool-$pkgver.tar.gz
+	0001-Fix-lint-warning-to-avoid-linting-failure-with-rust-.patch
+	0002-cargo-update.patch"
+options="net"
+
+export CARGO_PROFILE_RELEASE_OPT_LEVEL="z"
+
+prepare() {
+	default_prepare
+
+	# Rust target triple.
+	local target=$(rustc -vV | sed -n 's/host: //p')
+
+	# Build against system-provided libs
+	mkdir -p .cargo
+	cat >> .cargo/config.toml <<-EOF
+		[target.$target]
+		git2 = { rustc-link-lib = ["git2"] }
+	EOF
+
+	# open64
+	cargo update -p getrandom --precise 0.2.10
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -D -m755 target/release/interactive-rebase-tool -t "$pkgdir"/usr/bin/
+
+	install -D -m 644 src/interactive-rebase-tool.1 \
+		"$pkgdir"/usr/share/man/man1/interactive-rebase-tool.1
+}
+
+sha512sums="
+11d4be71bf6f55f541046ea607b965ffd0f044e525ed3dfbfc37c8d986cda6819c1838d2852e7d6468f43f9482766a3cddb5b8305d09a0d6fd5596b85d6671af  git-interactive-rebase-tool-2.3.0.tar.gz
+284d01290776e193adb837f3cb0c062aa7ea6c7d5d89b729bbbcaa7a63b487742e535e795db3ce62b7440e3f456bfadf034cff6c1cbb43ef6921e8701128f9c6  0001-Fix-lint-warning-to-avoid-linting-failure-with-rust-.patch
+5cdb58bd868c1ed21b29f640c7c17577a71050e74042a74b6441aabf8e6675953dfcdd04a6554a256d6f0f4307eb456953632395c708c858e05c12eecbaf3664  0002-cargo-update.patch
+"

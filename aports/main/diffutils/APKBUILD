@@ -1,0 +1,36 @@
+# Maintainer: Leonardo Arena <rnalrd@alpinelinux.org>
+pkgname=diffutils
+pkgver=3.10
+pkgrel=0
+pkgdesc="Show differences among files"
+subpackages="$pkgname-doc"
+url="https://www.gnu.org/software/diffutils/"
+arch="all"
+license="GPL-3.0-or-later"
+checkdepends="perl"
+source="https://ftp.gnu.org/pub/gnu/diffutils/diffutils-$pkgver.tar.xz"
+
+build() {
+	CFLAGS="$CFLAGS -flto=auto" \
+	CXXFLAGS="$CXXFLAGS -flto=auto" \
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--disable-nls
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make install DESTDIR=$pkgdir
+}
+
+sha512sums="
+219d2c815a120690c6589846271e43aee5c96c61a7ee4abbef97dfcdb3d6416652ed494b417de0ab6688c4322540d48be63b5e617beb6d20530b5d55d723ccbb  diffutils-3.10.tar.xz
+"

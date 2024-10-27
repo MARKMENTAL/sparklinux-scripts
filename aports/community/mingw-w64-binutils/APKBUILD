@@ -1,0 +1,84 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Simon Zeni <simon@bl4ckb0ne.ca>
+pkgname=mingw-w64-binutils
+pkgver=2.42
+pkgrel=0
+pkgdesc="Cross binutils for the MinGW-w64 cross-compiler"
+url="https://www.gnu.org/software/binutils"
+arch="x86_64 x86"
+license="GPL-3.0-or-later"
+makedepends="texinfo zlib-dev zstd-dev"
+source="$pkgname-$pkgver.tar.xz::https://ftp.gnu.org/gnu/binutils/binutils-$pkgver.tar.xz"
+builddir="$srcdir/binutils-$pkgver"
+
+# secfixes:
+#   2.36-r0:
+#     - CVE-2020-35448
+
+case "$CARCH" in
+x86_64)
+	_targets="x86_64-w64-mingw32 i686-w64-mingw32"
+	subpackages="$subpackages i686-$pkgname:x32"
+	;;
+x86)
+	_targets="i686-w64-mingw32"
+	;;
+esac
+
+build() {
+	export CFLAGS="$CFLAGS -O2"
+	export CXXFLAGS="$CXXFLAGS -O2"
+	export CPPFLAGS="$CPPFLAGS -O2"
+
+	local target
+	for target in $_targets; do
+		msg "building target: $target"
+		(
+		local bld="$srcdir"/bld-$target
+		mkdir -p "$bld"
+		cd "$bld"
+		"$builddir"/configure \
+			--prefix=/usr \
+			--program-prefix=$target- \
+			--target=$target \
+			--enable-deterministic-archives \
+			--enable-ld=default \
+			--enable-plugins \
+			--disable-default-execstack \
+			--disable-gprofng \
+			--disable-internal-libiberty \
+			--disable-multilib \
+			--disable-nls \
+			--disable-shared \
+			--disable-werror \
+			--with-mmap \
+			--with-system-zlib
+		make
+		)
+	done
+}
+
+package() {
+	local target
+	for target in $_targets; do
+		make -C "$srcdir"/bld-$target DESTDIR="$pkgdir" install
+	done
+
+	# delete bfd-plugins directory, so it does not conflict with host toolchain
+	rm -rf "$pkgdir"/usr/lib/bfd-plugins
+
+	# quite redundant given this is just regular binutils docs
+	rm -rf "$pkgdir"/usr/share/info
+	rm -rf "$pkgdir"/usr/share/man
+}
+
+x32() {
+	pkgdesc="$pkgdesc (i686-mingw target)"
+
+	amove usr/i686-w64-mingw32
+	amove usr/bin/i686-w64-mingw32*
+}
+
+sha512sums="
+155f3ba14cd220102f4f29a4f1e5cfee3c48aa03b74603460d05afb73c70d6657a9d87eee6eb88bf13203fe6f31177a5c9addc04384e956e7da8069c8ecd20a6  mingw-w64-binutils-2.42.tar.xz
+"

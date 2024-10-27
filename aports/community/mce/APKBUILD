@@ -1,0 +1,88 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=mce
+pkgver=1.115.7
+pkgrel=0
+_commit_dbus_gmain="d42176ae4763e5288ef37ea314fe58387faf2005"
+pkgdesc="mce with support for tap-to-wake and tilt-to-wake"
+url="https://github.com/sailfishos/mce"
+arch="all"
+license="LGPL-2.1-only"
+makedepends="
+	bsd-compat-headers
+	dbus-dev
+	dbus-glib-dev
+	doxygen
+	elogind-dev
+	eudev-dev
+	glib-dev
+	graphviz
+	libdsme-dev
+	libiphb-dev
+	libngf-dev
+	mce-dev
+	usb-moded-dev
+	"
+subpackages="$pkgname-doc $pkgname-openrc"
+source="https://github.com/sailfishos/mce/archive/$pkgver/mce-$pkgver.tar.gz
+	https://github.com/sailfishos-mirror/dbus-glib/archive/$_commit_dbus_gmain/dbus-glib-$_commit_dbus_gmain.tar.gz
+	0001-Double-tap-emulation-Adapts-the-state-machine-to-a-s.patch
+	0001-Keep-screen-on-by-default-on-emulator.patch
+	0002-tilt-to-wake-Wake-screen-when-wrist-gesture-arrives.patch
+	0003-inactivity-Allow-activities-in-lockscreen-mode.-aste.patch
+	0004-Ambient-mode-Adapt-low-power-mode-to-allow-for-actua.patch
+	0005-Ambient-Mode-Wait-for-compositor-when-sending-enable.patch
+	0006-Ambient-Mode-Exit-ambient-mode-when-touch-is-detecte.patch
+	0007-powerkey-Also-suspend-on-palm-reports.patch
+	0008-fix-32bit-build.patch
+	0009-fix-lfs64-lseek.patch
+	mce.initd
+	mce.confd
+	"
+options="!check" # Build failures
+
+prepare() {
+	default_prepare
+
+	rmdir dbus-gmain
+	mv "$srcdir/dbus-glib-$_commit_dbus_gmain" dbus-gmain
+}
+
+build() {
+	make
+	make doc
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	install -Dm755 "$srcdir"/mce.initd "$pkgdir"/etc/init.d/mce
+	install -Dm644 "$srcdir"/mce.confd "$pkgdir"/etc/conf.d/mce
+
+	# We don't ship systemd
+	rm -r "$pkgdir"/lib/systemd
+
+	mkdir -p "$pkgdir"/usr/share/dbus-1/system.d/
+	mv "$pkgdir"/etc/dbus-1/system.d/* "$pkgdir"/usr/share/dbus-1/system.d/
+}
+
+sha512sums="
+f734895b7ec68f58dbe9f6e40d5bde1f5288156bee29ca80c48cc50413a1b35f1f5bc1d511715760811fe3f7a5b7cd56060abc74039aea8d033da1efee03d784  mce-1.115.7.tar.gz
+665cd6395ee0ea14086ba30188c62a72697b3f63484681e18fc7f54109c9aca162f2e33aa2fa4d45287c6c0b590e81ca310c143dac0232cd5887692cdaf51256  dbus-glib-d42176ae4763e5288ef37ea314fe58387faf2005.tar.gz
+d5855bb7cf72920a57533ff0e6d567b1fc52104e04c3e4a15c01d72b83cf7011daf66c37b86ae5e20ff859c13606a2acd81f7f34ff29f8086c34979ca641491b  0001-Double-tap-emulation-Adapts-the-state-machine-to-a-s.patch
+4cecf1b48266c4ec1d05412514eca1d63f9c442a39eaee25e654c1878f6c506995458f43d4f70ed4179198577ab2cadd4ab2d816e185e6f4d187aa449dbd0887  0001-Keep-screen-on-by-default-on-emulator.patch
+892aeab5b26decd4ae7de36c13bdce7e530b1a56c5acf40cfb69427f61bde7e211e339e4ae7640135131f11f4a9f5f8cf10efbf4f838bf5d479fd2f7d8d9e63f  0002-tilt-to-wake-Wake-screen-when-wrist-gesture-arrives.patch
+9777138f514591d34524ccde1b0646c0d8d8f980ac3f217fed4739e2718fef6c820106fa58a12999ff567eba49dfbff03f0a7b952d65d8763eb263f52086a6b0  0003-inactivity-Allow-activities-in-lockscreen-mode.-aste.patch
+4d1f150406e489c3dcc3481dc42d2c04882423dda94e5c43ab46213e0aa77a20f10c44044665a36c49134590529b438b37fda38a07d85872d1068858e2935d56  0004-Ambient-mode-Adapt-low-power-mode-to-allow-for-actua.patch
+23910efee13c22c3718bacd76d87f6b485d2de2eb5b6678022e439d6397e07c639eca17286a8bf1e716fbcd57b7e25b07352b15b469a22f3e9cf97fbc4e4975e  0005-Ambient-Mode-Wait-for-compositor-when-sending-enable.patch
+777d4e4d2229f16685208e644bfd9a5f121a73e7645c37f7366d3887a8a0228ed7a0d680d5aab875457f7fa65b26710e21690f5b990bc1749b5b2faf7c847902  0006-Ambient-Mode-Exit-ambient-mode-when-touch-is-detecte.patch
+9d01202edf21e848a8665076dfd02d0896a50251e4acda694733fbd1acc4e4be522ebc896206a5fc8d3e02f9435f85ab5f60f8a32d410bc2acfcaedde0c40670  0007-powerkey-Also-suspend-on-palm-reports.patch
+ad76be70336bec361bfcb2cd664a627a26c1576d7acd98666f986d318ff1ac96e739696577381b99f5ff13febd62b497f9e5e7ee80c7ea1de02409c65d8a7a36  0008-fix-32bit-build.patch
+0f22d22df8a458b732ff9598edb2369ba92ab473b5f239e39f6a27ce9c7268756994f33af42c6b74b28a2d2143d210c3aa3fa12a6173704a20d22c447ad5c518  0009-fix-lfs64-lseek.patch
+b07d40a66fd9206b1e34164a0229b05456cbe268b4004045c8fda34742c40528c56c5f1cf81cbc4ba3662c20fcbcff4a8f8e00fc8fbb2ff7bb92e7ab125dd55b  mce.initd
+b841282b96110ec59a7aa539db0737327b09549d55c78dc4b2c3b28b4a6ad1facf015b3175cb6d3a38f13e47aa6314ef3dc1514a4e60dd653a97409ec54ba706  mce.confd
+"

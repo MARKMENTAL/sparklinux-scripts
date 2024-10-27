@@ -1,0 +1,50 @@
+# Contributor: Nicolas Lorin <androw95220@gmail.com>
+# Contributor: Jonathan Sieber <mail@strfry.org>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=toxcore
+pkgver=0.2.19
+pkgrel=0
+pkgdesc="Tox communication project - C core"
+url="https://tox.chat/"
+arch="all"
+license="GPL-3.0-or-later"
+makedepends="
+	cmake
+	libconfig-dev
+	libsodium-dev
+	libvpx-dev
+	linux-headers
+	opus-dev
+	samurai
+	"
+checkdepends="gtest-dev"
+subpackages="$pkgname-bash-completion $pkgname-dev $pkgname-libs"
+source="$pkgname-$pkgver.tar.gz::https://github.com/TokTok/c-toxcore/releases/download/v$pkgver/c-toxcore-$pkgver.tar.gz"
+builddir="$srcdir/c-toxcore-$pkgver"
+options="net" # tests require networking
+
+build() {
+	CFLAGS="$CFLAGS -flto=auto" \
+	CXXFLAGS="$CXXFLAGS -flto=auto" \
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DENABLE_STATIC=OFF \
+		-DENABLE_SHARED=ON \
+		-DUNITTEST="$(want_check && echo ON || echo OFF)"
+
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+793070e2f53e9736e23803d5e60dab8997b2e1f0b0655807b32667d660ee240b1904842aee1910f508ef26f0d4af8ca003fe384e6c59f26787a1059f5d5a5b22  toxcore-0.2.19.tar.gz
+"

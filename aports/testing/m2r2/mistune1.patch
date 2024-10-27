@@ -1,0 +1,82 @@
+diff --git a/m2r2.py b/m2r2.py
+index e78d969..b259970 100644
+--- a/m2r2.py
++++ b/m2r2.py
+@@ -9,7 +9,7 @@ import re
+ import sys
+ from argparse import ArgumentParser, Namespace
+ 
+-import mistune
++import mistune1
+ from docutils import io, nodes, statemachine, utils
+ from docutils.parsers import rst
+ from docutils.utils import column_width
+@@ -79,7 +79,7 @@ def parse_options():
+     parser.parse_known_args(namespace=options)
+ 
+ 
+-class RestBlockGrammar(mistune.BlockGrammar):
++class RestBlockGrammar(mistune1.BlockGrammar):
+     directive = re.compile(
+         r"^( *\.\..*?)\n(?=\S)",
+         re.DOTALL | re.MULTILINE,
+@@ -94,13 +94,13 @@ class RestBlockGrammar(mistune.BlockGrammar):
+     )
+ 
+ 
+-class RestBlockLexer(mistune.BlockLexer):
++class RestBlockLexer(mistune1.BlockLexer):
+     grammar_class = RestBlockGrammar
+     default_rules = [
+         "directive",
+         "oneline_directive",
+         "rest_code_block",
+-    ] + mistune.BlockLexer.default_rules
++    ] + mistune1.BlockLexer.default_rules
+ 
+     def parse_directive(self, m):
+         self.tokens.append({"type": "directive", "text": m.group(1)})
+@@ -113,7 +113,7 @@ class RestBlockLexer(mistune.BlockLexer):
+         self.tokens.append({"type": "rest_code_block"})
+ 
+ 
+-class RestInlineGrammar(mistune.InlineGrammar):
++class RestInlineGrammar(mistune1.InlineGrammar):
+     image_link = re.compile(
+         r"\[!\[(?P<alt>.*?)\]\((?P<url>.*?)\).*?\]\((?P<target>.*?)\)"
+     )
+@@ -139,14 +139,14 @@ class RestInlineGrammar(mistune.InlineGrammar):
+         self.emphasis = re.compile(r"^\*(?P<text>(?:\*\*|[^\*])+?)\*(?!\*)")  # *word*
+ 
+ 
+-class RestInlineLexer(mistune.InlineLexer):
++class RestInlineLexer(mistune1.InlineLexer):
+     grammar_class = RestInlineGrammar
+     default_rules = [
+         "image_link",
+         "rest_role",
+         "rest_link",
+         "eol_literal_marker",
+-    ] + mistune.InlineLexer.default_rules
++    ] + mistune1.InlineLexer.default_rules
+ 
+     def __init__(self, *args, **kwargs):
+         no_underscore_emphasis = kwargs.pop("no_underscore_emphasis", False)
+@@ -197,7 +197,7 @@ class RestInlineLexer(mistune.InlineLexer):
+         return self.renderer.eol_literal_marker(marker)
+ 
+ 
+-class RestRenderer(mistune.Renderer):
++class RestRenderer(mistune1.Renderer):
+     _include_raw_html = False
+     list_indent_re = re.compile(r"^(\s*(#\.|\*)\s)")
+     indent = " " * 3
+@@ -528,7 +528,7 @@ class RestRenderer(mistune.Renderer):
+         return "\n\n"
+ 
+ 
+-class M2R(mistune.Markdown):
++class M2R(mistune1.Markdown):
+     def __init__(
+         self, renderer=None, inline=RestInlineLexer, block=RestBlockLexer, **kwargs
+     ):

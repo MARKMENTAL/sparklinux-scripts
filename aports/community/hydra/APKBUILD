@@ -1,0 +1,38 @@
+# Contributor: Maxim Karasev <mxkrsv@disroot.org>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=hydra
+pkgver=9.5
+pkgrel=1
+pkgdesc="fast network logon cracker with support for many different services"
+url="https://github.com/vanhauser-thc/thc-hydra"
+arch="all"
+license="AGPL-3.0-or-later"
+makedepends="ncurses-dev openssl-dev pcre2-dev mariadb-dev afpfs-ng-dev samba-dev
+	freerdp-dev libidn-dev libpq-dev subversion-dev mongo-c-driver-dev
+	libssh-dev libmemcached-dev"
+subpackages="$pkgname-doc"
+source="https://github.com/vanhauser-thc/thc-hydra/archive/refs/tags/v$pkgver/thc-hydra-$pkgver.tar.gz"
+builddir="$srcdir/thc-hydra-$pkgver"
+options="!check" # no tests
+
+build() {
+	export CFLAGS="$CFLAGS -D_GNU_SOURCE"
+	# it's a custom shell script
+	./configure \
+		--prefix=/usr \
+		--fhs
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" \
+		MANDIR=/share/man/man1 \
+		DATADIR=/share/hydra \
+		install
+
+	rm -r "$pkgdir"/usr/share/pixmaps # unused
+}
+
+sha512sums="
+a8fe42d175d184cdb82072f3a963b956d767fa908aaf1cbbc0746b6a67cfd37f8b5e3ecf9be82085a7f6c1ef57e91a8bf05bfeb41e96708899b6c8d7f05eee06  thc-hydra-9.5.tar.gz
+"

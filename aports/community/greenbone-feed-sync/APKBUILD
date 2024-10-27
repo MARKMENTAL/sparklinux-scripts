@@ -1,0 +1,49 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=greenbone-feed-sync
+# follow the same version of gvm-tools
+pkgver=24.3.0
+pkgrel=0
+pkgdesc="New script for syncing the Greenbone Community Feed"
+url="https://github.com/greenbone/greenbone-feed-sync"
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="
+	py3-rich
+	python3
+	rsync
+	"
+makedepends="
+	py3-gpep517
+	py3-installer
+	py3-poetry-core
+	py3-lxml
+	"
+checkdepends="
+	py3-pontos
+	py3-pytest
+	py3-shtab
+	"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/greenbone/greenbone-feed-sync/archive/refs/tags/v$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+ac1ce1f0a2898997e5a330e9a186b6203b7593e5b847d23202c28e7b3b7be1556001cc6d8ba5abd7077d1b51e0f21640728f78659ecf9a60eede28ea483344b4  greenbone-feed-sync-24.3.0.tar.gz
+"

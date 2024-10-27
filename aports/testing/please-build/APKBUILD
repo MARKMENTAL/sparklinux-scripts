@@ -1,0 +1,79 @@
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=please-build
+pkgver=17.9.0
+pkgrel=0
+pkgdesc="High-performance, extensible build system for reproducible multi-language builds"
+url="https://please.build/"
+# The only architectures supported upstream
+arch="x86_64 aarch64"
+license="Apache-2.0"
+makedepends="go bash"
+subpackages="
+	$pkgname-tools
+	$pkgname-bash-completion
+	$pkgname-zsh-completion
+	"
+source="
+	$pkgname-$pkgver.tar.gz::https://github.com/thought-machine/please/archive/refs/tags/v$pkgver.tar.gz
+	fix-test.patch
+	"
+builddir="$srcdir/please-$pkgver"
+options="net" # download Go modules
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	local _buildargs="--plain_output --noupdate --profile=alpine"
+	go run src/please.go build $_buildargs //src:please
+
+	./plz-out/bin/src/please build $_buildargs \
+		//tools/sandbox:please_sandbox \
+		//tools/please_shim:please_shim \
+		//tools/build_langserver:build_langserver
+
+	./plz-out/bin/src/please --completion_script > plz.bash
+}
+
+check() {
+	# The test has an input only for x86_64 target.
+	rm -r test/config_rules
+
+	# python3: vendored 'please_pex' binary doesn't run on musl.
+	#          Also, it can't be built from source due to dependency cycling.
+	# clang:
+	# - 16: hardcode -fmodules-ts in cc-rules plugin
+	# - 15: undefined reference to 'initializer for module q1'
+	"$builddir"/plz-out/bin/src/please test \
+		--plain_output --noupdate --profile=alpine \
+		--exclude=python3 --exclude=clang --exclude=e2e
+}
+
+package() {
+	install -Dm755 plz-out/bin/src/please "$pkgdir"/usr/bin/plz
+
+	install -Dm755 -t "$pkgdir"/usr/bin/ \
+		plz-out/bin/tools/build_langserver/build_langserver \
+		plz-out/bin/tools/sandbox/please_sandbox \
+		plz-out/bin/tools/please_shim/please_shim
+
+	install -Dm644 plz.bash \
+		"$pkgdir"/usr/share/bash-completion/completions/plz
+	install -Dm644 plz.bash \
+		"$pkgdir"/usr/share/zsh/site-functions/_plz
+}
+
+tools() {
+	pkgdesc="External utilities for Please build system"
+
+	amove \
+		usr/bin/build_langserver \
+		usr/bin/please_sandbox \
+		usr/bin/please_shim
+}
+
+sha512sums="
+9fd0c055bb16084ac1e9cbb4d2fe24d694b0b1d5ce640c4420857b7bf3ca36300cb25ddc36da33de8fe17d6415fab4df91206131e0101b39f61ccf5be0e0f1f6  please-build-17.9.0.tar.gz
+b28a5919b3550b5f8f3a460abefe3c2595aed17305486d328a384936138aa9fde01cf99932c088d472dc8df80d9741c67a36abf1799ac346596c8ccbcfe479f5  fix-test.patch
+"

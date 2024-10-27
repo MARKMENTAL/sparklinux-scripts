@@ -1,0 +1,35 @@
+# Contributor: Austin Page <jaustinpage@gmail.com>
+# Maintainer: Austin Page <jaustinpage@gmail.com>
+pkgname=py3-cassandra-driver
+_pkgname="${pkgname/py3-/}"
+pkgver=3.29.1
+pkgrel=0
+pkgdesc="Python driver for Apache Cassandra"
+url="https://github.com/datastax/python-driver"
+arch="noarch"
+license="Apache-2.0"
+makedepends="libev-dev py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/${_pkgname:0:1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+options="!check" # requires cython>=0.20,<0.30
+
+build() {
+	gpep517 build-wheel --wheel-dir .dist --output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+
+}
+
+sha512sums="
+8a1be4490a7ee22a446d2ae3aef2bab9071934d2499bf2f43e63c0efea923eacede217814ab947879eb4c92eaf1375cd26f39fa879dfc5c9532f7c1d9a58cf0b  cassandra-driver-3.29.1.tar.gz
+"

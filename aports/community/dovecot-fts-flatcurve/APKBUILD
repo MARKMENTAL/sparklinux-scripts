@@ -1,0 +1,46 @@
+# Maintainer: Niklas Meyer <derlinkman@gmail.com>
+pkgname=dovecot-fts-flatcurve
+pkgver=1.0.4
+pkgrel=0
+pkgdesc="Dovecot FTS Flatcurve plugin (Xapian)"
+url="https://github.com/slusarz/dovecot-fts-flatcurve"
+arch="all"
+license="LGPL-2.1-or-later"
+depends_dev="$pkgname=$pkgver-r$pkgrel"
+depends="dovecot xapian-core"
+makedepends="
+	autoconf
+	automake
+	dovecot-dev
+	icu-dev
+	libtool
+	xapian-core-dev
+	"
+subpackages="$pkgname-dev"
+source="$pkgname-$pkgver.tar.gz::https://github.com/slusarz/dovecot-fts-flatcurve/archive/refs/tags/v$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+	./autogen.sh
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--disable-static
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+cd8930f3a0d13323d3b12e73f5add336a845340e95aa5867f3565f038533c157e86212d742295ffd04095c56c3e06735edc7d0eb52a6c50c88aa61f6b6fb9889  dovecot-fts-flatcurve-1.0.4.tar.gz
+"

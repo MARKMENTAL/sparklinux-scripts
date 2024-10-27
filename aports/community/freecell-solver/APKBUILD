@@ -1,0 +1,56 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=freecell-solver
+pkgver=6.8.0
+pkgrel=1
+pkgdesc="A program that automatically solves layouts of Freecell and similar variants of Card Solitaire"
+url="https://fc-solve.shlomifish.org"
+arch="all"
+license="MIT"
+makedepends="
+	cmake
+	cmd:gperf
+	cmocka-dev
+	gmp-dev
+	libbsd-dev
+	perl
+	perl-html-template
+	perl-moo
+	perl-path-tiny
+	perl-template-toolkit
+	perl-text-template
+	py3-cffi
+	py3-freecell-solver
+	py3-pysol-cards
+	py3-random2
+	py3-six
+	python3
+	rinutils-dev
+	samurai
+	"
+subpackages="$pkgname-dev $pkgname-doc"
+source="https://fc-solve.shlomifish.org/downloads/fc-solve/freecell-solver-$pkgver.tar.xz"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DFCS_WITH_TEST_SUITE=OFF \
+		-DBUILD_STATIC_LIBRARY=OFF \
+		-DCMAKE_SKIP_INSTALL_RPATH=TRUE
+	cmake --build build
+}
+
+check() {
+	cd build
+	CTEST_OUTPUT_ON_FAILURE=TRUE ctest
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+3baed3cc02405036b882b8eb71f0e54d11051789b9071081a26a6feca653e13129b7d2e5f3ffcbbbac528e67eccdb95d0adcbf598b35f0849a220c90bed131ee  freecell-solver-6.8.0.tar.xz
+"

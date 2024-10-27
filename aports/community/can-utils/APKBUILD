@@ -1,0 +1,36 @@
+# Contributor: Milan P. Stanić <mps@arvanta.net>
+# Maintainer: Milan P. Stanić <mps@arvanta.net>
+pkgname=can-utils
+pkgver=2023.03
+pkgrel=0
+pkgdesc="SocketCAN userspace utilities and tools"
+url="https://github.com/linux-can/can-utils"
+arch="all"
+license="GPL-2.0-only AND BSD-3-Clause"
+options="!check" # package don't have tests
+makedepends="cmake linux-headers samurai"
+source="$pkgname-$pkgver.tar.gz::https://github.com/linux-can/can-utils/archive/v$pkgver.tar.gz"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		$CMAKE_CROSSOPTS
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	# not installed with cmake
+	install -Dm755 build/can-calc-bit-timing -t "$pkgdir"/usr/bin/
+}
+
+sha512sums="
+bf8f3e555bada4ce1e6f308b46daaab51664a0b6a1b793dc1a2aab46b44331f59635051eb3e75cb9b39999369a7fd463421a89ab60e74bc76ef2d84f6519c501  can-utils-2023.03.tar.gz
+"

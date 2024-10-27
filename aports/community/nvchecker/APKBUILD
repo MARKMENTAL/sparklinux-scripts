@@ -1,0 +1,60 @@
+# Contributor: fossdd <fossdd@pwned.life>
+# Maintainer: fossdd <fossdd@pwned.life>
+pkgname=nvchecker
+pkgver=2.15.1
+pkgrel=0
+pkgdesc="New version checker for software releases"
+url="https://github.com/lilydjwg/nvchecker"
+arch="noarch"
+license="MIT"
+depends="
+	py3-curl
+	py3-platformdirs
+	py3-structlog
+	py3-tornado
+	python3
+	"
+makedepends="
+	git
+	py3-aiohttp
+	py3-docutils
+	py3-flaky
+	py3-gobject3
+	py3-gpep517
+	py3-pygments
+	py3-setuptools
+	py3-toml
+	py3-wheel
+	"
+checkdepends="
+	py3-pytest-asyncio
+	py3-pytest-httpbin
+	pytest
+	"
+install="$pkgname.post-install"
+subpackages="$pkgname-pyc $pkgname-doc $pkgname-bash-completion"
+source="$pkgname-$pkgver.tar.gz::https://github.com/lilydjwg/nvchecker/archive/refs/tags/v$pkgver.tar.gz"
+options="!check" # tests fail
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+	make -C docs man
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer "$builddir"/.dist/*.whl
+	.testenv/bin/python3 -m pytest -v
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+	install -Dm644 scripts/nvtake.bash_completion "$pkgdir"/usr/share/bash-completion/completions/nvtake
+	install -Dm644 docs/_build/man/nvchecker.1 -t "$pkgdir"/usr/share/man/man1/
+}
+sha512sums="
+4b6a675c02079eece0bd0cda6912a48b6a47cb633a6e7e05b1b145aedb810a4edb60c25c065ed85134e969f006890a20078a8b98696658a2beb62f2edd322fda  nvchecker-2.15.1.tar.gz
+"

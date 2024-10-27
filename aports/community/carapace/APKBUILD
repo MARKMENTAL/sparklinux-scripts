@@ -1,0 +1,40 @@
+# Contributor: Andrej Kolchin <KAAtheWise@protonmail.com>
+# Maintainer: Andrej Kolchin <KAAtheWise@protonmail.com>
+pkgname=carapace
+pkgver=1.0.5
+pkgrel=1
+pkgdesc="Multi-shell multi-command argument completer"
+url="https://carapace.sh/"
+arch="all"
+license="MIT"
+makedepends="go"
+source="$pkgname-$pkgver.tar.gz::https://github.com/rsteube/carapace-bin/archive/v$pkgver.tar.gz"
+# fixes the tar archive unpacking to carapace-bin-$pkgver
+_pkgname=carapace-bin
+builddir="$srcdir/$_pkgname-$pkgver"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+export GOFLAGS="$GOFLAGS -modcacherw"
+
+build() {
+	go generate ./cmd/carapace/...
+	go build -tags release ./cmd/carapace
+}
+
+check() {
+	# The three lone tests in the repository.
+	go test \
+		./cmd/carapace/... \
+		./pkg/actions/tools/pandoc \
+		./pkg/actions/env
+}
+
+package() {
+	install -Dm755 carapace -t "$pkgdir"/usr/bin
+}
+
+sha512sums="
+a1343a9ca8d311ca2125c14af169516265f28c82ae6d87029351cd0ca7fadf647a488266eb3df665bd8ffb0e7d342afcec7764c2810d8dd43e6c080659da96d2  carapace-1.0.5.tar.gz
+"

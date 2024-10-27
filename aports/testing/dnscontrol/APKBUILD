@@ -1,0 +1,36 @@
+# Contributor: Nicolas Lorin <androw95220@gmail.com>
+# Maintainer: Nicolas Lorin <androw95220@gmail.com>
+pkgname=dnscontrol
+pkgver=4.13.0
+pkgrel=0
+pkgdesc="Synchronize your DNS to multiple providers from a simple DSL"
+url="https://stackexchange.github.io/dnscontrol/"
+arch="all"
+license="MIT"
+makedepends="go"
+subpackages="$pkgname-doc"
+options="net"
+source="$pkgname-$pkgver.tar.gz::https://github.com/StackExchange/dnscontrol/archive/v$pkgver.tar.gz
+	dnsconfig.js"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build
+}
+
+check() {
+	./dnscontrol check --config ../dnsconfig.js
+}
+
+package() {
+	install -Dm755 dnscontrol "$pkgdir"/usr/bin/dnscontrol
+	install -Dm644 LICENSE "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+}
+
+sha512sums="
+75fdb34378e7896ccc2dd90320d3be76856878aba95eca44628f2dc1c0ea0f0b736016779bf053b886dd53ea2e5c603d0c581f08bdc66754a2dc4f9161b1898d  dnscontrol-4.13.0.tar.gz
+5503f149662dcf4d8548bc7e60bf566b2c4e7580593a15cca8f344f37103f413b860f4cb25ed38a620cf650528f133e4dc4d51824993b4e314acba5308a225d4  dnsconfig.js
+"

@@ -1,0 +1,32 @@
+# Maintainer:
+pkgname=himitsu-ssh
+pkgver=0.4
+pkgrel=0
+pkgdesc="SSH integration for Himitsu"
+url="https://himitsustore.org"
+arch="x86_64 aarch64 riscv64" # Hare
+license="GPL-3.0-only"
+depends="himitsu"
+makedepends="hare scdoc hare-ssh himitsu-dev"
+subpackages="$pkgname-doc"
+# no tests available
+options="!check"
+source="
+	$pkgname-$pkgver.tar.gz::https://git.sr.ht/~sircmpwn/himitsu-ssh/archive/$pkgver.tar.gz
+"
+
+build() {
+	make -j1 PREFIX=/usr
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr install
+}
+
+sha512sums="
+32720e3e7eb887ced62da2ac9897c2a26ae019ff4bab2d4cf02c178fad47094b7e6e7fddcc7a89779a3ad604e49cc0ae908143ea6e16544133a64b32630b7b33  himitsu-ssh-0.4.tar.gz
+"

@@ -1,0 +1,50 @@
+# Contributor: Eivind Uggedal <eu@eju.no>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=hiredis
+pkgver=1.2.0
+pkgrel=0
+pkgdesc="Minimalistic C client library for Redis"
+url="https://github.com/redis/hiredis"
+arch="all"
+license="BSD-3-Clause"
+makedepends="openssl-dev>3"
+checkdepends="redis"
+subpackages="$pkgname-ssl $pkgname-dev"
+source="$pkgname-$pkgver-99.tar.gz::https://github.com/redis/hiredis/archive/v$pkgver.tar.gz"
+options="!check" # fail with redis 7 for now for some reason
+
+build() {
+	make USE_SSL=1 PREFIX=/usr DEBUG="$CFLAGS" LDFLAGS="$LDFLAGS"
+}
+
+check() {
+	redis-server \
+		--dir "$builddir" \
+		--enable-debug-command local \
+		--unixsocket "$builddir"/redis.sock&
+	local _redispid=$!
+
+	make hiredis-test
+
+	# make sure socket is available before we start running tests
+	local _n=100 # wait up to 10 sec
+	while ! [ -e "$builddir"/redis.sock ] && [ $_n -gt 0 ]; do
+		sleep 0.1s
+		let _n="$_n - 1"
+	done
+
+	./hiredis-test -s "$builddir"/redis.sock || (kill $_redispid && false)
+	kill $_redispid
+}
+
+package() {
+	make USE_SSL=1 PREFIX="$pkgdir"/usr install
+}
+
+ssl() {
+	amove usr/lib/libhiredis_ssl.so*
+}
+
+sha512sums="
+f8984abb29c09e7e6b56e656616c5155f36c53da4161a2d4c85688486411cadcdf20aa1adb9bda208c500b401c750871be1c8d58ba9df5328634d00e9d1b6589  hiredis-1.2.0-99.tar.gz
+"

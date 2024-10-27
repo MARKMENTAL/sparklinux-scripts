@@ -1,0 +1,34 @@
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=py3-cloudpickle
+pkgver=3.0.0
+pkgrel=1
+pkgdesc="Extended pickling support for Python objects"
+url="https://pypi.org/project/cloudpickle/"
+arch="noarch"
+license="BSD-3-Clause"
+makedepends="py3-flit-core py3-gpep517 py3-installer py3-wheel"
+checkdepends="py3-pytest py3-psutil py3-tornado py3-typing-extensions py3-numpy"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/cloudpipe/cloudpickle/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/cloudpickle-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+e091cc0de2489c06e020fac2852d25f7fd832036a2b2c4c34f0cda0c642a1c65413fc0f21dc51fec75803e7c7da37f26f613620150acd9ab4aa2bb7b1eaabb79  py3-cloudpickle-3.0.0.tar.gz
+"

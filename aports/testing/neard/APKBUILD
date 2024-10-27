@@ -1,0 +1,55 @@
+# Contributor: Minecrell <minecrell@minecrell.net>
+# Maintainer: Minecrell <minecrell@minecrell.net>
+pkgname=neard
+pkgver=0.19
+pkgrel=0
+pkgdesc="Near Field Communication manager"
+url="https://01.org/linux-nfc/"
+arch="all"
+license="GPL-2.0-only"
+depends="dbus"
+makedepends="glib-dev dbus-dev libnl3-dev autoconf autoconf-archive automake libtool"
+subpackages="$pkgname-dev $pkgname-doc $pkgname-openrc"
+source="
+	https://git.kernel.org/pub/scm/network/nfc/neard.git/snapshot/neard-$pkgver.tar.gz
+	neard.initd
+	"
+
+prepare() {
+	default_prepare
+	./bootstrap
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var \
+		--disable-systemd \
+		--enable-tools
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	# Avoid conflicts with other packages
+	mv "$pkgdir"/usr/include/version.h "$pkgdir"/usr/include/near/version.h
+
+	install -m755 -D "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
+
+	mkdir -p "$pkgdir"/usr/share/dbus-1/system.d/
+	mv "$pkgdir"/etc/dbus-1/system.d/* "$pkgdir"/usr/share/dbus-1/system.d/
+}
+
+sha512sums="
+577061c214365853667033a2ae9f78a367adcbf07f2d7a70087c484ac31b410d34c003f396da622604f8844f30d44cba01f0d8a7cadebfd4c4c6457996541b48  neard-0.19.tar.gz
+6e28ffa74687cc409856d8966d9e794e523254781133e61adb81007ed00b7f057122ca8dfa967684312a613e9a3898865844320e4302990046d871a0a9b66eb5  neard.initd
+"

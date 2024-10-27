@@ -1,0 +1,60 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Maintainer: Sören Tempel <soeren+alpine@soeren-tempel.net>
+pkgname=hy
+pkgver=1.0.0
+pkgrel=0
+pkgdesc="Dialect of Lisp that's embedded in Python"
+url="http://hylang.org/"
+arch="noarch"
+license="MIT"
+depends="python3 py3-funcparserlib py3-rply py3-colorama"
+makedepends="py3-setuptools py3-sphinx py3-sphinxcontrib-hydomain py3-sphinx_rtd_theme py3-wheel py3-gpep517"
+checkdepends="python3-tests py3-pytest py3-pytest-runner py3-tox"
+options="net"
+subpackages="$pkgname-pyc"
+#subpackages="$pkgname-doc $pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/hylang/hy/archive/$pkgver.tar.gz"
+
+# By default setup.py tries to determine the hy version using
+# git-describe(1). Unfourtunatly, this will return the version
+# of the aports repository on Alpine.
+export HY_VERSION="$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+
+	# TODO: Building the documentation requires py3-sphinx == 5.0.2.
+	#cd docs
+	#sphinx-build . _build -b man
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	gpep517 install-wheel --destdir .testenv --prefix '' .dist/*.whl
+	# Ignore tests requiring binaries to be installed
+	.testenv/bin/python3 -m pytest \
+		--ignore tests/test_bin.py \
+		--ignore tests/test_hy2py.py
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+
+	# XXX: See comment regarding documentation above.
+	# local man
+	# for man in docs/_build/*.?; do
+	# 	install -Dm644 "$man" \
+	# 		"$pkgdir"/usr/share/man/man${man##*.}/${man##*/}
+	# done
+
+	# This file is only needed for setuptools-produced source
+	# distributions <https://github.com/hylang/hy/commit/bd7b8bf5e19e>.
+	rm -rf "$pkgdir"/usr/get_version
+}
+
+sha512sums="
+a0a5fa40191638e82b98477b1b546be5791f0c27f8cfd1e0403c5c05be7ca23c694b50d3aa458bd83c2bdecac89fac68541f0a39a9aee8a4fad2e5e533805fa4  hy-1.0.0.tar.gz
+"

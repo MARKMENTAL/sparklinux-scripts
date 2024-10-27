@@ -1,0 +1,42 @@
+# Contributor: TimotheeLF <timotheel-f@protonmail.com>
+# Maintainer: TimotheeLF <timotheel-f@protonmail.com>
+pkgname=callaudiod
+pkgver=0.1.10
+pkgrel=0
+pkgdesc="Call audio routing daemon"
+url="https://gitlab.com/mobian1/callaudiod"
+arch="all"
+license="GPL-3.0-or-later"
+makedepends="meson alsa-lib-dev glib-dev pulseaudio-dev"
+subpackages="
+	$pkgname-dev
+	$pkgname-libs
+	callaudiocli
+	"
+source="https://gitlab.com/mobian1/callaudiod/-/archive/$pkgver/callaudiod-$pkgver.tar.gz"
+
+build() {
+	abuild-meson -Db_lto=true . output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	depends="callaudiocli=$pkgver-r$pkgrel"
+	provider_priority=100
+
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+callaudiocli() {
+	pkgdesc="CLI for callaudiod"
+
+	amove usr/bin/callaudiocli
+}
+
+sha512sums="
+de58893941b01ef4982f7204dcc62b5cb4b4a6401adfc9083a50d087dbdce7a7989a4b7947fdf65433088cd781cef4224edc9b1a3c183296559bc8e6c3916b4e  callaudiod-0.1.10.tar.gz
+"

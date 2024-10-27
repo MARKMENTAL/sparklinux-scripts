@@ -1,0 +1,109 @@
+# Maintainer: Alex Xu (Hello71) <alex_y_xu@yahoo.ca>
+pkgname=libjxl
+pkgver=0.10.2
+pkgrel=0
+_testdata_commit=873045a9c42ed60721756e26e2a6b32e17415205
+pkgdesc="JPEG XL image format reference implementation"
+url="https://jpeg.org/jpegxl/"
+# s390x fails like most of the tests, implying it's broken
+arch="all !s390x"
+license="Apache-2.0"
+makedepends="
+	asciidoc
+	brotli-dev
+	clang
+	cmake
+	gdk-pixbuf-dev
+	gflags-dev
+	giflib-dev
+	gtest-dev
+	highway-dev
+	lcms2-dev
+	libjpeg-turbo-dev
+	libpng-dev
+	lld
+	llvm
+	openexr-dev
+	samurai
+	zlib-dev
+	"
+subpackages="$pkgname-doc $pkgname-tools $pkgname-dev $pkgname-pixbuf-loader"
+source="https://github.com/libjxl/libjxl/archive/v$pkgver/libjxl-v$pkgver.tar.gz
+	libjxl-testdata-$_testdata_commit.tar.gz::https://github.com/libjxl/testdata/archive/$_testdata_commit.tar.gz
+	no-werror.patch
+	"
+
+# with -fstack-clash-protection/-D_GLIBCXX_ASSERTIONS, a lot of these just segfault
+case "$CARCH" in
+x86) options="$options !check" ;;
+esac
+
+prepare() {
+	default_prepare
+	rmdir testdata
+	ln -sfv "$srcdir"/testdata-$_testdata_commit testdata
+	rmdir third_party/skcms
+}
+
+build() {
+	case "$CARCH" in
+	riscv64)
+		;;
+	*)
+		# fails on riscv
+		export CFLAGS="$CFLAGS -flto=thin"
+		export CXXFLAGS="$CXXFLAGS -flto=thin"
+		export CC=clang
+		export CXX=clang++
+		export LDFLAGS="$LDFLAGS -fuse-ld=lld"
+		;;
+	esac
+
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBUILD_SHARED_LIBS=ON \
+		-DBUILD_TESTING="$(want_check && echo ON || echo OFF)" \
+		-DJPEGXL_ENABLE_PLUGINS=ON \
+		-DJPEGXL_ENABLE_PLUGIN_GIMP210=OFF \
+		-DJPEGXL_ENABLE_BENCHMARK=OFF \
+		-DJPEGXL_ENABLE_COVERAGE=OFF \
+		-DJPEGXL_ENABLE_EXAMPLES=OFF \
+		-DJPEGXL_ENABLE_FUZZERS=OFF \
+		-DJPEGXL_ENABLE_SJPEG=OFF \
+		-DJPEGXL_ENABLE_SKCMS=OFF \
+		-DJPEGXL_ENABLE_VIEWERS=OFF \
+		-DJPEGXL_FORCE_SYSTEM_GTEST=ON \
+		-DJPEGXL_FORCE_SYSTEM_BROTLI=ON \
+		-DJPEGXL_FORCE_SYSTEM_HWY=ON
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+tools() {
+	pkgdesc="JPEG XL image format reference implementation tools (cjxl, djxl)"
+	amove usr/bin/*
+}
+
+loader() {
+	pkgdesc="$pkgdesc (pixbuf loader)"
+	install_if="$pkgname=$pkgver-r$pkgrel gdk-pixbuf-loaders"
+
+	amove \
+		usr/lib/gdk-pixbuf-* \
+		usr/share/mime \
+		usr/share/thumbnailers
+}
+
+sha512sums="
+1d19f30c0ae94e212326a15dc128612bce207e619c55c2a020401a27d01a933de71bb35e907521dc8fd853dd5578d74d74f7a5a282f0083fd22cf9cb07ccb96e  libjxl-v0.10.2.tar.gz
+31bfccc8421e98cb80cea111ead0ea7d14016c77ad10fd804d783419e61892257688e1fcf89f956166e3242b522349ad22da985b96a9d3129c66be2aa60793b6  libjxl-testdata-873045a9c42ed60721756e26e2a6b32e17415205.tar.gz
+93911a350d1515d9ea9a3c2ee1e1f4c6a6daa702ebd551c1a193bda1f8dea70cbe3ecfd1bdee2fc812cb2ea1c10195870ed0e447f557dc09e7c8a55466199646  no-werror.patch
+"

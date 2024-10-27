@@ -1,0 +1,32 @@
+# Contributor: Fabian Affolter <fabian@affolter-engineering.ch>
+# Maintainer: Fabian Affolter <fabian@affolter-engineering.ch>
+pkgname=libewf
+pkgver=20231119
+pkgrel=0
+pkgdesc="Library to support the Expert Witness Compression Format"
+url="https://libewf.sourceforge.net/"
+arch="all"
+license="LGPL-2.0-or-later"
+depends_dev="zlib-dev bzip2-dev openssl-dev>3"
+makedepends="$depends_dev fuse-dev"
+subpackages="$pkgname-dev libewf-libs $pkgname-doc"
+source="https://github.com/libyal/libewf/releases/download/$pkgver/libewf-experimental-$pkgver.tar.gz"
+
+build() {
+	# fix build on gcc6
+	# export CFLAGS="$CFLAGS -std=gnu89"
+	./configure \
+		--prefix=/usr \
+		--mandir=/usr/share/man \
+		--disable-nls \
+		--disable-static
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+dbfc3be295f81217c316a401a2df61d2bd94f5e6d365b2754e7648e8e27435a578eb93769dd3142de4c849b8167ac5af96a2edbb30281ca11065674101f26fcc  libewf-experimental-20231119.tar.gz
+"

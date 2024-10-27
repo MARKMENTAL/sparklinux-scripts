@@ -1,0 +1,34 @@
+# Contributor: Nathan Caldwell <saintdev@gmail.com>
+# Maintainer: Nathan Caldwell <saintdev@gmail.com>
+# NOTE: For now we must use vendored libfuse, see the URL below for details.
+#       https://github.com/trapexit/mergerfs/blob/2.27.0/README.md#why-was-libfuse-embedded-into-mergerfs
+pkgname=mergerfs
+pkgver=2.40.2
+pkgrel=0
+pkgdesc="A FUSE based union filesystem"
+url="https://github.com/trapexit/mergerfs"
+arch="all"
+license="ISC"
+depends="libattr"
+makedepends="autoconf automake libtool gettext-dev attr-dev linux-headers"
+options="suid !check" # No test suite
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/trapexit/mergerfs/archive/$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+	echo "$pkgver" > "$builddir"/VERSION
+}
+
+build() {
+	export GIT_CEILING_DIRECTORIES="$srcdir"
+	make OPTS="$CXXFLAGS"
+}
+
+package() {
+	make PREFIX="/usr" DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+b491007ef14ebd9c9193e730cccd7a178fb7d96426066d5a61cc654eae0b81824a3bf25258b1fafd248f4454ebe55787653f3d906cdc2e89a5cd0884db534876  mergerfs-2.40.2.tar.gz
+"

@@ -1,0 +1,36 @@
+# Contributor: Clayton Craft <clayton@craftyguy.net>
+# Maintainer: Clayton Craft <clayton@craftyguy.net>
+pkgname=py3-evdev
+pkgver=1.7.1
+pkgrel=0
+pkgdesc="Python bindings to the kernel's generic input event interface (evdev) and to uinput"
+url="https://github.com/gvalkov/python-evdev"
+arch="all"
+license="BSD-3-Clause"
+depends="libevdev python3"
+makedepends="
+	linux-headers
+	py3-setuptools
+	python3-dev
+	"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="https://github.com/gvalkov/python-evdev/archive/v$pkgver/py3-evdev-$pkgver.tar.gz"
+builddir="$srcdir/python-evdev-$pkgver"
+options="!check"  # tests broken: https://github.com/gvalkov/python-evdev/issues/153
+
+build() {
+	python3 setup.py build
+}
+
+check() {
+	python3 -m pytest
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+802ba7c252a8817c60480db90b28e89b8356580d7b7f6a35725c70fcacbcabb3d3216330f6639ece940d901434cf1617d7682d344b7428fd5c5b6ab940700ff8  py3-evdev-1.7.1.tar.gz
+"

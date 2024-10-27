@@ -1,0 +1,75 @@
+# Contributor: Mathias LANG <pro.mathias.lang@gmail.com>
+# Maintainer: Mathias LANG <pro.mathias.lang@gmail.com>
+pkgname=dmd
+pkgver=2.109.1
+pkgrel=0
+pkgdesc="D Programming Language reference compiler"
+url="https://github.com/dlang/dmd"
+# TODO: Enable on x86 once LDC-1.20.1 is out (and enabled on x86)
+arch="x86_64"
+license="BSL-1.0"
+depends="llvm-libunwind-dev tzdata"
+makedepends="chrpath ldc"
+subpackages="$pkgname-doc"
+source="dmd-$pkgver.tar.gz::https://github.com/dlang/dmd/archive/v$pkgver.tar.gz
+	phobos-$pkgver.tar.gz::https://github.com/dlang/phobos/archive/v$pkgver.tar.gz
+
+	dmd-install-config.conf
+	10-dmd-musl.patch
+	"
+builddir="$srcdir"
+options="!check" # todo
+
+prepare() {
+	# The Makefiles make some assumption about the directory structure
+	ln -s "$srcdir/dmd-$pkgver/" "$srcdir/dmd"
+	ln -s "$srcdir/phobos-$pkgver/" "$srcdir/phobos"
+
+	default_prepare
+}
+
+build() {
+	export HOST_DMD="ldmd2"
+
+	local generated="$builddir"/dmd/generated
+
+	cd "$builddir"/dmd
+	mkdir generated
+	ldmd2 -ofgenerated/build -g compiler/src/build.d -release -O
+	generated/build BUILD=release HOST_DMD="$HOST_DMD" CXX="c++" ENABLE_RELEASE=1 DFLAGS="$DFLAGS" dmd -v $MAKEFLAGS
+
+	cd "$builddir"/dmd/druntime
+	make -f posix.mak DMD="$generated"/linux/release/*/dmd BUILD=release ENABLE_RELEASE=1 PIC=1
+
+	cd "$builddir"/phobos
+	make -f posix.mak DMD="$generated"/linux/release/*/dmd BUILD=release ENABLE_RELEASE=1 PIC=1
+
+	cd "$builddir"/dmd/compiler
+	make -C docs DMD="$HOST_DMD"
+
+	# Strip redundant rpath to avoid warnings in the builder
+	chrpath -d "$builddir"/dmd/generated/linux/release/64/dmd
+}
+
+package() {
+	mkdir -p "$pkgdir"/usr/lib/ "$pkgdir"/usr/include/dmd/phobos/
+
+	install -Dm755 dmd/generated/linux/release/64/dmd -t "$pkgdir"/usr/bin/
+	install -Dm644 dmd-install-config.conf "$pkgdir"/etc/dmd.conf
+
+	install -Dm644 dmd/generated/docs/man/man1/dmd.1 -t "$pkgdir"/usr/share/man/man1/
+	install -Dm644 dmd/generated/docs/man/man5/* -t "$pkgdir"/usr/share/man/man5/
+
+	install -Dm755 phobos/generated/linux/release/64/*.so* -t "$pkgdir"/usr/lib/
+	install -Dm755 phobos/generated/linux/release/64/*.a -t "$pkgdir"/usr/lib/
+
+	cp -r phobos/etc phobos/std phobos/*.d "$pkgdir"/usr/include/dmd/phobos/
+	cp -r dmd/druntime/import "$pkgdir"/usr/include/dmd/druntime
+}
+
+sha512sums="
+d4b6d4da6ff9f471ea028688fa3694440d3cf3b98f30f7a3665f0a61e667b4f78c2d4554d4ea2d78a0ab2c890e74b079150b6759fdc1ac612b9e374a730b837c  dmd-2.109.1.tar.gz
+712478d2fb60a792ce5703062f0af3bafcddb54970cb8b9b579b8cd2ff560f958c7007d18dd4a66f7d4f25f74b8765505fe2de59c1756a4f679c2064f8025bcb  phobos-2.109.1.tar.gz
+123ec0f256a73030a5e5b4b87a7f2e0752320777b7fcd175a221807ec2917f5d6d88776c3448eab077eb7a2211dd4a3d64e3a556053b0f183eb058da437bc5da  dmd-install-config.conf
+928874c8a6acc593f2ac54b785ff551bc16b53ec647c4c7e19b5f19d609f02b200e550d1ee3d024bf969ef417b705c3448ce590adbe9a113a03e9372718a0f55  10-dmd-musl.patch
+"

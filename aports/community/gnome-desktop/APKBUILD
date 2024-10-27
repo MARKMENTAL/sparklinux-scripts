@@ -1,0 +1,93 @@
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: team/gnome <ablocorrea@hotmail.com>
+pkgname=gnome-desktop
+pkgver=44.1
+pkgrel=0
+pkgdesc="GNOME desktop core libraries"
+url="https://gitlab.gnome.org/GNOME/gnome-desktop"
+arch="all"
+license="GPL-2.0-or-later AND LGPL-2.1-or-later"
+depends_dev="gobject-introspection-dev gsettings-desktop-schemas-dev"
+makedepends="$depends_dev
+	eudev-dev
+	fontconfig-dev
+	gdk-pixbuf-dev
+	glib-dev
+	gtk-doc
+	gtk+3.0-dev
+	gtk4.0-dev
+	iso-codes-dev
+	itstool
+	libseccomp-dev
+	libxml2-utils
+	meson
+	xkeyboard-config-dev
+	"
+options="!check" # Can't find its own GSettings schemas
+subpackages="
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-lang
+	$pkgname-dbg
+	$pkgname-debug
+	libgnome-bg-4:bg_four
+	libgnome-desktop-3:three
+	libgnome-desktop-4:four
+	libgnome-rr-4:rr_four
+	"
+# Patch: https://gitlab.gnome.org/GNOME/gnome-desktop/-/merge_requests/158
+source="https://download.gnome.org/sources/gnome-desktop/${pkgver%.*}/gnome-desktop-$pkgver.tar.xz"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dudev=enabled \
+		-Dbuild_gtk4=true \
+		-Dlegacy_library=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	depends="
+		libgnome-bg-4=$pkgver-r$pkgrel
+		libgnome-desktop-3=$pkgver-r$pkgrel
+		libgnome-desktop-4=$pkgver-r$pkgrel
+		libgnome-rr-4=$pkgver-r$pkgrel
+		"
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+bg_four() {
+	amove usr/lib/girepository-*/GnomeBG-4.0.typelib
+	amove usr/lib/libgnome-bg-4.so.*
+}
+
+three() {
+	depends="bubblewrap"
+	amove usr/lib/girepository-*/GnomeDesktop-3.0.typelib
+	amove usr/lib/libgnome-desktop-3.so.*
+}
+
+four() {
+	depends="bubblewrap"
+	amove usr/lib/girepository-*/GnomeDesktop-4.0.typelib
+	amove usr/lib/libgnome-desktop-4.so.*
+}
+
+rr_four() {
+	amove usr/lib/girepository-*/GnomeRR-4.0.typelib
+	amove usr/lib/libgnome-rr-4.so.*
+}
+
+debug() {
+	amove usr/libexec/gnome-desktop-debug
+}
+
+sha512sums="
+a939793a6870693f132cabb6dd5f06d0f2744cf97a9dc4b7a2b04c9a5aa09aa56f2f6d7630199a42d0d4e539ae724b54b91d4f9fe9ea2f785d854c58b2d8dd5f  gnome-desktop-44.1.tar.xz
+"

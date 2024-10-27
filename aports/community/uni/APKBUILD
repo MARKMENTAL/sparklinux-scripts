@@ -1,0 +1,37 @@
+# Contributor: omni <omni@gitlab.alpinelinux.org>
+# Maintainer: omni <omni@gitlab.alpinelinux.org>
+pkgname=uni
+pkgver=2.8.0
+pkgrel=0
+pkgdesc="Query the Unicode database from the commandline"
+url="https://github.com/arp242/uni"
+license="MIT"
+arch="all"
+makedepends="go"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/arp242/uni/archive/v$pkgver.tar.gz"
+
+export GOFLAGS="$GOFLAGS -trimpath -mod=readonly -modcacherw"
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -v .
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	install -Dm755 uni -t "$pkgdir"/usr/bin/
+
+	install -Dm644 LICENSE -t "$pkgdir"/usr/share/licenses/"$pkgname"/
+	install -Dm644 CHANGELOG.md README.md -t "$pkgdir"/usr/share/doc/"$pkgname"/
+	install -Dm755 dmenu-uni -t "$pkgdir"/usr/share/doc/"$pkgname"/examples/
+}
+
+sha512sums="
+3adc4eb2a57fa53d0081892b9b1d46d640342b0b28dcd945c4fcb42336e4178a113604f036127a11a0fed3feec989170150b70ce176a3720f962ae74f8fae4dc  uni-2.8.0.tar.gz
+"

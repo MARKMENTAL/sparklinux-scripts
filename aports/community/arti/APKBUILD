@@ -1,0 +1,71 @@
+# Contributor: omni <omni+alpine@hack.org>
+# Maintainer: omni <omni+alpine@hack.org>
+pkgname=arti
+pkgver=1.2.7
+pkgrel=0
+pkgdesc="An implementation of Tor, in Rust"
+url="https://docs.rs/arti/latest/arti/"
+license="GPL-3.0-or-later"
+# s390x: merlin crate doesn't support big-endian targets
+# riscv64: https://gitlab.torproject.org/tpo/core/arti/-/issues/1398
+arch="all !riscv64 !s390x"
+makedepends="cargo openssl-dev>3 sqlite-dev zstd-dev xz-dev cargo-auditable"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://gitlab.torproject.org/tpo/core/arti/-/archive/arti-v$pkgver/arti-arti-v$pkgver.tar.gz
+	disable_system_time_conversion_patch
+	"
+builddir="$srcdir/$pkgname-$pkgname-v$pkgver"
+
+prepare() {
+	default_prepare
+	cargo fetch --target="$CTARGET" --locked
+
+	# Rust target triple.
+	local target=$(rustc -vV | sed -n 's/host: //p')
+
+	# Build against system-provided libs
+	mkdir -p .cargo
+	cat >> .cargo/config.toml <<-EOF
+		[target.$target]
+		zstd = { rustc-link-lib = ["zstd"] }
+	EOF
+
+	case "$CARCH" in
+	arm*|x86)
+		patch crates/tor-hsservice/src/time_store.rs \
+		"$srcdir"/disable_system_time_conversion_patch
+		;;
+	esac
+}
+
+build() {
+	cargo auditable build --release --frozen --features=full --package arti
+}
+
+check() {
+	case $CARCH in
+	loongarch64|ppc64le)
+		# error: failed to run custom build command for `ring v0.16.20`
+		./target/release/arti --version
+		;;
+	*)
+		cargo test --frozen
+		;;
+	esac
+}
+
+package() {
+	install -Dm755 -t "$pkgdir"/usr/bin/ target/release/arti
+	install -Dm755 -t "$pkgdir"/usr/share/doc/"$pkgname"/ \
+		doc/bridges.md \
+		doc/Compatibility.md \
+		doc/FAQ.md \
+		doc/OnionService.md \
+		doc/SupportPolicy.md \
+		CHANGELOG.md README.md
+}
+
+sha512sums="
+5163ffb81ab592eddb94c924effaac8ca713c1eddc62d7af572f1d1bf65628db179d5d6bbabdcdad78194dc23fca7baf11c60cda5a39a5638fbbcfe6ac4a0adf  arti-1.2.7.tar.gz
+a68d7c99b1d1d73b4c8c725d7c69486bb732b3b2c28df339f2e56f842c17417aa89fe8ba41f1017bd4c7e550e1e8a2b886071b8f96c0e2863855698cb8767810  disable_system_time_conversion_patch
+"

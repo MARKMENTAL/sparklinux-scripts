@@ -1,0 +1,36 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=sndio
+pkgver=1.10.0
+pkgrel=0
+pkgdesc="Small audio and MIDI framework part of the OpenBSD project"
+url="https://sndio.org/"
+arch="all"
+license="ISC"
+makedepends="alsa-lib-dev"
+subpackages="$pkgname-dev $pkgname-doc $pkgname-libs $pkgname-openrc"
+install="$pkgname.pre-install"
+source="https://sndio.org/sndio-$pkgver.tar.gz
+	sndiod.initd
+	"
+
+build() {
+	./configure --prefix=/usr
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	mkdir -p "$pkgdir"/usr/sbin
+	mv "$pkgdir"/usr/bin/sndiod "$pkgdir"/usr/sbin/
+	install -D -m 644 contrib/default.sndiod \
+		"$pkgdir"/etc/conf.d/sndiod
+	install -m755 -D "$srcdir"/${pkgname}d.initd \
+		"$pkgdir"/etc/init.d/${pkgname}d
+
+}
+
+sha512sums="
+c35462976a1bffd128eacb185165964dac6b03505255e9ab9a933e24be5ed146cd9ac6995fd7af23247cb9133c010cce0876572db53b783ebabeb563fec7a1cf  sndio-1.10.0.tar.gz
+888534ff6076e7e216c158fb4a7f430e5d519f2a1a96072d5b4017ece5db8cf135a0183023f5a621549f4db249808e6d6b033abec90de6dcbe5ad5c0273fd1c3  sndiod.initd
+"

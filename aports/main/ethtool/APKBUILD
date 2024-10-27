@@ -1,0 +1,34 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=ethtool
+pkgver=6.10
+pkgrel=0
+pkgdesc="Utility for controlling network drivers and hardware"
+url="https://mirrors.edge.kernel.org/pub/software/network/ethtool/"
+arch="all"
+license="GPL-2.0-only"
+makedepends="linux-headers libmnl-dev"
+subpackages="$pkgname-doc $pkgname-bash-completion"
+source="https://www.kernel.org/pub/software/network/ethtool/ethtool-$pkgver.tar.xz"
+
+build() {
+	CFLAGS="$CFLAGS -flto=auto" \
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--mandir=/usr/share/man
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+1b6a0f5d2b89de57d1f003779557f2be786e26660ec430e80a966ad047f2fe1fe41bb573738b93454f32cf9089000ae879fc7feba0532bb559636a301ea61b10  ethtool-6.10.tar.xz
+"

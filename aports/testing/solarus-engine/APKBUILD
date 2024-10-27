@@ -1,0 +1,64 @@
+# Contributor: Díaz Urbaneja Diego <sodomon2@gmail.com>
+# Maintainer: Díaz Urbaneja Diego <sodomon2@gmail.com>
+pkgname=solarus-engine
+_realname=solarus
+pkgver=1.7.0
+_commit_ver=a44ae4b2a2f5289dc00bdf123eee239c99fab3b5
+pkgrel=0
+pkgdesc="Solarus is an open-source adventure 2D game engine written in C++"
+url="https://solarus-games.org/"
+arch="all !ppc64le !riscv64 !loongarch64" # no luajit found
+license="GPL-3.0-Only"
+depends="
+	libvorbis
+	libogg
+	libmodplug
+	luajit
+	mesa
+	openal-soft
+	physfs
+	qt5-qtbase
+	qt5-qttools
+	sdl2
+	sdl2_image
+	sdl2_ttf
+	"
+makedepends="
+	cmake
+	glm-dev
+	libvorbis-dev
+	libogg-dev
+	libmodplug-dev
+	luajit-dev
+	mesa-dev
+	openal-soft-dev
+	physfs-dev
+	qt5-qtbase-dev
+	qt5-qttools-dev
+	sdl2-dev
+	sdl2_image-dev
+	sdl2_ttf-dev
+	"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://gitlab.com/solarus-games/solarus/-/archive/$_commit_ver/solarus-$_commit_ver.tar.gz"
+builddir="$srcdir/$_realname-$_commit_ver"
+
+build() {
+	cmake -B build \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DSOLARUS_GUI=ON
+	make -C build/
+}
+
+check() {
+	ctest -L
+}
+
+package() {
+	make -C build DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+d1b95fffd643eb2fc984d6a8f511704d65d130a4d639634c31912bbadc5d67044723ad088a9085a528de0276627ed3e3db926d8415b58f35f1bc548265b4ea0e  solarus-engine-1.7.0.tar.gz
+"

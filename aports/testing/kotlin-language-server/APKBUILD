@@ -1,0 +1,31 @@
+# Contributor: Matthias Ahouansou <matthias@ahouansou.cz>
+# Maintainer: Matthias Ahouansou <matthias@ahouansou.cz>
+pkgname=kotlin-language-server
+pkgver=1.3.7
+pkgrel=0
+pkgdesc="Kotlin code completion, linting and more for any editor/IDE using the Language Server Protocol"
+url="https://github.com/fwcd/kotlin-language-server"
+arch="x86_64" # blocked by openjdk11, rest don't build, time out, or fail to build tests
+license="MIT"
+checkdepends="maven"
+depends="openjdk11"
+source="$pkgname-$pkgver.tar.gz::https://github.com/fwcd/kotlin-language-server/archive/refs/tags/$pkgver.tar.gz"
+options="!archcheck"
+
+build() {
+	./gradlew :server:installDist
+}
+
+check() {
+	./gradlew :server:test
+}
+
+package() {
+	mkdir -p "$pkgdir"/usr/share/kotlin "$pkgdir"/usr/bin
+	cp -r server/build/install/server "$pkgdir"/usr/share/kotlin/kotlin-language-server
+	ln -sf /usr/share/kotlin/kotlin-language-server/bin/kotlin-language-server "$pkgdir"/usr/bin/kotlin-language-server
+}
+
+sha512sums="
+78ec728cdef1c1ac75804a25f9884f71e5af4c39a9275504aa87f9bd9588cd02eb8da4ffb04de9f50b5afb70e32d73f4ae53097e253b33b40f8162925760fbaf  kotlin-language-server-1.3.7.tar.gz
+"

@@ -1,0 +1,30 @@
+# Contributor: Kaarle Ritvanen <kunkku@alpinelinux.org>
+# Maintainer: Kaarle Ritvanen <kunkku@alpinelinux.org>
+pkgname=py3-django-tables2
+pkgver=2.7.0
+pkgrel=1
+pkgdesc="Table/data-grid framework for Django"
+url="https://github.com/jieter/django-tables2"
+arch="noarch"
+license="BSD-2-Clause"
+depends="python3 py3-django"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+options="!check" #no testsuite
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/d/django-tables2/django-tables2-$pkgver.tar.gz"
+builddir="$srcdir"/django-tables2-$pkgver
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+75aab97a279eaca8fe7c83dd901bc9447e8a435ad9a56c93147370f82b439f286ef9ee3b0a697d1a48500b544515edb331c37866499d9df55a7d29b0a105bf22  django-tables2-2.7.0.tar.gz
+"

@@ -1,0 +1,32 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=libnymphcast
+pkgver=0.2
+pkgrel=0
+arch="all"
+url="https://github.com/MayaPosch/libnymphcast"
+pkgdesc="NymphCast Client Library"
+license="BSD-3-Clause"
+depends_dev="
+	nymphrpc-dev
+	poco-dev
+	"
+makedepends="$depends_dev"
+subpackages="$pkgname-static $pkgname-dev $pkgname-doc"
+source="https://github.com/MayaPosch/libnymphcast/archive/v$pkgver/libnymphcast-v$pkgver.tar.gz"
+options="!check" # No unit tests
+builddir="$srcdir/libnymphcast-$pkgver"
+
+build() {
+	make
+}
+
+package() {
+	DESTDIR="$pkgdir" make PREFIX=/usr install
+	mkdir -p "$pkgdir"/usr/share/doc
+	cp -r doc "$pkgdir"/usr/share/doc/$pkgname/
+}
+
+sha512sums="
+d41ac7248a8013388524788167347ce09259f024a1a8159c721c922ca046ca7826bad83f1ee5aebf97dd32e1aa3c09849e20e48aa4757c735ad3fa981f4b07cc  libnymphcast-v0.2.tar.gz
+"

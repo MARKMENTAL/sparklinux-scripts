@@ -1,0 +1,30 @@
+diff --git a/Makefile b/Makefile
+index 1f9dcce..05ed55b 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,15 +1,12 @@
+ .PHONY: all clean install uninstall debug man compose test-harness
+ VERSION=2.4.3
+-COMMIT=$(shell git describe --no-match --always --abbrev=7 --dirty)
+ VKBD=uinput
+ PREFIX=/usr
+ 
+ CONFIG_DIR=/etc/keyd
+ SOCKET_PATH=/var/run/keyd.socket
+ 
+-CFLAGS:=-DVERSION=\"v$(VERSION)\ \($(COMMIT)\)\" \
+-	-I/usr/local/include \
+-	-L/usr/local/lib \
++CFLAGS:=-DVERSION=\"v$(VERSION)\" \
+ 	-Wall \
+ 	-Wextra \
+ 	-Wno-unused \
+@@ -34,7 +31,7 @@ endif
+ all:
+ 	-mkdir bin
+ 	cp scripts/keyd-application-mapper bin/
+-	$(CC) $(CFLAGS) -O3 $(COMPAT_FILES) src/*.c src/vkbd/$(VKBD).c -lpthread -o bin/keyd $(LDFLAGS)
++	$(CC) $(CFLAGS) $(COMPAT_FILES) src/*.c src/vkbd/$(VKBD).c -lpthread -o bin/keyd $(LDFLAGS)
+ debug:
+ 	CFLAGS="-g -Wunused" $(MAKE)
+ compose:

@@ -1,0 +1,39 @@
+# Contributor: Sodface <sod@sodface.com>
+# Maintainer: Sodface <sod@sodface.com>
+pkgname=cagebreak
+pkgver=2.3.1
+pkgrel=1
+pkgdesc="Wayland tiling compositor inspired by Ratpoison"
+url="https://github.com/project-repo/cagebreak"
+license="MIT"
+arch="all"
+options="!check" # no test suite
+depends="xwayland"
+makedepends="
+	libevdev-dev
+	meson
+	pango-dev
+	scdoc
+	wayland-protocols
+	wlroots0.17-dev
+	"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/project-repo/cagebreak/archive/$pkgver.tar.gz"
+
+build() {
+	# defaults to debug build without buildtype=release
+	abuild-meson \
+		--buildtype=release \
+		-Dman-pages=true \
+		-Dxwayland=true \
+		build
+	meson compile -C build
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C build
+}
+
+sha512sums="
+a32424d8327826946fba108970a3de20b770bc228f0de040246e8acd7ff6183d256391a80e2294de773f86a0f9034d728c96a59d276a7612d36053a3188c923f  cagebreak-2.3.1.tar.gz
+"

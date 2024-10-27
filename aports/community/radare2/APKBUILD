@@ -1,0 +1,154 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Contributor: Valery Kartel <valery.kartel@gmail.com>
+# Contributor: stef <l0ls0fo2i@ctrlc.hu>
+# Contributor: Jose-Luis Rivas <ghostbar@riseup.net>
+# Maintainer: omni <omni+alpine@hack.org>
+pkgname=radare2
+pkgver=5.9.4
+pkgrel=0
+pkgdesc="Opensource, crossplatform reverse engineering framework"
+url="https://www.radare.org/"
+arch="all"
+license="GPL-3.0-or-later AND LGPL-2.0-or-later AND LGPL-2.1-or-later"
+options="net !check" # upstream does not provide any working testsuite
+makedepends="
+	capstone-dev
+	file-dev
+	libzip-dev
+	linux-headers
+	lz4-dev
+	meson
+	xxhash-dev
+	zlib-dev
+	"
+subpackages="
+	$pkgname-dbg
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-libs
+	$pkgname-zsh-completion:zshcomp:noarch
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/radare/radare2/archive/$pkgver.tar.gz"
+
+# secfixes:
+#   5.8.2-r0:
+#     - CVE-2023-0302
+#   5.8.0-r0:
+#     - CVE-2022-4398
+#   5.7.2-r0:
+#     - CVE-2022-34520
+#     - CVE-2022-34502
+#   5.7.0-r0:
+#     - CVE-2022-1437
+#     - CVE-2022-1444
+#     - CVE-2022-1451
+#     - CVE-2022-1452
+#     - CVE-2022-1649
+#     - CVE-2022-1714
+#     - CVE-2022-1809
+#     - CVE-2022-1899
+#   5.6.8-r0:
+#     - CVE-2022-1061
+#     - CVE-2022-1207
+#     - CVE-2022-1237
+#     - CVE-2022-1238
+#     - CVE-2022-1244
+#     - CVE-2022-1283
+#     - CVE-2022-1284
+#     - CVE-2022-1296
+#     - CVE-2022-1297
+#     - CVE-2022-1382
+#     - CVE-2022-1383
+#   5.6.6-r0:
+#     - CVE-2022-0849
+#     - CVE-2022-1031
+#     - CVE-2022-1052
+#     - CVE-2022-1240
+#   5.6.4-r0:
+#     - CVE-2022-0476
+#     - CVE-2022-0676
+#     - CVE-2022-0695
+#     - CVE-2022-0712
+#     - CVE-2022-0713
+#   5.6.2-r0:
+#     - CVE-2022-0518
+#     - CVE-2022-0519
+#     - CVE-2022-0520
+#     - CVE-2022-0521
+#     - CVE-2022-0522
+#     - CVE-2022-0523
+#     - CVE-2022-0559
+#   5.6.0-r0:
+#     - CVE-2022-0139
+#     - CVE-2022-0173
+#     - CVE-2022-0419
+#   5.5.4-r0:
+#     - CVE-2021-44974
+#     - CVE-2021-44975
+#   5.5.2-r0:
+#     - CVE-2021-4021
+#   5.4.0-r0:
+#     - CVE-2021-3673
+#   5.3.1-r0:
+#     - CVE-2021-32613
+#   4.5.1-r0:
+#     - CVE-2020-16269
+#     - CVE-2020-17487
+#   4.5.0-r0:
+#     - CVE-2020-15121
+#   4.4.0-r0:
+#     - CVE-2020-27793
+#     - CVE-2020-27794
+#     - CVE-2020-27795
+#   4.0.0-r0:
+#     - CVE-2019-19590
+#     - CVE-2019-19647
+#   3.9.0-r0:
+#     - CVE-2019-14745
+#     - CVE-2019-12865
+#     - CVE-2019-12829
+#     - CVE-2019-12802
+#     - CVE-2019-12790
+
+build() {
+	local _disable_debugger=
+	if [ "$CARCH" = "s390x" ]; then
+		_disable_debugger="-Ddebugger=false"
+	fi
+
+	abuild-meson \
+		$_disable_debugger \
+		-Duse_sys_magic=true \
+		-Duse_sys_zlib=true \
+		-Duse_sys_lz4=true \
+		-Duse_sys_xxhash=true \
+		-Duse_sys_zip=true \
+		-Duse_sys_capstone=true \
+		-Dwant_capstone=true \
+		. output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+
+	# Install additional documentation files
+	for file in doc/*; do
+		if [ -f "$file" ]; then
+			install -Dm644 -t "$pkgdir"/usr/share/doc/$pkgname "$file"
+		fi
+	done
+
+	# Create soname.major.minor symlinks which the meson build
+	# system doesn't create by default (GNU autotools did though).
+	for file in "$pkgdir"/usr/lib/libr_*.so.?.?.?; do
+		name=${file##*/} # basename with major.minor.patch
+		major=${name%.*} # basename with major.minor
+
+		ln -s "$name" "$pkgdir/usr/lib/$major"
+	done
+}
+
+sha512sums="
+51d42b6d98027d3f3d85570e79ea18a8f220c145e3451fd10d82eea1a0542648f83447bb6cb6f5bbf76241677a2412bf064ffbade75e69b486c6148543aa4b0f  radare2-5.9.4.tar.gz
+"

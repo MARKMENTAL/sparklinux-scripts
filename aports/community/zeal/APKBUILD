@@ -1,0 +1,44 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=zeal
+pkgver=0.7.0
+pkgrel=0
+pkgdesc="Offline documentation browser inspired by Dash"
+url="https://zealdocs.org/"
+arch="all !ppc64le !s390x !riscv64 !loongarch64"  # blocked by qt5-qtwebengine
+license="GPL-3.0-only"
+depends="hicolor-icon-theme"
+makedepends="
+	cmake
+	extra-cmake-modules
+	libarchive-dev
+	qt5-qtbase-dev
+	qt5-qtwebengine-dev
+	qt5-qtx11extras-dev
+	samurai
+	sqlite-dev
+	xcb-util-keysyms-dev
+	"
+source="https://github.com/zealdocs/zeal/releases/download/v$pkgver/zeal-$pkgver.tar.gz"
+options="!check"  # no tests provided
+
+build() {
+	local crossopts=
+	if [ "$CBUILD" != "$CHOST" ]; then
+		crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -G Ninja -B build \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBUILD_SHARED_LIBS=OFF \
+		$crossopts .
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+724e5393ae5aa9dcd511d31c94697ca24e9a80fa530705005811ff7ae4766e6326a2c04647f662b8e2e5acd9104a805cc8b16bd24ec6e7774977fa0fa44843ae  zeal-0.7.0.tar.gz
+"

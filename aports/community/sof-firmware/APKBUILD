@@ -1,0 +1,28 @@
+# Maintainer: Hugo Osvaldo Barrera <hugo@whynothugo.nl>
+pkgname=sof-firmware
+pkgver=2024.03
+pkgrel=1
+pkgdesc="Sound Open Firmware"
+url="https://github.com/thesofproject/sof-bin"
+arch="noarch"
+license="BSD-3-Clause AND MIT AND ISC"
+options="!check"
+subpackages="$pkgname-doc"
+source="https://github.com/thesofproject/sof-bin/releases/download/v$pkgver/sof-bin-$pkgver.tar.gz"
+builddir="$srcdir/sof-bin-$pkgver"
+
+provides="sof-bin=$pkgver-r$pkgrel"
+replaces="sof-bin"
+
+package() {
+	mkdir -p "$pkgdir"/usr/share/licenses \
+		"$pkgdir"/lib/firmware/intel
+
+	cp -a sof* "$pkgdir"/lib/firmware/intel/
+
+	install -m644 LICENCE.* Notice.* "$pkgdir"/usr/share/licenses/
+}
+
+sha512sums="
+1e9891d3891f5a4413a77a68ea6d3a2e6ead8c1a67eaa7e9aaf30871753617ffce19bd3b85ebcbb617e606646f6aa0e1dafee5279c294ec72ef4b2885e009f72  sof-bin-2024.03.tar.gz
+"

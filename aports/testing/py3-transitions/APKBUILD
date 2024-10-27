@@ -1,0 +1,46 @@
+# Contributor: Fabian Affolter <fabian@affolter-engineering.ch>
+# Maintainer: Fabian Affolter <fabian@affolter-engineering.ch>
+pkgname=py3-transitions
+_pyname=transitions
+pkgver=0.9.2
+pkgrel=0
+pkgdesc="A lightweight, object-oriented Python state machine implementation"
+url="https://github.com/pytransitions/transitions"
+arch="noarch"
+license="MIT"
+depends="py3-six"
+makedepends="py3-setuptools py3-gpep517"
+checkdepends="py3-pytest py3-pycodestyle py3-graphviz"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/${_pyname:0:1}/$_pyname/$_pyname-$pkgver.tar.gz"
+builddir="$srcdir"/$_pyname-$pkgver
+options="!check" # fail with py311
+
+replaces="py-transitions" # Backwards compatibility
+provides="py-transitions=$pkgver-r$pkgrel" # Backwards compatibility
+
+prepare() {
+	default_prepare
+	rm tests/test_codestyle.py
+}
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	gpep517 install-wheel --destdir .testenv --prefix '' .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+695ab61e1af9f90b7d5a348efab55aee6cd69b1689fa4bf4a93512e1e4f19890bb4e4e5d0e81007cc41b3e95dee42c3c8bd85aa6b285643546d44b6014ea1204  transitions-0.9.2.tar.gz
+"

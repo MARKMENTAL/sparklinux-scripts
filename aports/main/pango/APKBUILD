@@ -1,0 +1,64 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Contributor: Natanael Copa <ncopa@alpinelinux.org>
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Simon Zeni <simon@bl4ckb0ne.ca>
+pkgname=pango
+pkgver=1.54.0
+pkgrel=0
+pkgdesc="library for layout and rendering of text"
+url="https://www.pango.org/"
+arch="all"
+license="LGPL-2.1-or-later"
+depends_dev="pango-tools=$pkgver-r$pkgrel"
+makedepends="
+	cairo-dev
+	expat-dev
+	fontconfig-dev
+	fribidi-dev
+	glib-dev
+	gobject-introspection-dev
+	gtk-doc
+	harfbuzz-dev
+	help2man
+	libxft-dev
+	meson
+	"
+checkdepends="font-dejavu font-cantarell font-droid font-tlwg"
+install="$pkgname.pre-deinstall"
+triggers="$pkgname.trigger=/usr/lib/pango/*/modules"
+subpackages="$pkgname-dbg $pkgname-dev $pkgname-doc $pkgname-tools"
+source="https://download.gnome.org/sources/pango/${pkgver%.*}/pango-$pkgver.tar.xz
+	disable-broken-test.patch
+	"
+
+# secfixes:
+#   1.44.1-r0:
+#     - CVE-2019-1010238
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dintrospection=enabled \
+		-Dgtk_doc=false \
+		build
+	meson compile -C build
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C build
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C build
+}
+
+tools() {
+	pkgdesc="$pkgdesc (tools)"
+
+	amove usr/bin
+}
+
+sha512sums="
+b08792a811e033b2dc9ae78278ea522fad1064de3a4d33460271eb0502613ee21d2c82349f8e7d8f59d59e0c020b7a3a8efa194572e16e2e78db422956fd97ea  pango-1.54.0.tar.xz
+b347c5dcdbe2a19f1d801193a3d309d3c14ff8474759b3ec74cc7d4714a3ac6aacce8b4ae770ba5172524a7be5654820839c5edd689d3957a2b55fedc875a5fb  disable-broken-test.patch
+"

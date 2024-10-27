@@ -1,0 +1,49 @@
+# Contributor: Hoang Nguyen <folliekazetani@protonmail.com>
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=ticker
+pkgver=4.6.3
+pkgrel=0
+pkgdesc="Terminal stock watcher and stock position tracker"
+url="https://github.com/achannarasappa/ticker"
+arch="all"
+license="GPL-3.0-or-later"
+makedepends="go"
+subpackages="
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="$pkgname-$pkgver.tar.gz::https://github.com/achannarasappa/ticker/archive/refs/tags/v$pkgver.tar.gz"
+options="!check" # fail presently with current yahoo finance api response
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -v -o bin/ticker \
+		-ldflags "-X github.com/achannarasappa/ticker/cmd.Version=v$pkgver"
+
+	./bin/ticker completion bash > ticker.bash
+	./bin/ticker completion zsh > ticker.zsh
+	./bin/ticker completion fish > ticker.fish
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	install -Dm755 bin/$pkgname "$pkgdir"/usr/bin/$pkgname
+
+	install -Dm644 ticker.bash \
+		"$pkgdir"/usr/share/bash-completion/completions/ticker
+	install -Dm644 ticker.fish \
+		"$pkgdir"/usr/share/fish/vendor_completions.d/ticker.fish
+	install -Dm644 ticker.zsh \
+		"$pkgdir"/usr/share/zsh/site-functions/_ticker
+}
+
+sha512sums="
+b18f737bd61f6fc8be58534fd8eab1290339a038c936f2f168a6d1ea244f1c23ceb63e0bf4d036c6b618ebeace2a21fa381bf9dd60d6dfaf0ab948e54bc46556  ticker-4.6.3.tar.gz
+"

@@ -1,0 +1,71 @@
+# Contributor: Justin Berthault <justin.berthault@zaclys.net>
+# Maintainer:
+pkgname=thonny
+pkgver=4.1.6
+pkgrel=0
+pkgdesc="Python IDE for beginners"
+url="https://thonny.org"
+arch="noarch !s390x" # py3-pylint
+license="MIT"
+depends="
+	openssl
+	py3-astroid
+	py3-asttokens
+	py3-docutils
+	py3-filelock
+	py3-gpep517
+	py3-jedi
+	py3-mypy
+	py3-pylint
+	py3-pyperclip
+	py3-pyserial
+	py3-send2trash
+	py3-setuptools
+	py3-wheel
+	python3-tkinter
+	"
+subpackages="$pkgname-lang $pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/t/thonny/thonny-$pkgver.tar.gz"
+options="!check" # Tests need a DISPLAY
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 setup.py test
+}
+
+package() {
+	local pythonpath="$(python3 -c \
+		"from sysconfig import get_path; print(get_path('platlib'))")"
+
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+	rm -r "$pkgdir$pythonpath"/thonny/vendored_libs/filelock
+
+	local appid="org.thonny.Thonny"
+	install -Dm644 packaging/linux/$appid.desktop \
+		-t "$pkgdir"/usr/share/applications
+	install -Dm644 packaging/linux/$appid.appdata.xml \
+		-t "$pkgdir"/usr/share/metainfo
+
+	local size
+	for size in 16 22 32 48 64 128 192 256; do
+		install -Dm644 packaging/icons/thonny-"$size"x"$size".png \
+			"$pkgdir"/usr/share/icons/hicolor/"$size"x"$size"/apps/thonny.png
+	done
+}
+
+lang() {
+	local pythonpath="$(python3 -c \
+		"from sysconfig import get_path; print(get_path('platlib'))")"
+
+	langdir="$pythonpath"/thonny/locale
+	default_lang
+}
+
+sha512sums="
+f7eeadc75a381b516a5f33fefeffe8580aae5149935c193b8f6c86b787c45114aa4a975a7fdc9c6405e02bba055cf0dbb872757e6d974526cd5b99828bed6278  thonny-4.1.6.tar.gz
+"

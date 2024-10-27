@@ -1,0 +1,60 @@
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Contributor: Antoni Aloy <aaloytorrens@gmail.com>
+pkgname=lomiri-download-manager
+pkgver=0.1.3
+pkgrel=3
+pkgdesc="Provides a service for downloading files while an application is suspended"
+arch="all"
+url="https://gitlab.com/ubports/development/core/lomiri-download-manager"
+license="LGPL-3.0-only"
+depends_dev="
+	boost-dev
+	glog-dev
+	gtest-dev
+	lomiri-api-dev
+	qt5-qtdeclarative-dev
+	qt5-qttools-dev
+	"
+makedepends="
+	$depends_dev
+	cmake
+	cmake-extras
+	doxygen
+	gmock
+	graphviz
+	samurai
+	"
+checkdepends="dbus-test-runner xvfb-run"
+source="https://gitlab.com/ubports/development/core/lomiri-download-manager/-/archive/$pkgver/lomiri-download-manager-$pkgver.tar.gz
+	0001-docs-use-qdoc-qt5-directly-instead-of-qtswitcher.patch
+	0001-Use-CMAKE_INSTALL_FULL_-for-installing.patch
+	"
+subpackages="$pkgname-dev $pkgname-doc $pkgname-lang"
+
+build() {
+	# Workaround to compile against glog 0.7.0+
+	export CXXFLAGS="$CXXFLAGS -DGLOG_USE_GLOG_EXPORT"
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_BUILD_TYPE=None \
+		-DUSE_SYSTEMD=OFF \
+		-DENABLE_WERROR=OFF
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+693dbaa85dc227a2c1ed26acc4bf662c888f45df544868906c9d405c62e32215a4825e03ba548ce3aa38f7c9a0c9c7c8e58198c4384c54aec343dfa47b7ab99c  lomiri-download-manager-0.1.3.tar.gz
+6b387c39a3073d9f7c3c90724db192490f435c1fef72489188908ee13e512b56234f8b0ac45469fd5f4cb1a961338f85a1534440c99ba992bc461547df7f024d  0001-docs-use-qdoc-qt5-directly-instead-of-qtswitcher.patch
+ad8e60484201053b93585a3f818409ba8c235d57590454084f0d3c3dcb2e62297fc277a2662f5dd1a19c0682fb3200089d752e01cd585ef7d4a6a7fcc52b9fd8  0001-Use-CMAKE_INSTALL_FULL_-for-installing.patch
+"

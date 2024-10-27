@@ -1,0 +1,30 @@
+# Maintainer: Andy Postnikov <apostnikov@gmail.com>
+pkgname=phpunit
+pkgver=9.6.11
+pkgrel=1
+pkgdesc="The PHP Unit Testing framework"
+url="https://phpunit.de/"
+arch="noarch"
+license="BSD-3-Clause"
+_php=php83
+depends="$_php
+	$_php-phar
+	$_php-dom
+	$_php-mbstring
+	$_php-tokenizer
+	$_php-xml
+	$_php-xmlwriter
+	"
+source="$pkgname-$pkgver.phar::https://phar.phpunit.de/phpunit-$pkgver.phar"
+
+check() {
+	$_php "$srcdir"/$pkgname-$pkgver.phar --version
+}
+
+package() {
+	install -m 0755 -D "$srcdir"/$pkgname-$pkgver.phar "$pkgdir"/usr/bin/$pkgname
+}
+
+sha512sums="
+7535a6e04ad256a92c7ebe4fedbcbafdf7a1ba123814bcbb95c3e3491b073eea25b73dae0bef4cc5687159f595ff3a0b62897d4dbd84c4c1fa3563457474b4da  phpunit-9.6.11.phar
+"

@@ -1,0 +1,47 @@
+# Maintainer:
+pkgname=libserdes
+pkgver=7.6.1
+pkgrel=0
+pkgdesc="Avro Serialization/Deserialization C/C++ library with Confluent schema-registry support"
+url="https://github.com/confluentinc/libserdes"
+# 32-bit: avro-dev
+arch="all !x86 !armhf !armv7"
+license="Apache-2.0"
+makedepends="
+	avro-dev
+	bash
+	bsd-compat-headers
+	curl-dev
+	"
+subpackages="$pkgname++:pp $pkgname-dev"
+source="$pkgname-$pkgver.tar.gz::https://github.com/confluentinc/libserdes/archive/refs/tags/v$pkgver.tar.gz"
+
+build() {
+	CFLAGS="$CFLAGS -O2 -flto=auto" \
+	CXXFLAGS="$CXXFLAGS -O2 -flto=auto" \
+	bash ./configure \
+		--prefix=/usr \
+		--host=$CHOST \
+		--build=$CBUILD \
+		--disable-dependency-tracking
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	rm "$pkgdir"/usr/lib/*.a
+	rm "$pkgdir"/usr/lib/pkgconfig/*-static.pc
+}
+
+pp() {
+	amove usr/lib/libserdes++.so.*
+}
+
+sha512sums="
+205617b50636ed865c974495233ff57107c33a4fe4493992943dd5817a98096cf0bf555fec767e398563b732068fc962b8adda037b109ccd54c969e5536cdc5a  libserdes-7.6.1.tar.gz
+"

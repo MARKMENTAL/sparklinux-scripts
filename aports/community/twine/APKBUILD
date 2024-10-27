@@ -1,0 +1,73 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=twine
+pkgver=4.0.2
+pkgrel=5
+pkgdesc="Collection of utilities for publishing packages on PyPI"
+url="https://twine.readthedocs.io/en/latest/"
+# loongarch64: blocked by py3-readme_renderer
+arch="noarch !loongarch64"
+license="Apache-2.0"
+depends="
+	py3-keyring
+	py3-pkginfo
+	py3-readme_renderer
+	py3-requests-toolbelt
+	py3-requests>=2.20.0
+	py3-rfc3986
+	py3-rich
+	py3-urllib3
+	python3
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools_scm
+	py3-wheel
+	"
+checkdepends="
+	py3-build
+	py3-flaky
+	py3-jaraco.envs
+	py3-munch
+	py3-portend
+	py3-pretend
+	py3-pytest
+	py3-pytest-cov
+	py3-pytest-socket
+	"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/t/twine/twine-$pkgver.tar.gz
+	importlib-metadata.patch
+	test-setup.patch
+	"
+
+# Backwards compatibility
+provides="py3-$pkgname=$pkgver-r$pkgrel"
+replaces="py3-$pkgname"
+
+build() {
+	export SETUPTOOLS_SCM_PRETEND_VERSION="$pkgver"
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	# deselect'ed tests require a network connection
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	gpep517 install-wheel --destdir .testenv --prefix '' .dist/*.whl
+	.testenv/bin/python3 -m pytest \
+		--deselect tests/test_integration.py \
+		--deselect tests/test_upload.py::test_check_status_code_for_wrong_repo_url \
+		-k "not test_metadata_dictionary_keys and not test_fips_metadata_excludes_md5_and_blake2 and not test_pkginfo_returns_no_metadata and not test_pkginfo_returns_no_metadata and not test_fails_rst_no_content"
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/twine-$pkgver-py3-none-any.whl
+}
+
+sha512sums="
+9c197bf09db4ffd9342eb6a23e90a44e37123e285bdfc02c47087fce3cb468f1b12f4e3c890e434a80ec3d5155c8e42e53f61459c2f0a580b252d0dc18d1acb7  twine-4.0.2.tar.gz
+6c6680d30867523bbe13995966b1313039ada9d09c4f78b43a043fc18a7d76648570013e43339273deb1475bfa9f323947c82ba4dc4d54465d54699a973c98b6  importlib-metadata.patch
+5ecb151a715f51e31039ca24c5a3c22fbd6868b1545b4c608b6d3183c7d17efc51b87485d3f69cd56d40e9bd4fafef722408455a21ce7a743dae4e76297a7180  test-setup.patch
+"

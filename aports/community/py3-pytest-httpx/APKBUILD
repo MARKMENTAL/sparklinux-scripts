@@ -1,0 +1,35 @@
+# Contributor: Duncan Bellamy <dunk@denkimushi.com>
+# Maintainer: Duncan Bellamy <dunk@denkimushi.com>
+pkgname=py3-pytest-httpx
+pkgver=0.31.0
+pkgrel=0
+pkgdesc="send responses to httpx"
+url="https://colin-b.github.io/pytest_httpx/"
+arch="all"
+license="MIT"
+depends="py3-httpx py3-pytest"
+makedepends="py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest-asyncio"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/Colin-b/pytest_httpx/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/pytest_httpx-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+eb2ef15445484dda5fd11f296a9c3a95e1b7f2c71eeb9ba26454e595572b2b14a70504e0b1cf342dcad91d291b254b314e709d2d25c9933e611de2230814b4d8  py3-pytest-httpx-0.31.0.tar.gz
+"

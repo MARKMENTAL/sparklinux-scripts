@@ -1,0 +1,132 @@
+# Contributor: Leonardo Arena <rnalrd@alpinelinux.org>
+# Contributor: August Klein <amatcoder@gmail.com>
+# Contributor: Orson Teodoro <orsonteodoro@hotmail.com>
+# Contributor: Max Rees <maxcrees@me.com>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=keepassxc
+pkgver=2.7.9
+pkgrel=0
+pkgdesc="Community-driven port of the Windows application Keepass Password Safe"
+url="https://keepassxc.org/"
+arch="all"
+license="GPL-2.0-only OR GPL-3.0-only"
+provides="dbus:org.freedesktop.Secrets"
+provider_priority=5 # Smallest priority, unusual setup
+depends="hicolor-icon-theme"
+makedepends="
+	argon2-dev
+	asciidoctor
+	botan3-dev
+	cmake
+	libqrencode-dev
+	libusb-dev
+	libxi-dev
+	libxtst-dev
+	minizip-dev
+	pcsc-lite-dev
+	qt5-qtbase-dev
+	qt5-qtsvg-dev
+	qt5-qttools-dev
+	qt5-qtx11extras-dev
+	readline-dev
+	samurai
+	zlib-dev
+	"
+checkdepends="dbus xvfb-run"
+install="$pkgname.post-upgrade"
+subpackages="
+	$pkgname-doc
+	$pkgname-lang::noarch
+	$pkgname-autotype
+	$pkgname-firefox-manifest:_firefox_manifest:noarch
+	"
+source="https://github.com/keepassxreboot/keepassxc/releases/download/$pkgver/keepassxc-$pkgver-src.tar.xz
+	doc-path.patch
+	org.keepassxc.keepassxc_browser.json
+	"
+
+build() {
+	export CXXFLAGS="$CXXFLAGS -flto=auto"
+
+	cmake -G Ninja -B build \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=/usr/lib \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DKEEPASSXC_BUILD_TYPE=Release \
+		-DWITH_XC_AUTOTYPE=ON \
+		-DWITH_XC_NETWORKING=ON \
+		-DWITH_XC_BROWSER=ON \
+		-DWITH_XC_BROWSER_PASSKEYS=ON \
+		-DWITH_XC_YUBIKEY=ON \
+		-DWITH_XC_SSHAGENT=ON \
+		-DWITH_XC_KEESHARE=ON \
+		-DWITH_XC_UPDATECHECK=OFF \
+		-DWITH_XC_FDOSECRETS=ON \
+		-DWITH_GUI_TESTS=ON
+	cmake --build build
+}
+
+check() {
+	cd build
+	case "$CARCH" in
+	riscv64)
+		CTEST_OUTPUT_ON_FAILURE=TRUE xvfb-run -a ctest \
+			-E '(testcli|testautotype|testentrysearcher|testpasskeys)' -j1
+			# QWARN  : TestAutoType::testGlobalAutoTypeWithOneMatch() Maximum depth of replacement has been reached. Entry uuid: {00000000-0000-0000-0000-000000000000}
+			# QFATAL : TestAutoType::testGlobalAutoTypeWithOneMatch() Received signal 4
+			# FAIL!  : TestEntrySearcher::testAndConcatenationInSearch() Compared values are not the same
+			# QFATAL : TestEntrySearcher::testSearch() Received signal 11
+			# QWARN  : TestPasskeys::testEntry() QObject::connect(MainWindow, BrowserService): invalid nullptr parameter
+			# QFATAL : TestPasskeys::testIsDomain() Received signal 11
+		;;
+	*)
+		CTEST_OUTPUT_ON_FAILURE=TRUE xvfb-run -a ctest \
+			-E 'testcli' -j1 # v2.7.4 testcli fails
+		;;
+	esac
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+
+	install -D -m 0644 -t "$pkgdir"/usr/lib/mozilla/native-messaging-hosts \
+		"$srcdir"/org.keepassxc.keepassxc_browser.json
+
+	install -D -m 0644 -t "$pkgdir"/usr/share/doc/$pkgname/ \
+		CHANGELOG.md README.md
+
+	rm -rf "$pkgdir"/usr/share/keepassxc/docs
+}
+
+lang() {
+	pkgdesc="Languages for package $pkgname"
+	depends=""
+	install_if="$pkgname=$pkgver-r$pkgrel lang"
+	local langdir='usr/share/keepassxc/translations'
+
+	amove $langdir
+
+	mkdir -p "$pkgdir"/$langdir
+	mv "$subpkgdir"/$langdir/keepassxc_en_US.qm "$pkgdir"/$langdir/
+}
+
+autotype() {
+	pkgdesc="KeePassXC Auto-Type feature for X11"
+	install_if="$pkgname=$pkgver-r$pkgrel xorg-server"
+	depends=""
+
+	amove usr/lib/keepassxc/libkeepassxc-autotype-xcb.so
+}
+
+_firefox_manifest() {
+	pkgdesc="KeePassXC native app manifest for Firefox (Browser extension not included)"
+	depends=""
+
+	amove usr/lib/mozilla
+}
+
+sha512sums="
+255102d3b3723a80cdd5f14cde2130b37807db226b48e985bcc2ab537b482e3fb23afde331e15ed02727e98b526d894aa4567f2e82039a2ad9d33a6ad9ea08a4  keepassxc-2.7.9-src.tar.xz
+f1d1978db4da56064f6f7eb37f61f82169020afc18de3be4afbe46f6bbb6292cc9551bf07a454a89bc5b09ebe72a153f08bff9f62492e3c1b69b6919da8be94e  doc-path.patch
+977f1f76c8c7be819b51417481664bf22d3138978f450bf2b762ebad8f4aee7f6384f090f66b5bee8c0a2a182d4f578c1c4c6cd9a2d80ab65716e24c65d43aee  org.keepassxc.keepassxc_browser.json
+"

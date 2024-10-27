@@ -1,0 +1,134 @@
+# Maintainer: Peter van Dijk <peter.van.dijk@powerdns.com>
+pkgname=dnsdist
+pkgver=1.9.6
+pkgrel=0
+pkgdesc="dnsdist is a highly DNS-, DoS-, and abuse-aware loadbalancer."
+url="https://dnsdist.org/"
+# riscv64: for some reason, gcc segfaults
+arch="all !riscv64"
+license="GPL-2.0-only WITH OpenSSL-Exception"
+depends="$pkgname-common"
+checkdepends="findutils"
+makedepends="
+	boost-dev
+	fstrm-dev
+	libedit-dev
+	libsodium-dev
+	lmdb-dev
+	lua5.4-dev
+	net-snmp-dev
+	nghttp2-dev
+	openssl-dev
+	re2-dev
+	wslay-dev
+	"
+pkgusers="dnsdist"
+pkggroups="dnsdist"
+install="$pkgname-common.pre-install"
+subpackages="$pkgname-common::noarch $pkgname-doc"
+source="https://downloads.powerdns.com/releases/dnsdist-${pkgver//_/-}.tar.bz2"
+builddir="$srcdir/$pkgname-${pkgver//_/-}"
+
+[ "$CARCH" = "ppc64le" ] && options="!check" # failing tests
+
+case "$CARCH" in
+ppc64le|riscv64|loongarch64)
+	_luajit=OFF
+	;;
+*)
+	makedepends="$makedepends luajit-dev"
+	subpackages="$subpackages $pkgname-luajit"
+	_luajit=ON
+	;;
+esac
+
+# secfixes:
+#   1.9.4-r0:
+#     - CVE-2024-25581
+
+prepare() {
+	default_prepare
+	if [ "$_luajit" = "ON" ]; then
+		cp -a "$builddir" "$builddir-jit"
+	fi
+}
+
+_configure() {
+	local arg="$1"
+	local lua
+
+	if [ "$arg" = '-jit' ]; then
+		lua="luajit"
+	else
+		lua="lua5.4"
+	fi
+
+	cd "$builddir$arg"
+
+	./configure \
+		--build="$CBUILD" \
+		--host="$CHOST" \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--enable-dnscrypt \
+		--enable-dns-over-tls \
+		--enable-dns-over-https \
+		--enable-unit-tests \
+		--with-re2 \
+		--with-boost=/usr/include \
+		--with-net-snmp \
+		--with-lua=$lua
+}
+
+build() {
+	_configure
+	make
+
+	[ -d "$builddir-jit" ] || return 0
+
+	_configure -jit
+	make
+}
+
+_cat_found_file() {
+	local _rc="$?"
+	find . -name "$1" -type f -ls -printf '%P {{{\n' -exec cat -v -n '{}' ';' -printf '}}} %P\n'
+	return "$_rc"
+}
+
+check() {
+	make check || _cat_found_file 'test-suite.log'
+	./dnsdist --version
+
+	if cd "$builddir-jit"; then
+		make check || _cat_found_file 'test-suite.log'
+		./dnsdist --version
+	fi
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+common() {
+	pkgdesc="$pkgname common files"
+	depends=""
+
+	mkdir -p "$subpkgdir"/etc
+	mv "$pkgdir"/etc/* "$subpkgdir"/etc
+}
+
+luajit() {
+	pkgdesc="$pkgname with luajit bindings"
+	depends="$pkgname-common"
+	provides="$pkgname=$pkgver-r$pkgrel"
+
+	cd "$builddir-jit"
+	make DESTDIR="$subpkgdir" install-exec
+	rm "$subpkgdir"/etc/*
+}
+
+sha512sums="
+8d0c88336864b788df320298678e2a8556d7c4ff468ec1b4165b87c2fe5c6c167a2c75cdd2df433346fac12694d8e39d30910b8d1d4be7f35d9e0d85edd5ef5a  dnsdist-1.9.6.tar.bz2
+"

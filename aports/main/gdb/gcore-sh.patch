@@ -1,0 +1,54 @@
+diff --git a/gdb/gcore.in b/gdb/gcore.in
+index 34860de..5ede1d4 100644
+--- a/gdb/gcore.in
++++ b/gdb/gcore.in
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env bash
++#!/bin/sh
+ 
+ #   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+ 
+@@ -25,17 +25,12 @@ prefix=core
+ 
+ # When the -a option is present, this may hold additional commands
+ # to ensure gdb dumps all mappings (OS dependent).
+-dump_all_cmds=()
++dump_all=0
+ 
+ while getopts :ao: opt; do
+     case "$opt" in
+         a)
+-            case "$OSTYPE" in
+-                linux*)
+-                    dump_all_cmds=("-ex" "set use-coredump-filter off")
+-                    dump_all_cmds+=("-ex" "set dump-excluded-mappings on")
+-                    ;;
+-            esac
++            dump_all=1
+             ;;
+         o)
+             prefix=$OPTARG
+@@ -97,11 +92,18 @@ for pid in "$@"
+ do
+ 	# `</dev/null' to avoid touching interactive terminal if it is
+ 	# available but not accessible as GDB would get stopped on SIGTTIN.
+-	"$binary_path/@GDB_TRANSFORM_NAME@" </dev/null \
+-	    --nx --batch --readnever -iex 'set debuginfod enabled off' \
+-	    -ex "set pagination off" -ex "set height 0" -ex "set width 0" \
+-	    "${dump_all_cmds[@]}" \
+-	    -ex "attach $pid" -ex "gcore $prefix.$pid" -ex detach -ex quit
++  if [ "$dump_all" -eq 1 ]; then
++  	"$binary_path/@GDB_TRANSFORM_NAME@" </dev/null \
++  	    --nx --batch --readnever -iex 'set debuginfod enabled off' \
++  	    -ex "set pagination off" -ex "set height 0" -ex "set width 0" \
++        -ex "set use-coredump-filter off" -ex "set dump-excluded-mappings on" \
++  	    -ex "attach $pid" -ex "gcore $prefix.$pid" -ex detach -ex quit
++  else
++  	"$binary_path/@GDB_TRANSFORM_NAME@" </dev/null \
++  	    --nx --batch --readnever -iex 'set debuginfod enabled off' \
++  	    -ex "set pagination off" -ex "set height 0" -ex "set width 0" \
++  	    -ex "attach $pid" -ex "gcore $prefix.$pid" -ex detach -ex quit
++  fi
+ 
+ 	if [ -r "$prefix.$pid" ] ; then
+ 	    rc=0

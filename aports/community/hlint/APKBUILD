@@ -1,0 +1,53 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Maintainer: Sören Tempel <soeren+alpine@soeren-tempel.net>
+pkgname=hlint
+pkgver=3.8
+pkgrel=1
+pkgdesc="Linter for Haskell source code"
+url="https://github.com/ndmitchell/hlint"
+arch="x86_64 aarch64" # limited by ghc
+license="BSD-3-Clause"
+makedepends="ghc cabal"
+options="net"
+source="https://hackage.haskell.org/package/hlint-$pkgver/hlint-$pkgver.tar.gz
+	cabal.project.freeze"
+
+# Directory were cabal files are stored.
+export CABAL_DIR="$srcdir/dist"
+
+# Needed to fix build on aarch64.
+export PATH="$PATH:/usr/lib/llvm15/bin"
+
+cabal_update() {
+	cd $builddir
+	cabal v2-update
+	(
+		cabal v2-freeze --shadow-installed-packages
+		mv cabal.project.freeze "$startdir/"
+	)
+}
+
+prepare() {
+	default_prepare
+	ln -sf "$srcdir/cabal.project.freeze" \
+		"$builddir/cabal.project.freeze"
+}
+
+build() {
+	cabal v2-update
+	cabal v2-build hlint:exes \
+		--jobs=${JOBS:-1} \
+		--prefix=/usr \
+		--docdir=/usr/share/doc/$pkgname \
+		--sysconfdir=/etc
+}
+
+package() {
+	# See https://github.com/haskell/cabal/issues/6919#issuecomment-761563498
+	cabal list-bin hlint:exes | xargs install -Dm755 -t "$pkgdir"/usr/bin
+}
+
+sha512sums="
+7dd1eb0195ebe1453aba0f690e2de65c9a4d487eac2f13b9e7ed013bb880033f75b599585634ae2582f316dc8e4745495caeb3986961f4ea7cb555f5905be95b  hlint-3.8.tar.gz
+c1e9f8435310ae3532adfed20487fdabf6d2d844450128f36239196381772f69f3733dc579aa089c7ccc553c73b8c888cce2f8f6e978d34c3d6d72641634a887  cabal.project.freeze
+"

@@ -1,0 +1,38 @@
+# Contributor: Grigory Kirillov <txgk@bk.ru>
+# Maintainer:
+pkgname=libbraiding
+pkgver=1.2
+pkgrel=2
+pkgdesc="Library for computations on braid groups"
+url="https://github.com/miguelmarco/libbraiding"
+arch="all"
+license="GPL-2.0-or-later"
+options="!check" # no test suite
+subpackages="$pkgname-dev"
+source="https://github.com/miguelmarco/libbraiding/releases/download/$pkgver/libbraiding-$pkgver.tar.gz"
+
+# update config sub to support loongarch64
+prepare() {
+	default_prepare
+	update_config_sub
+}
+
+build() {
+	export CFLAGS="${CFLAGS/-Os/-O3}" # gotta go fast
+
+	./configure \
+		--target="$CTARGET" \
+		--build="$CBUILD" \
+		--host="$CHOST" \
+		--prefix=/usr \
+		--disable-static
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+f3dcfa77d5313ecfa91c0b9a61988eb2048dd27ed77f46a5c34fc57adb9eee53b250946a7158918b3198559bd016c723dba98465036d01c482b5c6000ab59d8a  libbraiding-1.2.tar.gz
+"

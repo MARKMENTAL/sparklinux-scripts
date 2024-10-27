@@ -1,0 +1,44 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Contributor: Michał Polański <michal@polanski.me>
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=age
+pkgver=1.2.0
+pkgrel=0
+pkgdesc="Simple, modern and secure encryption tool"
+url="https://github.com/FiloSottile/age"
+license="BSD-3-Clause"
+arch="all"
+makedepends="go"
+subpackages="$pkgname-doc"
+source="https://github.com/FiloSottile/age/archive/v$pkgver/age-$pkgver.tar.gz"
+options="net" # Go modules
+
+case "$CARCH" in
+s390x)
+	# tests fail on s390x
+	# fix in https://github.com/rogpeppe/go-internal/pull/246 (unreleased)
+	options="$options !check"
+	;;
+esac
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	mkdir bin
+	go build -ldflags "-X main.Version=$pkgver" -o bin ./cmd/...
+}
+
+check() {
+	TMPDIR="$GOTMPDIR" go test ./...
+}
+
+package() {
+	install -Dm755 bin/* -t "$pkgdir"/usr/bin
+	install -Dm644 doc/*.1 -t "$pkgdir"/usr/share/man/man1
+}
+
+sha512sums="
+fddc7e6a68115d52f4b98957ef87a82cbf634ba38a028fb113370392d88af3e8b32991baabc1595280ecbd8e44bbc88dcea93e7336e7ffa2cbccfea0c953842f  age-1.2.0.tar.gz
+"

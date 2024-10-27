@@ -1,0 +1,66 @@
+# Contributor: Henrik Riomar <henrik.riomar@gmail.com>
+# Contributor:
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=swaylock
+pkgver=1.8.0
+pkgrel=0
+pkgdesc="Screen locker for Wayland"
+url="https://swaywm.org/"
+license="MIT"
+arch="all"
+makedepends="cairo-dev
+	gdk-pixbuf-dev
+	libxkbcommon-dev
+	linux-pam-dev
+	meson
+	ninja
+	scdoc
+	wayland-dev
+	wayland-protocols
+	"
+provider_priority=100  # highest (other provider is swaylock-effects)
+subpackages="
+	$pkgname-dbg
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="https://github.com/swaywm/swaylock/archive/v$pkgver/swaylock-$pkgver.tar.gz"
+options="!check" # no test suite
+
+# secfixes:
+#   1.6-r0:
+#     - CVE-2022-26530
+
+prepare() {
+	default_prepare
+	sed -i 's/login/base-auth/g' \
+		pam/swaylock
+
+	cat <<-__EOF__ >> pam/swaylock
+
+	# Unlock GNOME Keyring if available
+	-auth       optional     pam_gnome_keyring.so
+	-session    optional     pam_gnome_keyring.so auto_start
+
+	# Unlock KWallet if available
+	-auth    optional        pam_kwallet.so
+	-auth    optional        pam_kwallet5.so
+	-session optional        pam_kwallet.so auto_start
+	-session optional        pam_kwallet5.so auto_start
+	__EOF__
+}
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+950b608d3af010d4c68efb3468859e6b45632220cfb1597084eed457c1afc31afb7f75d49d316aae2b20c9849e8c7f1d37a288b6ca0c27f53994c2e43f97789f  swaylock-1.8.0.tar.gz
+"

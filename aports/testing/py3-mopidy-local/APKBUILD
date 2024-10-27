@@ -1,0 +1,42 @@
+# Maintainer: Hoang Nguyen <folliekazetani@protonmail.com>
+pkgname=py3-mopidy-local
+_pyname=${pkgname#py3-}
+pkgver=3.2.1
+pkgrel=4
+pkgdesc="Mopidy extension for playing music from local music archive"
+url="https://github.com/mopidy/mopidy-local"
+arch="noarch"
+license="Apache-2.0"
+depends="
+	mopidy
+	python3
+	py3-pykka
+	py3-uritools
+	"
+makedepends="py3-setuptools py3-gpep517"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="$_pyname-$pkgver.tar.gz::https://github.com/mopidy/mopidy-local/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/$_pyname-$pkgver"
+options="!check" # tests fail on CI
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	gpep517 install-wheel --destdir .testenv --prefix '' .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+2a34018306f9ca7b94e55c40f41e728329d10d6c530c58a7c5f58f6783b280069db27a1249e1d021126cda35be5f7cb1bc02affdd7b3eb7c77a4627fe588005f  mopidy-local-3.2.1.tar.gz
+"

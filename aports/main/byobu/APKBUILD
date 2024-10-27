@@ -1,0 +1,37 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=byobu
+pkgver=6.12
+pkgrel=0
+pkgdesc="An enhancement of the GNU Screen"
+url="https://byobu.org"
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="python3 tmux py3-newt"
+makedepends="automake autoconf libtool"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/dustinkirkland/byobu/archive/refs/tags/$pkgver.tar.gz"
+
+prepare() {
+	sh autogen.sh
+	default_prepare
+}
+
+build() {
+	./configure \
+		--prefix=/usr \
+		--sysconfdir=/etc
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+285c45ee333eb0be9fad797a28a5daf829b4575e19e9cee64a04f1dc4ccef1c505e6659c190d741c2f3aa5f546fe36fbfe75e36e79ce3cd1661a4738c40e221f  byobu-6.12.tar.gz
+"

@@ -1,0 +1,63 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: team/kde <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=kde-other
+pkgname=alkimia
+pkgver=8.1.2
+pkgrel=0
+# armhf blocked by qt5-qtdeclarative
+# armhf, ppc64le, riscv64, s390x, loongarch64 blocked by qt5-qtwebengine
+arch="all !armhf !ppc64le !s390x !riscv64 !loongarch64"
+url="https://community.kde.org/Alkimia/libalkimia"
+pkgdesc="A library with common classes and functionality used by finance applications for the KDE SC"
+license="GPL-3.0-or-later"
+makedepends="
+	doxygen
+	extra-cmake-modules
+	gmp-dev
+	graphviz
+	kcompletion5-dev
+	kconfig5-dev
+	kcoreaddons5-dev
+	kdoctools5-dev
+	ki18n5-dev
+	kiconthemes5-dev
+	kinit5-dev
+	kio5-dev
+	kitemmodels5-dev
+	knewstuff5-dev
+	kpackage5-dev
+	ktextwidgets5-dev
+	plasma-framework5-dev
+	qt5-qtbase-dev
+	qt5-qtdeclarative-dev
+	qt5-qtwebengine-dev
+	samurai
+	"
+checkdepends="xvfb-run"
+_repo_url="https://invent.kde.org/office/alkimia.git"
+source="https://download.kde.org/stable/alkimia/$pkgver/alkimia-$pkgver.tar.xz"
+subpackages="$pkgname-dev $pkgname-lang"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_WITH_WEBKIT=OFF \
+		-DBUILD_WITH_WEBENGINE=ON
+	cmake --build build
+}
+
+check() {
+	xvfb-run ctest --test-dir build --output-on-failure -E 'alkonlinequotestest'
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+019bb04623204efeb8a7a066213972cfdcb2634969f61adc8cc75deba89842a7d3e6cda056e05b68ad1f20a5ed6739c03531b10362732d7c7c92efc20bc58a1b  alkimia-8.1.2.tar.xz
+"

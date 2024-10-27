@@ -1,0 +1,37 @@
+# Contributor: Antoine Martin (ayakael) <dev@ayakael.net>
+# Maintainer: Antoine Martin (ayakael) <dev@ayakael.net>
+pkgname=py3-django-cleanup
+#_pkgreal is used by apkbuild-pypi to find modules at PyPI
+_pkgreal=django-cleanup
+pkgver=8.1.0
+pkgrel=1
+pkgdesc="Deletes old files."
+url="https://pypi.python.org/project/django-cleanup"
+arch="noarch"
+license="MIT"
+depends="py3-django"
+checkdepends="py3-pytest-django py3-coverage py3-pytest-cov py3-pytest-forked py3-pytest-xdist"
+makedepends="py3-setuptools py3-gpep517 py3-wheel"
+source="$pkgname-$pkgver.tar.gz::https://github.com/un1t/django-cleanup/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/$_pkgreal-$pkgver"
+subpackages="$pkgname-pyc"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -v
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+sha512sums="
+878080140720f84417a264b2e4dc15b4fa790ffe6a482a83a183b370f1035e311e20a20312c36d19c9e1f2d6279a1e8193269835d4273060bc0939bf3efe1799  py3-django-cleanup-8.1.0.tar.gz
+"

@@ -1,0 +1,42 @@
+# Contributor: Martin Schmidt <martin.schmidt13@gmx.de>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=openh264
+pkgver=2.4.1
+pkgrel=0
+options="!check"
+pkgdesc="OpenH264 is a codec library which supports H.264 encoding and decoding"
+url="https://github.com/cisco/openh264"
+arch="all"
+license="BSD-2-Clause"
+makedepends="nasm"
+subpackages="$pkgname-dev"
+source="$pkgname-$pkgver.tar.gz::https://github.com/cisco/openh264/archive/v$pkgver.tar.gz"
+
+build() {
+	# This is a codec, don't override opt level.
+	export CFLAGS=${CFLAGS/-Os/}
+	export CXXFLAGS=${CXXFLAGS/-Os/}
+
+	case "$CARCH" in
+	x86*|aarch64|armv7)
+		local asm="Yes"
+		;;
+	*)
+		local asm="No"
+		;;
+	esac
+
+	make ARCH="$CARCH" \
+		BUILDTYPE=Release \
+		USE_ASM=$asm \
+		ENABLEPIC=Yes \
+		HAVE_AVX2=No
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX="/usr" install
+}
+
+sha512sums="
+eb99144addd2e9c352bb95e752366e104ac6b0ddc84311dc7c87dafb803f8e7fe4d1e726833d49f8cc6d3914508e19c3a25ef82637a4993e8af3f504aa005baf  openh264-2.4.1.tar.gz
+"

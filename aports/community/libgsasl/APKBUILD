@@ -1,0 +1,46 @@
+# Contributor: Fabian Affolter <fabian@affolter-engineering.ch>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=libgsasl
+pkgver=2.2.1
+pkgrel=0
+pkgdesc="An implementation of the Simple Authentication and Security Layer framework"
+url="https://www.gnu.org/software/gsasl/"
+arch="all"
+license="LGPL-2.0-or-later"
+depends_dev="$pkgname-tools=$pkgver-r$pkgrel"
+makedepends="libidn-dev libgss-dev libgcrypt-dev krb5-dev"
+subpackages="$pkgname-dev $pkgname-doc $pkgname-tools"
+source="https://ftp.gnu.org/gnu/gsasl/gsasl-$pkgver.tar.gz"
+builddir="$srcdir/gsasl-$pkgver"
+
+build() {
+	./configure \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
+		--localstatedir=/var \
+		--with-libgcrypt \
+		--with-gssapi-impl=mit \
+		--disable-nls \
+		--disable-static
+	make
+}
+
+check() {
+	make tests
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+tools() {
+	pkgdesc="$pkgdesc (tools)"
+
+	amove usr/bin
+}
+
+sha512sums="
+161b8a315862a79807ba067c5ae840175b0d8ec14806aceafc3f92d571713b94d1b8c1a5b188c47bf94a79b9a1f133065f96b087baa5e7f360ae7fb8336381ab  gsasl-2.2.1.tar.gz
+"

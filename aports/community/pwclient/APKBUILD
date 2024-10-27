@@ -1,0 +1,34 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=pwclient
+pkgver=2.6.2
+pkgrel=1
+pkgdesc="The command-line client for the patchwork patch tracking tool"
+url="https://github.com/getpatchwork/pwclient"
+arch="noarch"
+license="GPL-2.0-or-later"
+depends="python3"
+makedepends="py3-setuptools py3-pbr"
+checkdepends="py3-pytest py3-pytest-cov py3-mock"
+subpackages="$pkgname-doc $pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/getpatchwork/pwclient/archive/$pkgver.tar.gz"
+
+build() {
+	export PBR_VERSION=$pkgver
+	python3 setup.py build
+}
+
+check() {
+	pytest
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+
+	mkdir -p "$pkgdir/usr/share/man/man1"
+	install -Dm644 man/pwclient.1 "$pkgdir/usr/share/man/man1/"
+}
+
+sha512sums="
+2763004b97de3c2801ade91df69fdda537d1b7fd39be69b9ca0857a0c0f0a535fb1f42783a073838d535d12f2a58983319ba36f8e869b194233adda617cdd0c6  pwclient-2.6.2.tar.gz
+"

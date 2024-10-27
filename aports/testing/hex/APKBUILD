@@ -1,0 +1,34 @@
+# Contributor: guddaff <guddaff@protonmail.com>
+# Maintainer: guddaff <guddaff@protonmail.com>
+pkgname=hex
+pkgver=0.6.0
+pkgrel=0
+pkgdesc="futuristic take on hexdump"
+url="https://github.com/sitkevij/hex"
+arch="x86_64 armv7 armhf aarch64 x86 ppc64le" # limited by rust/cargo
+license="MIT"
+makedepends="cargo cargo-auditable"
+source="$pkgname-$pkgver.tar.gz::https://github.com/sitkevij/hex/archive/refs/tags/v$pkgver.tar.gz"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test --release --locked
+}
+
+package() {
+	cargo auditable install --locked --path . --root="$pkgdir/usr"
+	rm "$pkgdir"/usr/.crates*
+}
+
+sha512sums="
+d5d787a34f1602c9ee1543844b59da83f81d70c1da16397b09ea96205e96f29fffd44a38d5a7f5655cf38626f3d3c73539afcde23d81e8f550758746f9dfc444  hex-0.6.0.tar.gz
+"

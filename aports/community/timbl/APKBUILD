@@ -1,0 +1,34 @@
+# Contributor: Maarten van Gompel <proycon@anaproy.nl>
+# Maintainer: Maarten van Gompel <proycon@anaproy.nl>
+pkgname=timbl
+pkgver=6.9
+pkgrel=1
+pkgdesc="implementation of several memory-based learning algorithms like IB1-IG (kNN) and IGTree"
+arch="all"
+url="https://github.com/LanguageMachines/timbl"
+license="GPL-3.0-only"
+makedepends="libtool libxml2-dev ticcutils-dev icu-dev"
+subpackages="$pkgname-dev $pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/LanguageMachines/timbl/releases/download/v$pkgver/timbl-$pkgver.tar.gz"
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--localstatedir=/var
+	make
+}
+
+check() {
+	LD_LIBRARY_PATH="$PWD/src/.libs/" make check
+}
+
+package() {
+	make DESTDIR=$pkgdir install
+}
+
+sha512sums="
+78bf90cb33e8f3b181f1a915cd2fe21425429372a93b082b60ccc86fce1e31a98f7e206338f2e575650c917faa238aaa48818f58278f4dc6c8d6ddf3da66b9f2  timbl-6.9.tar.gz
+"

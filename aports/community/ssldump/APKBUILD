@@ -1,0 +1,49 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=ssldump
+pkgver=1.8
+pkgrel=0
+pkgdesc="SSLv3/TLS network protocol analyzer"
+url="https://github.com/adulau/ssldump"
+arch="all"
+license="BSD-4-Clause"
+subpackages="$pkgname-doc"
+makedepends="
+	cmake
+	json-c-dev
+	libnet-dev
+	libpcap-dev
+	musl-fts-dev
+	openssl-dev>3
+	samurai
+	"
+source="https://github.com/adulau/ssldump/archive/v$pkgver/ssldump-$pkgver.tar.gz
+	fix-dirs.patch
+	"
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		local crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_MANDIR=/usr/share/man \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_BUILD_TYPE=None \
+		$crossopts
+	cmake --build build
+}
+
+check() {
+	ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build --prefix /usr
+	install -Dm644 COPYRIGHT -t "$pkgdir"/usr/share/licenses/$pkgname
+}
+
+sha512sums="
+5435187fa851cddd167a5ee7e79f8051752780512873195b215e8695430282338f22719e6ddd32bd4eae3cc9a385abd44a4b369f93dc201908696aaed214b9bc  ssldump-1.8.tar.gz
+b448cb82cac3918973a023218e41e718ae55751b62e292678ae7cae368a348049d9fce91f7b69a5417bd94da7bc7aa2bc6bb195cac7e02f87cb46a050ffd9052  fix-dirs.patch
+"

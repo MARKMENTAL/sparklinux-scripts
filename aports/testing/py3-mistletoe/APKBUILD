@@ -1,0 +1,37 @@
+# Contributor: Marian Buschsieweke <marian.buschsieweke@posteo.net>
+# Maintainer: Marian Buschsieweke <marian.buschsieweke@posteo.net>
+pkgname=py3-mistletoe
+_pkgname="${pkgname#py3-}"
+pkgver=1.2.1
+pkgrel=2
+pkgdesc="markdown parser in pure Python, designed to be fast, spec-compliant and fully customizable"
+url="https://github.com/miyuchina/mistletoe"
+arch="noarch"
+license="MIT"
+depends="py3-pygments"
+makedepends="py3-setuptools py3-gpep517"
+checkdepends="py3-pytest py3-requests py3-yaml py3-parameterized"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/miyuchina/mistletoe/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	gpep517 install-wheel --destdir .testenv --prefix '' .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+a6dc5dc021d001a0b34a4d6cb5007ef55958b93d143937ecde07602aaf25e3a9c3116be2ed8f8cd90353524cf8d4058239f4018b726bec007b13d917e6deefac  py3-mistletoe-1.2.1.tar.gz
+"

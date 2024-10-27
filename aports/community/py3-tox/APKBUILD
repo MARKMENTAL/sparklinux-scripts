@@ -1,0 +1,53 @@
+# Contributor: Stuart Cardall <developer@it-offshore.co.uk>
+# Maintainer: Stuart Cardall <developer@it-offshore.co.uk>
+pkgname=py3-tox
+_pkgname=${pkgname#py3-*}
+pkgver=4.6.4
+pkgrel=1
+pkgdesc="virtualenv management and test command line tool"
+options="!check" #  Requires community/py3-pathlib2, and unpackaged flaky
+url="https://tox.readthedocs.org/"
+arch="noarch"
+license="MIT"
+depends="
+	py3-cachetools
+	py3-chardet
+	py3-colorama
+	py3-filelock
+	py3-packaging
+	py3-platformdirs
+	py3-pluggy
+	py3-pyproject-api
+	py3-virtualenv
+	"
+makedepends="
+	py3-gpep517
+	py3-hatch-vcs
+	py3-hatchling
+	"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/${_pkgname:0:1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+replaces="py-tox" # Backwards compatibility
+provides="py-tox=$pkgver-r$pkgrel" # Backwards compatibility
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 setup.py test
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+b6a4673ea58e21b5e8b3d1330244d46ac7a36563a089b2e03cfcd7039386ab6afc437ebf4c516bbe373133a7beb54ebb380d39ab126be69f3601226f2273f3c2  tox-4.6.4.tar.gz
+"

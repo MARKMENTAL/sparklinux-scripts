@@ -1,0 +1,40 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=py3-gvm
+_pkgname=${pkgname/py3/python}
+# follow the same version of gvm-tools
+pkgver=24.6.0
+pkgrel=0
+pkgdesc="Greenbone Vulnerability Management Python Library "
+url="https://github.com/greenbone/python-gvm"
+arch="noarch"
+license="GPL-3.0-or-later"
+depends="python3 py3-paramiko py3-lxml py3-defusedxml py3-typing-extensions"
+makedepends="py3-gpep517 py3-installer py3-poetry-core"
+checkdepends="py3-defusedxml py3-pytest py3-lxml py3-paramiko py3-pontos"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/greenbone/$_pkgname/archive/v${pkgver/_/.}.tar.gz"
+builddir="$srcdir/$_pkgname-${pkgver/_/.}"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	# hangs
+	.testenv/bin/python3 -m pytest \
+		--deselect=tests/connections/test_ssh_connection.py
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+b67de4562655389db90780bfdc79629702fe9a74c1ca8310924389e73ef9351ca989f6e00922af14a2462b8797b89b6ed96dc74ebbca59b698292523f523d8d2  py3-gvm-24.6.0.tar.gz
+"

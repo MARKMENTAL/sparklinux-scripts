@@ -1,0 +1,90 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Contributor: Rasmus Thomsen <oss@cogitri.dev>
+# Maintainer: Pablo Correa Gomez <ablocorrea@hotmail.com>
+pkgname=appstream
+pkgver=1.0.2
+pkgrel=2
+pkgdesc="Provides a standard for creating app stores across distributions"
+url="https://distributions.freedesktop.org/wiki/AppStream"
+arch="all"
+license="LGPL-2.1-or-later"
+makedepends="
+	cairo-dev
+	curl-dev
+	fontconfig-dev
+	gdk-pixbuf-dev
+	glib-dev
+	gobject-introspection-dev
+	gperf
+	itstool
+	librsvg-dev
+	libxml2-dev
+	libxmlb-dev
+	meson
+	pango-dev
+	qt6-qtbase-dev
+	yaml-dev
+	"
+triggers="$pkgname.trigger=/usr/share/app-info/*:/var/cache/swcatalog/xml"
+install="$pkgname.post-install $pkgname.post-upgrade"
+subpackages="
+	$pkgname-dbg
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-qt
+	$pkgname-compose
+	$pkgname-lang
+	"
+source="https://www.freedesktop.org/software/appstream/releases/AppStream-$pkgver.tar.xz
+	"
+builddir="$srcdir/AppStream-$pkgver"
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Dqt=true \
+		-Dsystemd=false \
+		-Ddocs=false \
+		-Dapidocs=false \
+		-Dinstall-docs=false \
+		-Dstemming=false \
+		-Dvapi=false \
+		-Dapt-support=false \
+		-Dgir=true \
+		-Dcompose=true \
+		. output
+	meson compile -C output
+}
+
+check() {
+	XDG_RUNTIME_DIR="$builddir" \
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+
+	# Remove installed-tests, there is no switch to disable installing them
+	rm -rf "$pkgdir"/usr/share/installed-tests
+}
+
+compose() {
+	pkgdesc="Building blocks to compose AppStream metadata"
+
+	amove usr/lib/libappstream-compose*
+	amove usr/lib/girepository-*/AppStreamCompose*
+
+	# Needs so:libappstream-compose.so and thus needs
+	# to be moved to prevent a recursive dependency.
+	amove usr/libexec/appstreamcli-compose
+}
+
+qt() {
+	pkgdesc="Qt5 interface for AppStream"
+
+	amove usr/lib/libAppStreamQt.so.*
+}
+
+sha512sums="
+e5c109c383e3bf3af3693bfb3146663767c2c61fac0bd421f2ce52242fe7b869effeacc4d207987321dfeb4ab0ba77ece6c1c6eea054a7365204cd955426517a  AppStream-1.0.2.tar.xz
+"

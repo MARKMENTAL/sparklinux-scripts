@@ -1,0 +1,44 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: team/kde <bribbers@disroot.org>
+
+# The group tag is just to easily find this APKBUILD by some scripts for automation
+# group=kde-frameworks
+pkgname=kplotting
+pkgver=6.6.0
+pkgrel=0
+pkgdesc="Lightweight plotting framework"
+arch="all !armhf" # armhf blocked by extra-cmake-modules
+url="https://community.kde.org/Frameworks"
+license="LGPL-2.1-or-later"
+depends_dev="qt6-qtbase-dev"
+makedepends="$depends_dev
+	doxygen
+	extra-cmake-modules
+	qt6-qttools-dev
+	samurai
+	"
+checkdepends="xvfb-run"
+subpackages="$pkgname-dev $pkgname-doc"
+_repo_url="https://invent.kde.org/frameworks/kplotting.git"
+source="https://download.kde.org/stable/frameworks/${pkgver%.*}/kplotting-$pkgver.tar.xz"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_QCH=ON
+	cmake --build build
+}
+
+check() {
+	xvfb-run ctest --test-dir build --output-on-failure
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+sha512sums="
+829ab64852ee9578319221a5dcb4cbd1f2b9b5e9d3cefab77b0f8ab7f861c96be895aa819ee5cf2ba4080da5f3a91b522172515b135aba41a6c031e4df902dc7  kplotting-6.6.0.tar.xz
+"

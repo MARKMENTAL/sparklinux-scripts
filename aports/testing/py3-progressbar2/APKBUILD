@@ -1,0 +1,41 @@
+# Contributor: Marian Buschsieweke <marian.buschsieweke@posteo.net>
+# Maintainer: Marian Buschsieweke <marian.buschsieweke@posteo.net>
+pkgname=py3-progressbar2
+_pkgname=progressbar2
+pkgver=4.2.0
+pkgrel=3
+pkgdesc="Text progress bar library for Python"
+url="https://github.com/WoLpH/python-progressbar"
+arch="noarch !s390x" # py3-utils
+license="BSD-3-Clause"
+depends="python3 py3-utils py3-freezegun"
+makedepends="py3-setuptools py3-gpep517"
+checkdepends="py3-pytest py3-pytest-cov"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/${_pkgname:0:1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+replaces="py-progressbar" # for backwards compatibility
+provides="py-progressbar=$pkgver-r$pkgrel" # for backwards compatibility
+
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	gpep517 install-wheel --destdir .testenv --prefix '' .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	gpep517 install-wheel --destdir "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+d49c154e48bd730c2a7916ed53272ff20cb6fac8c9752734cf645d4701ffcdf25309bf493d03fdc5b6072a85b5f758332fa7448f307d4acc001ad4ab36303a68  progressbar2-4.2.0.tar.gz
+"

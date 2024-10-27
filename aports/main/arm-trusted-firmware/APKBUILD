@@ -1,0 +1,84 @@
+# Contributor: Milan P. Stanić <mps@arvanta.net>
+# Contributor: Maxim Karasev <begs@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=arm-trusted-firmware
+pkgver=2.8.14
+pkgrel=1
+pkgdesc="ARM Trusted Firmware-A (TF-A)"
+url="https://github.com/ARM-software/arm-trusted-firmware"
+# no lld on s390x, but it doesn't matter anyway as this is arm firmware
+arch="all !s390x"
+license="BSD-3-Clause"
+makedepends="
+	clang
+	dtc
+	lld
+	llvm
+	openssl-dev
+	"
+subpackages="$pkgname-tools"
+source="$pkgname-$pkgver.tar.gz::https://github.com/ARM-software/arm-trusted-firmware/archive/refs/tags/lts-v$pkgver.tar.gz
+	key_t.patch
+	rk3399.patch
+	"
+options="!check" # No tests
+builddir="$srcdir/$pkgname-lts-v$pkgver"
+
+_plats="
+	imx8mq
+	rk3328
+	rk3399
+	sun50i_a64
+	sun50i_h6
+	"
+
+build() {
+	unset LDFLAGS
+	if [ "$CARCH" = "aarch64" ]; then
+		for plat in $_plats; do
+			case "$plat" in
+				sun50i_a64|sun50i_h6)
+					local opts="SUNXI_SETUP_REGULATORS=1 SUNXI_AMEND_DTB=1"
+					;;
+			esac
+
+			msg "Building ATF for $plat (opts='$opts')"
+			LDFLAGS="$LDFLAGS -no-warn-rwx-segment" make E=0 PLAT=$plat bl31 $opts
+		done
+	fi
+
+	make -C tools/fiptool
+	make -C tools/cert_create
+}
+
+package() {
+	install -d "$pkgdir"/usr/share/$pkgname
+	if [ "$CARCH" = "aarch64" ]; then
+		for plat in $_plats; do
+			case $plat in
+			rk33*)
+				local path="$builddir"/build/$plat/release/bl31/bl31.elf
+				;;
+			*)
+				local path="$builddir"/build/$plat/release/bl31.bin
+				;;
+			esac
+			install -D $path -t "$pkgdir"/usr/share/$pkgname/$plat/
+		done
+	fi
+	install -Dm755 -t "$pkgdir"/usr/bin tools/fiptool/fiptool
+	install -Dm755 -t "$pkgdir"/usr/bin tools/cert_create/cert_create
+}
+
+tools() {
+	pkgdesc="$pkgdesc (tools)"
+
+	amove usr/bin/fiptool
+	amove usr/bin/cert_create
+}
+
+sha512sums="
+3283c13ba442a8d6231049c69091872888ae1b6cfb2ab1aea0c0aab28e34bb7cc82b99ec26fdfd96cd8cd0019e30fe6244c71aee183e8127397639a6621c58d5  arm-trusted-firmware-2.8.14.tar.gz
+71f59abbb3c53d975afe0f20456e8bd943f005aeeb14633f609ad7b7617d51c479a505b54f9c49f77e02ecdea233bc8dffecd31b79b86a38d9ad39f6b0dc1129  key_t.patch
+4b26d06cc5f23cd73515927624c164745dd144a0255a717052d80d904a58e001cb7b334ce1fa20cf21ba18b6e0f024da011321cb2c53dfb44ddd52ee24e31a66  rk3399.patch
+"

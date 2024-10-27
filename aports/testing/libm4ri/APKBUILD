@@ -1,0 +1,48 @@
+# Contributor: Grigory Kirillov <txgk@bk.ru>
+# Maintainer:
+pkgname=libm4ri
+pkgver=20240729
+pkgrel=0
+pkgdesc="Library for fast arithmetic with dense matrices over F2"
+url="https://github.com/malb/m4ri"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="
+	autoconf
+	automake
+	libpng-dev
+	libtool
+	"
+source="https://github.com/malb/m4ri/archive/release-$pkgver/m4ri-$pkgver.tar.gz"
+subpackages="$pkgname-static $pkgname-dev"
+builddir="$srcdir/m4ri-release-$pkgver"
+
+prepare() {
+	default_prepare
+	autoreconf -fi
+}
+
+build() {
+	export CFLAGS="${CFLAGS/-Os/-O3}" # gotta go fast
+
+	./configure \
+		--target="$CTARGET" \
+		--build="$CBUILD" \
+		--host="$CHOST" \
+		--prefix=/usr \
+		--enable-thread-safe \
+		--enable-openmp
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+afd74b0f9a1e3f16b313dca9a73fde85bd08aa431f0ad7064f09600434f27d6cabddc117cf99396dc8d83d245f81b7ed4185e305caad56dad79ecfefc11cf817  m4ri-20240729.tar.gz
+"

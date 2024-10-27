@@ -1,0 +1,55 @@
+# Contributor: Jakub Jirutka <jakub@jirutka.cz>
+# Maintainer: Jakub Jirutka <jakub@jirutka.cz>
+pkgname=pueue
+pkgver=3.4.1
+pkgrel=1
+pkgdesc="Manage your shell commands"
+url="https://github.com/nukesor/pueue"
+# s390x, loongarch64: fails to build nix crate
+arch="all !s390x !loongarch64"
+license="MIT"
+checkdepends="bash"
+makedepends="cargo cargo-auditable"
+subpackages="
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="https://github.com/Nukesor/pueue/archive/v$pkgver/pueue-$pkgver.tar.gz"
+options="net"
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --release --frozen
+
+	mkdir -p target/completion
+	local sh; for sh in bash fish zsh; do
+		./target/release/pueue completions $sh target/completion/
+	done
+}
+
+check() {
+	# test_multiple_worker - fails on CI, but passes locally
+	cargo test --frozen -- \
+		--skip daemon::integration::worker_environment_variables::test_multiple_worker
+}
+
+package() {
+	cd target
+
+	install -D -m755 release/pueue -t "$pkgdir"/usr/bin/
+	install -D -m755 release/pueued -t "$pkgdir"/usr/bin/
+
+	install -D -m644 completion/$pkgname.bash "$pkgdir"/usr/share/bash-completion/completions/$pkgname
+	install -D -m644 completion/*.fish -t "$pkgdir"/usr/share/fish/vendor_completions.d/
+	install -D -m644 completion/_* -t "$pkgdir"/usr/share/zsh/site-functions/
+}
+
+sha512sums="
+de866978cb1d5907dc6804e28c020196abde565a64862b04a7be5a38b004fc4cd1e0863f976637fbbc27fb379ccdb893321d3a754872ae14da0253b989b1c046  pueue-3.4.1.tar.gz
+"

@@ -1,0 +1,56 @@
+# Contributor: André Klitzing <aklitzing@gmail.com>
+# Maintainer: André Klitzing <aklitzing@gmail.com>
+pkgname=geth
+pkgver=1.14.6
+pkgrel=0
+pkgdesc="Official Go implementation of the Ethereum protocol"
+url="https://geth.ethereum.org/"
+arch="all !loongarch64"
+license="LGPL-3.0-or-later"
+makedepends="go linux-headers"
+subpackages="$pkgname-tools"
+checkdepends="fuse"
+options="!check chmod-clean net"
+source="$pkgname-$pkgver.tar.gz::https://github.com/ethereum/go-ethereum/archive/v$pkgver.tar.gz"
+builddir="$srcdir/go-ethereum-$pkgver"
+
+# secfixes:
+#   1.10.22-r0:
+#     - CVE-2022-37450
+
+export GOROOT=/usr/lib/go
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	make all
+}
+
+check() {
+	make test
+}
+
+package() {
+	install -Dm755 -t "$pkgdir"/usr/bin \
+		build/bin/geth \
+		build/bin/abigen \
+		build/bin/bootnode \
+		build/bin/clef \
+		build/bin/evm \
+		build/bin/rlpdump
+}
+
+tools() {
+	pkgdesc="$pkgdesc (extra tools: abigen, bootnode, clef, evm, rlpdump)"
+
+	amove usr/bin/abigen
+	amove usr/bin/bootnode
+	amove usr/bin/clef
+	amove usr/bin/evm
+	amove usr/bin/rlpdump
+}
+
+sha512sums="
+8b9b887bf2d3c620079a6f92c347a57a9aec657353edbaeb74be0333e96631704f45fd7bdcd428f05de0a72963e10e0f85b51b93af224ff28c46b19eaee3fa71  geth-1.14.6.tar.gz
+"

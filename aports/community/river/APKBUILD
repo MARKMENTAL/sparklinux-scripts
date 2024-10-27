@@ -1,0 +1,69 @@
+# Contributor: Anjandev Momi <anjan@momi.ca>
+# Maintainer: Anjandev Momi <anjan@momi.ca>
+pkgname=river
+pkgver=0.3.5
+pkgrel=0
+pkgdesc="Dynamic Tiling Wayland Compositor"
+url="https://codeberg.org/river/river"
+arch="x86_64 aarch64" # limited by zig aport
+license="GPL-3.0-only"
+makedepends="
+	libevdev-dev
+	libxkbcommon-dev
+	pixman-dev
+	scdoc
+	wayland-dev
+	wayland-protocols
+	wlroots-dev
+	zig
+	"
+depends="xwayland seatd"
+subpackages="
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+options="net"
+source="https://codeberg.org/river/river/releases/download/v$pkgver/river-$pkgver.tar.gz"
+
+# We may want other than "baseline" for other targets, when enabled by zig
+case "$CARCH" in
+	aarch64|x86_64) cputarget=baseline ;;
+esac
+
+build() {
+	# This installs it to $builddir/out
+	DESTDIR="$builddir/out" zig build \
+		-Doptimize=ReleaseSafe \
+		-Dpie \
+		-Dxwayland \
+		--prefix /usr install \
+		${cputarget:+-Dcpu="$cputarget"}
+}
+
+check() {
+	zig build test
+}
+
+package() {
+	mkdir -p "$pkgdir"
+	cp -r out/* "$pkgdir"
+
+	# Fix location of pkgconfig files, must be fixed upstream
+	mkdir -p "$pkgdir"/usr/lib
+	mv "$pkgdir"/usr/share/pkgconfig "$pkgdir"/usr/lib
+
+	# Install example configuration
+	install -Dm0644 example/init -t "$pkgdir"/usr/share/doc/river/examples
+}
+
+dev() {
+	default_dev
+	amove usr/share/river-protocols
+}
+
+sha512sums="
+9fba267b8663969e0a7e6cb39950d41bd7e1b7def6b27a856f403ef19b9dc048018014bb2fc9ac535a4888193256f8089c2559cce2981405c7c9570e0cee2ef5  river-0.3.5.tar.gz
+"

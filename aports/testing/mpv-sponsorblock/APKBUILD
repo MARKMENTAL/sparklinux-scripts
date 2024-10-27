@@ -1,0 +1,39 @@
+# Maintainer: Cowington Post <cowingtonpost@gmail.com>
+pkgname=mpv-sponsorblock
+pkgver=2.1.0
+pkgrel=0
+pkgdesc="MPV plugin that allows you to skip sponsors while watching YouTube videos"
+url="https://github.com/TheCactusVert/mpv-sponsorblock"
+# rust-ring
+arch="x86 x86_64 aarch64"
+license="MIT"
+depends="mpv"
+makedepends="
+	cargo
+	cargo-auditable
+	mpv-dev
+	"
+source="https://github.com/TheCactusVert/mpv-sponsorblock/archive/v$pkgver/mpv-sponsorblock-$pkgver.tar.gz"
+options="!check" # no tests
+
+prepare() {
+	default_prepare
+
+	cargo fetch --target="$CTARGET" --locked
+}
+
+build() {
+	cargo auditable build --frozen --release
+}
+
+check() {
+	cargo test --frozen
+}
+
+package() {
+	install -Dm0644 target/release/libmpv_sponsorblock.so -t "$pkgdir"/etc/mpv/scripts/
+}
+
+sha512sums="
+60c673ef37e72aad87e69a533311fe2172fd53cc687f29d64560b35d2b272d16cbda523536312992170bcab2d5d84d7b4bdc91a7b75bdf8e76f4b21dccc6bd79  mpv-sponsorblock-2.1.0.tar.gz
+"

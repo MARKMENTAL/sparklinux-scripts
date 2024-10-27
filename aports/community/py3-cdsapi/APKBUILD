@@ -1,0 +1,38 @@
+# Contributor: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+# Maintainer: Iztok Fister, Jr. <iztok@iztok-jr-fister.eu>
+pkgname=py3-cdsapi
+_pkgorig=cdsapi
+pkgver=0.7.3
+pkgrel=0
+pkgdesc="Python API to access the Copernicus Climate Data Store"
+url="https://github.com/ecmwf/cdsapi"
+arch="noarch"
+license="Apache-2.0"
+depends="py3-cads-api-client py3-requests py3-tqdm py3-setuptools"
+makedepends="py3-gpep517 py3-wheel"
+checkdepends="py3-pytest-xdist"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://files.pythonhosted.org/packages/source/c/cdsapi/cdsapi-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgorig-$pkgver"
+options="!check" # we need API key for test
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest -n auto
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+8231291012e0ed2ad15ab7d2481197bc4fdb433ca03734cdf9abda023b69a2e511825b3584bb6db13674c633038f8e72801ba0e43aced1cd2e93b5cd6ed2a79e  py3-cdsapi-0.7.3.tar.gz
+"

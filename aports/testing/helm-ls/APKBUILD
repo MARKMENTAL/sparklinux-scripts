@@ -1,0 +1,35 @@
+# Contributor: Galen Abell <galen@galenabell.com>
+# Maintainer: Galen Abell <galen@galenabell.com>
+pkgname=helm-ls
+pkgver=0.0.12
+pkgrel=4
+pkgdesc="Language server for Helm"
+url="https://github.com/mrjosh/helm-ls"
+arch="all"
+license="MIT"
+makedepends="go"
+options="chmod-clean net"
+subpackages="$pkgname-doc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/mrjosh/helm-ls/archive/refs/tags/v$pkgver.tar.gz"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	go build -ldflags="-buildid= -X main.Version=$pkgver"
+}
+
+check() {
+	# Depends on yaml-ls
+	go test ./... -skip TestYamllsDiagnosticsIntegration
+}
+
+package() {
+	install -Dm755 "$pkgname" "$pkgdir"/usr/bin/helm_ls
+	install -Dm644 LICENSE "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+}
+
+sha512sums="
+163d0619b86c3368e29a0c0aa7fcb4f9ea3d8eeba19d86c95d54d06a3b4ad5b0fa5b455d911863c17e16849394191777bbba698c85a721046ea53b100010ac12  helm-ls-0.0.12.tar.gz
+"

@@ -1,0 +1,248 @@
+# Contributor: Holger Jaekel <holger.jaekel@gmx.de>
+# Maintainer: Holger Jaekel <holger.jaekel@gmx.de>
+pkgname=grass-gis
+pkgver=8.3.2
+_shortver=${pkgver%.*}; _shortver=${_shortver/./}
+pkgrel=3
+pkgdesc="Geographic Resources Analysis Support System"
+url="https://grass.osgeo.org"
+arch="all !s390x" # s390x: tests fail
+license="GPL-2.0-or-later"
+depends_dev="
+	freetype-dev
+	gdal-dev
+	libpq-dev
+	proj-dev
+	"
+makedepends="
+	$depends_dev
+	bison
+	bzip2-dev
+	cairo-dev
+	doxygen
+	fftw-dev
+	flex
+	font-urw-base35
+	geos-dev
+	gettext-dev
+	glu-dev
+	gnutls-dev
+	graphviz
+	grep
+	libjpeg-turbo-dev
+	libpng-dev
+	mariadb-connector-c-dev
+	mesa-dev
+	netcdf-dev
+	openblas-dev
+	opencl-dev
+	openjpeg-dev
+	pdal-dev
+	py3-numpy-dev
+	py3-wxpython
+	readline-dev
+	sqlite-dev
+	tiff-dev
+	unixodbc-dev
+	zlib-dev
+	zstd-dev
+	"
+checkdepends="bash py3-pytest"
+depends="proj-util py3-six"
+subpackages="$pkgname-dev-doc:devdoc:noarch $pkgname-dev $pkgname-doc $pkgname-gui::noarch $pkgname-lang"
+langdir="/usr/lib/grass$_shortver/locale"
+source="https://grass.osgeo.org/grass$_shortver/source/grass-$pkgver.tar.gz
+	10-libintl.patch
+	20-openblas.patch
+	30-pkgconfig.patch
+	40-int64.patch
+	gcc14.patch
+	"
+builddir="$srcdir/grass-$pkgver"
+
+_use_pngquant=false
+case "$CARCH" in
+	s390x|riscv64) ;;
+	*)
+		makedepends="$makedepends pngquant"
+		_use_pngquant=true
+		;;
+esac
+
+build() {
+	# Ancient autoconf used upstream can't handle CPPFLAGS correctly, so set CPP to ignore warnings
+	CPP="gcc -E -w" \
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr/lib \
+		--enable-largefile \
+		--with-cxx \
+		--with-tiff \
+		--with-libpng \
+		--with-postgres \
+		--with-postgres-includes=/usr/include/postgresql \
+		--with-mysql \
+		--with-mysql-includes=/usr/include/mysql/ \
+		--with-sqlite \
+		--with-opengl \
+		--with-odbc \
+		--with-fftw \
+		--with-blas \
+		--with-lapack \
+		--with-cairo \
+		--with-cairo-ldflags=-lfontconfig \
+		--with-freetype \
+		--with-nls \
+		--with-readline \
+		--without-opendwg \
+		--with-regex \
+		--with-pthread \
+		--with-openmp \
+		--with-opencl \
+		--with-bzlib \
+		--with-zstd \
+		--with-gdal \
+		--with-pdal \
+		--with-netcdf \
+		--with-geos \
+		--with-x
+	LC_ALL=C make
+
+	# generate the Programmers' manual (in HTML)
+	make htmldocs-single
+
+	# save ~4mb of disk space by compressing PNG images (but takes a long time)
+	if [ "$_use_pngquant" = true ]; then
+		find lib/html -iname \*.png -print0 | xargs -0 -n 1 -P ${JOBS:-2} pngquant --speed 1 --force --ext .png
+	fi
+}
+
+check() {
+	export PYTHONPATH="$builddir/$(ls -d dist.*)/etc/python:$PYTHONPATH"
+	export LD_LIBRARY_PATH="$builddir/$(ls -d dist.*)/lib:$LD_LIBRARY_PATH"
+	export PATH="$builddir/$(ls -d bin.*):$PATH"
+
+	.github/workflows/print_versions.sh
+	.github/workflows/test_simple.sh
+	pytest .
+
+}
+
+package() {
+	DESTDIR="$pkgdir" make install INST_DIR=/usr/lib/grass$_shortver UNIX_BIN=/usr/bin
+
+	# install pkg-config file
+	mkdir -p "$pkgdir"/usr/share/pkgconfig
+	install -m 644 grass.pc "$pkgdir"/usr/share/pkgconfig/grass.pc
+
+	# change section from 1 to .1grass
+	for m in "$pkgdir"/usr/lib/grass"$_shortver"/docs/man/man1/*.1; do \
+		n=$(basename $m .1); mv $m "$pkgdir"/usr/lib/grass$_shortver/docs/man/man1/$n.1grass;
+		sed -i -e 's/^.TH \(.*\) 1/.TH \1 1grass/' "$pkgdir/usr/lib/grass$_shortver/docs/man/man1/$n.1grass"; done
+
+	# escape minus signs which are command line options not hyphens
+	for m in "$pkgdir"/usr/lib/grass"$_shortver"/docs/man/man1/*.1grass; do \
+		sed -i -e 's/\([ ([]\)-\([a-z]\)/\1\\-\2/g' \
+			-e 's/\([ []\)--\([a-z]\)/\1\\-\\-\2/g' \
+			-e 's/\[-\\fB/[\\-\\fB/' \
+			-e 's/\[--\\fB/[\\-\\-\\fB/g' \
+			-e 's/"\\fB-\([a-zA-Z0-9]\)/"\\fB\\-\1/' \
+			-e 's/"\\fB--\([a-zA-Z0-9]\)/"\\fB\\-\\-\1/' \
+			-e 's/\\fI-\([a-zA-Z0-9]\)/\\fI\-\1/g' \
+			"$m"; done
+
+	# move manpages to /usr/share/man
+	mv "$pkgdir"/usr/lib/grass$_shortver/docs/man "$pkgdir"/usr/share
+
+	# move docs to /usr/share/doc
+	mkdir -p "$pkgdir/usr/share/doc"
+	mv "$pkgdir/usr/lib/grass$_shortver/docs" "$pkgdir/usr/share/doc/grass-doc"
+
+	# move programming-manual to /usr/share/doc
+	mkdir -p "$pkgdir/usr/share/doc/grass-dev-doc/programming-manual"
+	mv "$builddir/lib/html" "$pkgdir/usr/share/doc/grass-dev-doc/programming-manual"
+
+	# install icons and desktop file
+	mkdir -p "$pkgdir"/usr/share/icons
+	mv "$pkgdir"/usr/lib/grass$_shortver/share/icons/hicolor "$pkgdir"/usr/share/icons
+
+	mkdir -p "$pkgdir"/usr/share/applications
+	mv "$pkgdir"/usr/lib/grass$_shortver/share/applications/grass.desktop "$pkgdir"/usr/share/applications/grass$_shortver.desktop
+
+	# install AppStream metadata
+	mkdir -p "$pkgdir"/usr/share/metainfo
+	mv "$pkgdir"/usr/lib/grass$_shortver/share/metainfo/org.osgeo.grass.appdata.xml "$pkgdir"/usr/share/metainfo/org.osgeo.grass.appdata.xml
+
+	# Remove empty directory
+	rmdir "$pkgdir"/usr/lib/grass$_shortver/gui/wxpython/scripts/
+
+	# Remove files not installed
+	rm -rf "$pkgdir"/usr/lib/grass$_shortver/INSTALL.md \
+		"$pkgdir"/usr/lib/grass$_shortver/REQUIREMENTS.md \
+		"$pkgdir"/usr/lib/grass$_shortver/demolocation/PERMANENT/.tmp/* \
+		"$pkgdir"/usr/lib/grass$_shortver/translation_status.json \
+		"$pkgdir"/usr/lib/grass$_shortver/translators.csv
+
+	# Move image files from /usr/lib/grass$_shortver to /usr/share/grass$_shortver
+	mkdir -p "$pkgdir"/usr/share/grass$_shortver/gui
+	mv "$pkgdir"/usr/lib/grass$_shortver/gui/icons/  "$pkgdir"/usr/share/grass$_shortver/gui/
+	mv "$pkgdir"/usr/lib/grass$_shortver/gui/images/ "$pkgdir"/usr/share/grass$_shortver/gui/
+
+	find "$pkgdir"/usr/lib/grass$_shortver/gui/wxpython/ -type f \( -name "*.jpg" -or -name "*.png" \) -print | sort > "$builddir"/grass-gui.image-file-in-usr-lib.list
+
+	while read -r file; do \
+		dir=$(dirname "$file" | sed 's/usr\/lib\//usr\/share\//') ; \
+		if [ ! -e "$dir" ]; then \
+			mkdir -p "$dir" ; \
+		fi ; \
+		mv "$file" "$dir" ; \
+	done < "$builddir"/grass-gui.image-file-in-usr-lib.list
+
+	# Remove empty files
+	find "$pkgdir" -type f -empty -name "class_graphical*" -print -delete
+}
+
+devdoc() {
+	pkgdesc="$pkgdesc (development documentation)"
+
+	amove usr/share/doc/grass-dev-doc
+}
+
+dev() {
+	default_dev
+
+	# move *.so links from usr/lib/grass$_shortver/lib
+	# needed when linking the apps to -dev packages
+	for i in usr/lib/grass"$_shortver"/lib/*.so; do
+		if [ -L "$i" ]; then
+			amove "$i"
+		fi
+	done
+}
+
+doc() {
+	default_doc
+
+	mkdir -p "$subpkgdir/usr/lib/grass$_shortver"
+	ln -s ../../share/doc/grass-doc "$subpkgdir/usr/lib/grass$_shortver/docs"
+}
+
+gui() {
+	pkgdesc="$pkgdesc (graphical user interface)"
+	depends="$pkgname=$pkgver-r$pkgrel  ghostscript py3-matplotlib py3-opengl py3-pillow py3-wxpython"
+
+	amove usr/lib/grass$_shortver/gui
+	amove usr/share/grass$_shortver/gui
+	ln -s ../../../share/grass$_shortver/gui/icons "$subpkgdir/usr/lib/grass$_shortver/gui/icons"
+	ln -s ../../../share/grass$_shortver/gui/images "$subpkgdir/usr/lib/grass$_shortver/gui/images"
+}
+
+sha512sums="
+6523e2c0eae183fddeaa015e63283febfbae4953e809ff41bcc4ab95aa1055162b08c65365f973124608ff7b01aa907a1a0ec96c9f31884c657f236e56c0eab0  grass-8.3.2.tar.gz
+80e4efecb1e468767bb33dd5fd5d2aa8cc6d77d4c0fd8b9f96626a0b528a17884427f9d3f7d71b2bbf57791f85d5cf8efa4f269738dca172fe533fb5442481c9  10-libintl.patch
+35241c91936bafde2ee27755eca5d21ef6c272b4693a66ffda73f95782f17bcb7d8c79f76ed14fe9743b6ceb13a8dcbf29e2b21c17e80038394a7b85b12bb90e  20-openblas.patch
+764f0169172ab6683f9a4b9ab2e4354a7aa19d722acc1663fe007a4eda593afb7dee53b23c21e2daf0d37c038796473a65faab89dd0a00f630f5c7cfbf3e67cc  30-pkgconfig.patch
+14eb4b36f5b6e7bd4a8a308c15b50a57a1433d5f4ba8f84fa473ce851f2b636301eae878f6a75309cf83382aae2e6227f5e093243bc13b63413f77f9307c1d38  40-int64.patch
+dfe58f94a2e63d5d5b74e8efcd9cc9a74ae3670e7a14ac1a2972f4d73a132d18daf3522980108f9d37793ee5786c7f26e3611d6b7b88f96130acdc19d283aa8a  gcc14.patch
+"

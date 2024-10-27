@@ -1,0 +1,29 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=alien
+pkgver=8.95.7
+pkgrel=0
+pkgdesc="Alien is a program that converts between the rpm, dpkg, stampede slp, and slackware tgz file formats"
+url="http://joeyh.name/code/alien"
+arch="noarch"
+license="GPL-2.0-only"
+depends="perl"
+subpackages="$pkgname-doc"
+source="https://deb.debian.org/debian/pool/main/a/alien/alien_$pkgver.tar.xz"
+builddir="$srcdir/$pkgname"
+
+build() {
+	PERL_MM_USE_DEFAULT=1 perl Makefile.PL \
+		INSTALLDIRS=vendor \
+		NO_PACKLIST=1 \
+		NO_PERLLOCAL=1
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+5528ee66117d5429b2021350c11fcaa1e831c8f46dfb661c7ec42e2840c67d7fa488dabb7361e91fc034ba6b8a970938ec08e74ab619747e03acb577213d27f8  alien_8.95.7.tar.xz
+"

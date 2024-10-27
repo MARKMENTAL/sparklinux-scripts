@@ -1,0 +1,59 @@
+# Contributor: l-n-s <supervillain@riseup.net>
+# Maintainer: r4sas <r4sas@i2pmail.org>
+pkgname=i2pd
+pkgver=2.52.0
+pkgrel=1
+pkgdesc="I2P Router written in C++"
+url="https://i2pd.website"
+arch="all"
+license="BSD-3-Clause"
+pkgusers="i2pd"
+makedepends="boost-dev miniupnpc-dev openssl-dev>3 openssl zlib-dev"
+options="!check" # No test suite
+install="$pkgname.pre-install"
+source="https://github.com/PurpleI2P/i2pd/archive/$pkgver/i2pd-$pkgver.tar.gz
+	miniupnpc.patch
+	i2pd.initd
+	i2pd.confd
+	"
+subpackages="$pkgname-dbg $pkgname-openrc"
+
+build() {
+	local _arch_opts=
+
+	case "$CARCH" in
+		aarch64*|arm*) _arch_opts="USE_UPNP=yes USE_AESNI=no" ;;
+		*)             _arch_opts="USE_UPNP=yes" ;;
+	esac
+
+	make $_arch_opts
+}
+
+package() {
+
+	install -D -m 755 i2pd "$pkgdir"/usr/sbin/i2pd
+
+	install -dm755 -o $pkgusers \
+		"$pkgdir"/etc/$pkgname \
+		"$pkgdir"/usr/share/$pkgname \
+		"$pkgdir"/var/lib/$pkgname \
+		"$pkgdir"/var/log/$pkgname
+
+	install -D -m 644 contrib/tunnels.conf "$pkgdir"/etc/i2pd/tunnels.conf
+	install -D -m 644 contrib/i2pd.conf "$pkgdir"/etc/i2pd/i2pd.conf
+	install -D -m 644 contrib/i2pd.logrotate "$pkgdir"/etc/logrotate.d/i2pd
+	cp -r contrib/certificates/ "$pkgdir"/usr/share/$pkgname/certificates
+	ln -s /usr/share/$pkgname/certificates "$pkgdir"/var/lib/$pkgname/certificates
+
+	install -m755 -D "$srcdir"/$pkgname.initd \
+		"$pkgdir"/etc/init.d/$pkgname
+	install -m644 -D "$srcdir"/$pkgname.confd \
+		"$pkgdir"/etc/conf.d/$pkgname
+}
+
+sha512sums="
+54272b23dcb62b8b7523038a9c1fc71b87bb9042f22bd12d6ebc62cfa47da07e2df47d88d706f285e9d88f9cace0564546632c10161f83f5c57b9ea17f5bde5f  i2pd-2.52.0.tar.gz
+09e44332cbecd310982d5868ebf7d6d30122f016e4deb1024d3744004eece9b9526840c1bd810e323c2d22dbc2e04c475c56776342883e15974c8a144774616c  miniupnpc.patch
+fae08de6cbdb5097cb3068d9a87509195d607fe666db870a3264f952fb3fceafc665168bd16bf598597617e48322301bbc900dcbd2c38fefca419d4755cea5f9  i2pd.initd
+5b767037b49a9d94ac12dcc014a34c63967ab16a3292dd2622a118326c8d54905213d9638e48903cf0115c69b37490f648d3b2a78a1099063af78178b7024c75  i2pd.confd
+"

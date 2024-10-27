@@ -1,0 +1,33 @@
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=libselinux
+pkgver=3.6
+pkgrel=1
+pkgdesc="SELinux library and simple utilities"
+url="https://github.com/SELinuxProject/selinux/wiki"
+arch="all"
+license="Public-Domain"
+# we need coreutils for ln --relative
+makedepends="pcre2-dev linux-headers libsepol-dev musl-fts-dev coreutils"
+subpackages="$pkgname-static $pkgname-dev $pkgname-doc $pkgname-utils"
+source="https://github.com/SELinuxProject/selinux/releases/download/$pkgver/libselinux-$pkgver.tar.gz
+	lfs64.patch
+	"
+
+build() {
+	make SHLIBDIR="/usr/lib" FTS_LDLIBS="-lfts"
+}
+
+package() {
+	make SHLIBDIR="/usr/lib" DESTDIR="$pkgdir" install
+}
+
+utils() {
+	pkgdesc="SELinux libselinux utilies"
+
+	amove usr/sbin
+}
+
+sha512sums="
+182dcdf3510083ff4b9376a4a6d6a7b33905ac3c5e974c188bf3965686c54b663162c543ecf15eab75102f3c91a2502d33d0f1104dec01dd9b14737ef3f2b544  libselinux-3.6.tar.gz
+a6098386275c67b5070cc62cd4f4d6ad5917182829e151b2d740ab71eec9e8c9835b633898537b62bf3811ac7e8a229de33bc650e8711e499256372ddec5e7fc  lfs64.patch
+"

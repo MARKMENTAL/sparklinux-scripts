@@ -1,0 +1,27 @@
+# Contributor: Michał Polański <michal@polanski.me>
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=drm_info
+pkgver=2.7.0
+pkgrel=0
+pkgdesc="Small utility to dump info about DRM devices"
+url="https://gitlab.freedesktop.org/emersion/drm_info"
+license="MIT"
+arch="all"
+options="!check" # no test suite
+makedepends="meson libdrm-dev pciutils-dev json-c-dev scdoc"
+subpackages="$pkgname-doc"
+source="https://gitlab.freedesktop.org/emersion/drm_info/-/archive/v$pkgver/drm_info-v$pkgver.tar.gz"
+builddir="$srcdir/$pkgname-v$pkgver"
+
+build() {
+	abuild-meson . output
+	meson compile -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+1eeaa103699655dd6b5d0e81e43c5422b843bb8cea991585047c3cc3e118b65c7dac4cef84155346df2c887ca57702a82e6fac202fe0146fe5280e3c83519ab8  drm_info-v2.7.0.tar.gz
+"

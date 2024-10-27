@@ -1,0 +1,52 @@
+# Contributor: Leo <thinkabit.ukim@gmail.com>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=libosinfo
+pkgver=1.11.0
+pkgrel=0
+pkgdesc="library for managing OS information for virtualization"
+url="https://libosinfo.org/"
+arch="all"
+license="LGPL-2.0-or-later"
+depends="hwdata osinfo-db"
+makedepends="
+	glib-dev
+	gobject-introspection-dev
+	libsoup3-dev
+	libxml2-dev
+	libxslt-dev
+	meson
+	perl
+	vala
+	"
+subpackages="$pkgname-dev $pkgname-doc $pkgname-lang"
+source="https://gitlab.com/libosinfo/libosinfo/-/archive/v$pkgver/libosinfo-v$pkgver.tar.gz"
+builddir="$srcdir/libosinfo-v$pkgver"
+
+# secfixes:
+#   1.5.0-r1:
+#     - CVE-2019-13313
+
+build() {
+	abuild-meson \
+		-Db_lto=true \
+		-Denable-gtk-doc=false \
+		-Denable-introspection=enabled \
+		-Denable-tests=true \
+		-Denable-vala=enabled \
+		-Dwith-pci-ids-path=/usr/share/hwdata/pci.ids \
+		-Dwith-usb-ids-path=/usr/share/hwdata/usb.ids \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+278bc2f61bcdd4f9f1cfbdde6e99084279e49e7c09ef7ee532bf480de3cb0afdac7313eb5dd0893921f134596543c59269a0cceced8cce7a758daf85fb8dc888  libosinfo-v1.11.0.tar.gz
+"

@@ -1,0 +1,83 @@
+# Contributor: Jordan ERNST <SecT0uch@sect0uch.world>
+# Maintainer: fossdd <fossdd@pwned.life>
+pkgname=firewalld
+pkgver=2.2.1
+pkgrel=0
+pkgdesc="Firewall daemon with D-Bus interface providing a dynamic firewall"
+url="https://github.com/firewalld/firewalld"
+arch="noarch"
+license="GPL-2.0-or-later"
+depends="
+	dbus
+	nftables
+	py3-dbus
+	py3-gobject3
+	py3-nftables
+	"
+makedepends="
+	autoconf
+	desktop-file-utils
+	docbook-xsl
+	gettext
+	glib-dev
+	intltool
+	libxslt
+	"
+checkdepends="
+	iproute2-minimal
+	musl-locales
+	"
+subpackages="
+	$pkgname-bash-completion
+	$pkgname-doc
+	$pkgname-gui
+	$pkgname-lang
+	$pkgname-openrc
+	$pkgname-zsh-completion
+	"
+source="https://github.com/firewalld/firewalld/releases/download/v$pkgver/firewalld-$pkgver.tar.bz2
+	$pkgname.initd
+	"
+options="!check" # checks produce errors (firewalld needs to be started)
+
+build() {
+	# Disable systemd and iptables features
+	./configure \
+		--sysconfdir=/etc \
+		--disable-systemd \
+		--without-systemd-unitdir \
+		--disable-rpmmacros \
+		--without-iptables \
+		--without-ip6tables \
+		--without-ebtables \
+		--without-ipset \
+		--without-iptables-restore \
+		--without-ip6tables-restore \
+		--without-ebtables-restore
+	make dist
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+
+	# Remove useless
+	rm -vrf "$pkgdir"/etc/sysconfig/
+	rm -vrf "$pkgdir"/etc/rc.d/
+
+	install -vDm755 "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
+}
+
+gui() {
+	# Taken here: https://gitweb.gentoo.org/repo/gentoo.git/tree/net-firewall/firewalld/firewalld-1.2.1.ebuild#n181
+	pkgdesc="GUI tools and assets for $pkgname"
+	amove etc/xdg
+	amove usr/bin/firewall-applet
+	amove usr/bin/firewall-config
+	amove usr/share/applications
+	amove usr/share/icons
+}
+
+sha512sums="
+08117be01a25a8e263cf419d7b01a98c80b53108af68f6cfc1d900692e6124c37b9dd6feaf4bc3c6e3f27958a9ee45b9795c7f5a9250eb644b6e903f97672c8a  firewalld-2.2.1.tar.bz2
+7a3089c1e34f4b499f463e7adf5ca4f1137994290780ebb08cdcf8728f0933d7236d1aa202c6598c3033d4984d7e113dec102f3b617ad2b766271c60e151d930  firewalld.initd
+"

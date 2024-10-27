@@ -1,0 +1,39 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=bionic_translation
+pkgver=0_git20240525
+pkgrel=0
+_commit="8b324301f4ba3f634b479d608eec2df2d1667757"
+pkgdesc="A set of libraries for loading bionic-linked .so files on musl/glibc"
+url="https://gitlab.com/android_translation_layer/bionic_translation"
+arch="x86_64 aarch64 armv7"
+license="Apache-2.0"
+makedepends="
+	elfutils-dev
+	libbsd-dev
+	libunwind-dev
+	mesa-dev
+	meson
+	samurai
+	"
+subpackages="$pkgname-dev $pkgname-dbg"
+source="https://gitlab.com/android_translation_layer/bionic_translation/-/archive/$_commit/bionic_translation-$_commit.tar.gz"
+builddir="$srcdir/bionic_translation-$_commit"
+
+build() {
+	abuild-meson \
+		. output
+	meson compile -C output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+9a522b3fe2b6e02b5683d8ac979a1ab33b8b8c7674de28f09155c21e279e5bdaffe7ab18aaa0c3d48246d90b285a682f04304d57ebda6af04e09012d41201f36  bionic_translation-8b324301f4ba3f634b479d608eec2df2d1667757.tar.gz
+"

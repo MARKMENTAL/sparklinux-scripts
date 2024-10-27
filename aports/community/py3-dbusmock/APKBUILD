@@ -1,0 +1,34 @@
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+pkgname=py3-dbusmock
+_pyname=python-dbusmock
+pkgver=0.32.1
+pkgrel=0
+pkgdesc="Mock D-Bus objects for tests"
+url="https://github.com/martinpitt/python-dbusmock"
+arch="noarch"
+license="LGPL-3.0-or-later"
+depends="dbus py3-dbus py3-gobject3"
+makedepends="python3-dev py3-setuptools"
+checkdepends="bash py3-nose py3-pytest"
+_pypiprefix="${_pyname%${_pyname#?}}"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/$_pypiprefix/$_pyname/$_pyname-$pkgver.tar.gz"
+builddir="$srcdir/$_pyname-$pkgver"
+
+build() {
+	python3 setup.py build
+}
+
+check() {
+	# Skip the fakeroot tests as they can't run under our fakeroot environment
+	# https://github.com/martinpitt/python-dbusmock/issues/46
+	env -u LD_PRELOAD python3 -m unittest
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+14b71c5d0a760fd1e8609815e4ae702ebc5c9f1f3c3e1bd930da616350b63b7fdbf99c7d584f5a834857798fb1cad56347d6a1cf2bdd758f9100180b0a7e725d  python-dbusmock-0.32.1.tar.gz
+"

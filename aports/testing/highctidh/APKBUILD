@@ -1,0 +1,46 @@
+# Contributor: omni <omni+alpine@hack.org>
+# Maintainer: omni <omni+alpine@hack.org>
+pkgname=highctidh
+pkgver=1.0.2024050500
+pkgrel=0
+pkgdesc="high-ctidh fork as a portable shared library"
+url="https://codeberg.org/vula/highctidh"
+arch="all !armhf !armv7 !x86" # 32bit architectures fail to build
+license="LicenseRef-PD-2"
+makedepends="clang py3-gpep517 py3-setuptools py3-wheel"
+checkdepends="py3-pytest"
+subpackages="$pkgname-dev py3-$pkgname-pyc py3-$pkgname:py3"
+source="$pkgname-$pkgver.tar.gz::https://codeberg.org/vula/highctidh/archive/v$pkgver.tar.gz"
+builddir="$srcdir/$pkgname/src"
+
+build() {
+	export CC=clang
+	make
+
+	gpep517 build-wheel --wheel-dir .dist --output-fd 3 3>&1 >&2
+}
+
+check() {
+	# TODO: run c library tests
+
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	DESTDIR="$pkgdir"/usr make install
+
+	python3 -m installer -d "$pkgdir" .dist/*.whl
+}
+
+py3() {
+	pkgdesc="$pkgdesc Python bindings"
+
+	local pyver="$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+	amove usr/lib/python"$pyver"
+}
+
+sha512sums="
+8b78a23e19f696f8749c5f7f449d1fdf481ae4971203519d6114ff083315bad656da722bfcfd45853815dd5f537b73418ede2796f94a773f853a66bf6b9f55ba  highctidh-1.0.2024050500.tar.gz
+"

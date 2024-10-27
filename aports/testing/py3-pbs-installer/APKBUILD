@@ -1,0 +1,38 @@
+# Contributor: Patrycja Rosa <alpine@ptrcnull.me>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=py3-pbs-installer
+pkgver=2024.9.9
+_pkgver=2024.09.09 # apk doesn't handle leading zeroes well
+pkgrel=0
+pkgdesc="Installer for Python Build Standalone"
+url="https://github.com/frostming/pbs-installer"
+arch="noarch"
+license="MIT"
+makedepends="py3-gpep517 py3-pdm-backend"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="https://github.com/frostming/pbs-installer/archive/$_pkgver/py3-pbs-installer-$_pkgver.tar.gz"
+builddir="$srcdir/pbs-installer-$_pkgver"
+options="!check" # tests/ directory empty
+
+build() {
+	export PDM_BUILD_SCM_VERSION="$_pkgver"
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+b935a8e7b9255310f6a3ee7f81a09c56090872375113fa1f9b077b3c7ef6a9a323d5d39c27edeb4806f7d8ff3c89d86977011d4680511365cf20a7c78a2636dc  py3-pbs-installer-2024.09.09.tar.gz
+"

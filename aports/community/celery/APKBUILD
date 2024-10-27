@@ -1,0 +1,79 @@
+# Contributor: Antoine Martin (ayakael) <dev@ayakael.net>
+# Maintainer: Antoine Martin (ayakael) <dev@ayakael.net>
+pkgname=celery
+pkgver=5.4.0
+pkgrel=1
+pkgdesc="An asynchronous task queue/job queue based on distributed message passing"
+url="http://www.celeryproject.org/"
+# loongarch64: blocked by py3-moto
+# s390x: blocked by py3-kombu
+arch="noarch !loongarch64 !s390x"
+license="Apache-2.0"
+depends="
+	py3-billiard
+	py3-click
+	py3-click-didyoumean
+	py3-click-plugins
+	py3-click-repl
+	py3-dateutil
+	py3-kombu
+	py3-tz
+	py3-tzdata
+	py3-vine
+	python3
+	"
+makedepends="python3-dev py3-setuptools py3-gpep517 py3-wheel"
+checkdepends="
+	pre-commit
+	py3-pytest
+	py3-dnspython
+	py3-mongo
+	py3-pytest-celery
+	py3-pytest-subtests
+	py3-pytest-timeout
+	py3-pytest-click
+	py3-boto3
+	py3-moto
+	py3-pyaml
+	py3-msgpack
+"
+install="$pkgname.pre-install"
+source="https://files.pythonhosted.org/packages/source/c/celery/celery-$pkgver.tar.gz
+	celery.confd
+	celery.initd
+	"
+pkgusers="celery"
+pkggroups="celery"
+subpackages="$pkgname-openrc $pkgname-pyc"
+provides="py3-celery=$pkgver-r$pkgrel"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer "$builddir"/.dist/*.whl
+	# t/unit/backends/test_gcs.py: requires py3-google-cloud-storage
+	.testenv/bin/python3 -m pytest -v \
+		--ignore=t/unit/backends/test_gcs.py
+}
+
+package() {
+	# install scripts
+	install -m755 -D "$srcdir"/$pkgname.initd \
+		"$pkgdir"/etc/init.d/$pkgname
+	install -m644 -D "$srcdir"/$pkgname.confd \
+		"$pkgdir"/etc/conf.d/$pkgname
+
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+e59b62878f7da0af79be13df816e899c948f71f1063643baaabc1244dd44fd3114a5b3d724c010307ca8091c6b4343a4322213bc6154b843b79893b8f772476c  celery-5.4.0.tar.gz
+c283956f8fe386ef39cb3e165a20d1cc7ff6398fbf5a922bec6b61fe4a71188519baed9feafc4e0e5b6864851545edaba54b89ba3613b2cf2ddd6426a6bf8fc2  celery.confd
+a27cc3521cdf79ec60b15318c15679fe8f593c029c3ead53b162453ab9e86c05c57f7e4af843d69f17817a707db885f2c44d3b7f56337676dfc2ec0210bf38b7  celery.initd
+"

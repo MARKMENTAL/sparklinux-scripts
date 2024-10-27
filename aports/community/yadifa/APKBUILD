@@ -1,0 +1,59 @@
+# Contributor: Francesco Colista <fcolista@alpinelinux.org>
+# Maintainer: Francesco Colista <fcolista@alpinelinux.org>
+pkgname=yadifa
+pkgver=2.6.7
+_buildnr=11259
+pkgrel=0
+pkgdesc="Lightweight authoritative Name Server with DNSSEC capabilities"
+url="https://www.yadifa.eu/"
+arch="all"
+license="BSD-3-Clause"
+makedepends="openssl-dev"
+install="$pkgname.post-install"
+subpackages="$pkgname-dev $pkgname-doc $pkgname-openrc"
+source="$pkgname-$pkgver.tar.gz::https://yadifa.eu/sites/default/files/releases/yadifa-$pkgver-$_buildnr.tar.gz
+	no-execinfo.patch
+	remove-backtrace.patch
+	$pkgname.initd
+	$pkgname.confd
+	"
+builddir=$srcdir/$pkgname-$pkgver-$_buildnr
+
+build() {
+	./configure \
+		--prefix=/usr \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--sysconfdir=/etc/$pkgname \
+		--localstatedir=/var/yadifa \
+		--with-logdir=/var/log/yadifa \
+		--enable-ctrl \
+		--enable-static=no \
+		--enable-shared \
+		--enable-keygen \
+		--enable-non-aa-axfr-support \
+		--enable-rrl
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	install -Dm755 "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
+	install -Dm644 "$srcdir"/$pkgname.confd "$pkgdir"/etc/conf.d/$pkgname
+	install -Dm755 etc/*.example "$pkgdir"/etc/$pkgname
+	cp etc/yadifad.conf "$pkgdir"/etc/$pkgname
+	mkdir -p "$pkgdir"/var/run/$pkgname
+	mkdir -p "$pkgdir"/var/log/$pkgname
+}
+
+sha512sums="
+be597dc6e886177c20d13c78c2b30f3ff3ea5cfb2cff91f1f4e3507d2ae17974c630939856ae46b5200aa9e9d2c454c8c88045aa86511894e9659fcd7f9090af  yadifa-2.6.7.tar.gz
+65c2f8bb4ab5a449e16825db42eb5b0fba4c25534dddfaebe76c53ae9baa83fd557d5dbe1bff285cedace75c6e4c5684283ce3a4a49870d89ce2e2b169d56e6a  no-execinfo.patch
+b4a378d7b1d0d391d9664eb5a9a025a9a917ecaf2bacc59400d22dc519416b2caadb99a57c3172f9636acd061b0a55241567d0c51c65e75fe1e5aff2a22bbd05  remove-backtrace.patch
+a3a65bf13f41838d9493facc2903d955aafd107a29d8a73d4ed021690e1e2c511f48915360a9490ccbf8d9573f8e9c3fca988cb6dd5e57546787384e2b2d075d  yadifa.initd
+eac74148b58d3b7472602542622616bd0ef441b191356a5b7fd06d17284c579139c1fde9b35fbb30a8214394863e31bed4c8521aff7b3f7ea831f14c2a3ccf01  yadifa.confd
+"

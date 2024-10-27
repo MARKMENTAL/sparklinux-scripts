@@ -1,0 +1,27 @@
+# Maintainer: Dylan Van Assche <me@dylanvanassche.be>
+# Contributor: team/phosh <me@dylanvanassche.be>
+pkgname=feedbackd-device-themes
+pkgver=0.4.0
+pkgrel=0
+pkgdesc="Feedbackd device themes for different devices"
+url="https://source.puri.sm/Librem5/feedbackd-device-themes"
+arch="all"
+license="GPL-3.0-or-later"
+makedepends="meson json-glib-dev"
+source="https://sources.phosh.mobi/releases/feedbackd-device-themes/feedbackd-device-themes-$pkgver.tar.xz"
+
+build() {
+	abuild-meson . output
+}
+
+check() {
+	meson test --no-rebuild --print-errorlogs -C output
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install --no-rebuild -C output
+}
+
+sha512sums="
+849a4d0d8d6c9c257400b32f23f574b8afde9bf905c778cad5bfd4fe087f32d76847bacc6e1828ba1da09ddcb40d6e6de8a7d423583d929ff3f1969ffcdcd372  feedbackd-device-themes-0.4.0.tar.xz
+"

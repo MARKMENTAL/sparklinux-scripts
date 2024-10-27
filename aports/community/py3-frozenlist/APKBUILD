@@ -1,0 +1,42 @@
+# Maintainer: Donoban <donoban@riseup.net>
+pkgname=py3-frozenlist
+_pkgname=frozenlist
+pkgver=1.4.1
+pkgrel=1
+pkgdesc="immutable list"
+url="https://github.com/aio-libs/frozenlist"
+arch="all"
+license="Apache-2.0"
+makedepends="
+	cython
+	py3-expandvars
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	python3-dev
+	"
+checkdepends="py3-pytest-cov"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/${_pkgname:0:1}/$_pkgname/$_pkgname-$pkgver.tar.gz"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir "$builddir"/.dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+5ec5f8cff67d7f1aae517507122bc6c7af66a8ef23cac8b490edf65180c723277a33628e1395f24ffbd793de1eb65f429fd0b39a50115f740ce614a5577ffae2  frozenlist-1.4.1.tar.gz
+"

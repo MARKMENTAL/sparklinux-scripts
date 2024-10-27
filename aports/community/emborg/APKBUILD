@@ -1,0 +1,53 @@
+# Contributor: Andy Hawkins <andy@gently.org.uk>
+# Maintainer: Andy Hawkins <andy@gently.org.uk>
+pkgname=emborg
+pkgver=1.40
+pkgrel=0
+pkgdesc="Front-End to Borg Backup"
+url="https://emborg.readthedocs.io/"
+# armhf: borgbackup
+arch="noarch !armhf"
+license="GPL-3.0-or-later"
+depends="
+	borgbackup
+	python3
+	py3-appdirs
+	py3-arrow
+	py3-docopt
+	py3-inform>=1.31
+	py3-nestedtext
+	py3-quantiphy
+	py3-requests
+	"
+makedepends="
+	py3-flit-core
+	py3-gpep517
+	py3-installer
+"
+checkdepends="
+	py3-pytest
+	py3-nestedtext
+	py3-parametrize-from-file
+	py3-voluptuous
+	"
+subpackages="$pkgname-pyc"
+source="https://github.com/KenKundert/emborg/archive/v$pkgver/emborg-v$pkgver.tar.gz"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	PYTHONPATH="$PWD/emborg" pytest --no-fuse
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/emborg-$pkgver*-py3-none-any.whl
+}
+
+sha512sums="
+cbad13b64e4be9462a7357c9375ef205913359b8df46cb617cc02fa627953a6e2bfa907056c8ea09b668fad947719186cdf39ca85034d0ff9648c8e8c9be8302  emborg-v1.40.tar.gz
+"

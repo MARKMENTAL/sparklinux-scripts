@@ -1,0 +1,43 @@
+# Contributor: Patrycja Rosa <alpine@ptrcnull.me>
+# Maintainer: Patrycja Rosa <alpine@ptrcnull.me>
+pkgname=rofi-calc
+pkgver=2.2.1
+pkgrel=0
+pkgdesc="Rofi plugin that uses qalc to parse natural language input and provide results"
+url="https://github.com/svenstaro/rofi-calc"
+arch="all"
+license="MIT"
+depends="cmd:rofi qalc"
+makedepends="
+	autoconf
+	automake
+	libtool
+	rofi-dev
+	"
+source="https://github.com/svenstaro/rofi-calc/archive/v$pkgver/rofi-calc-$pkgver.tar.gz"
+options="!check"  # no tests available
+
+prepare() {
+	default_prepare
+
+	autoreconf -fi
+}
+
+build() {
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--localstatedir=/var
+	make
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+33c4b5ca2c13d538c902d747c65b376d00b4f6b628d5fc14b4761105537503f24bd51a5cf8f07b6ab4b28bccbf6e84c70ea3125ed7e1664eadb108e4250a42ba  rofi-calc-2.2.1.tar.gz
+"

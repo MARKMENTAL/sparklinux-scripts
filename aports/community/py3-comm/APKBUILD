@@ -1,0 +1,36 @@
+# Contributor: Aiden Grossman <agrossman154@yahoo.com>
+# Maintainer:
+pkgname=py3-comm
+pkgver=0.2.2
+pkgrel=2
+pkgdesc="Python comm implementation for the Jupyter kernel protocol"
+url="https://github.com/ipython/comm"
+arch="noarch"
+license="BSD-3-Clause"
+depends="py3-traitlets"
+makedepends="py3-gpep517 py3-hatchling"
+checkdepends="py3-pytest"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/ipython/comm/archive/refs/tags/v$pkgver.tar.gz"
+builddir="$srcdir/comm-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages test-env
+	test-env/bin/python3 -m installer \
+		.dist/*.whl
+	test-env/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer --destdir="$pkgdir" .dist/*.whl
+}
+
+sha512sums="
+a37999859894186cb52f50835459dd6c3aced256ed1c6319660c98ad9e423f4ab1fd86545f68c82fbbbd74dcec70359566307cecbc3610d806084a33fae9e693  py3-comm-0.2.2.tar.gz
+"

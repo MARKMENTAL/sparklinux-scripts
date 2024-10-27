@@ -1,0 +1,26 @@
+# Contributor: David Demelier <markand@malikania.fr>
+# Maintainer: David Demelier <markand@malikania.fr>
+pkgname=libretro-melonds
+pkgver=0_git20221207
+pkgrel=0
+_commit="0e1f06da626cbe67215c3f06f6bdf510dd4e4649"
+pkgdesc="Nintendo DS emulator for libretro"
+url="https://github.com/libretro/melonDS"
+arch="all"
+license="GPL-3.0-only"
+makedepends="mesa-dev"
+source="$pkgname-$_commit.tar.gz::https://github.com/libretro/melonDS/archive/$_commit.tar.gz"
+builddir="$srcdir/melonDS-$_commit"
+options="!check" # No tests
+
+build() {
+	make
+}
+
+package() {
+	install -Dm644 melonds_libretro.so "$pkgdir"/usr/lib/libretro/melonds_libretro.so
+}
+
+sha512sums="
+82ad7afc0127518f964dacc70ca59c51650b036ce4bd21d6f33c69d803aee4a72d477453c86e73d04fd00b2afd3fe8ba3d4277ffb5b028685640685ae6f9eea9  libretro-melonds-0e1f06da626cbe67215c3f06f6bdf510dd4e4649.tar.gz
+"

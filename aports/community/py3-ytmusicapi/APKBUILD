@@ -1,0 +1,30 @@
+# Maintainer: Luca Weiss <luca@lucaweiss.eu>
+pkgname=py3-ytmusicapi
+pkgver=1.8.1
+pkgrel=0
+pkgdesc="Unofficial API for YouTube Music"
+url="https://github.com/sigma67/ytmusicapi"
+arch="noarch"
+license="MIT"
+depends="py3-setuptools py3-requests"
+makedepends="py3-setuptools_scm py3-gpep517 py3-installer py3-wheel"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/y/ytmusicapi/ytmusicapi-$pkgver.tar.gz"
+builddir="$srcdir/ytmusicapi-$pkgver"
+options="!check" # tests require special auth setup
+
+build() {
+	export SETUPTOOLS_SCM_PRETEND_VERSION=$pkgver
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/ytmusicapi-$pkgver-*.whl
+}
+
+sha512sums="
+37b166e550ead565b752e466ab0ec0fd238474f669b79596a3d16626ed2480ecfe0066715c685f39376ed2ea528993ca2a0330b3c4eac9d4fcd096c8d4c20884  ytmusicapi-1.8.1.tar.gz
+"

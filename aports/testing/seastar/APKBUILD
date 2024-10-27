@@ -1,0 +1,97 @@
+# Maintainer: Duncan Bellamy <dunk@denkimushi.com>
+pkgname=seastar
+pkgver=22.11.0_git20240815
+pkgrel=0
+_commit="e42e382648e459a608bf42f9d8c1d95550182362"
+_ver="${_commit:=$pkgver}"
+pkgdesc="High performance server-side application framework"
+url="https://seastar.io"
+# riscv64, loongarch64: valgrind
+# armhf armv7 x86 32bit not supported
+arch="all !x86 !armhf !armv7 !riscv64 !loongarch64"
+license="Apache-2.0"
+depends_dev="
+	$pkgname=$pkgver-r$pkgrel
+	$pkgname-testing=$pkgver-r$pkgrel
+	"
+makedepends="
+	boost-dev
+	bsd-compat-headers
+	c-ares-dev
+	cmake
+	crypto++-dev
+	fmt-dev
+	gnutls-dev
+	hwloc-dev
+	libpciaccess-dev
+	libucontext-dev
+	libunwind-dev
+	liburing-dev
+	lksctp-tools-dev
+	lz4-dev
+	numactl-dev
+	protobuf-dev
+	ragel
+	samurai
+	util-linux-dev
+	valgrind-dev
+	xfsprogs-dev
+	yaml-cpp-dev
+	"
+case "$CARCH" in
+aarch64|x86_64) makedepends="$makedepends dpdk-dev" ;;
+esac
+checkdepends="py3-yaml"
+subpackages="$pkgname-dev $pkgname-testing"
+source="$pkgname-$_ver.tar.gz::https://github.com/scylladb/seastar/archive/$_ver.tar.gz"
+builddir="$srcdir/$pkgname-$_ver"
+
+build() {
+	case "$CARCH" in
+		aarch64|x86_64) local _dpdk=ON ;;
+		*) 		local _dpdk=OFF ;;
+	esac
+	if [ "$CBUILD" != "$CHOST" ]; then
+		local _crossopts="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	export CXXFLAGS="$CXXFLAGS -DSEASTAR_DEFAULT_ALLOCATOR -Wno-cpp"
+	cmake -B build -G Ninja \
+		-DBUILD_SHARED_LIBS=ON \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DCMAKE_BUILD_TYPE=MinSizeRel \
+		-DSeastar_APPS=OFF \
+		-DSeastar_DEMOS=OFF \
+		-DSeastar_DOCS=OFF \
+		-DSeastar_DPDK="$_dpdk" \
+		$_crossopts
+	cmake --build build
+}
+
+check() {
+	# rest: needs root (doesn't work in container) for hardware access
+	# see also: https://github.com/scylladb/seastar/issues/1826
+	local _tests="chunk_parsers|dns|httpd|request_parser|semaphore|stall_detector|tls|app-template"
+	# -j2: "Could not initialize seastar: std::runtime_error (Could not setup Async I/O:
+	# "Not enough request capacity in /proc/sys/fs/aio-max-nr. Try increasing that number
+	# "or reducing the amount of logical CPUs available for your application)"
+	ctest --test-dir build --output-on-failure \
+		-E "($_tests)" -j2
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+dev() {
+	default_dev
+	amove usr/bin
+}
+
+testing() {
+	amove usr/lib/libseastar_*testing.so
+}
+
+sha512sums="
+448ef3c4f0b3db781fd8683b4f6b43183da19582a70982922d1121791faa17d7e34feacd5aa7b412b227cb8f47d014c85f21cb5025cacd50940bfd7fb6856020  seastar-e42e382648e459a608bf42f9d8c1d95550182362.tar.gz
+"

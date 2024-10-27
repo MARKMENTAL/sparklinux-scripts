@@ -1,0 +1,29 @@
+# Contributor: Grigory Kirillov <txgk@bk.ru>
+# Maintainer: Celeste <cielesti@protonmail.com>
+pkgname=md4c
+pkgver=0.5.2
+pkgrel=0
+pkgdesc="Fast Markdown parser written in C"
+url="https://github.com/mity/md4c"
+arch="all"
+license="MIT"
+options="!check" # no test suite
+makedepends="cmake samurai"
+source="https://github.com/mity/md4c/archive/release-$pkgver/md4c-$pkgver.tar.gz"
+subpackages="$pkgname-libs $pkgname-dev $pkgname-doc"
+builddir="$srcdir/md4c-release-$pkgver"
+
+build() {
+	cmake -B builddir -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr
+	cmake --build builddir
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install builddir
+}
+
+sha512sums="
+30607ba39d6c59329f5a56a90cd816ff60b82ea752ac2b9df356d756529cfc49170019fae5df32fa94afc0e2a186c66eaf56fa6373d18436c06ace670675ba85  md4c-0.5.2.tar.gz
+"

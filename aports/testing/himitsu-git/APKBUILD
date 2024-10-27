@@ -1,0 +1,26 @@
+# Maintainer: Hugo Osvaldo Barrera <hugo@whynothugo.nl>
+pkgname=himitsu-git
+pkgver=0.3.0
+pkgrel=0
+pkgdesc="git-credential integration for Himitsu"
+url="https://himitsustore.org"
+arch="x86_64 aarch64 riscv64" # Hare
+license="GPL-3.0-only"
+depends="himitsu"
+makedepends="hare scdoc himitsu-dev"
+source="
+	$pkgname-$pkgver.tar.gz::https://git.sr.ht/~sircmpwn/himitsu-git/archive/$pkgver.tar.gz
+	"
+options="!check"
+
+build() {
+	make -j1 PREFIX=/usr
+}
+
+package() {
+	make DESTDIR="$pkgdir" PREFIX=/usr install
+}
+
+sha512sums="
+42ac37762bf8f7e97e6f3317138b75d0f25be38d98e40d59cc9fa71cbd7fde24d2e4a0bd871d8b48d87e1ce3e349899a248f61d401470f7b4d837579273ac481  himitsu-git-0.3.0.tar.gz
+"

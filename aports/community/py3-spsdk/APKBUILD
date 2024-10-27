@@ -1,0 +1,89 @@
+# Contributor: Bart Ribbers <bribbers@disroot.org>
+# Maintainer: Bart Ribbers <bribbers@disroot.org>
+pkgname=py3-spsdk
+pkgver=2.2.0
+pkgrel=0
+pkgdesc="Open Source Secure Provisioning SDK for NXP MCU/MPU"
+url="https://github.com/NXPmicro/spsdk"
+# s390x, ppc64le and riscv64 blocked by py3-cmsis-pack-manager, 32 bit issues with py3-libusbsio
+arch="x86_64 aarch64"
+license="BSD-3-Clause"
+depends="
+	pcsc-lite-libs
+	py3-asn1crypto
+	py3-astunparse
+	py3-bincopy
+	py3-bitstring
+	py3-click
+	py3-click-command-tree
+	py3-click-option-group
+	py3-cmsis-pack-manager
+	py3-colorama
+	py3-commentjson
+	py3-crcmod
+	py3-cryptography
+	py3-deepmerge
+	py3-fastjsonschema
+	py3-hexdump
+	py3-jinja2
+	py3-libusbsio
+	py3-oscrypto
+	py3-platformdirs
+	py3-pycryptodome
+	py3-pylink-square
+	py3-pyocd
+	py3-pyscard
+	py3-pyserial
+	py3-requests
+	py3-ruamel.yaml
+	py3-sly
+	py3-typing-extensions
+	python3
+	"
+makedepends="
+	py3-gpep517
+	py3-installer
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="
+	py3-attrs
+	py3-pytest
+	py3-pytest-cov
+	py3-pytest-xdist
+	py3-voluptuous
+	"
+subpackages="$pkgname-pyc spsdk:_spsdk"
+source="spsdk-$pkgver.tar.gz::https://github.com/NXPmicro/spsdk/archive/refs/tags/$pkgver.tar.gz"
+builddir="$srcdir/spsdk-$pkgver"
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest \
+		--ignore=tests/mcu_examples/test_jupyter.py  \
+		--ignore=tests/nxpimage/test_nxpimage_fcb.py \
+		-k 'not test_keys_generation_ec and not test_key_types and not test_matching_keys_ecc'
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+_spsdk() {
+	depends="$pkgname=$pkgver-r$pkgrel"
+
+	amove usr/bin
+	amove usr/lib/python*/site-packages/spsdk/apps/*.py
+}
+
+sha512sums="
+bc0176da1051fb84583d252a95feb8f27c48c95d24fb650f0657a8269aa7d3f5b88d538424e5885e8053d7657995ebbe9c0d71dabc9ff226ea1d048e39af8e22  spsdk-2.2.0.tar.gz
+"

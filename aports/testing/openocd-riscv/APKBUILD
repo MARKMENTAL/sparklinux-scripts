@@ -1,0 +1,77 @@
+# Contributor: Sören Tempel <soeren+alpine@soeren-tempel.net>
+# Maintainer: Sören Tempel <soeren+alpine@soeren-tempel.net>
+pkgname=openocd-riscv
+pkgver=0_git20230104
+_commit=43ea20dfbb6c815004a51106a3b2009d7f6c4940
+pkgrel=1
+pkgdesc="Fork of OpenOCD with RISC-V support"
+url="https://github.com/riscv/riscv-openocd"
+arch="all"
+license="GPL-2.0-only,GPL-2.0-or-later,GPL-3.0-only"
+makedepends="
+	autoconf
+	automake
+	hidapi-dev
+	jimtcl-dev
+	libftdi1-dev
+	libjaylink-dev
+	libtool
+	libusb-dev
+	"
+subpackages="$pkgname-dev $pkgname-doc $pkgname-udev-rules:udev_rules"
+source="$pkgname-$pkgver.tar.gz::https://github.com/riscv/riscv-openocd/archive/$_commit.tar.gz
+	fix-jimtcl-link.patch"
+builddir="$srcdir/riscv-openocd-$_commit"
+
+##
+# XXX: Remove this aport when changes are upstreamed.
+##
+
+prepare() {
+	default_prepare
+	./bootstrap nosubmodule
+}
+
+build() {
+	# --datadir:
+	# avoid conflicts with upstream openocd to allow parallel installations
+	./configure \
+		--build=$CBUILD \
+		--host=$CHOST \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--mandir=/usr/share/man \
+		--datadir=/usr/share/$pkgname \
+		--localstatedir=/var \
+		--disable-werror \
+		--disable-internal-jimtcl \
+		--disable-internal-libjaylink
+	make
+}
+
+check() {
+	make check
+}
+
+package() {
+	make DESTDIR="$pkgdir" install
+	install -Dm644 contrib/60-openocd.rules \
+		"$pkgdir"/lib/udev/rules.d/60-$pkgname.rules
+	# allow parallel install with upstream openocd
+	mv "$pkgdir"/usr/bin/openocd "$pkgdir"/usr/bin/$pkgname
+	mv "$pkgdir"/usr/share/man/man1/openocd.1 \
+		"$pkgdir"/usr/share/man/man1/openocd-riscv.1
+	sed -e 's/openocd/openocd-riscv/g' -i \
+		"$pkgdir"/usr/share/man/man1/openocd-riscv.1
+}
+
+udev_rules() {
+	pkgdesc="udev rules for $pkgname"
+	depends="!openocd-udev-rules"
+	amove lib/udev/rules.d/60-$pkgname.rules
+}
+
+sha512sums="
+2ffe4047d4c3afa8dd7be581362f36b88d250a46c4ed3f9b396a15163bd6d131984a9b0d27c47bfbda9f195443010ddfb267e7401b6b334a466a1dcad4ebc9b8  openocd-riscv-0_git20230104.tar.gz
+6fd2fbe11917bb7f181ba67812f63e75d51bcd19e4df6a7e22e1abb8f36a4f4bdc9202e815f560476ec184d54d84df8ae4dceb17f2429b9dc1d9503804dacb03  fix-jimtcl-link.patch
+"

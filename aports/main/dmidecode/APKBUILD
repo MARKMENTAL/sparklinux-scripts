@@ -1,0 +1,29 @@
+# Maintainer: Nathan Angelacos <nangel@alpinelinux.org>
+pkgname=dmidecode
+pkgver=3.6
+pkgrel=0
+pkgdesc="A utility for reporting system hardware as described by BIOS"
+url="https://nongnu.org/dmidecode"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="bash-completion bash-completion-dev"
+options="!check" # No testsuite
+subpackages="$pkgname-doc $pkgname-bash-completion"
+source="https://download.savannah.gnu.org/releases/dmidecode/dmidecode-$pkgver.tar.xz"
+
+prepare() {
+	default_prepare
+	sed -e '/^PROGRAMS !=/d' -i Makefile
+}
+
+build() {
+	make prefix=/usr
+}
+
+package() {
+	make prefix=/usr DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+b1e47a2121062581876ba2daf3ce80b1c39612d078718609b8bc97d4e7a4b47427200502468b5d71f0d0dcb5ba299fb2e808791b62dc5b50e67acac60c51a461  dmidecode-3.6.tar.xz
+"

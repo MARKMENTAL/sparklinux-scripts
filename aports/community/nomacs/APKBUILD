@@ -1,0 +1,75 @@
+# Contributor: mio <miyopan@e.email>
+# Maintainer: Will Sinatra <wpsinatra@gmail.com>
+pkgname=nomacs
+pkgver=3.19.0
+pkgrel=1
+_pluginsver=3.16
+pkgdesc="Cross platform image viewer"
+url="https://nomacs.org/"
+license="GPL-3.0-or-later"
+# ppc64le: opencv alpine/aports#15494
+# riscv64, loongarch64: blocked by opencv
+# armhf/aarch64/x86: missing linguist tools
+arch="all !armhf !aarch64 !x86 !s390x !ppc64le !riscv64 !loongarch64"
+makedepends="
+	cmake
+	exiv2-dev
+	libraw-dev
+	libjxl-dev
+	libwebp-dev
+	libzip-dev
+	opencv-dev
+	qt5-qtbase-dev
+	qt5-qtscript-dev
+	qt5-qtsvg-dev
+	qt5-qttools-dev
+	quazip-dev
+	samurai
+	tiff-dev
+	"
+subpackages="$pkgname-doc $pkgname-lang"
+source="nomacs-$pkgver.tar.gz::https://github.com/nomacs/nomacs/archive/$pkgver.tar.gz
+	nomacs-plugins-$_pluginsver.tar.gz::https://github.com/nomacs/nomacs-plugins/archive/$_pluginsver.tar.gz
+	version.patch
+	"
+options="!check" # No tests
+
+prepare() {
+	default_prepare
+
+	rm -r 3rd-party
+
+	rmdir ImageLounge/plugins
+	ln -sfv "$srcdir"/nomacs-plugins-$_pluginsver ImageLounge/plugins
+}
+
+build() {
+	cmake -B build -G Ninja -S ImageLounge \
+		-DCMAKE_BUILD_TYPE=None \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DENABLE_INCREMENTER=OFF \
+		-DENABLE_JXL=ON \
+		-DENABLE_TRANSLATIONS=TRUE \
+		-DQT_VERSION_MAJOR=5 \
+		-DUSE_SYSTEM_QUAZIP=ON
+	cmake --build build
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+}
+
+lang() {
+	pkgdesc="translations for $pkgname"
+	install_if="$pkgname=$pkgver-r$pkgrel lang"
+
+	mkdir -p "$subpkgdir/usr/share/nomacs/Image Lounge/"
+	mv "$pkgdir/usr/share/nomacs/Image Lounge/translations/" \
+		"$subpkgdir/usr/share/nomacs/Image Lounge/"
+}
+
+sha512sums="
+3a44fc2004ac65c1d0cbdcf76ab0d5c7fab977741ea5806ae5645dca6fcf124c9da597c102a39b22f1c1447161cbd446e9e15d5b4cf5657d59be6c9882db1931  nomacs-3.19.0.tar.gz
+cd72f6ddbe3e07d7ed97f08405bac7574f4f3285c81e835f5630e011c8a9b105f23d892fed8084cb35ce521aca5524db071d0edb8bb04850dd2209d9ed019747  nomacs-plugins-3.16.tar.gz
+bc46c024f874857199ff33246011a7ed49e2b61813dab30a92995d9571b209c7b188e6cc5100f0bc0dec0e86d6cce3135731a768642bc4cf6f32d851ac7d0afe  version.patch
+"

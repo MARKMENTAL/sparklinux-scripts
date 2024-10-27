@@ -1,0 +1,34 @@
+# Maintainer: Jenneron <jenneron@protonmail.com>
+pkgname=depthcharge-tools
+pkgver=0.6.2
+pkgrel=1
+pkgdesc="Tools to manage the Chrome OS bootloader"
+url="https://github.com/alpernebbi/depthcharge-tools"
+# other arches blocked by vboot-utils
+arch="armhf armv7 aarch64 x86_64 x86"
+license="GPL-2.0-or-later"
+depends="
+	cgpt
+	dtc
+	gzip
+	lz4
+	py3-setuptools
+	u-boot-tools
+	vboot-utils
+	xz
+"
+subpackages="$pkgname-pyc"
+source="$pkgname-$pkgver.tar.gz::https://github.com/alpernebbi/depthcharge-tools/archive/refs/tags/v$pkgver.tar.gz"
+options="!check"
+
+build() {
+	python3 setup.py build
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+d4d708bbdb949cebbd7dca85b9a52ccab92223f430c4f1dad8a339a74f8c695c625fd6578e55432ddd8e0a7517262c9f9cc215cbba3010da776ba89d3ede7693  depthcharge-tools-0.6.2.tar.gz
+"

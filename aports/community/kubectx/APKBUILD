@@ -1,0 +1,49 @@
+# Contributor: Michał Polański <michal@polanski.me>
+# Maintainer: Michał Polański <michal@polanski.me>
+pkgname=kubectx
+pkgver=0.9.5
+pkgrel=8
+pkgdesc="Faster way to switch between clusters and namespaces in kubectl"
+url="https://kubectx.dev/"
+license="Apache-2.0"
+arch="all"
+makedepends="go"
+subpackages="
+	$pkgname-bash-completion
+	$pkgname-fish-completion
+	$pkgname-zsh-completion
+	"
+source="https://github.com/ahmetb/kubectx/archive/v$pkgver/kubectx-$pkgver.tar.gz"
+
+export GOCACHE="${GOCACHE:-"$srcdir/go-cache"}"
+export GOTMPDIR="${GOTMPDIR:-"$srcdir"}"
+export GOMODCACHE="${GOMODCACHE:-"$srcdir/go"}"
+
+build() {
+	for cmd in kubectx kubens; do
+		go build \
+			-ldflags="-X main.version=$pkgver" \
+			-v -o bin/$cmd ./cmd/$cmd
+	done
+}
+
+check() {
+	go test ./...
+}
+
+package() {
+	for cmd in kubectx kubens; do
+		install -Dm755 bin/$cmd -t "$pkgdir"/usr/bin/
+
+		install -Dm644 completion/$cmd.bash \
+			"$pkgdir"/usr/share/bash-completion/completions/$cmd
+		install -Dm644 completion/$cmd.fish \
+			"$pkgdir"/usr/share/fish/vendor_completions.d/$cmd.fish
+		install -Dm644 completion/_$cmd.zsh \
+			"$pkgdir"/usr/share/zsh/site-functions/_$cmd
+	done
+}
+
+sha512sums="
+a7eacc4676d70caba7081aa09f36f8513c3578368a6f0984fd88d3fe674df8cadb3c5ccf109e9ea231bcfd189af6416b94b8e2cb4a4073a9b12c37e88ed73008  kubectx-0.9.5.tar.gz
+"

@@ -1,0 +1,42 @@
+# Maintainer: Antoni Aloy <aaloytorrens@gmail.com>
+pkgname=qtxdg-tools
+pkgver=4.0.0
+pkgrel=0
+pkgdesc="Qt implementation of freedesktop.org xdg specifications"
+url="https://github.com/lxqt/qtxdg-tools"
+arch="all"
+license="LGPL-2.1-or-later"
+depends="gtk+3.0"
+depends_dev="$pkgname=$pkgver-r$pkgrel"
+makedepends="
+	cmake samurai lxqt-build-tools libqtxdg-dev
+	"
+checkdepends="xvfb-run"
+subpackages="$pkgname-dev"
+source="https://github.com/lxqt/qtxdg-tools/releases/download/$pkgver/qtxdg-tools-$pkgver.tar.xz"
+options="!check" # no tests
+
+build() {
+	if [ "$CBUILD" != "$CHOST" ]; then
+		CMAKE_CROSSOPTS="-DCMAKE_SYSTEM_NAME=Linux -DCMAKE_HOST_SYSTEM_NAME=Linux"
+	fi
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_LIBDIR=lib \
+		-DBUILD_SHARED_LIBS=True \
+		$CMAKE_CROSSOPTS .
+	cmake --build build
+
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --build build --target install
+
+	mkdir -p "$pkgdir"/usr/lib
+	mv "$pkgdir"/usr/share/cmake "$pkgdir"/usr/lib
+}
+
+sha512sums="
+0d3e3a4afa5a4a0a63b4e9c489b4b20688b5c6c79f6460d9d15dc519bdb911b14f4307e50cd236c20ab939c517eed2ba284295d4f05deb764facda4acad8f4d8  qtxdg-tools-4.0.0.tar.xz
+"

@@ -1,0 +1,32 @@
+# Contributor: Justin Berthault <justin.berthault@zaclys.net>
+# Maintainer: Will Sinatra <wpsinatra@gmail.com>
+pkgname=py3-crashtest
+_pyname=crashtest
+pkgver=0.4.1
+pkgrel=4
+pkgdesc="Manage Python errors with ease"
+url="https://github.com/sdispater/crashtest"
+arch="noarch"
+license="MIT"
+depends="python3"
+makedepends="py3-setuptools"
+checkdepends="py3-pytest py3-pytest-cov"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/c/crashtest/crashtest-$pkgver.tar.gz"
+builddir="$srcdir/$_pyname-$pkgver"
+
+build() {
+	python3 setup.py build
+}
+
+check() {
+	python3 setup.py test
+}
+
+package() {
+	python3 setup.py install --skip-build --root="$pkgdir"
+}
+
+sha512sums="
+3f4d940450bcd40ff56059756ed81894556b75b4c17f99ac8d899088eab07a6c2cbbf206188b381801d143e590bdd05f609d48541f041e380383031c98f4d874  crashtest-0.4.1.tar.gz
+"

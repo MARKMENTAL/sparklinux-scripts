@@ -1,0 +1,51 @@
+# Contributor: Keith Maxwell <keith.maxwell@gmail.com>
+# Maintainer: Keith Maxwell <keith.maxwell@gmail.com>
+pkgname=py3-google-api-core
+pkgver=2.11.1
+pkgrel=1
+pkgdesc="Google API client core library"
+url="https://github.com/googleapis/python-api-core"
+arch="noarch"
+license="Apache-2.0"
+depends="
+	py3-google-auth
+	py3-googleapis-common-protos
+	py3-protobuf
+	py3-requests
+	python3
+	"
+makedepends="
+	py3-gpep517
+	py3-setuptools
+	py3-wheel
+	"
+checkdepends="
+	py3-grpcio
+	py3-mock
+	py3-pytest
+	"
+subpackages="$pkgname-pyc"
+source="https://files.pythonhosted.org/packages/source/g/google-api-core/google-api-core-$pkgver.tar.gz"
+builddir="$srcdir/google-api-core-$pkgver"
+options="!check" # missing some "proto" dep
+
+build() {
+	gpep517 build-wheel \
+		--wheel-dir .dist \
+		--output-fd 3 3>&1 >&2
+}
+
+check() {
+	python3 -m venv --clear --without-pip --system-site-packages .testenv
+	.testenv/bin/python3 -m installer .dist/*.whl
+	.testenv/bin/python3 -m pytest
+}
+
+package() {
+	python3 -m installer -d "$pkgdir" \
+		.dist/*.whl
+}
+
+sha512sums="
+8b36e598153ce121d4d536a01202e4608ff0fd361326bb4b55c76d05ab420d27a8cb001cbd9e23f1051f311cd3d35f179f108078e12fcaa81ba6960729230f5a  google-api-core-2.11.1.tar.gz
+"
