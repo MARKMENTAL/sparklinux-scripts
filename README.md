@@ -6,6 +6,10 @@ A collection of build scripts for creating customized Spark Linux images based o
 
 Spark Linux is a lightweight Linux distribution designed for developers, featuring pre-installed development tools and utilities. This repository contains the build scripts used to create Spark Linux images.
 
+Before starting, please familiarize yourself with the mkimage scripts from Alpine Linux, as this is the environment mine is based off of.
+
+[How to make a custom ISO image with mkimage - Alpine Linux](https://wiki.alpinelinux.org/wiki/How_to_make_a_custom_ISO_image_with_mkimage)
+
 ## Repository Structure
 ```
 sparklinux-scripts/
